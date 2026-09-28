@@ -323,6 +323,12 @@ class UrionWearableBridge
     final invalidDuration = snapshot.sleepMinutes > 1440 ||
         snapshot.deepMinutes > 1440 ||
         snapshot.lightMinutes > 1440;
+    if (kDebugMode) {
+      debugPrint(
+        '[U19Sync] daily: index=${snapshot.daysAgo} '
+        'dayOffset=$dayDistance',
+      );
+    }
     if (unexpectedDayIndex || unexpectedDate || invalidDuration) {
       if (kDebugMode) {
         debugPrint('[U19Sync] daily rejected: index=$unexpectedDayIndex '
