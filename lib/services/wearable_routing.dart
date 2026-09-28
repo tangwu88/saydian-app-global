@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter/services.dart';
 
@@ -9,7 +10,7 @@ import '../domain/models.dart';
 import 'global_storage_scope.dart';
 import 'wearable_bridge.dart';
 
-enum WearableTransport { veepoo, yucheng }
+enum WearableTransport { veepoo, yucheng, urion }
 
 class YuchengDeviceClassifier {
   const YuchengDeviceClassifier._();
@@ -92,6 +93,7 @@ class RoutedWearableBridge
   RoutedWearableBridge({
     required WearableBridge veepoo,
     required WearableBridge yucheng,
+    WearableBridge? urion,
     WearableTransportPreferenceStore? preferenceStore,
     this.restoreOnlyBoundDevice = false,
     this.recoveryOperationTimeout = const Duration(seconds: 30),
@@ -99,6 +101,7 @@ class RoutedWearableBridge
   }) : _sources = {
          WearableTransport.veepoo: veepoo,
          WearableTransport.yucheng: yucheng,
+         WearableTransport.urion: ?urion,
        },
        _preferenceStore =
            preferenceStore ?? const SecureWearableTransportPreferenceStore() {
@@ -140,7 +143,13 @@ class RoutedWearableBridge
     final results = await Future.wait([
       _sources[WearableTransport.veepoo]!.scanDevices(),
       _sources[WearableTransport.yucheng]!.scanDevices(),
+      if (_sources[WearableTransport.urion] case final urion?)
+        urion.scanDevices(),
     ]);
+    // Live scan callbacks may have populated this table before the three
+    // scanners complete. Rebuild it from the cross-transport selection so a
+    // stale SDK entry cannot remain next to the verified Urion candidate.
+    _scanned.clear();
     final candidates =
         <RoutedDevice>[
           ...results[0].map(
@@ -151,16 +160,26 @@ class RoutedWearableBridge
             (device) =>
                 RoutedDevice.fromDevice(WearableTransport.yucheng, device),
           ),
+          if (results.length > 2)
+            ...results[2].map(
+              (device) =>
+                  RoutedDevice.fromDevice(WearableTransport.urion, device),
+            ),
         ].where((candidate) {
           // Yucheng-family devices must use Yucheng. The two native SDKs expose
           // different identifiers for the same watch, so filtering here avoids a
           // duplicate Veepoo entry even when identifier-based grouping cannot.
-          return candidate.transport == WearableTransport.yucheng ||
+          return candidate.transport != WearableTransport.veepoo ||
               !YuchengDeviceClassifier.matches(candidate.display.name);
         }).toList();
     final grouped = <String, List<RoutedDevice>>{};
     for (final candidate in candidates) {
-      grouped.putIfAbsent(candidate.nativeIdentifier, () => []).add(candidate);
+      grouped
+          .putIfAbsent(
+            candidate.display.macAddress ?? candidate.nativeIdentifier,
+            () => [],
+          )
+          .add(candidate);
     }
 
     for (final group in grouped.values) {
@@ -172,6 +191,9 @@ class RoutedWearableBridge
   }
 
   RoutedDevice? _selectDevice(List<RoutedDevice> candidates) {
+    for (final candidate in candidates) {
+      if (candidate.transport == WearableTransport.urion) return candidate;
+    }
     final hasYuchengModel = candidates.any(
       (candidate) => YuchengDeviceClassifier.matches(candidate.display.name),
     );
@@ -198,16 +220,14 @@ class RoutedWearableBridge
     if (_restoringGeneration == _connectionGeneration) {
       ++_connectionGeneration;
     }
-    return Future.wait([
-      _sources[WearableTransport.veepoo]!.stopScan().timeout(
-        recoveryStopScanTimeout,
-        onTimeout: () {},
+    return Future.wait(
+      _sources.values.map(
+        (source) => source.stopScan().timeout(
+          recoveryStopScanTimeout,
+          onTimeout: () {},
+        ),
       ),
-      _sources[WearableTransport.yucheng]!.stopScan().timeout(
-        recoveryStopScanTimeout,
-        onTimeout: () {},
-      ),
-    ]).then((_) {});
+    ).then((_) {});
   }
 
   @override
@@ -233,6 +253,9 @@ class RoutedWearableBridge
 
     final generation = ++_connectionGeneration;
     _activeTransport = device.transport;
+    if (kDebugMode) {
+      debugPrint('[WearableRoute] connect ${device.transport.name}');
+    }
     _activeConnectionGeneration = generation;
     _sourceConnectionGenerations[device.transport] = generation;
     try {
@@ -650,6 +673,22 @@ class RoutedWearableBridge
         return;
       }
       final routed = RoutedDevice.fromDevice(transport, device);
+      final mac = routed.display.macAddress;
+      if (mac != null) {
+        if (transport != WearableTransport.urion &&
+            _scanned.values.any(
+              (existing) =>
+                  existing.transport == WearableTransport.urion &&
+                  existing.display.macAddress == mac,
+            )) {
+          return;
+        }
+        if (transport == WearableTransport.urion) {
+          _scanned.removeWhere(
+            (_, existing) => existing.display.macAddress == mac,
+          );
+        }
+      }
       // A user can tap a device as soon as it appears. Keep the routing table
       // in sync with live discovery events instead of waiting for the native
       // scan Future to finish.

@@ -835,6 +835,9 @@ struct IOSWechatAuthState {
   private var wearableAdapter: WearableAdapter?
   private var methodChannel: FlutterMethodChannel?
   private var eventChannel: FlutterEventChannel?
+  private let urionTransport = UrionGattTransport()
+  private var urionMethods: FlutterMethodChannel?
+  private var urionEvents: FlutterEventChannel?
   private var paymentChannel: FlutterMethodChannel?
   private var authChannel: FlutterMethodChannel?
   private var wechatAuthState = IOSWechatAuthState()
@@ -888,6 +891,21 @@ struct IOSWechatAuthState {
     )
     events.setStreamHandler(wearableStreamHandler)
     eventChannel = events
+
+    let urionMethods = FlutterMethodChannel(
+      name: "cc.saidian/urion_methods", binaryMessenger: registrar.messenger()
+    )
+    urionMethods.setMethodCallHandler { [weak self] call, result in
+      DispatchQueue.main.async {
+        self?.urionTransport.handle(call, result: result)
+      }
+    }
+    self.urionMethods = urionMethods
+    let urionEvents = FlutterEventChannel(
+      name: "cc.saidian/urion_events", binaryMessenger: registrar.messenger()
+    )
+    urionEvents.setStreamHandler(urionTransport)
+    self.urionEvents = urionEvents
 
     let payments = FlutterMethodChannel(
       name: "cc.saidian/app_payments",

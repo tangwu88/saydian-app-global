@@ -2732,9 +2732,9 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
   }
 
   Future<void> _toggleFind() async {
-    final isOneShot =
-        widget.controller.connectedDevice?.sdkSource ==
-        WearableSdkSource.yucheng;
+    final source = widget.controller.connectedDevice?.sdkSource;
+    final isOneShot = source == WearableSdkSource.yucheng ||
+        source == WearableSdkSource.urion;
     if (isOneShot && _finding) return;
     final next = isOneShot || !_finding;
     final success = await widget.controller.triggerDeviceAction(
@@ -2806,6 +2806,8 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
                   onChanged: (value) => setState(() => _screen = value),
                   onSave: _saveScreen,
                 )
+              else if (widget.feature == DeviceFeature.basicSettings)
+                _buildBasicSettingsPanel(busy)
               else
                 _buildReadyContent(busy),
             ],
@@ -2834,6 +2836,138 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
       icon: _deviceFeatureIcon(widget.feature),
     ),
   };
+
+  Future<void> _saveBasicSetting(String key, Object value) async {
+    final saved = await widget.controller.writeDeviceFeature(
+      DeviceFeature.basicSettings,
+      {key: value},
+    );
+    if (!mounted) return;
+    if (saved) await _loadFeature();
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(saved
+          ? key == 'syncTime' ? '已发送时间，请核对手表显示' : '已保存并从手表确认'
+          : widget.controller.errorMessage ?? '设置未生效，请重试'),
+    ));
+  }
+
+  Future<void> _syncBasicTime() async {
+    var language = _featureData['timeLanguage'];
+    if (language != 'zh' && language != 'en') {
+      language = await showDialog<String>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: const Text('确认手表语言'),
+          content: const Text('首次同步时间时，请选择手表当前使用的语言。之后切换 App 语言不会改变手表语言。'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: Text(context.l10n.cancel),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop('zh'),
+              child: const Text('中文'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop('en'),
+              child: const Text('English'),
+            ),
+          ],
+        ),
+      );
+    }
+    if (mounted && language is String) {
+      await _saveBasicSetting('syncTime', language);
+    }
+  }
+
+  Future<void> _editBasicNumber(
+    String key,
+    String label,
+    int minimum,
+    int maximum,
+  ) async {
+    final input = TextEditingController(text: '${_featureData[key] ?? ''}');
+    final value = await showDialog<int>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(label),
+        content: TextField(
+          controller: input,
+          keyboardType: TextInputType.number,
+          autofocus: true,
+          decoration: InputDecoration(hintText: '$minimum–$maximum'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: Text(context.l10n.cancel),
+          ),
+          FilledButton(
+            onPressed: () {
+              final parsed = int.tryParse(input.text.trim());
+              if (parsed == null || parsed < minimum || parsed > maximum) return;
+              Navigator.of(dialogContext).pop(parsed);
+            },
+            child: Text(context.l10n.save),
+          ),
+        ],
+      ),
+    );
+    input.dispose();
+    if (value != null && mounted) await _saveBasicSetting(key, value);
+  }
+
+  Widget _buildBasicSettingsPanel(bool busy) {
+    if (_featureData.isEmpty) return _loadingCard(busy, '手表设置');
+    final is24Hour = _featureData['is24Hour'] == true;
+    return Column(children: [
+      Card(child: ListTile(
+        leading: const Icon(Icons.access_time_rounded),
+        title: const Text('同步时间'),
+        subtitle: const Text('将手机当前时间发送到手表；请在手表上核对'),
+        trailing: const Icon(Icons.chevron_right_rounded),
+        onTap: busy ? null : _syncBasicTime,
+      )),
+      Card(child: SwitchListTile(
+        title: const Text('24 小时制'),
+        subtitle: Text(is24Hour ? '当前使用 24 小时制' : '当前使用 12 小时制'),
+        value: is24Hour,
+        onChanged: busy ? null : (value) => _saveBasicSetting('is24Hour', value),
+      )),
+      Card(child: Column(children: [
+        ListTile(
+          title: const Text('步数目标'),
+          subtitle: Text('${_featureData['stepGoal'] ?? '—'} 步'),
+          onTap: busy ? null : () => _editBasicNumber('stepGoal', '步数目标', 1, 100000),
+        ),
+        const Divider(height: 1),
+        ListTile(
+          title: const Text('性别'),
+          subtitle: Text(_featureData['gender'] == 0 ? '男' : '女'),
+          onTap: busy ? null : () => _saveBasicSetting('gender', _featureData['gender'] == 0 ? 1 : 0),
+        ),
+        for (final item in <(String, String, String, int, int)>[
+          ('age', '年龄', '岁', 1, 120),
+          ('heightCm', '身高', '厘米', 50, 240),
+          ('weightKg', '体重', '千克', 10, 250),
+        ]) ...[
+          const Divider(height: 1),
+          ListTile(
+            title: Text(item.$2),
+            subtitle: Text('${_featureData[item.$1] ?? '—'} ${item.$3}'),
+            onTap: busy ? null : () => _editBasicNumber(item.$1, item.$2, item.$4, item.$5),
+          ),
+        ],
+      ])),
+      TextButton.icon(
+        onPressed: busy ? null : _loadFeature,
+        icon: const Icon(Icons.refresh_rounded),
+        label: Text(context.l10n.readAgain),
+      ),
+    ]);
+  }
 
   List<Map<String, Object?>> get _items {
     final raw = _featureData['items'];
@@ -5728,6 +5862,7 @@ IconData _deviceFeatureIcon(DeviceFeature feature) => switch (feature) {
   DeviceFeature.healthMonitoring => Icons.monitor_heart_outlined,
   DeviceFeature.healthAssessment => Icons.assignment_turned_in_outlined,
   DeviceFeature.screenDisplay => Icons.brightness_6_outlined,
+  DeviceFeature.basicSettings => Icons.tune_rounded,
 };
 
 String _deviceFeatureDescription(DeviceFeature feature) => switch (feature) {
@@ -5745,4 +5880,5 @@ String _deviceFeatureDescription(DeviceFeature feature) => switch (feature) {
   DeviceFeature.healthMonitoring => '设置自动检测和健康提醒',
   DeviceFeature.healthAssessment => '查看手表支持的辅助评估',
   DeviceFeature.screenDisplay => '调节亮度和亮屏方式',
+  DeviceFeature.basicSettings => '设置手表时间、目标和个人资料',
 };

@@ -67,6 +67,28 @@ void main() {
     expect(await store.pending(), hasLength(1));
   });
 
+  test('holds daily totals locally until the server declares version support', () async {
+    final store = MemoryHealthStore();
+    final api = _AcceptingApi();
+    await store.initialize();
+    await store.upsert([
+      HealthRecord(
+        id: 'daily-1', metric: HealthMetric.steps,
+        values: const {'value': 1000}, unit: '步',
+        measuredAt: DateTime.utc(2026, 9, 28), timezone: '+08:00',
+        deviceId: 'urion:a', firmwareVersion: 'test', quality: 'valid',
+        source: MeasurementSource.wearable, rawVersion: 1,
+        aggregation: const HealthAggregation.dailySummary('2026-09-28'),
+      ),
+      _measurement('regular', HealthMetric.heartRate, {'value': 72}),
+    ]);
+    final outcome = await HealthSyncService(store, api).synchronizeNow();
+    expect(outcome.uploaded, 1);
+    expect(api.receivedIds, {'regular'});
+    expect(outcome.message, '已保存到本机，暂未同步');
+    expect((await store.pending()).map((record) => record.id), ['daily-1']);
+  });
+
   test('quarantines SDK sentinel values instead of uploading them', () async {
     final store = MemoryHealthStore();
     final api = _AcceptingApi();

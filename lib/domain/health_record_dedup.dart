@@ -12,6 +12,19 @@ List<HealthRecord> deduplicateHealthRecords(Iterable<HealthRecord> records) {
     final device = record.deviceId.trim().isEmpty
         ? 'unknown-device'
         : record.deviceId.trim().toUpperCase();
+    final aggregation = record.aggregation;
+    if (aggregation != null) {
+      final key =
+          '${record.metric.wireName}|$device|${aggregation.kind}|${aggregation.localDate}';
+      final existing = selected[key];
+      if (existing == null ||
+          record.measuredAt.isAfter(existing.measuredAt) ||
+          (record.measuredAt.isAtSameMomentAs(existing.measuredAt) &&
+              record.id.compareTo(existing.id) > 0)) {
+        selected[key] = record;
+      }
+      continue;
+    }
     final second = record.measuredAt.toUtc().millisecondsSinceEpoch ~/ 1000;
     final key = '${record.metric.wireName}|$device|$second';
     final existing = selected[key];

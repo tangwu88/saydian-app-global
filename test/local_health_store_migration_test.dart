@@ -19,7 +19,7 @@ void main() {
   sqfliteFfiInit();
 
   test(
-    'v5 to v6 keeps old data unscoped until the persisted account adopts it',
+    'v5 to v7 keeps old data unscoped until the persisted account adopts it',
     () async {
       final directory = await Directory.systemTemp.createTemp(
         'saidian-health-v3-',
@@ -211,7 +211,7 @@ void main() {
         whereArgs: ['index', 'notification_inbox_time'],
       );
       expect(schema, hasLength(1));
-      expect(await verified.getVersion(), 6);
+      expect(await verified.getVersion(), 7);
       await verified.close();
     },
   );

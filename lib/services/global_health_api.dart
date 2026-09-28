@@ -2,8 +2,24 @@ part of 'api_client.dart';
 
 /// Canonical global health transport. Legacy minute/day aggregation must never
 /// decide which individual global records can be removed from the pending queue.
-mixin GlobalHealthApi on SaydianApiClient {
+mixin GlobalHealthApi on SaydianApiClient implements DailySummarySupportApi {
   static const _healthRoot = '/api/saydian-app/v2/health';
+
+  @override
+  Future<bool> supportsDailySummaries() async {
+    try {
+      final owner = _stableSessionAccountKey(await _requiredSession());
+      final response = await _globalHealthRequest(
+        owner,
+        'GET',
+        '$_healthRoot/capabilities',
+      );
+      final data = _data(_decode(response));
+      return data['dailySummaryVersions'] == true;
+    } catch (_) {
+      return false;
+    }
+  }
 
   Future<http.Response> _globalHealthRequest(
     String owner,
@@ -112,6 +128,8 @@ mixin GlobalHealthApi on SaydianApiClient {
         'values': record.values,
         if (record.unit.isNotEmpty) 'unit': record.unit,
         'quality': quality,
+        if (record.aggregation != null)
+          'aggregation': record.aggregation!.toJson(),
         'source': {
           'platform': platform,
           if (record.deviceId.isNotEmpty) 'deviceId': record.deviceId,

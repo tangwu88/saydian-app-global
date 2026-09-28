@@ -16,9 +16,13 @@ void main() {
       final yucheng = _FakeBridge(const [
         DeviceInfo(id: 'YC-01', name: 'W8 Pro'),
       ]);
+      final urion = _FakeBridge(const [
+        DeviceInfo(id: 'UR-01', name: 'U19S'),
+      ]);
       final bridge = createProductionWearableBridge(
         veepoo: veepoo,
         yucheng: yucheng,
+        urion: urion,
       );
       final devices = await bridge.scanDevices();
       await bridge.connect(
@@ -27,6 +31,12 @@ void main() {
       );
       expect(yucheng.connectCalls, ['YC-01']);
       expect(veepoo.connectCalls, isEmpty);
+      await bridge.disconnect();
+      await bridge.connect(
+        devices.singleWhere((d) => d.name == 'U19S').id,
+        profile: _profile,
+      );
+      expect(urion.connectCalls, ['UR-01']);
     },
   );
 }

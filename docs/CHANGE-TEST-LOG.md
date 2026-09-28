@@ -12,6 +12,7 @@
 
 ## 最近记录
 
+- [2026-09-28 U19 Android 真机重连](U19-ANDROID-RECONNECT-20260928.md) — 记录服务发现超时、失败的首轮修复和第二轮有界重试；U19S 两次手动断开重连通过，每日汇总仍因日期不符拒绝上传。
 - [2026-09-27 国际版 Android 模拟器调试](INTERNATIONAL-ANDROID-EMULATOR-QA-20260927.md) — API 36 Debug 启动、匿名登录/注册与协议页面、21 项定向测试和静态检查通过；更新清单 404、手机号区号体验差异及登录后/手表流程未验收。
 - [2026-09-13 国际商城账号、推广与 App 支付隔离](INTERNATIONAL-COMMERCE-AUTH-REFERRAL-PAYMENT-20260913.md) — 原生支付只接受独立 App 配置，客户端结果不冒充到账；双时区各 841 项、域名 37 项、Android 原生 16 项及 Debug/QA Release 构建通过，真实交易和真机支付回跳仍明确未验收。
 - [2026-09-13 国际 App 商城与 H5 能力对齐](INTERNATIONAL-COMMERCE-PARITY-20260913.md) — 源码、双时区 837 项、服务端 755 项、域名 37 项及 Debug/QA Release 构建已完成；华为手机拒绝 USB 安装，待开启手机端安装权限后做冷启动验收；仍未推送或发布。

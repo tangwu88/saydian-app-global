@@ -31,6 +31,34 @@ void main() {
 
     expect(result, hasLength(3));
   });
+
+  test('daily revisions show only the latest observed total per watch and day', () {
+    final first = DateTime.utc(2026, 9, 28, 1);
+    HealthRecord daily(String id, int value, DateTime observedAt, String device) =>
+        HealthRecord(
+          id: id,
+          metric: HealthMetric.steps,
+          values: {'value': value},
+          unit: '步',
+          measuredAt: observedAt,
+          timezone: '+08:00',
+          deviceId: device,
+          firmwareVersion: 'test',
+          quality: 'valid',
+          source: MeasurementSource.wearable,
+          rawVersion: 1,
+          aggregation: const HealthAggregation.dailySummary('2026-09-28'),
+        );
+
+    final result = deduplicateHealthRecords([
+      daily('old', 1000, first, 'urion:a'),
+      daily('new', 2000, first.add(const Duration(minutes: 5)), 'urion:a'),
+      daily('retry', 2000, first.add(const Duration(minutes: 5)), 'urion:a'),
+      daily('other-watch', 500, first, 'urion:b'),
+    ]);
+    expect(result, hasLength(2));
+    expect(result.where((record) => record.deviceId == 'urion:a').single.values['value'], 2000);
+  });
 }
 
 HealthRecord _record(

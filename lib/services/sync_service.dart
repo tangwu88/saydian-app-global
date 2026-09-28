@@ -23,6 +23,11 @@ class HealthSyncService {
 
   Future<SyncOutcome> synchronizeNow({bool Function()? isCurrent}) async {
     bool canContinue() => isCurrent?.call() ?? true;
+    final supportApi = _api is DailySummarySupportApi
+        ? _api as DailySummarySupportApi
+        : null;
+    final dailySupported =
+        supportApi != null && await supportApi.supportsDailySummaries();
     var uploaded = 0;
     var rejected = 0;
     var quarantined = 0;
@@ -34,15 +39,27 @@ class HealthSyncService {
       // ordinary health rows. Keep cloud batches small so reading an old
       // offline queue never delays a freshly completed manual measurement for
       // tens of seconds. Uploads still continue until the queue is empty.
-      final pending = await _store.pending(limit: 10);
+      final pending = await _store.pending(
+        limit: 10,
+        includeDailySummaries: dailySupported,
+      );
       if (!canContinue()) {
         return SyncOutcome(uploaded: uploaded, rejected: rejected);
       }
       if (pending.isEmpty) {
+        final heldDaily =
+            !dailySupported &&
+            (await _store.pending(
+              limit: 1,
+            )).any((record) => record.aggregation != null);
         return SyncOutcome(
           uploaded: uploaded,
           rejected: rejected,
-          message: quarantined == 0 ? null : '已隔离 $quarantined 条无效设备数据',
+          message: heldDaily
+              ? '已保存到本机，暂未同步'
+              : quarantined == 0
+              ? null
+              : '已隔离 $quarantined 条无效设备数据',
         );
       }
       final invalid = pending

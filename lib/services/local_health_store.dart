@@ -11,6 +11,11 @@ import 'global_storage_scope.dart';
 import 'notification_inbox.dart';
 import 'secure_vault.dart';
 
+String _calendarKey(DateTime value) =>
+    '${value.year.toString().padLeft(4, '0')}-'
+    '${value.month.toString().padLeft(2, '0')}-'
+    '${value.day.toString().padLeft(2, '0')}';
+
 abstract interface class HealthStore implements NotificationInboxStorage {
   Future<void> initialize();
   Future<void> switchOwner(String ownerId);
@@ -31,7 +36,15 @@ abstract interface class HealthStore implements NotificationInboxStorage {
   Future<List<SportRecord>> localSportRecords();
   Future<void> saveHealthWarningAlert(HealthWarningAlert alert);
   Future<List<HealthWarningAlert>> healthWarningAlerts();
-  Future<List<HealthRecord>> pending({int limit = 200});
+  Future<List<HealthRecord>> pending({
+    int limit = 200,
+    bool includeDailySummaries = true,
+  });
+  Future<HealthRecord?> latestDailySummary({
+    required String deviceId,
+    required HealthMetric metric,
+    required String localDate,
+  });
   Future<void> markSynced(Iterable<String> ids);
   Future<void> markInvalid(Iterable<String> ids);
   Future<String?> readCursor();
@@ -189,7 +202,7 @@ class EncryptedHealthStore implements HealthStore, HealthStoreRecoveryStatus {
     Future<Database> open() => _databaseOpener(
       file,
       password: password,
-      version: 6,
+      version: 7,
       onConfigure: (database) async {
         await database.execute('PRAGMA foreign_keys = ON');
       },
@@ -201,6 +214,9 @@ class EncryptedHealthStore implements HealthStore, HealthStoreRecoveryStatus {
             metric TEXT NOT NULL,
             measured_at TEXT NOT NULL,
             payload TEXT NOT NULL,
+            aggregation_kind TEXT,
+            aggregation_local_date TEXT,
+            source_device_id TEXT,
             synced INTEGER NOT NULL DEFAULT 0,
             PRIMARY KEY(owner_id, id)
           )
@@ -212,6 +228,11 @@ class EncryptedHealthStore implements HealthStore, HealthStoreRecoveryStatus {
         await database.execute('''
           CREATE INDEX health_records_metric_time
           ON health_records(owner_id, metric, measured_at DESC)
+        ''');
+        await database.execute('''
+          CREATE INDEX health_records_daily_version
+          ON health_records(owner_id, metric, aggregation_local_date,
+            source_device_id, measured_at DESC)
         ''');
         await database.execute('''
           CREATE TABLE metadata (
@@ -263,6 +284,22 @@ class EncryptedHealthStore implements HealthStore, HealthStoreRecoveryStatus {
         }
         if (oldVersion < 6) {
           await _migrateHealthDataToAccountScope(database);
+        }
+        if (oldVersion < 7) {
+          await database.execute(
+            'ALTER TABLE health_records ADD COLUMN aggregation_kind TEXT',
+          );
+          await database.execute(
+            'ALTER TABLE health_records ADD COLUMN aggregation_local_date TEXT',
+          );
+          await database.execute(
+            'ALTER TABLE health_records ADD COLUMN source_device_id TEXT',
+          );
+          await database.execute('''
+            CREATE INDEX health_records_daily_version
+            ON health_records(owner_id, metric, aggregation_local_date,
+              source_device_id, measured_at DESC)
+          ''');
         }
       },
     );
@@ -761,6 +798,11 @@ class EncryptedHealthStore implements HealthStore, HealthStoreRecoveryStatus {
           'metric': record.metric.wireName,
           'measured_at': record.measuredAt.toUtc().toIso8601String(),
           'payload': record.encode(),
+          'aggregation_kind': record.aggregation?.kind,
+          'aggregation_local_date': record.aggregation?.localDate,
+          'source_device_id': record.aggregation == null
+              ? null
+              : record.deviceId,
           'synced': 0,
         }, conflictAlgorithm: ConflictAlgorithm.ignore);
       }
@@ -783,6 +825,9 @@ class EncryptedHealthStore implements HealthStore, HealthStoreRecoveryStatus {
         'metric': record.metric.wireName,
         'measured_at': record.measuredAt.toUtc().toIso8601String(),
         'payload': record.encode(),
+        'aggregation_kind': record.aggregation?.kind,
+        'aggregation_local_date': record.aggregation?.localDate,
+        'source_device_id': record.aggregation == null ? null : record.deviceId,
         'synced': 0,
       }, conflictAlgorithm: ConflictAlgorithm.ignore),
     );
@@ -815,13 +860,18 @@ class EncryptedHealthStore implements HealthStore, HealthStoreRecoveryStatus {
       () => _db.query(
         'health_records',
         columns: ['payload'],
-        where:
-            'owner_id = ? AND metric = ? AND measured_at >= ? AND measured_at < ? AND synced != -1',
+        where: 'owner_id = ? AND metric = ? AND synced != -1 AND ('
+            '(aggregation_kind IS NULL AND measured_at >= ? AND measured_at < ?) '
+            'OR (aggregation_kind = ? AND aggregation_local_date >= ? '
+            'AND aggregation_local_date <= ?))',
         whereArgs: [
           ownerId,
           metric.wireName,
           start.toUtc().toIso8601String(),
           end.toUtc().toIso8601String(),
+          'daily_summary',
+          _calendarKey(start),
+          _calendarKey(end.subtract(const Duration(microseconds: 1))),
         ],
         orderBy: 'measured_at ASC',
       ),
@@ -971,19 +1021,52 @@ class EncryptedHealthStore implements HealthStore, HealthStoreRecoveryStatus {
   });
 
   @override
-  Future<List<HealthRecord>> pending({int limit = 200}) async {
+  Future<List<HealthRecord>> pending({
+    int limit = 200,
+    bool includeDailySummaries = true,
+  }) async {
     final ownerId = _ownerId;
     final rows = await _enqueue(
       () => _db.query(
         'health_records',
         columns: ['payload'],
-        where: 'owner_id = ? AND synced = 0',
+        where: includeDailySummaries
+            ? 'owner_id = ? AND synced = 0'
+            : 'owner_id = ? AND synced = 0 AND aggregation_kind IS NULL',
         whereArgs: [ownerId],
         orderBy: 'measured_at ASC',
         limit: limit,
       ),
     );
     return _decodeRows(rows);
+  }
+
+  @override
+  Future<HealthRecord?> latestDailySummary({
+    required String deviceId,
+    required HealthMetric metric,
+    required String localDate,
+  }) async {
+    final rows = await _enqueue(
+      () => _db.query(
+        'health_records',
+        columns: ['payload'],
+        where:
+            'owner_id = ? AND metric = ? AND aggregation_kind = ? '
+            'AND aggregation_local_date = ? AND source_device_id = ? AND synced != -1',
+        whereArgs: [
+          _ownerId,
+          metric.wireName,
+          'daily_summary',
+          localDate,
+          deviceId,
+        ],
+        orderBy: 'measured_at DESC, id DESC',
+        limit: 1,
+      ),
+    );
+    final decoded = _decodeRows(rows);
+    return decoded.isEmpty ? null : decoded.first;
   }
 
   List<HealthRecord> _decodeRows(List<Map<String, Object?>> rows) => rows
@@ -1190,11 +1273,18 @@ class MemoryHealthStore implements HealthStore {
     final values =
         _records.values
             .where(
-              (record) =>
-                  !_invalid.contains(record.id) &&
-                  record.metric == metric &&
-                  !record.measuredAt.isBefore(start) &&
-                  record.measuredAt.isBefore(end),
+              (record) {
+                final localDate = record.aggregation?.localDate;
+                final inRange = localDate == null
+                    ? !record.measuredAt.isBefore(start) &&
+                        record.measuredAt.isBefore(end)
+                    : localDate.compareTo(_calendarKey(start)) >= 0 &&
+                          localDate.compareTo(_calendarKey(
+                            end.subtract(const Duration(microseconds: 1)),
+                          )) <= 0;
+                return !_invalid.contains(record.id) &&
+                    record.metric == metric && inRange;
+              },
             )
             .toList()
           ..sort((a, b) => a.measuredAt.compareTo(b.measuredAt));
@@ -1262,13 +1352,38 @@ class MemoryHealthStore implements HealthStore {
   }
 
   @override
-  Future<List<HealthRecord>> pending({int limit = 200}) async => _records.values
+  Future<List<HealthRecord>> pending({
+    int limit = 200,
+    bool includeDailySummaries = true,
+  }) async => _records.values
       .where(
         (record) =>
-            !_synced.contains(record.id) && !_invalid.contains(record.id),
+            !_synced.contains(record.id) &&
+            !_invalid.contains(record.id) &&
+            (includeDailySummaries || record.aggregation == null),
       )
       .take(limit)
       .toList();
+
+  @override
+  Future<HealthRecord?> latestDailySummary({
+    required String deviceId,
+    required HealthMetric metric,
+    required String localDate,
+  }) async {
+    final matching =
+        _records.values
+            .where(
+              (record) =>
+                  !_invalid.contains(record.id) &&
+                  record.deviceId == deviceId &&
+                  record.metric == metric &&
+                  record.aggregation?.localDate == localDate,
+            )
+            .toList()
+          ..sort((a, b) => b.measuredAt.compareTo(a.measuredAt));
+    return matching.isEmpty ? null : matching.first;
+  }
 
   @override
   Future<void> markSynced(Iterable<String> ids) async => _synced.addAll(ids);

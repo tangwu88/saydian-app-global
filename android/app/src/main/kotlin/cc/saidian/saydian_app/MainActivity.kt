@@ -228,6 +228,7 @@ internal object WearableRecordTimezone {
 class MainActivity : FlutterActivity() {
     private val mainHandler = Handler(Looper.getMainLooper())
     private lateinit var adapter: VeepooWearableAdapter
+    private lateinit var urion: UrionGattTransport
     private var eventSink: EventChannel.EventSink? = null
     private var pendingPermissionCall: Pair<MethodCall, MethodChannel.Result>? = null
     private var pendingBluetoothCall: Pair<MethodCall, MethodChannel.Result>? = null
@@ -238,13 +239,33 @@ class MainActivity : FlutterActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         if (!::adapter.isInitialized) adapter = VeepooWearableAdapter(applicationContext)
+        if (!::urion.isInitialized) urion = UrionGattTransport(applicationContext)
     }
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         // FlutterActivity may configure the engine from super.onCreate before
         // this Activity's onCreate body resumes.
         if (!::adapter.isInitialized) adapter = VeepooWearableAdapter(applicationContext)
+        if (!::urion.isInitialized) urion = UrionGattTransport(applicationContext)
         super.configureFlutterEngine(flutterEngine)
+        MethodChannel(
+            flutterEngine.dartExecutor.binaryMessenger,
+            URION_METHODS_CHANNEL,
+        ).setMethodCallHandler { call, result ->
+            mainHandler.post { urion.handle(call, result) }
+        }
+        EventChannel(
+            flutterEngine.dartExecutor.binaryMessenger,
+            URION_EVENTS_CHANNEL,
+        ).setStreamHandler(object : EventChannel.StreamHandler {
+            override fun onListen(arguments: Any?, events: EventChannel.EventSink?) {
+                urion.eventListener = { payload -> mainHandler.post { events?.success(payload) } }
+            }
+
+            override fun onCancel(arguments: Any?) {
+                urion.eventListener = null
+            }
+        })
         MethodChannel(
             flutterEngine.dartExecutor.binaryMessenger,
             METHODS_CHANNEL,
@@ -752,6 +773,7 @@ class MainActivity : FlutterActivity() {
 
     override fun onDestroy() {
         if (::adapter.isInitialized) adapter.close(preserveConnection = true)
+        if (::urion.isInitialized) urion.close()
         super.onDestroy()
     }
 
@@ -816,6 +838,8 @@ class MainActivity : FlutterActivity() {
     }
 
     companion object {
+        private const val URION_METHODS_CHANNEL = "cc.saidian/urion_methods"
+        private const val URION_EVENTS_CHANNEL = "cc.saidian/urion_events"
         private const val METHODS_CHANNEL = "cc.saidian/wearable_methods"
         private const val EVENTS_CHANNEL = "cc.saidian/wearable_events"
         private const val PAYMENTS_CHANNEL = "cc.saidian/app_payments"

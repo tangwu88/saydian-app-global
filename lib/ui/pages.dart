@@ -1720,7 +1720,9 @@ class _HealthMeasurementDialogState extends State<_HealthMeasurementDialog> {
   @override
   void initState() {
     super.initState();
-    unawaited(widget.controller.startMeasurement(widget.metric));
+    if (!widget.controller.isMeasurementRunning(widget.metric)) {
+      unawaited(widget.controller.startMeasurement(widget.metric));
+    }
   }
 
   Future<void> _finish() async {
@@ -1729,6 +1731,10 @@ class _HealthMeasurementDialogState extends State<_HealthMeasurementDialog> {
     final record = widget.controller.latestByMetric[widget.metric];
     final completed = record != null && record.measuredAt.isAfter(_startedAt);
     if (completed) {
+      if (mounted) Navigator.of(context).pop();
+      return;
+    }
+    if (widget.controller.requiresWatchMeasurementStop(widget.metric)) {
       if (mounted) Navigator.of(context).pop();
       return;
     }
@@ -1742,7 +1748,11 @@ class _HealthMeasurementDialogState extends State<_HealthMeasurementDialog> {
   Future<void> _retry() async {
     if (_stopping) return;
     setState(() => _stopping = true);
-    await widget.controller.stopMeasurement(widget.metric);
+    if (widget.controller.requiresWatchMeasurementStop(widget.metric)) {
+      widget.controller.confirmWatchMeasurementEnded(widget.metric);
+    } else {
+      await widget.controller.stopMeasurement(widget.metric);
+    }
     if (!mounted) return;
     setState(() => _stopping = false);
     await widget.controller.startMeasurement(widget.metric);
@@ -1762,6 +1772,7 @@ class _HealthMeasurementDialogState extends State<_HealthMeasurementDialog> {
           final isNew = record != null && record.measuredAt.isAfter(_startedAt);
           final failure = widget.controller.measurementErrorMessage;
           final failed = !isNew && failure != null;
+          final watchStop = widget.controller.requiresWatchMeasurementStop(widget.metric);
           final waitingMessage = !widget.controller.measurementWearConfirmed
               ? switch (widget.metric) {
                   HealthMetric.ecg => '未检测到电极接触，请正确佩戴手表并将手指持续贴在心电电极上',
@@ -1805,7 +1816,7 @@ class _HealthMeasurementDialogState extends State<_HealthMeasurementDialog> {
                       ? '${_healthDisplayValue(record, widget.controller)} ${_healthDisplayUnit(widget.metric, record, widget.controller)}'
                       : failed
                       ? failure
-                      : waitingMessage,
+                  : watchStop ? '$waitingMessage\n请在手表上结束测量' : waitingMessage,
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: isNew ? 24 : 16,
@@ -1889,11 +1900,11 @@ class _HealthMeasurementDialogState extends State<_HealthMeasurementDialog> {
                   ],
                   const SizedBox(height: 16),
                   LinearProgressIndicator(
-                    value: widget.controller.measurementProgress > 0
+                    value: !watchStop && widget.controller.measurementProgress > 0
                         ? widget.controller.measurementProgress / 100
                         : null,
                   ),
-                  if (widget.controller.measurementProgress > 0) ...[
+                  if (!watchStop && widget.controller.measurementProgress > 0) ...[
                     const SizedBox(height: 6),
                     Text(
                       '测量进度 ${widget.controller.measurementProgress}%',
@@ -1910,11 +1921,23 @@ class _HealthMeasurementDialogState extends State<_HealthMeasurementDialog> {
               if (failed)
                 FilledButton(
                   onPressed: _stopping ? null : _retry,
-                  child: Text(context.l10n.measureAgain),
+                  child: Text(watchStop ? '已在手表结束，重新测量' : context.l10n.measureAgain),
+                ),
+              if (watchStop && !failed && !isNew)
+                TextButton(
+                  onPressed: _stopping
+                      ? null
+                      : () {
+                          widget.controller.confirmWatchMeasurementEnded(widget.metric);
+                          Navigator.of(context).pop();
+                        },
+                  child: const Text('已在手表结束'),
                 ),
               TextButton(
                 onPressed: _stopping ? null : _finish,
-                child: Text(_stopping ? '正在停止' : (failed ? '关闭' : '结束测量')),
+                child: Text(watchStop
+                    ? '稍后查看'
+                    : _stopping ? '正在停止' : (failed ? '关闭' : '结束测量')),
               ),
             ],
           );
@@ -4579,6 +4602,7 @@ class DevicePage extends StatelessWidget {
     DeviceFeature.healthMonitoring,
     DeviceFeature.healthAssessment,
     DeviceFeature.screenDisplay,
+    DeviceFeature.basicSettings,
   ];
 
   Widget _deviceFeatureCard(BuildContext context, DeviceFeature feature) {
@@ -4679,6 +4703,7 @@ class DevicePage extends StatelessWidget {
     DeviceFeature.healthMonitoring => Icons.monitor_heart_outlined,
     DeviceFeature.healthAssessment => Icons.assignment_turned_in_outlined,
     DeviceFeature.screenDisplay => Icons.brightness_6_outlined,
+    DeviceFeature.basicSettings => Icons.tune_rounded,
   };
 
   Color _featureColor(DeviceFeature feature) => switch (feature) {
@@ -4688,6 +4713,7 @@ class DevicePage extends StatelessWidget {
     DeviceFeature.camera ||
     DeviceFeature.notifications ||
     DeviceFeature.screenDisplay => SaydianColors.blue,
+    DeviceFeature.basicSettings => SaydianColors.blue,
     DeviceFeature.phoneCalls ||
     DeviceFeature.contacts ||
     DeviceFeature.healthReminders => SaydianColors.green,
@@ -10533,6 +10559,11 @@ class _PermissionManagementPageState extends State<PermissionManagementPage>
         type: 'heartRate',
         title: '心率自动检测',
         icon: Icons.favorite_outline_rounded,
+      ),
+      (
+        type: 'bloodOxygen',
+        title: '血氧自动检测',
+        icon: Icons.bloodtype_outlined,
       ),
       (type: 'bloodPressure', title: '血压自动检测', icon: Icons.speed_rounded),
       (type: 'bloodGlucose', title: '血糖自动检测', icon: Icons.water_drop_outlined),

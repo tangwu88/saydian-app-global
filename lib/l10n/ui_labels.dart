@@ -41,6 +41,7 @@ extension LocalizedModelLabels on AppLocalizations {
     DeviceFeature.healthMonitoring => healthMonitoring,
     DeviceFeature.healthAssessment => healthAssessment,
     DeviceFeature.screenDisplay => screenDisplay,
+    DeviceFeature.basicSettings => settings,
   };
 
   String connectionState(DeviceConnectionState state) => switch (state) {

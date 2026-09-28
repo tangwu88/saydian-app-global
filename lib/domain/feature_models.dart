@@ -41,7 +41,8 @@ enum DeviceFeature {
   healthReminders('health_reminders', '健康提醒'),
   healthMonitoring('health_monitoring', '健康监测'),
   healthAssessment('health_assessment', '辅助评估'),
-  screenDisplay('screen_display', '屏幕显示');
+  screenDisplay('screen_display', '屏幕显示'),
+  basicSettings('basic_settings', '手表基础设置');
 
   const DeviceFeature(this.wireName, this.label);
 

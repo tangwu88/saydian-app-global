@@ -452,6 +452,7 @@ class DeviceInfo {
 enum WearableSdkSource {
   veepoo('Vep', 'Veepoo'),
   yucheng('Yuc', 'Yucheng'),
+  urion('U19', 'Urion'),
   unknown('--', '未标识');
 
   const WearableSdkSource(this.shortLabel, this.fullLabel);
@@ -463,6 +464,7 @@ enum WearableSdkSource {
     final normalized = deviceId.trim().toLowerCase();
     if (normalized.startsWith('veepoo:')) return WearableSdkSource.veepoo;
     if (normalized.startsWith('yucheng:')) return WearableSdkSource.yucheng;
+    if (normalized.startsWith('urion:')) return WearableSdkSource.urion;
     return WearableSdkSource.unknown;
   }
 }
@@ -522,6 +524,7 @@ class DeviceCapabilities {
   const DeviceCapabilities({
     required this.metrics,
     this.manualMetrics,
+    this.stoppableManualMetrics,
     this.sportModes,
     this.features = const <DeviceFeature>{},
     this.integratedFeatures = const <DeviceFeature>{},
@@ -533,6 +536,7 @@ class DeviceCapabilities {
 
   final Set<HealthMetric> metrics;
   final Set<HealthMetric>? manualMetrics;
+  final Set<HealthMetric>? stoppableManualMetrics;
 
   /// Sports that the connected watch can enter from the phone.
   ///
@@ -557,6 +561,10 @@ class DeviceCapabilities {
         ? rawManualMetrics
               .map((value) => HealthMetric.fromWire('$value'))
               .toSet()
+        : null;
+    final rawStoppable = map['stoppableManualMetrics'];
+    final stoppableManualMetrics = rawStoppable is List
+        ? rawStoppable.map((value) => HealthMetric.fromWire('$value')).toSet()
         : null;
     final rawSportModes = map['sportModes'];
     final sportModes = rawSportModes is List
@@ -584,6 +592,7 @@ class DeviceCapabilities {
     return DeviceCapabilities(
       metrics: metrics,
       manualMetrics: manualMetrics,
+      stoppableManualMetrics: stoppableManualMetrics,
       sportModes: sportModes,
       features: features,
       integratedFeatures: integratedFeatures,
@@ -599,12 +608,20 @@ class DeviceCapabilities {
   bool supportsManualMeasurement(HealthMetric metric) =>
       manualMetrics?.contains(metric) ?? supports(metric);
 
+  bool supportsMeasurementStop(HealthMetric metric) =>
+      stoppableManualMetrics?.contains(metric) ??
+      supportsManualMeasurement(metric);
+
   bool supportsFeature(DeviceFeature feature) => features.contains(feature);
 
   Map<String, Object?> toJson() => {
     'metrics': metrics.map((metric) => metric.wireName).toList(),
     if (manualMetrics != null)
       'manualMetrics': manualMetrics!.map((metric) => metric.wireName).toList(),
+    if (stoppableManualMetrics != null)
+      'stoppableManualMetrics': stoppableManualMetrics!
+          .map((metric) => metric.wireName)
+          .toList(),
     if (sportModes != null)
       'sportModes': sportModes!.map((mode) => mode.wireName).toList(),
     'features': features.map((feature) => feature.wireName).toList(),
@@ -633,6 +650,7 @@ class HealthRecord {
     required this.rawVersion,
     MeasurementOrigin? origin,
     this.samples = const [],
+    this.aggregation,
   }) : origin = origin ?? MeasurementOrigin.fromWire(null, source: source);
 
   final String id;
@@ -648,6 +666,7 @@ class HealthRecord {
   final MeasurementOrigin origin;
   final int rawVersion;
   final List<num> samples;
+  final HealthAggregation? aggregation;
 
   factory HealthRecord.fromJson(Map<String, Object?> json) {
     final rawValues = json['values'];
@@ -679,6 +698,9 @@ class HealthRecord {
       samples: json['samples'] is List
           ? (json['samples'] as List).whereType<num>().toList()
           : const [],
+      aggregation: json['aggregation'] is Map
+          ? HealthAggregation.fromMap(json['aggregation'] as Map)
+          : null,
     );
   }
 
@@ -696,21 +718,25 @@ class HealthRecord {
     'origin': origin.wireName,
     'rawVersion': rawVersion,
     if (samples.isNotEmpty) 'samples': samples,
+    if (aggregation != null) 'aggregation': aggregation!.toJson(),
   };
 
   HealthRecord copyWith({
+    String? id,
+    DateTime? measuredAt,
     Map<String, num>? values,
     String? quality,
     MeasurementSource? source,
     MeasurementOrigin? origin,
     int? rawVersion,
     List<num>? samples,
+    HealthAggregation? aggregation,
   }) => HealthRecord(
-    id: id,
+    id: id ?? this.id,
     metric: metric,
     values: values ?? this.values,
     unit: unit,
-    measuredAt: measuredAt,
+    measuredAt: measuredAt ?? this.measuredAt,
     timezone: timezone,
     deviceId: deviceId,
     firmwareVersion: firmwareVersion,
@@ -719,6 +745,7 @@ class HealthRecord {
     origin: origin ?? this.origin,
     rawVersion: rawVersion ?? this.rawVersion,
     samples: samples ?? this.samples,
+    aggregation: aggregation ?? this.aggregation,
   );
 
   String get displayValue {
@@ -738,6 +765,35 @@ class HealthRecord {
       value % 1 == 0 ? value.toInt().toString() : value.toStringAsFixed(1);
 
   String encode() => jsonEncode(toJson());
+}
+
+/// A versioned daily snapshot. [localDate] is the watch's calendar day while
+/// [HealthRecord.measuredAt] is when that immutable version was observed.
+class HealthAggregation {
+  const HealthAggregation.dailySummary(this.localDate) : kind = 'daily_summary';
+
+  final String kind;
+  final String localDate;
+
+  factory HealthAggregation.fromMap(Map value) {
+    if (value['kind'] != 'daily_summary' ||
+        value['localDate'] is! String ||
+        !RegExp(
+          r'^\d{4}-\d{2}-\d{2}$',
+        ).hasMatch(value['localDate'] as String)) {
+      throw const FormatException('Invalid daily aggregation');
+    }
+    final rawDate = value['localDate'] as String;
+    final parsed = DateTime.tryParse(rawDate);
+    if (parsed == null ||
+        '${parsed.year.toString().padLeft(4, '0')}-${parsed.month.toString().padLeft(2, '0')}-${parsed.day.toString().padLeft(2, '0')}' !=
+            rawDate) {
+      throw const FormatException('Invalid aggregation date');
+    }
+    return HealthAggregation.dailySummary(rawDate);
+  }
+
+  Map<String, String> toJson() => {'kind': kind, 'localDate': localDate};
 }
 
 class HealthWarningSettings {

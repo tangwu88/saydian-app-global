@@ -1396,7 +1396,8 @@ class AppController extends ChangeNotifier {
     measurementProgress = 0;
     if (!hasNativeSession) return true;
     _wearableNeedsDisconnect = true;
-    if (metric != null) {
+    if (metric != null &&
+        (capabilities?.supportsMeasurementStop(metric) ?? true)) {
       try {
         await _wearable
             .stopMeasurement(metric)
@@ -1800,11 +1801,46 @@ class AppController extends ChangeNotifier {
       if (!_isDeviceSyncCurrent(generation, deviceId, sessionGeneration)) {
         return false;
       }
-      final records = deduplicateHealthRecords(
-        receivedRecords
-            .map(sanitizeWearableTransportRecord)
-            .where(hasSaneWearableTransportValues),
-      );
+      final validRecords = receivedRecords
+          .map(sanitizeWearableTransportRecord)
+          .where(hasSaneWearableTransportValues)
+          .toList(growable: false);
+      final dailyVersions = <HealthRecord>[];
+      for (final record in validRecords.where(
+        (item) => item.aggregation != null,
+      )) {
+        final previous = await _healthStore.latestDailySummary(
+          deviceId: record.deviceId,
+          metric: record.metric,
+          localDate: record.aggregation!.localDate,
+        );
+        if (!_isDeviceSyncCurrent(generation, deviceId, sessionGeneration)) {
+          return false;
+        }
+        if (previous != null &&
+            previous.values.length == record.values.length &&
+            previous.values.entries.every(
+              (entry) => record.values[entry.key] == entry.value,
+            ) &&
+            previous.unit == record.unit) {
+          continue;
+        }
+        final observedAt =
+            previous != null && !record.measuredAt.isAfter(previous.measuredAt)
+            ? previous.measuredAt.add(const Duration(milliseconds: 1))
+            : record.measuredAt;
+        dailyVersions.add(
+          record.copyWith(id: const Uuid().v4(), measuredAt: observedAt),
+        );
+      }
+      // Keep every immutable daily version in encrypted storage. Collapse only
+      // for display and calculations, never before local persistence.
+      final records = <HealthRecord>[
+        ...deduplicateHealthRecords(
+          validRecords.where((record) => record.aggregation == null),
+        ),
+        ...dailyVersions,
+      ];
       await _healthStore.upsert(records);
       if (!_isDeviceSyncCurrent(generation, deviceId, sessionGeneration)) {
         return false;
@@ -1826,9 +1862,16 @@ class AppController extends ChangeNotifier {
       _deviceSyncErrorMessage =
           '设备已连接，但${_wearableErrorMessage(error, fallback: initial ? '首次数据同步失败' : '历史数据同步失败')}';
       errorMessage = _deviceSyncErrorMessage;
-    } catch (_) {
+    } catch (error) {
       if (!_isDeviceSyncCurrent(generation, deviceId, sessionGeneration)) {
         return false;
+      }
+      if (kDebugMode && connectedDevice?.sdkSource == WearableSdkSource.urion) {
+        // Deliberately omit record values, addresses and raw packets.
+        debugPrint(
+          '[U19Sync] ${error.runtimeType}'
+          '${error is FormatException ? ': ${error.message}' : ''}',
+        );
       }
       syncStatus = '设备已连接，${initial ? '首次数据同步失败' : '历史数据同步失败'}';
       _deviceSyncErrorMessage = '设备已连接，但数据读取失败，请稍后重试';
@@ -2020,7 +2063,36 @@ class AppController extends ChangeNotifier {
     return false;
   }
 
+  bool isMeasurementRunning(HealthMetric metric) =>
+      _activeMeasurementMetric == metric;
+
+  bool requiresWatchMeasurementStop(HealthMetric metric) =>
+      capabilities?.supportsManualMeasurement(metric) == true &&
+      capabilities?.supportsMeasurementStop(metric) == false;
+
+  void confirmWatchMeasurementEnded(HealthMetric metric) {
+    if (!requiresWatchMeasurementStop(metric) ||
+        _activeMeasurementMetric != metric) {
+      return;
+    }
+    _measurementTimeout?.cancel();
+    _measurementTimeout = null;
+    _activeMeasurementMetric = null;
+    _activeMeasurementSessionGeneration = null;
+    measurementErrorMessage = null;
+    measurementProgress = 0;
+    if (deviceState == DeviceConnectionState.measuring) {
+      deviceMachine.transition(DeviceConnectionState.ready);
+    }
+    notifyListeners();
+  }
+
   Future<void> stopMeasurement(HealthMetric metric) async {
+    if (requiresWatchMeasurementStop(metric)) {
+      measurementErrorMessage = '请在手表上结束测量';
+      notifyListeners();
+      return;
+    }
     _measurementTimeout?.cancel();
     _measurementTimeout = null;
     _activeMeasurementMetric = null;
@@ -2071,6 +2143,13 @@ class AppController extends ChangeNotifier {
     if (_activeMeasurementMetric != metric ||
         generation == null ||
         !_isCurrentSessionGeneration(generation)) {
+      return;
+    }
+    if (requiresWatchMeasurementStop(metric)) {
+      _measurementTimeout = null;
+      measurementErrorMessage = '暂未收到新结果，请在手表上结束测量；确认后可重新开始';
+      errorMessage = measurementErrorMessage;
+      notifyListeners();
       return;
     }
     _activeMeasurementMetric = null;
@@ -5235,8 +5314,22 @@ class AppController extends ChangeNotifier {
     if (existingIndex >= 0) {
       updated[existingIndex] = device;
     } else {
-      updated.add(device);
+      final mac = device.macAddress;
+      final duplicateIndex = mac == null
+          ? -1
+          : updated.indexWhere((existing) => existing.macAddress == mac);
+      if (duplicateIndex < 0) {
+        updated.add(device);
+      } else if (device.sdkSource == WearableSdkSource.urion ||
+          updated[duplicateIndex].sdkSource != WearableSdkSource.urion) {
+        updated[duplicateIndex] = device;
+      }
     }
+    final seen = <String>{};
+    updated.removeWhere((item) {
+      final key = item.macAddress ?? item.id;
+      return !seen.add(key);
+    });
     scannedDevices = List.unmodifiable(updated);
   }
 
@@ -5271,7 +5364,8 @@ class AppController extends ChangeNotifier {
       return;
     }
     final shouldStopMeasurement = _activeMeasurementMetric == record.metric;
-    if (shouldStopMeasurement) {
+    if (shouldStopMeasurement &&
+        (capabilities?.supportsMeasurementStop(record.metric) ?? true)) {
       _measurementTimeout?.cancel();
       _measurementTimeout = null;
       _activeMeasurementMetric = null;

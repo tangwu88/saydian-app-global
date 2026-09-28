@@ -91,6 +91,12 @@ abstract interface class SaydianApi {
   Future<void> deleteAccount();
 }
 
+/// Optional V2 capability. An older server must never receive versioned daily
+/// snapshots because its statistics could count every revision separately.
+abstract interface class DailySummarySupportApi {
+  Future<bool> supportsDailySummaries();
+}
+
 abstract interface class SaydianFileApi {
   Future<String> uploadImage(String filePath);
 }

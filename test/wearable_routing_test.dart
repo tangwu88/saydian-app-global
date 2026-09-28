@@ -7,6 +7,37 @@ import 'package:saydian_app/services/wearable_bridge.dart';
 import 'package:saydian_app/services/wearable_routing.dart';
 
 void main() {
+  test('one MAC found by two scanners is shown and routed once as Urion', () async {
+    const commonAddress = 'AA:BB:CC:00:19:01';
+    final veepoo = _FakeWearableBridge(scanned: const [
+      DeviceInfo(
+        id: commonAddress,
+        name: 'Unverified watch',
+        hardwareAddress: commonAddress,
+      ),
+    ]);
+    final urion = _FakeWearableBridge(scanned: const [
+      DeviceInfo(
+        id: commonAddress,
+        name: 'U19',
+        hardwareAddress: commonAddress,
+      ),
+    ]);
+    final bridge = RoutedWearableBridge(
+      veepoo: veepoo,
+      yucheng: _FakeWearableBridge(scanned: const []),
+      urion: urion,
+      preferenceStore: _MemoryTransportPreference(),
+    );
+
+    final devices = await bridge.scanDevices();
+    expect(devices, hasLength(1));
+    expect(devices.single.sdkSource, WearableSdkSource.urion);
+    await bridge.connect(devices.single.id, profile: _profile);
+    expect(urion.connectCalls, [commonAddress]);
+    expect(veepoo.connectCalls, isEmpty);
+  });
+
   test(
     'production router forwards Vep native market and download only',
     () async {
