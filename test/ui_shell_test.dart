@@ -79,7 +79,7 @@ void main() {
     expect(find.text('远程关爱'), findsOneWidget);
     expect(find.text('健康百科'), findsOneWidget);
     expect(find.text('健康预警'), findsOneWidget);
-    expect(find.text('赛电商城'), findsOneWidget);
+    expect(find.text('赛电商城'), findsNothing);
 
     final navigationBar = tester.widget<NavigationBar>(
       find.byType(NavigationBar),
@@ -97,13 +97,6 @@ void main() {
     expect(find.byKey(const Key('article-category-page')), findsOneWidget);
     expect(find.byKey(const Key('article-category-all')), findsOneWidget);
     expect(find.text('心脑健康'), findsOneWidget);
-    await tester.pageBack();
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.text('赛电商城'));
-    await tester.pumpAndSettle();
-    expect(find.byKey(const Key('shop-page')), findsOneWidget);
-    expect(find.text('此功能暂时无法使用，请稍后再试'), findsWidgets);
     await tester.pageBack();
     await tester.pumpAndSettle();
 
@@ -173,7 +166,7 @@ void main() {
     controller.selectTab(2);
     await tester.pump();
     expect(find.byKey(const Key('my-page')), findsOneWidget);
-    expect(find.text('我的订单'), findsOneWidget);
+    expect(find.text('我的订单'), findsNothing);
 
     for (var tab = 0; tab < 3; tab++) {
       controller.selectTab(tab);

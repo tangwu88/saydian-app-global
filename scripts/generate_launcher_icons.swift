@@ -47,12 +47,12 @@ func render(_ size: Int, inset: CGFloat = 0, rounded: Bool = false, monochrome: 
     context.draw(master, in: CGRect(x: edge * inset, y: edge * inset,
                                    width: edge * (1 - 2 * inset), height: edge * (1 - 2 * inset)))
     if monochrome, let bytes = context.data?.assumingMemoryBound(to: UInt8.self) {
-        // The approved logo is #C30D23 over white. Keep its antialiased red
-        // silhouette for Android themed icons instead of exposing a solid box.
+        // Keep the antialiased black silhouette of the approved white-backed
+        // master for Android themed icons instead of exposing a solid box.
         for pixel in 0..<(size * size) {
             let offset = pixel * 4
             let alpha = Double(bytes[offset + 3])
-            let coverage = max(0, min(alpha, (alpha - Double(bytes[offset + 1])) * 255 / 242))
+            let coverage = max(0, min(alpha, alpha - Double(bytes[offset + 1])))
             bytes[offset] = 0
             bytes[offset + 1] = 0
             bytes[offset + 2] = 0
@@ -62,7 +62,7 @@ func render(_ size: Int, inset: CGFloat = 0, rounded: Bool = false, monochrome: 
     return png(context)
 }
 
-// Preserve iOS geometry and original #C30D23 pixels exactly. Harmony applies
+// Preserve iOS geometry and the approved black symbol. Harmony applies
 // its launcher mask; Android adaptive icons use the same mark in a 66dp safe area.
 try export("harmony-native/AppScope/resources/base/media/app_icon_v3.png", source)
 for (density, iconSize, adaptiveSize) in [("mdpi", 48, 108), ("hdpi", 72, 162),

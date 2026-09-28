@@ -64,16 +64,17 @@ import { WatchAssessmentSetting, WatchAutoMeasureSetting, WatchContact, WatchDev
   WatchScreenSetting, WatchWeatherSetting, WatchWorldClock, emptyPhoneState, emptyPhotoDialProfile,
   emptyScreenSetting, visibleWatchDeviceFeatures, watchContactError, watchDeviceFeatureSupported } from '../model/DeviceFeatureContracts';
 
-const RED: string = '#D20B27';
-const RED_DARK: string = '#980018';
-const INK: string = '#171B2B';
-const MUTED: string = '#5F6675';
-const BG: string = '#F5F7FA';
+const RED: string = '#17191C';
+const RED_DARK: string = '#111214';
+const INK: string = '#17191C';
+const MUTED: string = '#5D646B';
+const BG: string = '#F6F7F7';
 const SURFACE: string = '#FFFFFF';
 const SURFACE_ALT: string = '#F8FAFC';
 const LINE: string = '#DDE3EC';
 const OUTLINE: string = '#98A2B3';
-const RED_SOFT: string = '#FFE8EC';
+const RED_SOFT: string = '#F0F1F2';
+const SHOW_MALL: boolean = false;
 const GOLD_SOFT: string = '#FFF6DE';
 const BLUE_SOFT: string = '#EAF1FF';
 const GREEN_SOFT: string = '#EAF6ED';
@@ -2887,7 +2888,10 @@ struct Index {
     Scroll() {
       Column({ space: 14 }) {
         this.LanguagePicker()
-        Image($r('app.media.brand_lockup')).width(190).height(92).objectFit(ImageFit.Contain)
+        Row({ space: 10 }) {
+          Image($r('app.media.app_icon')).width(52).height(52).objectFit(ImageFit.Contain)
+          Text('SAYDIAN Health').fontSize(18).fontWeight(FontWeight.Bold).fontColor(INK)
+        }.width(190).height(92).justifyContent(FlexAlign.Center)
           .accessibilityText(this.tr('Saydian')).margin({ top: 18, bottom: 22 })
         this.AuthMethodSelector()
         Row({ space: 10 }) {
@@ -2947,7 +2951,7 @@ struct Index {
         }.width('100%').justifyContent(FlexAlign.Center) }
       }.width('100%').constraintSize({ maxWidth: 427 }).padding({ left: 26, right: 26, bottom: 32 })
     }.width('100%').height('100%').align(Alignment.Top).scrollBar(BarState.Off)
-      .linearGradient({ angle: 180, colors: [['#FFF1F3', 0.0], ['#F5F7FA', 0.5], ['#EAF1FF', 1.0]] })
+      .linearGradient({ angle: 180, colors: [['#FFFFFF', 0.0], [BG, 0.5], ['#E8EBED', 1.0]] })
   }
 
   @Builder
@@ -2963,7 +2967,10 @@ struct Index {
           Text(this.tr('注册')).fontSize(20).fontWeight(FontWeight.Bold).fontColor(INK).layoutWeight(1).textAlign(TextAlign.Center)
           Blank().width(48)
         }.width('100%').height(this.controlHeight(56))
-        Image($r('app.media.brand_lockup')).width(154).height(76).objectFit(ImageFit.Contain)
+        Row({ space: 8 }) {
+          Image($r('app.media.app_icon')).width(42).height(42).objectFit(ImageFit.Contain)
+          Text('SAYDIAN Health').fontSize(15).fontWeight(FontWeight.Bold).fontColor(INK)
+        }.width(154).height(76).justifyContent(FlexAlign.Center)
           .accessibilityText(this.tr('赛电 SAYDIAN')).margin({ top: 12, bottom: 16 })
         this.AuthMethodSelector()
         TextInput({ placeholder: this.tr(this.authChannel === 'email' ? 'email' : 'phone'), text: this.registerMobile }).type(InputType.Normal)
@@ -3025,7 +3032,7 @@ struct Index {
           .id('register_back_login')
       }.width('100%').constraintSize({ maxWidth: 440 }).padding({ left: 24, right: 24, bottom: 32 })
     }.width('100%').height('100%').align(Alignment.Top).scrollBar(BarState.Off)
-      .linearGradient({ angle: 180, colors: [['#FFF1F3', 0.0], ['#F5F7FA', 0.5], ['#EAF1FF', 1.0]] })
+      .linearGradient({ angle: 180, colors: [['#FFFFFF', 0.0], [BG, 0.5], ['#E8EBED', 1.0]] })
   }
 
   @Builder
@@ -3059,14 +3066,14 @@ struct Index {
         Image($r('app.media.health_doctor')).width('36%').height(140).objectFit(ImageFit.Cover)
           .accessibilityText(this.tr('赛电健康管家形象'))
         Column({ space: 4 }) {
-          Text(this.tr('AI健康管家')).fontSize(19).fontWeight(FontWeight.Bold).fontColor('#9E1025').width('100%')
+          Text(this.tr('AI健康管家')).fontSize(19).fontWeight(FontWeight.Bold).fontColor(INK).width('100%')
           Text(this.tr('我是您的健康管家，\n有任何健康问题都可以向我提问。'))
             .fontSize(12).lineHeight(15).fontColor(INK).width('100%')
           Button(this.tr('马上提问')).fontSize(14.5).fontWeight(FontWeight.Bold).height(this.controlHeight(44)).backgroundColor(RED)
             .type(ButtonType.Capsule).width('100%').onClick(() => this.openAiChat()).id('open_ai_chat')
         }.width('64%').padding({ left: 4, right: 13, top: 7, bottom: 7 }).alignItems(HorizontalAlign.Start)
-      }.width('100%').constraintSize({ minHeight: 140 }).borderRadius(20).backgroundColor('#FDF7F3')
-        .border({ width: 1.2, color: '#66D20B27' }).clip(true)
+      }.width('100%').constraintSize({ minHeight: 140 }).borderRadius(20).backgroundColor(SURFACE)
+        .border({ width: 1.2, color: LINE }).clip(true)
 
       Flex({ wrap: FlexWrap.Wrap }) {
         Column({ space: 6 }) {
@@ -3084,11 +3091,13 @@ struct Index {
             .width(47).height(47).justifyContent(FlexAlign.Center).backgroundColor('#EF6E78').borderRadius(14)
           Text(this.tr('健康预警')).fontSize(13.5).fontWeight(FontWeight.Bold).fontColor(INK).textAlign(TextAlign.Center)
         }.width(this.singleColumn() ? '100%' : '25%').padding({ top: 8, bottom: 8 }).onClick(() => this.openHealthAlerts()).id('health_alerts')
-        Column({ space: 6 }) {
-          Column() { SymbolGlyph($r('sys.symbol.bag_fill')).fontSize(26).fontColor([Color.White]) }
-            .width(47).height(47).justifyContent(FlexAlign.Center).backgroundColor('#D99C2B').borderRadius(14)
-          Text(this.tr('赛电商城')).fontSize(13.5).fontWeight(FontWeight.Bold).fontColor(INK).textAlign(TextAlign.Center)
-        }.width(this.singleColumn() ? '100%' : '25%').padding({ top: 8, bottom: 8 }).onClick(() => this.openShop()).id('health_shop')
+        if (SHOW_MALL) {
+          Column({ space: 6 }) {
+            Column() { SymbolGlyph($r('sys.symbol.bag_fill')).fontSize(26).fontColor([Color.White]) }
+              .width(47).height(47).justifyContent(FlexAlign.Center).backgroundColor('#D99C2B').borderRadius(14)
+            Text(this.tr('赛电商城')).fontSize(13.5).fontWeight(FontWeight.Bold).fontColor(INK).textAlign(TextAlign.Center)
+          }.width(this.singleColumn() ? '100%' : '25%').padding({ top: 8, bottom: 8 }).onClick(() => this.openShop()).id('health_shop')
+        }
       }.width('100%').padding({ left: 6, right: 6, top: 10, bottom: 10 }).backgroundColor(SURFACE).borderRadius(18)
         .shadow({ radius: 9, color: CARD_SHADOW, offsetY: 3 })
 
@@ -3160,7 +3169,7 @@ struct Index {
           .backgroundColor(RED_SOFT).borderRadius(17).onClick(() => this.openSportRecords())
           .accessibilityText(this.tr('查看运动记录'))
       }.width('100%').padding({ left: 14, right: 14, top: 14, bottom: 12 }).backgroundColor(SURFACE)
-        .borderRadius(22).border({ width: 1, color: '#18D20B27' }).shadow({ radius: 12, color: CARD_SHADOW, offsetY: 4 })
+        .borderRadius(22).border({ width: 1, color: LINE }).shadow({ radius: 12, color: CARD_SHADOW, offsetY: 4 })
       this.Notice({ message: '测量结果仅供健康管理参考，如有不适请咨询专业医务人员。', color: GREEN_SOFT })
     }.width('100%').padding({ left: 16, right: 16, top: 10, bottom: 24 })
   }
@@ -3999,11 +4008,13 @@ struct Index {
         .accessibilityText(`${device.name}，${device.provider}，${this.signalText(device.rssi)}`)
     }, (device: WearableDevice) => deviceRenderKey(device))
 
-    Row({ space: 7 }) {
-      SymbolGlyph($r('sys.symbol.bag')).fontSize(18).fontColor([RED])
-      Text(this.tr('没有设备？去赛电商城看看')).fontSize(15).fontWeight(FontWeight.Bold).fontColor(RED)
-    }.width('100%').height(52).justifyContent(FlexAlign.Center).onClick(() => this.openShop())
-      .id('device_search_shop').accessibilityText(this.tr('前往赛电商城'))
+    if (SHOW_MALL) {
+      Row({ space: 7 }) {
+        SymbolGlyph($r('sys.symbol.bag')).fontSize(18).fontColor([RED])
+        Text(this.tr('没有设备？去赛电商城看看')).fontSize(15).fontWeight(FontWeight.Bold).fontColor(RED)
+      }.width('100%').height(52).justifyContent(FlexAlign.Center).onClick(() => this.openShop())
+        .id('device_search_shop').accessibilityText(this.tr('前往赛电商城'))
+    }
   }
 
   @Builder
@@ -4027,8 +4038,8 @@ struct Index {
           SymbolGlyph($r('sys.symbol.square_and_pencil')).fontSize(19).fontColor([RED])
         }.width(36).height(36).justifyContent(FlexAlign.Center).backgroundColor(SURFACE).borderRadius(18)
       }.width('100%').padding(20).linearGradient({ angle: 135,
-        colors: [['#FFF8F3', 0.0], ['#FFECEE', 1.0]] }).borderRadius(24)
-        .border({ width: 1, color: '#F6C9D2' }).shadow({ radius: 12, color: CARD_SHADOW, offsetY: 4 })
+        colors: [['#FFFFFF', 0.0], ['#F0F1F2', 1.0]] }).borderRadius(24)
+        .border({ width: 1, color: LINE }).shadow({ radius: 12, color: CARD_SHADOW, offsetY: 4 })
         .onClick(() => {
           if (this.guest) { this.error = ''; this.screen = 'login'; return; }
           this.openProfileEditor();
@@ -4068,7 +4079,7 @@ struct Index {
         }.width('100%')
       }
 
-      Column({ space: 4 }) {
+      if (SHOW_MALL) { Column({ space: 4 }) {
         Row() {
           Text(this.tr('我的订单')).fontSize(17).fontWeight(FontWeight.Bold).fontColor(INK).layoutWeight(1)
           Row({ space: 2 }) {
@@ -4100,7 +4111,7 @@ struct Index {
             .borderRadius(13).onClick(() => this.openOrders(-1)).accessibilityText(this.tr('查看售后订单')).id('mine_orders_refund')
         }.width('100%')
       }.width('100%').padding({ left: 14, right: 14, top: 8, bottom: 10 }).backgroundColor(SURFACE)
-        .borderRadius(20).border({ width: 1, color: LINE }).id('mine-orders-card')
+        .borderRadius(20).border({ width: 1, color: LINE }).id('mine-orders-card') }
 
       Column({ space: 0 }) {
         if (!this.wearableSnapshot.connected) {
@@ -4317,7 +4328,7 @@ struct Index {
             .type(ButtonType.Normal).borderRadius(14).enabled(!this.sportActionBusy && this.sportActive())
             .onClick(() => this.confirmStopSport())
         }.width('100%')
-      }.width('100%').padding(18).backgroundColor(SURFACE).borderRadius(20).border({ width: 1, color: '#33D20B27' })
+      }.width('100%').padding(18).backgroundColor(SURFACE).borderRadius(20).border({ width: 1, color: LINE })
     } else if (this.wearableSnapshot.connected && this.wearableSnapshot.sportCapability.modes.length > 0) {
       if (this.sportSession.phase === 'completed') {
         this.Notice({ message: this.sportSession.status, color: GREEN_SOFT })
@@ -4392,7 +4403,7 @@ struct Index {
     }.width(this.singleColumn() ? '100%' : '48%').constraintSize({ minHeight: 78 })
       .padding({ left: 14, right: 12, top: 11, bottom: 10 })
       .backgroundColor(this.selectedSportMode === mode ? RED_SOFT : SURFACE).borderRadius(15)
-      .border({ width: 1, color: this.selectedSportMode === mode ? '#66D20B27' : LINE })
+      .border({ width: 1, color: this.selectedSportMode === mode ? RED : LINE })
       .margin({ bottom: 10 }).onClick(() => this.selectedSportMode = mode)
       .accessibilityText(`${sportModeLabel(mode)}${this.selectedSportMode === mode ? '，已选择' : ''}`)
   }
@@ -5181,7 +5192,10 @@ struct Index {
 
   @Builder
   AboutContent() {
-    Image($r('app.media.brand_lockup')).width(176).height(92).objectFit(ImageFit.Contain)
+    Row({ space: 9 }) {
+      Image($r('app.media.app_icon')).width(50).height(50).objectFit(ImageFit.Contain)
+      Text('SAYDIAN Health').fontSize(17).fontWeight(FontWeight.Bold).fontColor(INK)
+    }.width(176).height(92).justifyContent(FlexAlign.Center)
       .accessibilityText(this.tr('赛电 SAYDIAN')).margin({ top: 24, bottom: 12 })
     Text(this.tr('赛电健康')).fontSize(22).fontWeight(FontWeight.Bold).fontColor(INK).width('100%').textAlign(TextAlign.Center)
     Text(this.tr('让健康数据更直观，让日常管理更轻松。')).fontSize(16).lineHeight(24).fontColor(MUTED)

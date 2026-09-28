@@ -42,7 +42,7 @@
   "addSupportContact": "添加客服",
   "contactPreparationHint": "联系前请准备设备型号和问题发生时间",
   "supportPrivacyWarning": "请勿向非官方账号发送验证码、密码或完整健康记录。",
-  "brandHealthTitle": "赛电健康",
+  "brandHealthTitle": "SAYDIAN Health",
   "accountAndSecurity": "账号与安全",
   "cityNameLabel": "城市名称",
   "cityNameExample": "例如：深圳",
@@ -176,7 +176,7 @@
   "globalShopPricePending": "价格待确认",
   "globalShopLoadMore": "加载更多",
   "globalShopReadOnly": "可浏览商品，当前地区暂未开放下单。",
-  "appName": "Saydian",
+  "appName": "SAYDIAN Health",
   "searchingNearby": "正在搜索附近手表",
   "noDevices": "未发现设备",
   "selectWatch": "请核对名称和信号强度，再选择手表",
@@ -643,5 +643,6 @@
   "cloudHealthUploading": "正在上传已保存的记录…",
   "cloudHealthLocalOnly": "数据仅保存在本机，登录后可上传",
   "cloudHealthPending": "部分记录暂未上传，已保存在本机",
-  "cloudHealthConfirmed": "云端已确认接收本次上传的记录"
+  "cloudHealthConfirmed": "云端已确认接收本次上传的记录",
+  "u19WristMeasurementHint": "先安静休息 5 分钟，双脚平放，托住手腕并保持与心脏同高，按手表说明测量。腕部读数仅供参考；医疗判断请咨询医生并使用经过验证的上臂式血压计。"
 }

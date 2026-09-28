@@ -42,7 +42,7 @@
   "addSupportContact": "Supportkontakt hinzufügen",
   "contactPreparationHint": "Halten Sie vor der Kontaktaufnahme das Gerätemodell und den Zeitpunkt des Problems bereit.",
   "supportPrivacyWarning": "Senden Sie keine Bestätigungscodes, Passwörter oder vollständigen Gesundheitsaufzeichnungen an inoffizielle Konten.",
-  "brandHealthTitle": "Saydian Gesundheit",
+  "brandHealthTitle": "SAYDIAN Health",
   "accountAndSecurity": "Konto und Sicherheit",
   "cityNameLabel": "Stadtname",
   "cityNameExample": "Zum Beispiel: Berlin",
@@ -176,7 +176,7 @@
   "globalShopPricePending": "Preis noch nicht bestätigt",
   "globalShopLoadMore": "Mehr laden",
   "globalShopReadOnly": "Hier können Sie Produkte ansehen. Bestellungen sind in dieser Region noch nicht möglich.",
-  "appName": "Saydian",
+  "appName": "SAYDIAN Health",
   "searchingNearby": "Uhren in der Nähe werden gesucht",
   "noDevices": "Keine Geräte gefunden",
   "selectWatch": "Name und Signal prüfen, dann die Uhr auswählen",
@@ -643,5 +643,6 @@
   "cloudHealthUploading": "Gespeicherte Daten werden hochgeladen…",
   "cloudHealthLocalOnly": "Auf diesem Telefon gespeichert. Zum Hochladen anmelden.",
   "cloudHealthPending": "Einige Daten wurden noch nicht hochgeladen. Sie bleiben auf diesem Telefon gespeichert.",
-  "cloudHealthConfirmed": "Der Server hat die hochgeladenen Daten bestätigt."
+  "cloudHealthConfirmed": "Der Server hat die hochgeladenen Daten bestätigt.",
+  "u19WristMeasurementHint": "Ruhen Sie sich 5 Minuten aus. Stellen Sie beide Füße flach auf den Boden und stützen Sie das Handgelenk auf Herzhöhe ab. Befolgen Sie die Anweisungen der Uhr. Messwerte am Handgelenk dienen nur zur Orientierung. Besprechen Sie medizinische Entscheidungen mit einer Fachperson und verwenden Sie dafür ein validiertes Oberarmmessgerät."
 }

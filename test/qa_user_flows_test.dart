@@ -15,6 +15,7 @@ import 'package:saydian_app/services/secure_vault.dart';
 import 'package:saydian_app/services/wearable_bridge.dart';
 import 'package:saydian_app/ui/pages.dart';
 import 'package:saydian_app/ui/prototype_pages.dart';
+import 'package:saydian_app/ui/shop_pages.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -46,7 +47,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(api.lastLogin, ('13800138000', 'qa-password'));
-      expect(find.text('赛电商城'), findsOneWidget);
+      expect(find.text('赛电商城'), findsNothing);
       expect(find.byType(NavigationBar), findsOneWidget);
     },
   );
@@ -97,8 +98,7 @@ void main() {
     addTearDown(controller.dispose);
     await _pumpPhone(tester, controller);
 
-    await tester.tap(find.text('赛电商城'));
-    await tester.pumpAndSettle();
+    await _openHiddenShopForRegression(tester, controller);
     expect(find.byKey(const Key('shop-page')), findsOneWidget);
     expect(find.text('QA 智能手表'), findsOneWidget);
 
@@ -166,8 +166,7 @@ void main() {
     );
     await _pumpPhone(tester, controller);
 
-    await tester.tap(find.text('赛电商城'));
-    await tester.pumpAndSettle();
+    await _openHiddenShopForRegression(tester, controller);
     await tester.tap(find.byTooltip('购物车'));
     await tester.pumpAndSettle();
 
@@ -203,8 +202,7 @@ void main() {
     await tester.binding.setSurfaceSize(const Size(320, 568));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('赛电商城'));
-    await tester.pumpAndSettle();
+    await _openHiddenShopForRegression(tester, controller);
     await tester.tap(find.text('QA 智能手表'));
     await tester.pumpAndSettle();
     expect(find.text('品质保障'), findsOneWidget);
@@ -382,12 +380,7 @@ void main() {
       expect(find.text('Vep'), findsNothing);
       expect(find.text('Yuc'), findsNothing);
       expect(wearable.scanCount, 1);
-      expect(find.byKey(const Key('device-shop-entry')), findsOneWidget);
-      await tester.tap(find.byKey(const Key('device-shop-entry')));
-      await tester.pumpAndSettle();
-      expect(find.byKey(const Key('shop-page')), findsOneWidget);
-      await _popRoute(tester);
-      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('device-shop-entry')), findsNothing);
       await tester.tap(find.text('连接'));
       await tester.pumpAndSettle();
 
@@ -1222,13 +1215,7 @@ void main() {
 
     await tester.tap(find.text('我的'));
     await tester.pump();
-    expect(find.text('我的订单'), findsOneWidget);
-    await tester.tap(find.widgetWithText(TextButton, '全部'));
-    await tester.pumpAndSettle();
-    expect(find.text('我的订单'), findsOneWidget);
-    expect(find.textContaining('QA-ORDER-100'), findsOneWidget);
-    await _popRoute(tester);
-    await tester.pumpAndSettle();
+    expect(find.text('我的订单'), findsNothing);
 
     await tester.scrollUntilVisible(
       find.byKey(const Key('my-add-device')),
@@ -1238,7 +1225,7 @@ void main() {
     await tester.tap(find.byKey(const Key('my-add-device')));
     await tester.pumpAndSettle();
     expect(find.text('添加设备'), findsOneWidget);
-    expect(find.byKey(const Key('device-shop-entry')), findsOneWidget);
+    expect(find.byKey(const Key('device-shop-entry')), findsNothing);
     await _popRoute(tester);
     await tester.pumpAndSettle();
 
@@ -1564,6 +1551,24 @@ Future<void> _pumpPhone(WidgetTester tester, AppController controller) async {
   // The app resolves the persisted mandatory-update gate asynchronously
   // before exposing any authenticated route.
   await tester.pump(const Duration(milliseconds: 20));
+}
+
+Future<void> _openHiddenShopForRegression(
+  WidgetTester tester,
+  AppController controller,
+) async {
+  // Retain commerce regression coverage without restoring its public entry.
+  final context = tester.element(find.byType(AppShell));
+  Navigator.of(context).push(
+    MaterialPageRoute<void>(
+      builder: (_) => ShopHomePage(
+        controller: controller,
+        ordersPageBuilder: (_) =>
+            OrdersPage(controller: controller, initialStatus: null),
+      ),
+    ),
+  );
+  await tester.pumpAndSettle();
 }
 
 class _QaUpdateStore implements AppUpdateCheckStore {

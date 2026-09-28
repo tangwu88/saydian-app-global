@@ -145,7 +145,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get supportPrivacyWarning => '非公式のアカウントに認証コード、パスワード、健康記録全体を送らないでください。';
 
   @override
-  String get brandHealthTitle => 'Saydian ヘルス';
+  String get brandHealthTitle => 'SAYDIAN Health';
 
   @override
   String get accountAndSecurity => 'アカウントとセキュリティ';
@@ -552,7 +552,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get globalShopReadOnly => '商品をご覧いただけます。この地域ではまだ注文できません。';
 
   @override
-  String get appName => 'Saydian';
+  String get appName => 'SAYDIAN Health';
 
   @override
   String get searchingNearby => '近くのウォッチを検索中';
@@ -1994,4 +1994,8 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get cloudHealthConfirmed => '送信した記録の受信をサーバーが確認しました。';
+
+  @override
+  String get u19WristMeasurementHint =>
+      '測定前に5分間静かに休み、両足を床につけ、手首を支えて心臓の高さに保ってください。時計の説明に従ってください。手首での測定値は参考用です。医療上の判断は医療者に相談し、検証済みの上腕式血圧計を使用してください。';
 }

@@ -29,6 +29,7 @@ import 'health_reports_page.dart';
 import 'health_trend_page.dart';
 import 'prototype_pages.dart';
 import 'shop_pages.dart';
+import 'feature_visibility.dart';
 import 'watch_face_market_page.dart';
 
 class LoginPage extends StatefulWidget {
@@ -729,7 +730,7 @@ class _AiHealthAssistantCard extends StatelessWidget {
           Text(
             context.l10n.aiAssistant,
             style: const TextStyle(
-              color: Color(0xFF9E1025),
+              color: SaydianColors.ink,
               fontSize: 19,
               fontWeight: FontWeight.w900,
             ),
@@ -753,7 +754,7 @@ class _AiHealthAssistantCard extends StatelessWidget {
               ),
             ),
             style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xFFD20B27),
+              backgroundColor: SaydianColors.brandRed,
               foregroundColor: Colors.white,
               minimumSize: const Size.fromHeight(40),
               shape: const StadiumBorder(),
@@ -773,11 +774,11 @@ class _AiHealthAssistantCard extends StatelessWidget {
       key: const Key('dashboard-ai-assistant'),
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        color: const Color(0xFFFDF7F3),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(20),
       ),
       foregroundDecoration: BoxDecoration(
-        border: Border.all(color: const Color(0x66D20B27), width: 1.2),
+        border: Border.all(color: SaydianColors.line, width: 1.2),
         borderRadius: BorderRadius.circular(20),
       ),
       child: stacked
@@ -804,6 +805,7 @@ class _TodayHealthOverview extends StatelessWidget {
     required this.stepTarget,
     required this.distanceTarget,
     required this.calorieTarget,
+    required this.distanceUnit,
     required this.onSetGoal,
   });
 
@@ -811,6 +813,7 @@ class _TodayHealthOverview extends StatelessWidget {
   final double stepTarget;
   final double distanceTarget;
   final double calorieTarget;
+  final String distanceUnit;
   final VoidCallback onSetGoal;
 
   @override
@@ -837,7 +840,7 @@ class _TodayHealthOverview extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          '今日健康',
+                          'Today’s activity',
                           style: TextStyle(
                             fontSize: 19,
                             fontWeight: FontWeight.w900,
@@ -845,7 +848,7 @@ class _TodayHealthOverview extends StatelessWidget {
                         ),
                         SizedBox(height: 2),
                         Text(
-                          '坚持完成每日活动目标',
+                          'Keep moving toward your daily goals',
                           style: TextStyle(
                             color: SaydianColors.muted,
                             fontSize: 12,
@@ -871,6 +874,7 @@ class _TodayHealthOverview extends StatelessWidget {
                   metric: HealthMetric.steps,
                   record: latest[HealthMetric.steps],
                   target: stepTarget,
+                  distanceUnit: distanceUnit,
                   color: const Color(0xFF80BAF5),
                 ),
                 const SizedBox(height: 16),
@@ -878,6 +882,7 @@ class _TodayHealthOverview extends StatelessWidget {
                   metric: HealthMetric.distance,
                   record: latest[HealthMetric.distance],
                   target: distanceTarget,
+                  distanceUnit: distanceUnit,
                   color: const Color(0xFF6CDE53),
                 ),
                 const SizedBox(height: 16),
@@ -885,6 +890,7 @@ class _TodayHealthOverview extends StatelessWidget {
                   metric: HealthMetric.calories,
                   record: latest[HealthMetric.calories],
                   target: calorieTarget,
+                  distanceUnit: distanceUnit,
                   color: const Color(0xFFFF9949),
                 ),
               ],
@@ -901,12 +907,14 @@ class _GoalProgressRow extends StatelessWidget {
     required this.metric,
     required this.record,
     required this.target,
+    required this.distanceUnit,
     required this.color,
   });
 
   final HealthMetric metric;
   final HealthRecord? record;
   final double target;
+  final String distanceUnit;
   final Color color;
 
   num? get _value {
@@ -925,13 +933,16 @@ class _GoalProgressRow extends StatelessWidget {
     final progress = value == null
         ? 0.0
         : (value.toDouble() / target).clamp(0.0, 1.0).toDouble();
+    final usesMiles = metric == HealthMetric.distance && distanceUnit == '英里';
     final unit = switch (metric) {
-      HealthMetric.distance => '公里',
+      HealthMetric.distance => usesMiles ? 'mi' : 'km',
       HealthMetric.calories => '千卡',
       _ => metric.defaultUnit,
     };
-    final currentText = value == null ? '--' : _format(value);
-    final targetText = _format(target);
+    final currentText = value == null
+        ? '--'
+        : _format(usesMiles ? value * 0.621371 : value);
+    final targetText = _format(usesMiles ? target * 0.621371 : target);
 
     return Row(
       children: [
@@ -1027,14 +1038,15 @@ class _FeatureEntryGrid extends StatelessWidget {
                 onTap: onWarning,
               ),
             ),
-            Expanded(
-              child: _FeatureEntry(
-                label: context.l10n.shop,
-                icon: Icons.shopping_bag_rounded,
-                color: const Color(0xFFD99C2B),
-                onTap: onMall,
+            if (showSaydianMall)
+              Expanded(
+                child: _FeatureEntry(
+                  label: context.l10n.shop,
+                  icon: Icons.shopping_bag_rounded,
+                  color: const Color(0xFFD99C2B),
+                  onTap: onMall,
+                ),
               ),
-            ),
           ],
         ),
       ),
@@ -1928,7 +1940,10 @@ class _HealthMeasurementDialogState extends State<_HealthMeasurementDialog> {
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Text(
-                          context.l10n.spotCheckCuffHint,
+                          widget.controller.connectedDevice?.sdkSource ==
+                                  WearableSdkSource.urion
+                              ? context.l10n.u19WristMeasurementHint
+                              : context.l10n.spotCheckCuffHint,
                           textAlign: TextAlign.center,
                           style: TextStyle(fontSize: 13, height: 1.45),
                         ),
@@ -1962,7 +1977,10 @@ class _HealthMeasurementDialogState extends State<_HealthMeasurementDialog> {
             actions: [
               if (failed &&
                   widget.controller.connectedDevice != null &&
-                  widget.controller.capabilities?.supportsManualMeasurement(widget.metric) == true)
+                  widget.controller.capabilities?.supportsManualMeasurement(
+                        widget.metric,
+                      ) ==
+                      true)
                 FilledButton(
                   onPressed: _stopping ? null : _retry,
                   child: Text(
@@ -2015,7 +2033,7 @@ class _SportEntryPanel extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
       decoration: BoxDecoration(
         color: Colors.white,
-        border: Border.all(color: const Color(0x18D20B27)),
+        border: Border.all(color: SaydianColors.line),
         borderRadius: BorderRadius.circular(22),
         boxShadow: const [
           BoxShadow(
@@ -4446,16 +4464,25 @@ class DevicePage extends StatelessWidget {
                       Expanded(
                         child: Text(
                           switch (controller.cloudSyncState) {
-                            CloudHealthSyncState.uploading => context.l10n.cloudHealthUploading,
-                            CloudHealthSyncState.localOnly => context.l10n.cloudHealthLocalOnly,
-                            CloudHealthSyncState.pending => context.l10n.cloudHealthPending,
-                            CloudHealthSyncState.complete => context.l10n.cloudHealthConfirmed,
+                            CloudHealthSyncState.uploading =>
+                              context.l10n.cloudHealthUploading,
+                            CloudHealthSyncState.localOnly =>
+                              context.l10n.cloudHealthLocalOnly,
+                            CloudHealthSyncState.pending =>
+                              context.l10n.cloudHealthPending,
+                            CloudHealthSyncState.complete =>
+                              context.l10n.cloudHealthConfirmed,
                             CloudHealthSyncState.idle => '',
                           },
-                          style: const TextStyle(fontSize: 12, height: 1.4, color: SaydianColors.muted),
+                          style: const TextStyle(
+                            fontSize: 12,
+                            height: 1.4,
+                            color: SaydianColors.muted,
+                          ),
                         ),
                       ),
-                      if (controller.cloudSyncState == CloudHealthSyncState.pending)
+                      if (controller.cloudSyncState ==
+                          CloudHealthSyncState.pending)
                         TextButton(
                           onPressed: controller.synchronizeCloud,
                           child: Text(context.l10n.retry),
@@ -5365,21 +5392,23 @@ class _DeviceSearchPageState extends State<DeviceSearchPage>
                       ],
                     ),
             ),
-            bottomNavigationBar: SafeArea(
-              top: false,
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 6, 16, 12),
-                child: TextButton.icon(
-                  key: const Key('device-shop-entry'),
-                  onPressed: connecting ? null : _openShop,
-                  icon: const Icon(Icons.shopping_bag_outlined),
-                  label: Text(
-                    context.l10n.noWatchShopHint,
-                    style: TextStyle(fontWeight: FontWeight.w800),
+            bottomNavigationBar: !showSaydianMall
+                ? null
+                : SafeArea(
+                    top: false,
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 6, 16, 12),
+                      child: TextButton.icon(
+                        key: const Key('device-shop-entry'),
+                        onPressed: connecting ? null : _openShop,
+                        icon: const Icon(Icons.shopping_bag_outlined),
+                        label: Text(
+                          context.l10n.noWatchShopHint,
+                          style: TextStyle(fontWeight: FontWeight.w800),
+                        ),
+                      ),
+                    ),
                   ),
-                ),
-              ),
-            ),
           ),
         );
       },
@@ -7888,15 +7917,15 @@ class SettingsPage extends StatelessWidget {
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                colors: [Color(0xFFFFF8F3), Color(0xFFFFECEE)],
+                colors: [Colors.white, SaydianColors.brandRedSoft],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
-              border: Border.all(color: const Color(0x22A51125)),
+              border: Border.all(color: SaydianColors.line),
               borderRadius: BorderRadius.circular(24),
               boxShadow: const [
                 BoxShadow(
-                  color: Color(0x149E1025),
+                  color: Color(0x1417191C),
                   blurRadius: 22,
                   offset: Offset(0, 10),
                 ),
@@ -8004,75 +8033,76 @@ class SettingsPage extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 14),
-        Card(
-          color: Colors.white,
-          shape: RoundedRectangleBorder(
-            side: const BorderSide(color: Color(0x17344B7D)),
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 15, 8, 8),
-                child: Row(
-                  children: [
-                    Text(
-                      context.l10n.myOrders,
-                      style: const TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                    const Spacer(),
-                    TextButton(
-                      onPressed: () => _openOrders(context, null),
-                      child: Text(context.l10n.all),
-                    ),
-                  ],
-                ),
-              ),
-              const Divider(),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(8, 10, 8, 16),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: _OrderEntry(
-                        label: context.l10n.awaitingPayment,
-                        icon: Icons.account_balance_wallet_outlined,
-                        onTap: () => _openOrders(context, 0),
-                      ),
-                    ),
-                    Expanded(
-                      child: _OrderEntry(
-                        label: context.l10n.awaitingShipment,
-                        icon: Icons.inventory_2_outlined,
-                        onTap: () => _openOrders(context, 1),
-                      ),
-                    ),
-                    Expanded(
-                      child: _OrderEntry(
-                        label: context.l10n.awaitingDelivery,
-                        icon: Icons.local_shipping_outlined,
-                        onTap: () => _openOrders(context, 2),
-                      ),
-                    ),
-                    Expanded(
-                      child: _OrderEntry(
-                        label: context.l10n.afterSales,
-                        icon: Icons.support_agent_rounded,
-                        onTap: () => _openPage(
-                          context,
-                          AfterSalesPage(controller: controller),
+        if (showSaydianMall)
+          Card(
+            color: Colors.white,
+            shape: RoundedRectangleBorder(
+              side: const BorderSide(color: Color(0x17344B7D)),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 15, 8, 8),
+                  child: Row(
+                    children: [
+                      Text(
+                        context.l10n.myOrders,
+                        style: const TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w900,
                         ),
                       ),
-                    ),
-                  ],
+                      const Spacer(),
+                      TextButton(
+                        onPressed: () => _openOrders(context, null),
+                        child: Text(context.l10n.all),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+                const Divider(),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(8, 10, 8, 16),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: _OrderEntry(
+                          label: context.l10n.awaitingPayment,
+                          icon: Icons.account_balance_wallet_outlined,
+                          onTap: () => _openOrders(context, 0),
+                        ),
+                      ),
+                      Expanded(
+                        child: _OrderEntry(
+                          label: context.l10n.awaitingShipment,
+                          icon: Icons.inventory_2_outlined,
+                          onTap: () => _openOrders(context, 1),
+                        ),
+                      ),
+                      Expanded(
+                        child: _OrderEntry(
+                          label: context.l10n.awaitingDelivery,
+                          icon: Icons.local_shipping_outlined,
+                          onTap: () => _openOrders(context, 2),
+                        ),
+                      ),
+                      Expanded(
+                        child: _OrderEntry(
+                          label: context.l10n.afterSales,
+                          icon: Icons.support_agent_rounded,
+                          onTap: () => _openPage(
+                            context,
+                            AfterSalesPage(controller: controller),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
         const SizedBox(height: 14),
         Card(
           color: Colors.white,
@@ -8186,7 +8216,7 @@ class _MemberAvatar extends StatelessWidget {
     final fallback = DecoratedBox(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
-          colors: [SaydianColors.brandRed, Color(0xFFE13045)],
+          colors: [SaydianColors.brandRed, Color(0xFF41464A)],
         ),
       ),
       child: Icon(Icons.person_rounded, color: Colors.white, size: size * 0.52),
@@ -9291,7 +9321,10 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
                         gradient: const LinearGradient(
-                          colors: [Color(0xFF9E1025), Color(0xFFD20B27)],
+                          colors: [
+                            SaydianColors.brandRedDark,
+                            SaydianColors.brandRed,
+                          ],
                         ),
                         borderRadius: BorderRadius.circular(22),
                       ),
@@ -9651,6 +9684,7 @@ class _UnitSettingsPageState extends State<UnitSettingsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final english = Localizations.localeOf(context).languageCode != 'zh';
     return Scaffold(
       appBar: AppBar(title: Text(context.l10n.unitSettings)),
       body: ListView(
@@ -9663,17 +9697,17 @@ class _UnitSettingsPageState extends State<UnitSettingsPage> {
                 setState(() => _distance = value!);
                 widget.controller.setUnits(distance: value);
               },
-              child: const Column(
+              child: Column(
                 children: [
                   RadioListTile<String>(
                     value: '公里',
-                    title: Text('公里'),
-                    subtitle: Text('距离使用 km'),
+                    title: Text(english ? 'Kilometers' : '公里'),
+                    subtitle: Text('km'),
                   ),
                   RadioListTile<String>(
                     value: '英里',
-                    title: Text('英里'),
-                    subtitle: Text('距离使用 mi'),
+                    title: Text(english ? 'Miles' : '英里'),
+                    subtitle: Text('mi'),
                   ),
                 ],
               ),
@@ -9687,10 +9721,16 @@ class _UnitSettingsPageState extends State<UnitSettingsPage> {
                 setState(() => _temperature = value!);
                 widget.controller.setUnits(temperature: value);
               },
-              child: const Column(
+              child: Column(
                 children: [
-                  RadioListTile<String>(value: '摄氏度（℃）', title: Text('摄氏度（℃）')),
-                  RadioListTile<String>(value: '华氏度（℉）', title: Text('华氏度（℉）')),
+                  RadioListTile<String>(
+                    value: '摄氏度（℃）',
+                    title: Text(english ? 'Celsius (°C)' : '摄氏度（℃）'),
+                  ),
+                  RadioListTile<String>(
+                    value: '华氏度（℉）',
+                    title: Text(english ? 'Fahrenheit (°F)' : '华氏度（℉）'),
+                  ),
                 ],
               ),
             ),
@@ -9726,7 +9766,9 @@ class _GoalSettingsPageState extends State<GoalSettingsPage> {
     super.initState();
     _steps = TextEditingController(text: '${widget.controller.stepGoal}');
     _distance = TextEditingController(
-      text: '${widget.controller.distanceGoal}',
+      text: widget.controller.distanceUnit == '英里'
+          ? (widget.controller.distanceGoal * 0.621371).toStringAsFixed(2)
+          : '${widget.controller.distanceGoal}',
     );
     _calories = TextEditingController(text: '${widget.controller.calorieGoal}');
   }
@@ -9741,7 +9783,12 @@ class _GoalSettingsPageState extends State<GoalSettingsPage> {
 
   Future<void> _save() async {
     final steps = int.tryParse(_steps.text);
-    final distance = double.tryParse(_distance.text);
+    final enteredDistance = double.tryParse(_distance.text);
+    final distance = enteredDistance == null
+        ? null
+        : widget.controller.distanceUnit == '英里'
+        ? enteredDistance / 0.621371
+        : enteredDistance;
     final calories = int.tryParse(_calories.text);
     if (steps == null ||
         distance == null ||
@@ -9788,7 +9835,8 @@ class _GoalSettingsPageState extends State<GoalSettingsPage> {
             controller: _distance,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             decoration: InputDecoration(
-              labelText: context.l10n.dailyDistanceGoalField,
+              labelText:
+                  '${context.l10n.dailyDistanceGoalField} (${widget.controller.distanceUnit == '英里' ? 'mi' : 'km'})',
             ),
           ),
           const SizedBox(height: 12),
@@ -10641,11 +10689,7 @@ class _PermissionManagementPageState extends State<PermissionManagementPage>
         title: '心率自动检测',
         icon: Icons.favorite_outline_rounded,
       ),
-      (
-        type: 'bloodOxygen',
-        title: '血氧自动检测',
-        icon: Icons.bloodtype_outlined,
-      ),
+      (type: 'bloodOxygen', title: '血氧自动检测', icon: Icons.bloodtype_outlined),
       (type: 'bloodPressure', title: '血压自动检测', icon: Icons.speed_rounded),
       (type: 'bloodGlucose', title: '血糖自动检测', icon: Icons.water_drop_outlined),
       (

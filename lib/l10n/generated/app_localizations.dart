@@ -371,7 +371,7 @@ abstract class AppLocalizations {
   /// No description provided for @brandHealthTitle.
   ///
   /// In en, this message translates to:
-  /// **'Saydian Health'**
+  /// **'SAYDIAN Health'**
   String get brandHealthTitle;
 
   /// No description provided for @accountAndSecurity.
@@ -1121,7 +1121,7 @@ abstract class AppLocalizations {
   /// No description provided for @appName.
   ///
   /// In en, this message translates to:
-  /// **'Saydian'**
+  /// **'SAYDIAN Health'**
   String get appName;
 
   /// No description provided for @searchingNearby.
@@ -2921,7 +2921,7 @@ abstract class AppLocalizations {
   /// No description provided for @aboutApp.
   ///
   /// In en, this message translates to:
-  /// **'About Saydian'**
+  /// **'About SAYDIAN Health'**
   String get aboutApp;
 
   /// No description provided for @security.
@@ -3913,6 +3913,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The server has confirmed the uploaded records.'**
   String get cloudHealthConfirmed;
+
+  /// No description provided for @u19WristMeasurementHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Rest quietly for 5 minutes. Sit with feet flat and keep your wrist supported at heart level. Follow the watch instructions. Wrist readings are for reference; ask a clinician about a validated upper-arm monitor for medical decisions.'**
+  String get u19WristMeasurementHint;
 }
 
 class _AppLocalizationsDelegate

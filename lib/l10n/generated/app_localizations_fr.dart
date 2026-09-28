@@ -157,7 +157,7 @@ class AppLocalizationsFr extends AppLocalizations {
       'N’envoyez pas de codes de vérification, de mots de passe ou de dossiers de santé complets à des comptes non officiels.';
 
   @override
-  String get brandHealthTitle => 'Saydian Santé';
+  String get brandHealthTitle => 'SAYDIAN Health';
 
   @override
   String get accountAndSecurity => 'Compte et sécurité';
@@ -609,7 +609,7 @@ class AppLocalizationsFr extends AppLocalizations {
       'Consultez les produits ici. Les commandes ne sont pas encore disponibles dans cette région.';
 
   @override
-  String get appName => 'Saydian';
+  String get appName => 'SAYDIAN Health';
 
   @override
   String get searchingNearby => 'Recherche de montres à proximité';
@@ -2108,4 +2108,8 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get cloudHealthConfirmed =>
       'Le serveur a confirmé la réception des données envoyées.';
+
+  @override
+  String get u19WristMeasurementHint =>
+      'Reposez-vous au calme pendant 5 minutes. Posez les pieds à plat et soutenez le poignet à hauteur du cœur. Suivez les instructions de la montre. Les mesures au poignet sont indicatives ; pour toute décision médicale, consultez un professionnel et utilisez un tensiomètre brachial validé.';
 }

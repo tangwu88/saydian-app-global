@@ -155,7 +155,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Do not send verification codes, passwords or complete health records to unofficial accounts.';
 
   @override
-  String get brandHealthTitle => 'Saydian Health';
+  String get brandHealthTitle => 'SAYDIAN Health';
 
   @override
   String get accountAndSecurity => 'Account and security';
@@ -597,7 +597,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Browse products here. Ordering is not available in this region yet.';
 
   @override
-  String get appName => 'Saydian';
+  String get appName => 'SAYDIAN Health';
 
   @override
   String get searchingNearby => 'Searching for nearby watches';
@@ -1536,7 +1536,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get customerService => 'Customer support';
 
   @override
-  String get aboutApp => 'About Saydian';
+  String get aboutApp => 'About SAYDIAN Health';
 
   @override
   String get security => 'Account security';
@@ -2087,4 +2087,8 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get cloudHealthConfirmed =>
       'The server has confirmed the uploaded records.';
+
+  @override
+  String get u19WristMeasurementHint =>
+      'Rest quietly for 5 minutes. Sit with feet flat and keep your wrist supported at heart level. Follow the watch instructions. Wrist readings are for reference; ask a clinician about a validated upper-arm monitor for medical decisions.';
 }

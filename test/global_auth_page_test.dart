@@ -74,6 +74,16 @@ Widget host(AppController controller, {bool reset = false, double scale = 1}) =>
     );
 
 void main() {
+  testWidgets('international phone entry starts with United States +1', (
+    tester,
+  ) async {
+    await tester.pumpWidget(host(NoCodeController()));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(ChoiceChip, 'Phone number'));
+    await tester.pumpAndSettle();
+    expect(find.widgetWithText(OutlinedButton, 'US +1'), findsOneWidget);
+  });
+
   for (final networkFailure in [false, true]) {
     testWidgets(
       'capabilities distinguish service absence from network $networkFailure',

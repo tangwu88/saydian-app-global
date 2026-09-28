@@ -138,7 +138,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get supportPrivacyWarning => '请勿向非官方账号发送验证码、密码或完整健康记录。';
 
   @override
-  String get brandHealthTitle => '赛电健康';
+  String get brandHealthTitle => 'SAYDIAN Health';
 
   @override
   String get accountAndSecurity => '账号与安全';
@@ -529,7 +529,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get globalShopReadOnly => '可浏览商品，当前地区暂未开放下单。';
 
   @override
-  String get appName => 'Saydian';
+  String get appName => 'SAYDIAN Health';
 
   @override
   String get searchingNearby => '正在搜索附近手表';
@@ -1960,6 +1960,10 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get cloudHealthConfirmed => '云端已确认接收本次上传的记录';
+
+  @override
+  String get u19WristMeasurementHint =>
+      '先安静休息 5 分钟，双脚平放，托住手腕并保持与心脏同高，按手表说明测量。腕部读数仅供参考；医疗判断请咨询医生并使用经过验证的上臂式血压计。';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hans`).
@@ -2096,7 +2100,7 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
   String get supportPrivacyWarning => '请勿向非官方账号发送验证码、密码或完整健康记录。';
 
   @override
-  String get brandHealthTitle => '赛电健康';
+  String get brandHealthTitle => 'SAYDIAN Health';
 
   @override
   String get accountAndSecurity => '账号与安全';
@@ -2487,7 +2491,7 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
   String get globalShopReadOnly => '可浏览商品，当前地区暂未开放下单。';
 
   @override
-  String get appName => 'Saydian';
+  String get appName => 'SAYDIAN Health';
 
   @override
   String get searchingNearby => '正在搜索附近手表';
@@ -3918,6 +3922,10 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
 
   @override
   String get cloudHealthConfirmed => '云端已确认接收本次上传的记录';
+
+  @override
+  String get u19WristMeasurementHint =>
+      '先安静休息 5 分钟，双脚平放，托住手腕并保持与心脏同高，按手表说明测量。腕部读数仅供参考；医疗判断请咨询医生并使用经过验证的上臂式血压计。';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hant`).
@@ -4054,7 +4062,7 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get supportPrivacyWarning => '請勿向非官方帳號傳送驗證碼、密碼或完整健康記錄。';
 
   @override
-  String get brandHealthTitle => 'Saydian 健康';
+  String get brandHealthTitle => 'SAYDIAN Health';
 
   @override
   String get accountAndSecurity => '帳號與安全';
@@ -4445,7 +4453,7 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get globalShopReadOnly => '可瀏覽商品，目前地區暫未開放下單。';
 
   @override
-  String get appName => 'Saydian';
+  String get appName => 'SAYDIAN Health';
 
   @override
   String get searchingNearby => '正在搜尋附近手錶';
@@ -5876,4 +5884,8 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get cloudHealthConfirmed => '雲端已確認接收本次上傳的記錄';
+
+  @override
+  String get u19WristMeasurementHint =>
+      '先安靜休息 5 分鐘，雙腳平放，托住手腕並保持與心臟同高，依手錶說明測量。腕部讀數僅供參考；醫療判斷請諮詢醫師並使用經驗證的上臂式血壓計。';
 }

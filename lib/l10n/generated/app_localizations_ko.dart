@@ -149,7 +149,7 @@ class AppLocalizationsKo extends AppLocalizations {
       '공식 계정이 아닌 곳에 인증 코드, 비밀번호 또는 전체 건강 기록을 보내지 마세요.';
 
   @override
-  String get brandHealthTitle => 'Saydian 건강';
+  String get brandHealthTitle => 'SAYDIAN Health';
 
   @override
   String get accountAndSecurity => '계정 및 보안';
@@ -555,7 +555,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get globalShopReadOnly => '상품을 둘러볼 수 있습니다. 이 지역에서는 아직 주문할 수 없습니다.';
 
   @override
-  String get appName => 'Saydian';
+  String get appName => 'SAYDIAN Health';
 
   @override
   String get searchingNearby => '주변 워치 검색 중';
@@ -2003,4 +2003,8 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get cloudHealthConfirmed => '서버가 업로드된 기록을 수신했음을 확인했습니다.';
+
+  @override
+  String get u19WristMeasurementHint =>
+      '측정 전 5분간 조용히 쉬고, 두 발을 바닥에 평평하게 둔 채 손목을 심장 높이로 받쳐 주세요. 시계 안내를 따르세요. 손목 측정값은 참고용입니다. 의료적 판단은 의료진과 상의하고 검증된 상완식 혈압계를 사용하세요.';
 }

@@ -42,7 +42,7 @@
   "addSupportContact": "Ajouter le contact du support",
   "contactPreparationHint": "Préparez le modèle de votre appareil et l’heure du problème avant de contacter le support.",
   "supportPrivacyWarning": "N’envoyez pas de codes de vérification, de mots de passe ou de dossiers de santé complets à des comptes non officiels.",
-  "brandHealthTitle": "Saydian Santé",
+  "brandHealthTitle": "SAYDIAN Health",
   "accountAndSecurity": "Compte et sécurité",
   "cityNameLabel": "Nom de la ville",
   "cityNameExample": "Par exemple : Paris",
@@ -176,7 +176,7 @@
   "globalShopPricePending": "Prix à confirmer",
   "globalShopLoadMore": "Afficher plus",
   "globalShopReadOnly": "Consultez les produits ici. Les commandes ne sont pas encore disponibles dans cette région.",
-  "appName": "Saydian",
+  "appName": "SAYDIAN Health",
   "searchingNearby": "Recherche de montres à proximité",
   "noDevices": "Aucun appareil trouvé",
   "selectWatch": "Vérifiez le nom et le signal, puis choisissez votre montre",
@@ -643,5 +643,6 @@
   "cloudHealthUploading": "Envoi des données enregistrées…",
   "cloudHealthLocalOnly": "Enregistrées sur ce téléphone. Connectez-vous pour les envoyer.",
   "cloudHealthPending": "Certaines données ne sont pas encore envoyées. Elles restent sur ce téléphone.",
-  "cloudHealthConfirmed": "Le serveur a confirmé la réception des données envoyées."
+  "cloudHealthConfirmed": "Le serveur a confirmé la réception des données envoyées.",
+  "u19WristMeasurementHint": "Reposez-vous au calme pendant 5 minutes. Posez les pieds à plat et soutenez le poignet à hauteur du cœur. Suivez les instructions de la montre. Les mesures au poignet sont indicatives ; pour toute décision médicale, consultez un professionnel et utilisez un tensiomètre brachial validé."
 }

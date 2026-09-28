@@ -183,7 +183,10 @@ void main() {
     await tester.tap(find.text('Sync data'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Watch data read. Cloud upload is confirmed separately.'), findsOneWidget);
+    expect(
+      find.text('Watch data read. Cloud upload is confirmed separately.'),
+      findsOneWidget,
+    );
     expect(find.text('Data synced'), findsNothing);
     expect(tester.takeException(), isNull);
   });
@@ -474,19 +477,22 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      await tester.tap(find.widgetWithText(FilledButton, '开始查找'));
+      await tester.tap(find.widgetWithText(FilledButton, 'Find my watch'));
       await tester.pump();
 
       expect(wearable.findActionStates, [true]);
-      expect(find.widgetWithText(FilledButton, '正在查找'), findsOneWidget);
-      expect(find.text('停止查找'), findsNothing);
+      expect(find.widgetWithText(FilledButton, 'Finding…'), findsOneWidget);
+      expect(find.text('Stop finding'), findsNothing);
 
-      await tester.tap(find.widgetWithText(FilledButton, '正在查找'));
+      await tester.tap(find.widgetWithText(FilledButton, 'Finding…'));
       await tester.pump();
       expect(wearable.findActionStates, [true]);
 
       await tester.pump(const Duration(seconds: 6));
-      expect(find.widgetWithText(FilledButton, '开始查找'), findsOneWidget);
+      expect(
+        find.widgetWithText(FilledButton, 'Find my watch'),
+        findsOneWidget,
+      );
       expect(tester.takeException(), isNull);
     });
   }
@@ -515,13 +521,13 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    await tester.tap(find.widgetWithText(FilledButton, '开始查找'));
+    await tester.tap(find.widgetWithText(FilledButton, 'Find my watch'));
     await tester.pump();
-    await tester.tap(find.widgetWithText(FilledButton, '停止查找'));
+    await tester.tap(find.widgetWithText(FilledButton, 'Stop finding'));
     await tester.pump();
 
     expect(wearable.findActionStates, [true, false]);
-    expect(find.widgetWithText(FilledButton, '开始查找'), findsOneWidget);
+    expect(find.widgetWithText(FilledButton, 'Find my watch'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 

@@ -42,7 +42,7 @@
   "addSupportContact": "Add support contact",
   "contactPreparationHint": "Have your device model and the time of the issue ready before contacting support.",
   "supportPrivacyWarning": "Do not send verification codes, passwords or complete health records to unofficial accounts.",
-  "brandHealthTitle": "Saydian Health",
+  "brandHealthTitle": "SAYDIAN Health",
   "accountAndSecurity": "Account and security",
   "cityNameLabel": "City name",
   "cityNameExample": "For example: London",
@@ -176,7 +176,7 @@
   "globalShopPricePending": "Price to be confirmed",
   "globalShopLoadMore": "Load more",
   "globalShopReadOnly": "Browse products here. Ordering is not available in this region yet.",
-  "appName": "Saydian",
+  "appName": "SAYDIAN Health",
   "searchingNearby": "Searching for nearby watches",
   "noDevices": "No devices found",
   "selectWatch": "Check the name and signal, then select your watch",
@@ -482,7 +482,7 @@
   "permissions": "Permissions",
   "feedback": "Feedback",
   "customerService": "Customer support",
-  "aboutApp": "About Saydian",
+  "aboutApp": "About SAYDIAN Health",
   "security": "Account security",
   "goToSettings": "Open settings",
   "close": "Close",
@@ -702,5 +702,6 @@
   "cloudHealthUploading": "Uploading saved records…",
   "cloudHealthLocalOnly": "Saved on this phone. Sign in to upload.",
   "cloudHealthPending": "Some records have not been uploaded. They remain saved on this phone.",
-  "cloudHealthConfirmed": "The server has confirmed the uploaded records."
+  "cloudHealthConfirmed": "The server has confirmed the uploaded records.",
+  "u19WristMeasurementHint": "Rest quietly for 5 minutes. Sit with feet flat and keep your wrist supported at heart level. Follow the watch instructions. Wrist readings are for reference; ask a clinician about a validated upper-arm monitor for medical decisions."
 }

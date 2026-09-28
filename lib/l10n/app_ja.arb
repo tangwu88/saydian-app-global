@@ -42,7 +42,7 @@
   "addSupportContact": "サポート連絡先を追加",
   "contactPreparationHint": "問い合わせ前に、デバイスのモデルと問題が起きた時刻を確認してください。",
   "supportPrivacyWarning": "非公式のアカウントに認証コード、パスワード、健康記録全体を送らないでください。",
-  "brandHealthTitle": "Saydian ヘルス",
+  "brandHealthTitle": "SAYDIAN Health",
   "accountAndSecurity": "アカウントとセキュリティ",
   "cityNameLabel": "都市名",
   "cityNameExample": "例：東京",
@@ -176,7 +176,7 @@
   "globalShopPricePending": "価格は確認待ちです",
   "globalShopLoadMore": "さらに読み込む",
   "globalShopReadOnly": "商品をご覧いただけます。この地域ではまだ注文できません。",
-  "appName": "Saydian",
+  "appName": "SAYDIAN Health",
   "searchingNearby": "近くのウォッチを検索中",
   "noDevices": "デバイスが見つかりません",
   "selectWatch": "名前と電波強度を確認してウォッチを選択してください",
@@ -643,5 +643,6 @@
   "cloudHealthUploading": "保存済みの記録を送信しています…",
   "cloudHealthLocalOnly": "この端末に保存されています。送信するにはログインしてください。",
   "cloudHealthPending": "未送信の記録があります。記録はこの端末に保存されています。",
-  "cloudHealthConfirmed": "送信した記録の受信をサーバーが確認しました。"
+  "cloudHealthConfirmed": "送信した記録の受信をサーバーが確認しました。",
+  "u19WristMeasurementHint": "測定前に5分間静かに休み、両足を床につけ、手首を支えて心臓の高さに保ってください。時計の説明に従ってください。手首での測定値は参考用です。医療上の判断は医療者に相談し、検証済みの上腕式血圧計を使用してください。"
 }

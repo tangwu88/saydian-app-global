@@ -83,6 +83,10 @@ class AppController extends ChangeNotifier {
          pushRegistrationRetryDelays ?? _defaultPushRegistrationRetryDelays,
        ),
        _syncService = HealthSyncService(_healthStore, _api) {
+    if (isGlobalEdition) {
+      distanceUnit = '英里';
+      temperatureUnit = '华氏度（℉）';
+    }
     _notificationInboxRepository = StoredNotificationInboxRepository(
       _healthStore,
       ownerId: _notificationOwnerId,

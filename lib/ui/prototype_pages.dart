@@ -2272,6 +2272,9 @@ class DeviceFeaturePage extends StatefulWidget {
 
 class _DeviceFeaturePageState extends State<DeviceFeaturePage>
     with WidgetsBindingObserver {
+  String _watchText(String zh, String en) =>
+      Localizations.localeOf(context).languageCode == 'zh' ? zh : en;
+
   static const _nativeMethods = MethodChannel('cc.saidian/wearable_methods');
   DeviceScreenSettings? _screen;
   Map<String, Object?> _featureData = const {};
@@ -2733,7 +2736,8 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
 
   Future<void> _toggleFind() async {
     final source = widget.controller.connectedDevice?.sdkSource;
-    final isOneShot = source == WearableSdkSource.yucheng ||
+    final isOneShot =
+        source == WearableSdkSource.yucheng ||
         source == WearableSdkSource.urion;
     if (isOneShot && _finding) return;
     final next = isOneShot || !_finding;
@@ -2755,8 +2759,22 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
       SnackBar(
         content: Text(
           success
-              ? (isOneShot ? '已发送查找指令，请留意手表振动' : (next ? '手表正在响铃或振动' : '已停止查找'))
-              : widget.controller.errorMessage ?? '暂时无法查找手表',
+              ? (isOneShot
+                    ? _watchText(
+                        '已发送查找指令，请留意手表振动',
+                        'Find request sent. Watch for a vibration.',
+                      )
+                    : (next
+                          ? _watchText(
+                              '手表正在响铃或振动',
+                              'Your watch is ringing or vibrating.',
+                            )
+                          : _watchText('已停止查找', 'Find watch stopped.')))
+              : widget.controller.errorMessage ??
+                    _watchText(
+                      '暂时无法查找手表',
+                      'Unable to find your watch right now.',
+                    ),
         ),
       ),
     );
@@ -2847,11 +2865,27 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
     if (!mounted) return;
     if (saved) await _loadFeature();
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(saved
-          ? key == 'syncTime' ? '已发送时间，请核对手表显示' : '已保存并从手表确认'
-          : widget.controller.errorMessage ?? '设置未生效，请重试'),
-    ));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          saved
+              ? key == 'syncTime'
+                    ? _watchText(
+                        '已发送时间，请核对手表显示',
+                        'Time sent. Check your watch display.',
+                      )
+                    : _watchText(
+                        '已保存并从手表确认',
+                        'Saved and confirmed by your watch.',
+                      )
+              : widget.controller.errorMessage ??
+                    _watchText(
+                      '设置未生效，请重试',
+                      'The setting did not take effect. Try again.',
+                    ),
+        ),
+      ),
+    );
   }
 
   Future<void> _syncBasicTime() async {
@@ -2860,8 +2894,13 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
       language = await showDialog<String>(
         context: context,
         builder: (dialogContext) => AlertDialog(
-          title: const Text('确认手表语言'),
-          content: const Text('首次同步时间时，请选择手表当前使用的语言。之后切换 App 语言不会改变手表语言。'),
+          title: Text(_watchText('确认手表语言', 'Confirm watch language')),
+          content: Text(
+            _watchText(
+              '首次同步时间时，请选择手表当前使用的语言。之后切换 App 语言不会改变手表语言。',
+              'Before the first time sync, choose the language already shown on your watch. Changing the app language later will not change your watch.',
+            ),
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(),
@@ -2909,7 +2948,9 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
           FilledButton(
             onPressed: () {
               final parsed = int.tryParse(input.text.trim());
-              if (parsed == null || parsed < minimum || parsed > maximum) return;
+              if (parsed == null || parsed < minimum || parsed > maximum) {
+                return;
+              }
               Navigator.of(dialogContext).pop(parsed);
             },
             child: Text(context.l10n.save),
@@ -2922,53 +2963,107 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
   }
 
   Widget _buildBasicSettingsPanel(bool busy) {
-    if (_featureData.isEmpty) return _loadingCard(busy, '手表设置');
+    if (_featureData.isEmpty) {
+      return _loadingCard(busy, _watchText('手表设置', 'watch settings'));
+    }
     final is24Hour = _featureData['is24Hour'] == true;
-    return Column(children: [
-      Card(child: ListTile(
-        leading: const Icon(Icons.access_time_rounded),
-        title: const Text('同步时间'),
-        subtitle: const Text('将手机当前时间发送到手表；请在手表上核对'),
-        trailing: const Icon(Icons.chevron_right_rounded),
-        onTap: busy ? null : _syncBasicTime,
-      )),
-      Card(child: SwitchListTile(
-        title: const Text('24 小时制'),
-        subtitle: Text(is24Hour ? '当前使用 24 小时制' : '当前使用 12 小时制'),
-        value: is24Hour,
-        onChanged: busy ? null : (value) => _saveBasicSetting('is24Hour', value),
-      )),
-      Card(child: Column(children: [
-        ListTile(
-          title: const Text('步数目标'),
-          subtitle: Text('${_featureData['stepGoal'] ?? '—'} 步'),
-          onTap: busy ? null : () => _editBasicNumber('stepGoal', '步数目标', 1, 100000),
-        ),
-        const Divider(height: 1),
-        ListTile(
-          title: const Text('性别'),
-          subtitle: Text(_featureData['gender'] == 0 ? '男' : '女'),
-          onTap: busy ? null : () => _saveBasicSetting('gender', _featureData['gender'] == 0 ? 1 : 0),
-        ),
-        for (final item in <(String, String, String, int, int)>[
-          ('age', '年龄', '岁', 1, 120),
-          ('heightCm', '身高', '厘米', 50, 240),
-          ('weightKg', '体重', '千克', 10, 250),
-        ]) ...[
-          const Divider(height: 1),
-          ListTile(
-            title: Text(item.$2),
-            subtitle: Text('${_featureData[item.$1] ?? '—'} ${item.$3}'),
-            onTap: busy ? null : () => _editBasicNumber(item.$1, item.$2, item.$4, item.$5),
+    return Column(
+      children: [
+        Card(
+          child: ListTile(
+            leading: const Icon(Icons.access_time_rounded),
+            title: Text(_watchText('同步时间', 'Sync time')),
+            subtitle: Text(
+              _watchText(
+                '将手机当前时间发送到手表；请在手表上核对',
+                'Send your phone’s current time to the watch, then check its display.',
+              ),
+            ),
+            trailing: const Icon(Icons.chevron_right_rounded),
+            onTap: busy ? null : _syncBasicTime,
           ),
-        ],
-      ])),
-      TextButton.icon(
-        onPressed: busy ? null : _loadFeature,
-        icon: const Icon(Icons.refresh_rounded),
-        label: Text(context.l10n.readAgain),
-      ),
-    ]);
+        ),
+        Card(
+          child: SwitchListTile(
+            title: Text(_watchText('24 小时制', '24-hour time')),
+            subtitle: Text(
+              is24Hour
+                  ? _watchText('当前使用 24 小时制', 'Using 24-hour time')
+                  : _watchText('当前使用 12 小时制', 'Using 12-hour time'),
+            ),
+            value: is24Hour,
+            onChanged: busy
+                ? null
+                : (value) => _saveBasicSetting('is24Hour', value),
+          ),
+        ),
+        Card(
+          child: Column(
+            children: [
+              ListTile(
+                title: Text(_watchText('步数目标', 'Step goal')),
+                subtitle: Text(
+                  '${_featureData['stepGoal'] ?? '—'} ${_watchText('步', 'steps')}',
+                ),
+                onTap: busy
+                    ? null
+                    : () => _editBasicNumber(
+                        'stepGoal',
+                        _watchText('步数目标', 'Step goal'),
+                        1,
+                        100000,
+                      ),
+              ),
+              const Divider(height: 1),
+              ListTile(
+                title: Text(context.l10n.gender),
+                subtitle: Text(
+                  _featureData['gender'] == 0
+                      ? _watchText('男', 'Male')
+                      : _watchText('女', 'Female'),
+                ),
+                onTap: busy
+                    ? null
+                    : () => _saveBasicSetting(
+                        'gender',
+                        _featureData['gender'] == 0 ? 1 : 0,
+                      ),
+              ),
+              for (final item in <(String, String, String, int, int)>[
+                (
+                  'age',
+                  _watchText('年龄', 'Age'),
+                  _watchText('岁', 'years'),
+                  1,
+                  120,
+                ),
+                ('heightCm', _watchText('身高', 'Height'), 'cm', 50, 240),
+                ('weightKg', _watchText('体重', 'Weight'), 'kg', 10, 250),
+              ]) ...[
+                const Divider(height: 1),
+                ListTile(
+                  title: Text(item.$2),
+                  subtitle: Text('${_featureData[item.$1] ?? '—'} ${item.$3}'),
+                  onTap: busy
+                      ? null
+                      : () => _editBasicNumber(
+                          item.$1,
+                          item.$2,
+                          item.$4,
+                          item.$5,
+                        ),
+                ),
+              ],
+            ],
+          ),
+        ),
+        TextButton.icon(
+          onPressed: busy ? null : _loadFeature,
+          icon: const Icon(Icons.refresh_rounded),
+          label: Text(context.l10n.readAgain),
+        ),
+      ],
+    );
   }
 
   List<Map<String, Object?>> get _items {
@@ -4895,6 +4990,7 @@ class _FindWatchPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final english = Localizations.localeOf(context).languageCode != 'zh';
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(20),
@@ -4910,8 +5006,16 @@ class _FindWatchPanel extends StatelessWidget {
             const SizedBox(height: 14),
             Text(
               finding
-                  ? (supportsStop ? '请留意附近响铃或振动的手表' : '查找指令已发送，请留意手表振动')
-                  : '让手表响铃或振动，帮助你快速找到它',
+                  ? (supportsStop
+                        ? (english
+                              ? 'Listen or feel for your nearby watch.'
+                              : '请留意附近响铃或振动的手表')
+                        : (english
+                              ? 'Find request sent. Watch for a vibration.'
+                              : '查找指令已发送，请留意手表振动'))
+                  : (english
+                        ? 'Make your watch ring or vibrate to find it.'
+                        : '让手表响铃或振动，帮助你快速找到它'),
               textAlign: TextAlign.center,
               style: const TextStyle(height: 1.5),
             ),
@@ -4923,7 +5027,11 @@ class _FindWatchPanel extends StatelessWidget {
                     ? null
                     : onPressed,
                 child: Text(
-                  finding ? (supportsStop ? '停止查找' : '正在查找') : '开始查找',
+                  finding
+                      ? (supportsStop
+                            ? (english ? 'Stop finding' : '停止查找')
+                            : (english ? 'Finding…' : '正在查找'))
+                      : (english ? 'Find my watch' : '开始查找'),
                 ),
               ),
             ),

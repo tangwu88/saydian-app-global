@@ -3,6 +3,15 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 
+test('AI physician portrait is the same approved asset in Flutter and HarmonyOS',()=>{
+  const flutter=readFileSync(new URL('../../assets/branding/ai-health-manager-doctor.png',import.meta.url));
+  const harmony=readFileSync(new URL('../entry/src/main/resources/base/media/health_doctor.png',import.meta.url));
+  assert.deepEqual(flutter,harmony);
+  assert.equal(flutter.subarray(1,4).toString(),'PNG');
+  assert.equal(flutter.readUInt32BE(16),928);
+  assert.equal(flutter.readUInt32BE(20),1694);
+});
+
 test('all root scroll surfaces remain top aligned while loading content',()=>{
   const source=readUiSource(new URL('../entry/src/main/ets/pages/Index.ets',import.meta.url),'utf8');
   const scrolls=(source.match(/Scroll\([^)]*\)/g)||[]).length;
@@ -122,13 +131,13 @@ test('care member and sharing cards preserve readable member details',()=>{
   assert.ok(sharing.includes('.constraintSize({ minHeight: 76 })'));
 });
 
-test('visual system uses the current iOS Saydian palette and consistent surfaces',()=>{
+test('visual system uses the black SAYDIAN Health palette and consistent surfaces',()=>{
   const source=readUiSource(new URL('../entry/src/main/ets/pages/Index.ets',import.meta.url),'utf8');
   for(const token of [
-    "const RED: string = '#D20B27'",
-    "const INK: string = '#171B2B'",
-    "const BG: string = '#F5F7FA'",
-    "const RED_SOFT: string = '#FFE8EC'",
+    "const RED: string = '#17191C'",
+    "const INK: string = '#17191C'",
+    "const BG: string = '#F6F7F7'",
+    "const RED_SOFT: string = '#F0F1F2'",
     "const GOLD_SOFT: string = '#FFF6DE'",
     "const BLUE_SOFT: string = '#EAF1FF'",
     "const LINE: string = '#DDE3EC'",
@@ -166,9 +175,10 @@ test('device and mine pages follow the iOS information hierarchy without droppin
   }
   assert.equal(device.includes("Text('手动测量')"),false,'Manual measurement belongs to health metric pages');
   for(const marker of ['mine-profile-card','profile_stat_device','profile_stat_health','profile_stat_care',
-    'mine-orders-card','mine-quick-card','mine-services-card']) {
+    'mine-quick-card','mine-services-card']) {
     assert.ok(mine.includes(marker),`Missing iOS-aligned mine section: ${marker}`);
   }
+  assert.ok(mine.includes('if (SHOW_MALL) { Column({ space: 4 })'));
   assert.ok(home.includes("Text(this.tab === 1 ? '设备' : '我的')"));
   assert.ok(home.includes(".id('section-titlebar')"));
   assert.equal(home.includes('.backgroundColor(this.tab === index ? RED_SOFT : SURFACE)'),false,
@@ -191,7 +201,7 @@ test('care summary refresh and member page use the same list while all metric st
 test('launcher identity uses the requested name and a high-resolution brand icon',()=>{
   const app=JSON.parse(readFileSync(new URL('../AppScope/app.json5',import.meta.url),'utf8')).app;
   const strings=JSON.parse(readFileSync(new URL('../AppScope/resources/base/element/string.json',import.meta.url),'utf8')).string;
-  assert.equal(strings.find(item=>item.name==='app_name')?.value,'Saydian');
+  assert.equal(strings.find(item=>item.name==='app_name')?.value,'SAYDIAN Health');
   assert.equal(app.icon,'$media:app_icon_v3');
   const module=JSON.parse(readFileSync(new URL('../entry/src/main/module.json5',import.meta.url),'utf8')).module;
   assert.equal(module.abilities[0].icon,'$media:app_icon_v3');
@@ -279,9 +289,10 @@ test('login and primary surfaces exclude decorative or internal helper copy',()=
 test('device search and profile shortcuts match the iOS navigation hierarchy',()=>{
   const source=readUiSource(new URL('../entry/src/main/ets/pages/Index.ets',import.meta.url),'utf8');
   const search=source.slice(source.indexOf('DeviceSearchContent()'),source.indexOf('MineHome()'));
-  for(const marker of ['已发现设备','请选择需要连接的手表','device_search_refresh','device_search_shop']) {
+  for(const marker of ['已发现设备','请选择需要连接的手表','device_search_refresh']) {
     assert.ok(source.includes(marker),`Missing device search contract: ${marker}`);
   }
+  assert.ok(search.includes('if (SHOW_MALL)'));
   assert.ok(search.includes('wearableIdentifierText(device)'));
   assert.ok(search.includes("device.provider === 'Yuc' ? 'W8' : 'Vep'"));
   assert.ok(search.includes("Text('连接')"));

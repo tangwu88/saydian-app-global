@@ -1,27 +1,27 @@
 import 'package:flutter/material.dart';
 
 abstract final class SaydianColors {
-  // The primary red follows the current logo. Deep ink and cool silver
-  // surfaces add the restrained technology feel requested for this revision.
-  static const brandRed = Color(0xFFD20B27);
-  static const brandRedDark = Color(0xFF980018);
+  // Legacy field names remain for existing pages; the brand accent is black.
+  // Health warnings use the separate semantic danger color below.
+  static const brandRed = Color(0xFF17191C);
+  static const brandRedDark = Color(0xFF111214);
   static const brandGold = Color(0xFFD6B35A);
   static const brandGoldDark = Color(0xFF705300);
   static const goldText = brandGoldDark;
-  static const brandRedSoft = Color(0xFFFFE8EC);
+  static const brandRedSoft = Color(0xFFF0F1F2);
   static const brandGoldSoft = Color(0xFFFFF6DE);
 
-  static const ink = Color(0xFF171B2B);
-  static const muted = Color(0xFF5F6675);
-  static const canvas = Color(0xFFF5F7FA);
-  static const line = Color(0xFFDDE3EC);
+  static const ink = Color(0xFF17191C);
+  static const muted = Color(0xFF5D646B);
+  static const canvas = Color(0xFFF6F7F7);
+  static const line = Color(0xFFE1E4E5);
   static const outline = Color(0xFF98A2B3);
   static const techBlue = Color(0xFF316EF5);
   static const techBlueSoft = Color(0xFFEAF1FF);
 
   // Semantic colors stay independent from the brand palette. This keeps a
   // successful/normal state green and a warning amber after the chrome turns
-  // red and gold. All are dark enough for text on white.
+  // black and silver. All are dark enough for text on white.
   static const success = Color(0xFF287A3B);
   static const info = Color(0xFF2467A6);
   static const warning = Color(0xFF8A4B00);
@@ -232,7 +232,7 @@ ThemeData buildSaydianTheme() {
       iconTheme: WidgetStateProperty.resolveWith(
         (states) => IconThemeData(
           color: states.contains(WidgetState.selected)
-              ? const Color(0xFFD20B27)
+              ? SaydianColors.brandRed
               : SaydianColors.muted,
           size: states.contains(WidgetState.selected) ? 29 : 27,
         ),
@@ -240,7 +240,7 @@ ThemeData buildSaydianTheme() {
       labelTextStyle: WidgetStateProperty.resolveWith(
         (states) => TextStyle(
           color: states.contains(WidgetState.selected)
-              ? const Color(0xFFD20B27)
+              ? SaydianColors.brandRed
               : SaydianColors.muted,
           fontSize: 14,
           fontWeight: states.contains(WidgetState.selected)
@@ -258,7 +258,7 @@ ThemeData buildSaydianTheme() {
 }
 
 const saydianSoftGradient = LinearGradient(
-  colors: [Color(0xFFFFF1F3), SaydianColors.canvas, SaydianColors.techBlueSoft],
+  colors: [Color(0xFFFFFFFF), SaydianColors.canvas, Color(0xFFE8EBED)],
   stops: [0, 0.5, 1],
   begin: Alignment.topLeft,
   end: Alignment.bottomRight,

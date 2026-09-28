@@ -42,7 +42,7 @@
   "addSupportContact": "Añadir contacto de asistencia",
   "contactPreparationHint": "Ten a mano el modelo del dispositivo y la hora del problema antes de contactar con asistencia.",
   "supportPrivacyWarning": "No envíes códigos de verificación, contraseñas ni registros de salud completos a cuentas no oficiales.",
-  "brandHealthTitle": "Saydian Salud",
+  "brandHealthTitle": "SAYDIAN Health",
   "accountAndSecurity": "Cuenta y seguridad",
   "cityNameLabel": "Nombre de la ciudad",
   "cityNameExample": "Por ejemplo: Madrid",
@@ -176,7 +176,7 @@
   "globalShopPricePending": "Precio por confirmar",
   "globalShopLoadMore": "Cargar más",
   "globalShopReadOnly": "Aquí puede consultar los productos. Los pedidos aún no están disponibles en esta región.",
-  "appName": "Saydian",
+  "appName": "SAYDIAN Health",
   "searchingNearby": "Buscando relojes cercanos",
   "noDevices": "No se encontraron dispositivos",
   "selectWatch": "Comprueba el nombre y la señal y selecciona tu reloj",
@@ -643,5 +643,6 @@
   "cloudHealthUploading": "Subiendo los registros guardados…",
   "cloudHealthLocalOnly": "Guardados en este teléfono. Inicie sesión para subirlos.",
   "cloudHealthPending": "Algunos registros aún no se han subido. Siguen guardados en este teléfono.",
-  "cloudHealthConfirmed": "El servidor ha confirmado la recepción de los registros subidos."
+  "cloudHealthConfirmed": "El servidor ha confirmado la recepción de los registros subidos.",
+  "u19WristMeasurementHint": "Descanse en silencio durante 5 minutos. Apoye ambos pies en el suelo y mantenga la muñeca apoyada a la altura del corazón. Siga las instrucciones del reloj. Las lecturas de la muñeca son orientativas; para decisiones médicas, consulte a un profesional y use un tensiómetro de brazo validado."
 }

@@ -156,7 +156,7 @@ class AppLocalizationsEs extends AppLocalizations {
       'No envíes códigos de verificación, contraseñas ni registros de salud completos a cuentas no oficiales.';
 
   @override
-  String get brandHealthTitle => 'Saydian Salud';
+  String get brandHealthTitle => 'SAYDIAN Health';
 
   @override
   String get accountAndSecurity => 'Cuenta y seguridad';
@@ -604,7 +604,7 @@ class AppLocalizationsEs extends AppLocalizations {
       'Aquí puede consultar los productos. Los pedidos aún no están disponibles en esta región.';
 
   @override
-  String get appName => 'Saydian';
+  String get appName => 'SAYDIAN Health';
 
   @override
   String get searchingNearby => 'Buscando relojes cercanos';
@@ -2103,4 +2103,8 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get cloudHealthConfirmed =>
       'El servidor ha confirmado la recepción de los registros subidos.';
+
+  @override
+  String get u19WristMeasurementHint =>
+      'Descanse en silencio durante 5 minutos. Apoye ambos pies en el suelo y mantenga la muñeca apoyada a la altura del corazón. Siga las instrucciones del reloj. Las lecturas de la muñeca son orientativas; para decisiones médicas, consulte a un profesional y use un tensiómetro de brazo validado.';
 }

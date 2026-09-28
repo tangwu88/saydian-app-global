@@ -5,10 +5,10 @@ import type { FormField, MemberProfile } from './Contracts';
 
 export interface DisplayUnits { distance: 'km' | 'mi'; temperature: 'c' | 'f'; }
 
-export function defaultDisplayUnits(): DisplayUnits { return { distance: 'km', temperature: 'c' }; }
+export function defaultDisplayUnits(): DisplayUnits { return { distance: 'mi', temperature: 'f' }; }
 
 export function parseDisplayUnits(distance: string, temperature: string): DisplayUnits {
-  return { distance: distance === 'mi' ? 'mi' : 'km', temperature: temperature === 'f' ? 'f' : 'c' };
+  return { distance: distance === 'km' ? 'km' : 'mi', temperature: temperature === 'c' ? 'c' : 'f' };
 }
 
 export function displayHealthValue(value: HealthValue, units: DisplayUnits): HealthValue {

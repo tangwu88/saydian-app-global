@@ -64,7 +64,7 @@
         tools:replace="android:required" />
 
     <application
-        android:label="Saydian"
+        android:label="SAYDIAN Health"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher_round"
@@ -131,7 +131,7 @@
         <service
             android:name=".SaidianNotificationListener"
             android:exported="true"
-            android:label="Saydian watch notifications"
+            android:label="SAYDIAN Health watch notifications"
             android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
             <intent-filter>
                 <action android:name="android.service.notification.NotificationListenerService" />

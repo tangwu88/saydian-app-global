@@ -9,8 +9,8 @@ export class DisplayPreferenceStore {
 
   async read(context: common.UIAbilityContext): Promise<DisplayUnits> {
     this.store = await preferences.getPreferences(context, { name: 'saydian_display_units' });
-    const distance = await this.store.get('distance', 'km') as string;
-    const temperature = await this.store.get('temperature', 'c') as string;
+    const distance = await this.store.get('distance', 'mi') as string;
+    const temperature = await this.store.get('temperature', 'f') as string;
     return parseDisplayUnits(distance, temperature);
   }
 

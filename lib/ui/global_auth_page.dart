@@ -35,7 +35,7 @@ class _GlobalAuthPageState extends State<GlobalAuthPage> {
   final _code = TextEditingController();
   _AuthMode _mode = _AuthMode.signIn;
   AccountChannel _channel = AccountChannel.email;
-  Country? _country;
+  Country? _country = CountryParser.parseCountryCode('US');
   GlobalAuthCapabilities? _capabilities;
   VerificationChallenge? _challenge;
   Timer? _timer;

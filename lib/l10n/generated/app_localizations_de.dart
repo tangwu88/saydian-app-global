@@ -156,7 +156,7 @@ class AppLocalizationsDe extends AppLocalizations {
       'Senden Sie keine Bestätigungscodes, Passwörter oder vollständigen Gesundheitsaufzeichnungen an inoffizielle Konten.';
 
   @override
-  String get brandHealthTitle => 'Saydian Gesundheit';
+  String get brandHealthTitle => 'SAYDIAN Health';
 
   @override
   String get accountAndSecurity => 'Konto und Sicherheit';
@@ -605,7 +605,7 @@ class AppLocalizationsDe extends AppLocalizations {
       'Hier können Sie Produkte ansehen. Bestellungen sind in dieser Region noch nicht möglich.';
 
   @override
-  String get appName => 'Saydian';
+  String get appName => 'SAYDIAN Health';
 
   @override
   String get searchingNearby => 'Uhren in der Nähe werden gesucht';
@@ -2108,4 +2108,8 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get cloudHealthConfirmed =>
       'Der Server hat die hochgeladenen Daten bestätigt.';
+
+  @override
+  String get u19WristMeasurementHint =>
+      'Ruhen Sie sich 5 Minuten aus. Stellen Sie beide Füße flach auf den Boden und stützen Sie das Handgelenk auf Herzhöhe ab. Befolgen Sie die Anweisungen der Uhr. Messwerte am Handgelenk dienen nur zur Orientierung. Besprechen Sie medizinische Entscheidungen mit einer Fachperson und verwenden Sie dafür ein validiertes Oberarmmessgerät.';
 }
