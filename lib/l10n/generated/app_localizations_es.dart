@@ -708,6 +708,11 @@ class AppLocalizationsEs extends AppLocalizations {
   String get autoBrightness => 'Brillo automático';
 
   @override
+  String screenTimeoutSeconds(int seconds) {
+    return 'Apagado de pantalla: $seconds s';
+  }
+
+  @override
   String get raiseToWake => 'Levantar para activar';
 
   @override
@@ -2063,6 +2068,9 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get finishMeasurementOnWatch => 'Finalice la medición en el reloj.';
+
+  @override
+  String get startMeasurement => 'Iniciar medición';
 
   @override
   String get watchEndedMeasureAgain =>

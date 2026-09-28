@@ -149,6 +149,30 @@ void main() {
     },
   );
 
+  testWidgets('U19 pressure waits for explicit readiness before inflation', (
+    tester,
+  ) async {
+    final fixture = await _host(tester, metric: HealthMetric.bloodPressure);
+    final action = find.byKey(
+      Key('health-measure-${HealthMetric.bloodPressure.wireName}'),
+    );
+    await tester.ensureVisible(action);
+    await tester.tap(action);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(
+      find.byKey(const Key('u19-measurement-confirmation')),
+      findsOneWidget,
+    );
+    expect(fixture.wearable.starts, 0);
+    await tester.tap(find.text('取消'));
+    await tester.pumpAndSettle();
+    expect(find.byKey(_dialogKey), findsNothing);
+    expect(fixture.wearable.starts, 0);
+    expect(fixture.controller.activeMeasurementMetric, isNull);
+  });
+
   testWidgets('large-text pressure instructions scroll and can be dismissed', (
     tester,
   ) async {
@@ -191,6 +215,16 @@ Future<void> _open(WidgetTester tester, HealthMetric metric) async {
   final action = find.byKey(Key('health-measure-${metric.wireName}'));
   await tester.ensureVisible(action);
   await tester.tap(action);
+  if (metric == HealthMetric.bloodPressure) {
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(
+      find.byKey(const Key('u19-measurement-confirmation')),
+      findsOneWidget,
+    );
+    await tester.ensureVisible(find.text('开始测量'));
+    await tester.tap(find.text('开始测量'));
+  }
   // An indeterminate measurement indicator deliberately never settles.
   await tester.pump();
   await tester.pump(const Duration(milliseconds: 300));

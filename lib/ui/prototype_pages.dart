@@ -2278,6 +2278,7 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
   static const _nativeMethods = MethodChannel('cc.saidian/wearable_methods');
   DeviceScreenSettings? _screen;
   Map<String, Object?> _featureData = const {};
+  bool _pulseRequested = false;
   bool _finding = false;
   Timer? _findResetTimer;
   CameraController? _camera;
@@ -2314,7 +2315,9 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
       }
       if (widget.feature == DeviceFeature.screenDisplay) {
         unawaited(_loadScreen());
-      } else if (widget.feature == DeviceFeature.healthMonitoring) {
+      } else if (widget.feature == DeviceFeature.healthMonitoring &&
+          widget.controller.connectedDevice?.sdkSource !=
+              WearableSdkSource.urion) {
         unawaited(widget.controller.refreshDeviceSettings());
       } else if (widget.feature == DeviceFeature.camera) {
         unawaited(_initializeCamera());
@@ -2398,6 +2401,15 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
       }
     }
     final latest = widget.controller.deviceFeatureData[widget.feature];
+    if (latest != null &&
+        !mapEquals(latest, _featureData) &&
+        widget.feature != DeviceFeature.screenDisplay) {
+      setState(() {
+        _featureData = latest;
+        if (latest['justMeasured'] == true) _pulseRequested = false;
+      });
+      return;
+    }
     final progress = latest?['progress'];
     if (progress != null && progress != _featureData['progress']) {
       setState(() => _featureData = {..._featureData, 'progress': progress});
@@ -2407,7 +2419,14 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
   Future<void> _loadFeature() async {
     final value = await widget.controller.readDeviceFeature(widget.feature);
     if (mounted && value.isNotEmpty) {
-      setState(() => _featureData = value);
+      setState(() {
+        _featureData = value;
+        if (widget.feature == DeviceFeature.healthAssessment &&
+            widget.controller.connectedDevice?.sdkSource ==
+                WearableSdkSource.urion) {
+          _pulseRequested = value['awaitingCompletion'] == true;
+        }
+      });
       if (widget.feature == DeviceFeature.watchFaces) {
         unawaited(_enrichWatchFacePreviews(value));
       }
@@ -2791,16 +2810,17 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
         );
         return Scaffold(
           appBar: AppBar(
-            title: Text(context.l10n.deviceFeatureName(widget.feature)),
+            title: Text(
+              widget.feature == DeviceFeature.healthAssessment &&
+                      widget.controller.connectedDevice?.sdkSource ==
+                          WearableSdkSource.urion
+                  ? _watchText('脉搏分析', 'Pulse insights')
+                  : context.l10n.deviceFeatureName(widget.feature),
+            ),
           ),
           body: ListView(
             padding: const EdgeInsets.all(16),
             children: [
-              _DeviceFeatureHeader(
-                feature: widget.feature,
-                device: widget.controller.connectedDevice,
-              ),
-              const SizedBox(height: 14),
               if (!availability.isReady)
                 FeatureStateCard(
                   message: availability.message,
@@ -2828,6 +2848,14 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
                 )
               else if (widget.feature == DeviceFeature.basicSettings)
                 _buildBasicSettingsPanel(busy)
+              else if (widget.feature == DeviceFeature.healthMonitoring &&
+                  widget.controller.connectedDevice?.sdkSource ==
+                      WearableSdkSource.urion)
+                _buildU19MonitoringPanel(busy)
+              else if (widget.feature == DeviceFeature.healthAssessment &&
+                  widget.controller.connectedDevice?.sdkSource ==
+                      WearableSdkSource.urion)
+                _buildU19PulsePanel(busy)
               else
                 _buildReadyContent(busy),
             ],
@@ -2871,8 +2899,8 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
           saved
               ? key == 'syncTime'
                     ? _watchText(
-                        '已发送时间，请核对手表显示',
-                        'Time sent. Check your watch display.',
+                        '时间和语言请求已发送，请在手表上核对；语言可能保持不变。',
+                        'Time and language request sent. Check the watch; its language may stay the same.',
                       )
                     : _watchText(
                         '已保存并从手表确认',
@@ -2889,35 +2917,32 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
   }
 
   Future<void> _syncBasicTime() async {
-    var language = _featureData['timeLanguage'];
-    if (language != 'zh' && language != 'en') {
-      language = await showDialog<String>(
-        context: context,
-        builder: (dialogContext) => AlertDialog(
-          title: Text(_watchText('确认手表语言', 'Confirm watch language')),
-          content: Text(
-            _watchText(
-              '首次同步时间时，请选择手表当前使用的语言。之后切换 App 语言不会改变手表语言。',
-              'Before the first time sync, choose the language already shown on your watch. Changing the app language later will not change your watch.',
-            ),
+    final language = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(_watchText('时间与手表语言', 'Time & watch language')),
+        content: Text(
+          _watchText(
+            '选择希望手表显示的语言，并发送手机当前时间。部分手表可能不会切换语言，请发送后核对手表。',
+            'Choose the language you want on the watch and send your phone’s current time. Some watches may not change language; check the display afterward.',
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: Text(context.l10n.cancel),
-            ),
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop('zh'),
-              child: const Text('中文'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop('en'),
-              child: const Text('English'),
-            ),
-          ],
         ),
-      );
-    }
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: Text(context.l10n.cancel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop('zh'),
+            child: const Text('中文'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop('en'),
+            child: const Text('English'),
+          ),
+        ],
+      ),
+    );
     if (mounted && language is String) {
       await _saveBasicSetting('syncTime', language);
     }
@@ -2972,11 +2997,11 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
         Card(
           child: ListTile(
             leading: const Icon(Icons.access_time_rounded),
-            title: Text(_watchText('同步时间', 'Sync time')),
+            title: Text(_watchText('时间与语言', 'Time & language')),
             subtitle: Text(
               _watchText(
-                '将手机当前时间发送到手表；请在手表上核对',
-                'Send your phone’s current time to the watch, then check its display.',
+                '同步手机时间，并选择手表语言',
+                'Sync your phone’s time and request a watch language',
               ),
             ),
             trailing: const Icon(Icons.chevron_right_rounded),
@@ -4198,6 +4223,335 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
     }, enabled ? '已设为紧急联系人' : '已取消紧急联系人');
   }
 
+  Future<void> _editU19DynamicPressure() async {
+    final current = _featureData['dynamicBloodPressure'];
+    if (current is! Map) return;
+    final original = Map<String, Object?>.from(current);
+    var hour = (original['startHour'] as num?)?.toInt() ?? 8;
+    var day = (original['dayIntervalMinutes'] as num?)?.toInt() ?? 60;
+    var night = (original['nightIntervalMinutes'] as num?)?.toInt() ?? 60;
+    if (!{60, 90, 120, 180}.contains(day)) day = 60;
+    if (!{60, 90, 120, 180}.contains(night)) night = 60;
+    final selected = await showDialog<Map<String, Object?>>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          key: const Key('u19-dynamic-pressure-editor'),
+          scrollable: true,
+          title: Text(_watchText('定时血压测量', 'Scheduled blood pressure')),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                _watchText(
+                  '开启后手表会按间隔自动充气。请确认手表佩戴合适，并按个人需要谨慎设置。',
+                  'The watch will inflate on a schedule. Check the fit and choose intervals carefully.',
+                ),
+              ),
+              const SizedBox(height: 16),
+              DropdownButtonFormField<int>(
+                key: const Key('u19-dynamic-start-hour'),
+                initialValue: hour,
+                decoration: InputDecoration(
+                  labelText: _watchText('首次开始时间', 'First start time'),
+                ),
+                items: [
+                  for (var value = 0; value < 24; value++)
+                    DropdownMenuItem(
+                      value: value,
+                      child: Text('${value.toString().padLeft(2, '0')}:00'),
+                    ),
+                ],
+                onChanged: (value) {
+                  if (value != null) setDialogState(() => hour = value);
+                },
+              ),
+              const SizedBox(height: 12),
+              for (final isDay in [true, false]) ...[
+                DropdownButtonFormField<int>(
+                  key: Key(
+                    isDay
+                        ? 'u19-dynamic-day-interval'
+                        : 'u19-dynamic-night-interval',
+                  ),
+                  initialValue: isDay ? day : night,
+                  decoration: InputDecoration(
+                    labelText: isDay
+                        ? _watchText('白天间隔', 'Day interval')
+                        : _watchText('夜间间隔', 'Night interval'),
+                  ),
+                  items: [
+                    for (final value in [60, 90, 120, 180])
+                      DropdownMenuItem(
+                        value: value,
+                        child: Text(_watchText('$value 分钟', '$value min')),
+                      ),
+                  ],
+                  onChanged: (value) {
+                    if (value != null) {
+                      setDialogState(() {
+                        if (isDay) {
+                          day = value;
+                        } else {
+                          night = value;
+                        }
+                      });
+                    }
+                  },
+                ),
+                const SizedBox(height: 12),
+              ],
+              Text(
+                _watchText(
+                  '测量计划只供日常记录；如有不适请在手表上停止并取下表带。',
+                  'For personal tracking only. If uncomfortable, stop on the watch and remove the band.',
+                ),
+                style: const TextStyle(fontSize: 13, height: 1.4),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: Text(context.l10n.cancel),
+            ),
+            FilledButton(
+              key: const Key('u19-dynamic-pressure-enable'),
+              onPressed: () => Navigator.pop(dialogContext, {
+                'enabled': true,
+                'startHour': hour,
+                'dayIntervalMinutes': day,
+                'nightIntervalMinutes': night,
+              }),
+              child: Text(_watchText('下一步', 'Continue')),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (selected == null || !mounted) return;
+    final confirmed = await _confirm(
+      _watchText('确认开启定时充气？', 'Enable scheduled inflation?'),
+      _watchText(
+        '手表可能在白天和夜间反复充气。确定要启用吗？',
+        'Your watch may inflate repeatedly, including at night. Continue?',
+      ),
+    );
+    if (!confirmed || !mounted) return;
+    await _saveFeature({
+      'dynamicBloodPressure': selected,
+    }, _watchText('已从手表确认设置', 'Confirmed by your watch'));
+  }
+
+  Widget _buildU19MonitoringPanel(bool busy) {
+    if (_featureData.isEmpty) {
+      return _loadingCard(busy, _watchText('健康监测', 'health monitoring'));
+    }
+    final dynamic = _featureData['dynamicBloodPressure'];
+    final plan = dynamic is Map ? Map<String, Object?>.from(dynamic) : null;
+    return Column(
+      children: [
+        for (final entry in [
+          ('heartRate', _watchText('自动心率', 'Automatic heart rate')),
+          ('bloodOxygen', _watchText('自动血氧', 'Automatic blood oxygen')),
+        ])
+          if (_featureData[entry.$1] is bool)
+            Card(
+              child: SwitchListTile(
+                title: Text(entry.$2),
+                value: _featureData[entry.$1] == true,
+                onChanged: busy
+                    ? null
+                    : (value) => _saveFeature({
+                        entry.$1: value,
+                      }, _watchText('设置已保存', 'Setting saved')),
+              ),
+            ),
+        if (plan != null)
+          Card(
+            child: Column(
+              children: [
+                ListTile(
+                  leading: const Icon(Icons.schedule_rounded),
+                  title: Text(_watchText('定时血压测量', 'Scheduled blood pressure')),
+                  subtitle: Text(
+                    plan['enabled'] == true
+                        ? _watchText(
+                            '已开启 · ${plan['startHour']}:00 起 · 白天 ${plan['dayIntervalMinutes']} 分钟 / 夜间 ${plan['nightIntervalMinutes']} 分钟',
+                            'On · from ${plan['startHour']}:00 · day ${plan['dayIntervalMinutes']} min / night ${plan['nightIntervalMinutes']} min',
+                          )
+                        : _watchText('已关闭', 'Off'),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: busy ? null : _editU19DynamicPressure,
+                          child: Text(_watchText('设置计划', 'Set schedule')),
+                        ),
+                      ),
+                      if (plan['enabled'] == true) ...[
+                        const SizedBox(width: 10),
+                        TextButton(
+                          key: const Key('u19-dynamic-pressure-disable'),
+                          onPressed: busy
+                              ? null
+                              : () => _saveFeature({
+                                  'dynamicBloodPressure': {
+                                    ...plan,
+                                    'enabled': false,
+                                  },
+                                }, _watchText('已关闭', 'Turned off')),
+                          child: Text(_watchText('关闭', 'Turn off')),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        const SizedBox(height: 8),
+        OutlinedButton.icon(
+          onPressed: busy ? null : _loadFeature,
+          icon: const Icon(Icons.refresh_rounded),
+          label: Text(_watchText('从手表刷新', 'Refresh from watch')),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _startU19Pulse() async {
+    final confirmed = await _confirm(
+      _watchText('开始脉搏分析？', 'Start pulse reading?'),
+      _watchText(
+        '请保持手表贴合手腕。测量由手表完成，结果仅供日常参考。',
+        'Keep the watch snug. Results are for personal wellness tracking, not diagnosis.',
+      ),
+    );
+    if (!confirmed || !mounted) return;
+    final started = await _saveFeature(
+      {'operation': 'start'},
+      _watchText('手表已开始测量', 'Reading started on your watch'),
+      reload: false,
+    );
+    if (mounted && started) setState(() => _pulseRequested = true);
+  }
+
+  Widget _buildU19PulsePanel(bool busy) {
+    final raw = _featureData['pulse'];
+    final pulse = raw is Map ? Map<String, Object?>.from(raw) : null;
+    return Column(
+      children: [
+        if (pulse != null)
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(18),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    _watchText('手表脉搏指标', 'Watch pulse indices'),
+                    style: const TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  for (final item in [
+                    (_watchText('血瘀', 'Flow'), pulse['bloodStasis']),
+                    (_watchText('气血', 'Vitality'), pulse['qiBlood']),
+                    (_watchText('湿气', 'Moisture'), pulse['dampness']),
+                  ])
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 5),
+                      child: Row(
+                        children: [
+                          Expanded(child: Text(item.$1)),
+                          Text(
+                            '${item.$2 ?? '—'} / 10',
+                            style: const TextStyle(fontWeight: FontWeight.w700),
+                          ),
+                        ],
+                      ),
+                    ),
+                  const SizedBox(height: 8),
+                  Text(
+                    _watchText(
+                      '以上为手表提供的指数，不用于疾病诊断。',
+                      'Watch-provided wellness indices, not a diagnosis.',
+                    ),
+                    style: const TextStyle(fontSize: 12, height: 1.4),
+                  ),
+                ],
+              ),
+            ),
+          )
+        else
+          Card(
+            child: ListTile(
+              title: Text(_watchText('暂无脉搏记录', 'No pulse reading yet')),
+            ),
+          ),
+        if (_pulseRequested)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            child: Column(
+              children: [
+                Text(
+                  _watchText(
+                    '等待手表完成测量；需要中止时请在手表上操作。',
+                    'Waiting for the watch. To stop, use the watch controls.',
+                  ),
+                ),
+                TextButton(
+                  key: const Key('u19-pulse-ended-on-watch'),
+                  onPressed: () async {
+                    final ended = await _confirm(
+                      _watchText('手表已结束测量？', 'Finished on your watch?'),
+                      _watchText(
+                        '请先在手表上结束测量。确认后可以重新开始；此操作不会向手表发送停止指令。',
+                        'End the reading on your watch first. This only clears the wait in the app.',
+                      ),
+                    );
+                    if (ended && mounted) {
+                      final cleared = await widget.controller
+                          .writeDeviceFeature(widget.feature, const {
+                            'operation': 'watchEnded',
+                          });
+                      if (cleared && mounted) {
+                        setState(() => _pulseRequested = false);
+                      }
+                    }
+                  },
+                  child: Text(_watchText('我已在手表上结束', 'Finished on watch')),
+                ),
+              ],
+            ),
+          ),
+        const SizedBox(height: 12),
+        SizedBox(
+          width: double.infinity,
+          child: FilledButton(
+            key: const Key('u19-pulse-start'),
+            onPressed: busy || _pulseRequested ? null : _startU19Pulse,
+            child: Text(_watchText('开始测量', 'Start reading')),
+          ),
+        ),
+        const SizedBox(height: 8),
+        TextButton.icon(
+          onPressed: busy ? null : _loadFeature,
+          icon: const Icon(Icons.refresh_rounded),
+          label: Text(_watchText('读取手表记录', 'Read watch history')),
+        ),
+      ],
+    );
+  }
+
   Future<void> _selectEmergencyContact(
     List<Map<String, Object?>> contacts,
   ) async {
@@ -4784,61 +5138,6 @@ class _WatchFaceThumbnail extends StatelessWidget {
   }
 }
 
-class _DeviceFeatureHeader extends StatelessWidget {
-  const _DeviceFeatureHeader({required this.feature, required this.device});
-
-  final DeviceFeature feature;
-  final DeviceInfo? device;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 52,
-            height: 52,
-            decoration: BoxDecoration(
-              color: SaydianColors.blue.withValues(alpha: .12),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(_deviceFeatureIcon(feature), color: SaydianColors.blue),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  context.l10n.deviceFeatureName(feature),
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  _deviceFeatureDescription(feature),
-                  style: const TextStyle(
-                    color: SaydianColors.muted,
-                    fontSize: 14,
-                    height: 1.4,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _EcgWaveformCard extends StatelessWidget {
   const _EcgWaveformCard({
     required this.samples,
@@ -5106,35 +5405,15 @@ class _ScreenSettingsPanel extends StatelessWidget {
                         ),
                       ),
               ),
-            ] else ...[
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: SaydianColors.brandGoldSoft,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Icon(Icons.info_outline_rounded, size: 22),
-                    SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        '当前手表固件未开放 APP 亮度调节，请在手表的屏幕设置中调整亮度。',
-                        style: TextStyle(fontSize: 14, height: 1.45),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
             ],
             if (value.durationSeconds != null &&
                 value.minimumDurationSeconds != null &&
                 value.maximumDurationSeconds != null) ...[
-              const Divider(),
-              const SizedBox(height: 12),
-              Text('亮屏时长  ${value.durationSeconds} 秒'),
+              if (value.brightnessSupported) ...[
+                const Divider(),
+                const SizedBox(height: 12),
+              ],
+              Text(context.l10n.screenTimeoutSeconds(value.durationSeconds!)),
               Slider(
                 value: value.durationSeconds!.toDouble().clamp(
                   value.minimumDurationSeconds!.toDouble(),

@@ -764,10 +764,18 @@ class AppController extends ChangeNotifier {
           connectedDevice != null &&
           capabilities != null);
 
-  bool shouldShowHealthMetric(HealthMetric metric) =>
-      latestByMetric.containsKey(metric) ||
-      (_hasResolvedDeviceCapabilities &&
-          capabilities?.supports(metric) == true);
+  bool shouldShowHealthMetric(HealthMetric metric) {
+    // Keep saved history available from its history route, but do not present
+    // an unsupported sensor as a live feature of the connected U19.
+    if (connectedDevice?.sdkSource == WearableSdkSource.urion &&
+        _hasResolvedDeviceCapabilities &&
+        capabilities?.supports(metric) != true) {
+      return false;
+    }
+    return latestByMetric.containsKey(metric) ||
+        (_hasResolvedDeviceCapabilities &&
+            capabilities?.supports(metric) == true);
+  }
 
   bool canMeasureHealthMetric(HealthMetric metric) =>
       connectedDevice != null &&
@@ -5208,6 +5216,23 @@ class AppController extends ChangeNotifier {
       if (connectedDevice != null) {
         capabilities = DeviceCapabilities.fromMap(event.payload);
         deviceCapabilityState = DeviceCapabilityState.ready;
+      }
+    } else if (event.type == 'deviceFeatureData') {
+      final deviceId = '${event.payload['deviceId'] ?? ''}';
+      final feature = DeviceFeature.tryFromWire(
+        '${event.payload['feature'] ?? ''}',
+      );
+      if (connectedDevice != null &&
+          connectedDevice!.id == deviceId &&
+          feature != null &&
+          visibleDeviceFeatures.contains(feature)) {
+        final data = Map<String, Object?>.from(event.payload)
+          ..remove('deviceId')
+          ..remove('feature');
+        deviceFeatureData = {
+          ...deviceFeatureData,
+          feature: {...?deviceFeatureData[feature], ...data},
+        };
       }
     } else if (event.type == 'syncProgress') {
       final deviceId = '${event.payload['deviceId'] ?? ''}';

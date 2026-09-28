@@ -199,6 +199,84 @@ class Eb1BloodPressureSample {
   }
 }
 
+class Eb1PulseSample {
+  const Eb1PulseSample({
+    required this.rawTimestamp,
+    required this.bloodStasis,
+    required this.qiBlood,
+    required this.dampness,
+  });
+
+  final int rawTimestamp;
+  final int bloodStasis;
+  final int qiBlood;
+  final int dampness;
+
+  String get fingerprint => '$rawTimestamp|$bloodStasis|$qiBlood|$dampness';
+
+  static Eb1PulseSample? parse(Eb1Frame frame) {
+    if (frame.command != 0x34) {
+      throw const FormatException('Not an EB1 pulse packet');
+    }
+    final timestamp = eb1UnsignedLittle(frame, 1, 4);
+    if (timestamp == 0xffffffff) return null;
+    if (timestamp == 0 || frame[5] > 10 || frame[6] > 10 || frame[7] > 10) {
+      throw const FormatException('Invalid EB1 pulse values');
+    }
+    return Eb1PulseSample(
+      rawTimestamp: timestamp,
+      bloodStasis: frame[5],
+      qiBlood: frame[6],
+      dampness: frame[7],
+    );
+  }
+}
+
+class Eb1DynamicBloodPressureSettings {
+  const Eb1DynamicBloodPressureSettings({
+    required this.enabled,
+    required this.startHour,
+    required this.dayIntervalMinutes,
+    required this.nightIntervalMinutes,
+  });
+
+  final bool enabled;
+  final int startHour;
+  final int dayIntervalMinutes;
+  final int nightIntervalMinutes;
+
+  static Eb1DynamicBloodPressureSettings parse(Eb1Frame frame) {
+    if (frame.command != 0x36 && frame.command != 0x37) {
+      throw const FormatException('Not an EB1 dynamic pressure packet');
+    }
+    if (frame[1] > 1 ||
+        frame[2] > 23 ||
+        (frame[1] == 1 && (frame[3] == 0 || frame[4] == 0))) {
+      throw const FormatException('Invalid EB1 dynamic pressure settings');
+    }
+    return Eb1DynamicBloodPressureSettings(
+      enabled: frame[1] == 1,
+      startHour: frame[2],
+      dayIntervalMinutes: frame[3],
+      nightIntervalMinutes: frame[4],
+    );
+  }
+
+  Map<String, Object?> toMap() => {
+    'enabled': enabled,
+    'startHour': startHour,
+    'dayIntervalMinutes': dayIntervalMinutes,
+    'nightIntervalMinutes': nightIntervalMinutes,
+  };
+
+  List<int> get payload => [
+    enabled ? 1 : 0,
+    startHour,
+    dayIntervalMinutes,
+    nightIntervalMinutes,
+  ];
+}
+
 class Eb1IndexedDay {
   Eb1IndexedDay(this.command, this.frames);
 
@@ -266,8 +344,10 @@ class Eb1ResponseCollector {
     if (frame.command != command) {
       throw const FormatException('Wrong EB1 response');
     }
-    if (command == 0x14) {
-      final sample = Eb1BloodPressureSample.parse(frame);
+    if (command == 0x14 || command == 0x34) {
+      final sample = command == 0x14
+          ? Eb1BloodPressureSample.parse(frame)
+          : Eb1PulseSample.parse(frame);
       if (sample == null) return _finish();
       _frames.add(frame);
       return _frames.length == count ? _finish() : null;

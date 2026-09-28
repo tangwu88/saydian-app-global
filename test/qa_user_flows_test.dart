@@ -1179,7 +1179,7 @@ void main() {
       find.descendant(of: find.byType(AppBar), matching: find.text('健康记录')),
       findsOneWidget,
     );
-    expect(find.text('健康数据总览'), findsOneWidget);
+    expect(find.text('健康数据'), findsOneWidget);
     await _popRoute(tester);
     await tester.pumpAndSettle();
 
@@ -1229,12 +1229,7 @@ void main() {
     await _popRoute(tester);
     await tester.pumpAndSettle();
 
-    await tester.ensureVisible(find.byKey(const Key('my-ai-question')));
-    await tester.tap(find.byKey(const Key('my-ai-question')));
-    await tester.pumpAndSettle();
-    expect(find.text('AI 健康管家'), findsOneWidget);
-    await _popRoute(tester);
-    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('my-ai-question')), findsNothing);
 
     await tester.scrollUntilVisible(
       find.text('账号设置'),
@@ -1322,7 +1317,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('目标设置'), findsNothing);
       expect(find.byKey(const Key('my-add-device')), findsOneWidget);
-      expect(find.byKey(const Key('my-ai-question')), findsOneWidget);
+      expect(find.byKey(const Key('my-ai-question')), findsNothing);
       expect(tester.takeException(), isNull);
     },
   );

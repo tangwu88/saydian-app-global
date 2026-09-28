@@ -656,6 +656,11 @@ class AppLocalizationsKo extends AppLocalizations {
   String get autoBrightness => '자동 밝기';
 
   @override
+  String screenTimeoutSeconds(int seconds) {
+    return '화면 켜짐 시간: $seconds초';
+  }
+
+  @override
   String get raiseToWake => '손목을 들어 화면 켜기';
 
   @override
@@ -1967,6 +1972,9 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get finishMeasurementOnWatch => '시계에서 측정을 종료해 주세요.';
+
+  @override
+  String get startMeasurement => '측정 시작';
 
   @override
   String get watchEndedMeasureAgain => '시계에서 종료함 — 다시 측정';

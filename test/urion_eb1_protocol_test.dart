@@ -83,6 +83,57 @@ void main() {
     expect(Eb1BloodPressureSample.parse(sample)?.diastolic, 97);
   });
 
+  test('pulse history validates scores, sentinel, and packet count', () {
+    final sample = Eb1Frame.request(0x34, [1, 2, 3, 4, 3, 6, 2]);
+    expect(Eb1PulseSample.parse(sample)?.bloodStasis, 3);
+    expect(Eb1PulseSample.parse(sample)?.qiBlood, 6);
+    expect(Eb1PulseSample.parse(sample)?.dampness, 2);
+    expect(
+      Eb1PulseSample.parse(Eb1Frame.request(0x34, [255, 255, 255, 255])),
+      isNull,
+    );
+    expect(
+      () =>
+          Eb1PulseSample.parse(Eb1Frame.request(0x34, [1, 2, 3, 4, 11, 0, 0])),
+      throwsFormatException,
+    );
+    final collector = Eb1ResponseCollector(0x34, count: 2);
+    expect(collector.add(sample), isNull);
+    expect(
+      collector.add(Eb1Frame.request(0x34, [255, 255, 255, 255])),
+      hasLength(1),
+    );
+  });
+
+  test('dynamic pressure read and unsolicited change use the same layout', () {
+    final read = Eb1DynamicBloodPressureSettings.parse(
+      Eb1Frame.request(0x36, [1, 8, 60, 90]),
+    );
+    expect(read.enabled, isTrue);
+    expect(read.startHour, 8);
+    expect(read.dayIntervalMinutes, 60);
+    expect(read.nightIntervalMinutes, 90);
+    expect(read.payload, [1, 8, 60, 90]);
+    expect(
+      Eb1DynamicBloodPressureSettings.parse(
+        Eb1Frame.request(0x37, [0, 8, 60, 90]),
+      ).enabled,
+      isFalse,
+    );
+    expect(
+      () => Eb1DynamicBloodPressureSettings.parse(
+        Eb1Frame.request(0x36, [1, 24, 60, 90]),
+      ),
+      throwsFormatException,
+    );
+    expect(
+      () => Eb1DynamicBloodPressureSettings.parse(
+        Eb1Frame.request(0x36, [1, 8, 0, 90]),
+      ),
+      throwsFormatException,
+    );
+  });
+
   test('five-packet oxygen layout cannot be decoded as hourly scalars', () {
     final frames = [
       Eb1Frame.request(0x2d, [0, 5, 60]),

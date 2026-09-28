@@ -18,13 +18,15 @@ void main() {
     () async {
       await watch.connect();
       final capabilities = await watch.bridge.getCapabilities();
-      expect(capabilities.manualMetrics, {HealthMetric.bloodPressure});
+      expect(capabilities.manualMetrics, {
+        HealthMetric.bloodPressure,
+        HealthMetric.heartRate,
+        HealthMetric.bloodOxygen,
+      });
       expect(capabilities.stoppableManualMetrics, isEmpty);
       expect(capabilities.features, contains(DeviceFeature.findWatch));
-      expect(
-        capabilities.manualMetrics,
-        isNot(contains(HealthMetric.heartRate)),
-      );
+      expect(capabilities.features, contains(DeviceFeature.healthAssessment));
+      expect(capabilities.features, contains(DeviceFeature.healthMonitoring));
       expect(
         watch.writes.map((entry) => entry.$2.command),
         isNot(contains(0x32)),
@@ -132,7 +134,7 @@ void main() {
         watch.writes.where((entry) => entry.$2.command == 0x32),
         hasLength(2),
       );
-      expect(watch.writes.where((entry) => entry.$2.command == 0x34), isEmpty);
+      expect(watch.writes.where((entry) => entry.$2.command == 0x3a), isEmpty);
     },
   );
 
@@ -222,6 +224,192 @@ void main() {
       );
     },
   );
+
+  test('heart-rate start waits for one changed watch slot, not ACK', () async {
+    watch.heartValues = List.filled(288, 0);
+    await watch.connectAndReadCapabilities();
+    await watch.bridge.startMeasurement(HealthMetric.heartRate);
+    expect(watch.records, isEmpty);
+    watch.now = watch.now.add(const Duration(seconds: 25));
+    watch.heartValues![72] = 74;
+    await watch.emit(Eb1Frame.request(0x73, [1]));
+    await _until(() => watch.records.isNotEmpty);
+    final record = HealthRecord.fromJson(watch.records.single.payload);
+    expect(record.metric, HealthMetric.heartRate);
+    expect(record.values['value'], 74);
+    expect(record.origin, MeasurementOrigin.appMeasurement);
+    await watch.emit(Eb1Frame.request(0x73, [1]));
+    await _flush();
+    expect(watch.records, hasLength(1));
+  });
+
+  test('oxygen start accepts a four-packet changed slot only', () async {
+    watch.oxygenValues = List.filled(24, 0);
+    await watch.connectAndReadCapabilities();
+    await watch.bridge.startMeasurement(HealthMetric.bloodOxygen);
+    expect(watch.records, isEmpty);
+    watch.now = watch.now.add(const Duration(seconds: 20));
+    watch.oxygenValues![8] = 98;
+    await watch.emit(Eb1Frame.request(0x73, [3]));
+    await _until(() => watch.records.isNotEmpty);
+    final record = HealthRecord.fromJson(watch.records.single.payload);
+    expect(record.metric, HealthMetric.bloodOxygen);
+    expect(record.values['value'], 98);
+  });
+
+  test('unverified five-packet oxygen never exposes a measurement', () async {
+    watch.oxygenValues = List.filled(24, 98);
+    watch.oxygenFivePacket = true;
+    await watch.connectAndReadCapabilities();
+    final capabilities = await watch.bridge.getCapabilities();
+    expect(capabilities.metrics, isNot(contains(HealthMetric.bloodOxygen)));
+    expect(
+      capabilities.manualMetrics,
+      isNot(contains(HealthMetric.bloodOxygen)),
+    );
+    expect(watch.writes.where((entry) => entry.$2.command == 0x39), isEmpty);
+  });
+
+  test(
+    'dynamic pressure read, guarded write and watch change notice',
+    () async {
+      await watch.connectAndReadCapabilities();
+      final current = await watch.bridge.readDeviceFeature(
+        DeviceFeature.healthMonitoring,
+      );
+      expect((current['dynamicBloodPressure'] as Map)['enabled'], isFalse);
+      await expectLater(
+        watch.bridge.writeDeviceFeature(DeviceFeature.healthMonitoring, {
+          'dynamicBloodPressure': {
+            'enabled': true,
+            'startHour': 8,
+            'dayIntervalMinutes': 9,
+            'nightIntervalMinutes': 9,
+          },
+        }),
+        throwsFormatException,
+      );
+      expect(watch.writes.where((entry) => entry.$2.command == 0x35), isEmpty);
+      await watch.bridge.writeDeviceFeature(DeviceFeature.healthMonitoring, {
+        'dynamicBloodPressure': {
+          'enabled': true,
+          'startHour': 8,
+          'dayIntervalMinutes': 60,
+          'nightIntervalMinutes': 90,
+        },
+      });
+      expect(watch.schedule, [1, 8, 60, 90]);
+      await watch.emit(Eb1Frame.request(0x37, [0, 9, 60, 90]));
+      await _flush();
+      expect(
+        watch.events
+            .where((event) => event.type == 'deviceFeatureData')
+            .last
+            .payload['dynamicBloodPressure'],
+        containsPair('enabled', false),
+      );
+    },
+  );
+
+  test('pulse history changes are separate from acknowledged start', () async {
+    await watch.connectAndReadCapabilities();
+    await watch.bridge.writeDeviceFeature(DeviceFeature.healthAssessment, {
+      'operation': 'start',
+    });
+    expect(
+      watch.events.where((event) => event.type == 'deviceFeatureData'),
+      isEmpty,
+    );
+    watch.now = watch.now.add(const Duration(seconds: 30));
+    watch.pulseHistory = [
+      Eb1Frame.request(0x34, [
+        for (var index = 0; index < 4; index++)
+          ((watch.now.millisecondsSinceEpoch ~/ 1000) >> (index * 8)) & 255,
+        3,
+        6,
+        2,
+      ]),
+    ];
+    await watch.emit(Eb1Frame.request(0x73, [5]));
+    await _until(
+      () => watch.events.any((event) => event.type == 'deviceFeatureData'),
+    );
+    final event = watch.events.lastWhere(
+      (event) => event.type == 'deviceFeatureData',
+    );
+    expect(event.payload['justMeasured'], isTrue);
+    expect(event.payload['pulse'], containsPair('qiBlood', 6));
+  });
+
+  test('pulse restart waits for user-confirmed end on the watch', () async {
+    await watch.connectAndReadCapabilities();
+    await watch.bridge.writeDeviceFeature(DeviceFeature.healthAssessment, {
+      'operation': 'start',
+    });
+    expect(
+      (await watch.bridge.readDeviceFeature(
+        DeviceFeature.healthAssessment,
+      ))['awaitingCompletion'],
+      isTrue,
+    );
+    final startsBefore = watch.writes
+        .where((write) => write.$2.command == 0x3a)
+        .length;
+    await expectLater(
+      watch.bridge.writeDeviceFeature(DeviceFeature.healthAssessment, {
+        'operation': 'start',
+      }),
+      throwsA(isA<PlatformException>()),
+    );
+    expect(
+      watch.writes.where((write) => write.$2.command == 0x3a),
+      hasLength(startsBefore),
+    );
+    await watch.bridge.writeDeviceFeature(DeviceFeature.healthAssessment, {
+      'operation': 'watchEnded',
+    });
+    expect(
+      (await watch.bridge.readDeviceFeature(
+        DeviceFeature.healthAssessment,
+      ))['awaitingCompletion'],
+      isFalse,
+    );
+    await watch.bridge.writeDeviceFeature(DeviceFeature.healthAssessment, {
+      'operation': 'start',
+    });
+    expect(
+      watch.writes.where((write) => write.$2.command == 0x3a),
+      hasLength(startsBefore + 1),
+    );
+  });
+
+  test(
+    'time request carries selected watch language and screen timeout reads back',
+    () async {
+      await watch.connectAndReadCapabilities();
+      await watch.bridge.writeDeviceFeature(DeviceFeature.basicSettings, {
+        'syncTime': 'en',
+      });
+      final english = watch.writes.lastWhere(
+        (write) => write.$2.command == 0x01,
+      );
+      expect(english.$2[7], 1);
+      await watch.bridge.writeDeviceFeature(DeviceFeature.basicSettings, {
+        'syncTime': 'zh',
+      });
+      final chinese = watch.writes.lastWhere(
+        (write) => write.$2.command == 0x01,
+      );
+      expect(chinese.$2[7], 0);
+      await watch.bridge.writeDeviceFeature(DeviceFeature.screenDisplay, {
+        'durationSeconds': 15,
+      });
+      final screen = await watch.bridge.readDeviceFeature(
+        DeviceFeature.screenDisplay,
+      );
+      expect(screen['durationSeconds'], 15);
+    },
+  );
 }
 
 Future<void> _flush() => Future<void>.delayed(const Duration(milliseconds: 10));
@@ -250,6 +438,10 @@ class _Watch {
       const MethodChannel('test/u19-session-events'),
       (_) async => null,
     );
+    messenger.setMockMethodCallHandler(
+      const MethodChannel('plugins.it_nomads.com/flutter_secure_storage'),
+      (_) async => null,
+    );
     bridge = UrionWearableBridge(
       methods: methods,
       eventChannel: eventChannel,
@@ -270,6 +462,12 @@ class _Watch {
   int generation = 0;
   int bpReads = 0;
   List<Eb1Frame> history = [];
+  List<Eb1Frame> pulseHistory = [];
+  List<int>? heartValues;
+  List<int>? oxygenValues;
+  bool oxygenFivePacket = false;
+  List<int> schedule = [0, 8, 60, 60];
+  int screenDuration = 10;
   final events = <WearableEvent>[];
   final writes = <(String, Eb1Frame)>[];
   Completer<void>? historyGate;
@@ -331,6 +529,37 @@ class _Watch {
         if (history.length < request[6]) {
           replies.add(Eb1Frame.request(0x14, [255, 255, 255, 255]));
         }
+      case 0x34:
+        replies.addAll(pulseHistory.take(request[6]));
+        if (pulseHistory.length < request[6]) {
+          replies.add(Eb1Frame.request(0x34, [255, 255, 255, 255]));
+        }
+      case 0x15 || 0x2d:
+        final values = request.command == 0x15 ? heartValues : oxygenValues;
+        if (values == null) {
+          replies.add(Eb1Frame.request(request.command, [255]));
+        } else {
+          final total = request.command == 0x15
+              ? 24
+              : oxygenFivePacket
+              ? 5
+              : 4;
+          final interval = request.command == 0x15 ? 5 : 60;
+          replies.add(Eb1Frame.request(request.command, [0, total, interval]));
+          final padded = [...values, ...List.filled(295 - values.length, 0)];
+          var offset = 0;
+          for (var index = 1; index < total; index++) {
+            final count = index == 1 ? 9 : 13;
+            replies.add(
+              Eb1Frame.request(request.command, [
+                index,
+                if (index == 1) ...[0, 0, 0, 0],
+                ...padded.sublist(offset, offset + count),
+              ]),
+            );
+            offset += count;
+          }
+        }
       case 0x07:
         final today = DateTime.now();
         for (var index = 0; index < 2; index++) {
@@ -345,7 +574,10 @@ class _Watch {
           );
         }
       case 0x1f:
-        replies.add(Eb1Frame.request(0x1f, [1, 10]));
+        if (request[1] == 2) screenDuration = request[2];
+        replies.add(Eb1Frame.request(0x1f, [request[1], screenDuration]));
+      case 0x01:
+        replies.add(Eb1Frame.request(0x01));
       case 0x16 || 0x2c:
         replies.add(Eb1Frame.request(request.command, [1, 2]));
       case 0x0a:
@@ -354,6 +586,13 @@ class _Watch {
         replies.add(Eb1Frame.request(0x21, [1, 0x70, 0x17]));
       case 0x32:
         replies.add(Eb1Frame.request(0x32));
+      case 0x36:
+        replies.add(Eb1Frame.request(0x36, schedule));
+      case 0x35:
+        schedule = request.bytes.sublist(1, 5);
+        replies.add(Eb1Frame.request(0x35));
+      case 0x38 || 0x39 || 0x3a:
+        replies.add(Eb1Frame.request(request.command));
       case 0x50:
         if (findGate case final gate?) {
           findGate = null;
@@ -396,6 +635,10 @@ class _Watch {
     messenger.setMockMethodCallHandler(methods, null);
     messenger.setMockMethodCallHandler(
       const MethodChannel('test/u19-session-events'),
+      null,
+    );
+    messenger.setMockMethodCallHandler(
+      const MethodChannel('plugins.it_nomads.com/flutter_secure_storage'),
       null,
     );
   }

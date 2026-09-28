@@ -713,6 +713,11 @@ class AppLocalizationsFr extends AppLocalizations {
   String get autoBrightness => 'Luminosité automatique';
 
   @override
+  String screenTimeoutSeconds(int seconds) {
+    return 'Extinction de l’écran : $seconds s';
+  }
+
+  @override
   String get raiseToWake => 'Lever pour activer';
 
   @override
@@ -2069,6 +2074,9 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get finishMeasurementOnWatch => 'Terminez la mesure sur votre montre.';
+
+  @override
+  String get startMeasurement => 'Démarrer la mesure';
 
   @override
   String get watchEndedMeasureAgain => 'Terminée sur la montre — remesurer';

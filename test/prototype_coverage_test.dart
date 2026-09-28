@@ -115,6 +115,7 @@ void main() {
 
       expect(find.text('查找手表'), findsOneWidget);
       expect(find.text('天气'), findsOneWidget);
+      expect(find.text('点击进入'), findsNothing);
       expect(find.text('相机遥控'), findsNothing);
       expect(find.text('表盘与个性化'), findsNothing);
       expect(tester.takeException(), isNull);
@@ -140,6 +141,7 @@ void main() {
       await tester.pump();
       expect(find.text('Vep'), findsNothing);
       expect(find.text('Yuc'), findsNothing);
+      expect(find.textContaining('MAC ·'), findsNothing);
 
       await tester.pumpWidget(
         MaterialApp(home: DeviceInfoPage(controller: controller)),
@@ -497,6 +499,127 @@ void main() {
     });
   }
 
+  testWidgets('U19 scheduled inflation and pulse need explicit confirmation', (
+    tester,
+  ) async {
+    final wearable = _U19FeatureWearable();
+    final controller = AppController(
+      MemorySessionVault(),
+      _CoverageApi(),
+      MemoryHealthStore(),
+      wearable,
+    )..isBooting = false;
+    addTearDown(controller.dispose);
+    await controller.connectDevice(
+      const DeviceInfo(id: 'urion:synthetic-watch', name: 'U19', model: 'U19'),
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        home: DeviceFeaturePage(
+          controller: controller,
+          feature: DeviceFeature.healthMonitoring,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Scheduled blood pressure'), findsWidgets);
+    await tester.tap(find.text('Set schedule'));
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const Key('u19-dynamic-pressure-editor')),
+      findsOneWidget,
+    );
+    expect(wearable.writes, isEmpty);
+    await tester.tap(find.text('Continue'));
+    await tester.pumpAndSettle();
+    expect(wearable.writes, isEmpty);
+    await tester.tap(
+      find
+          .descendant(
+            of: find.byType(AlertDialog),
+            matching: find.byType(TextButton),
+          )
+          .first,
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Set schedule'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Continue'));
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find
+          .descendant(
+            of: find.byType(AlertDialog),
+            matching: find.byType(FilledButton),
+          )
+          .first,
+    );
+    await tester.pumpAndSettle();
+    expect(wearable.writes, hasLength(1));
+    expect(wearable.writes.single.$1, DeviceFeature.healthMonitoring);
+    expect(
+      (wearable.writes.single.$2['dynamicBloodPressure'] as Map)['enabled'],
+      isTrue,
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: DeviceFeaturePage(
+          controller: controller,
+          feature: DeviceFeature.healthAssessment,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.byKey(const Key('u19-pulse-start')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('u19-pulse-start')));
+    await tester.pumpAndSettle();
+    expect(wearable.writes, hasLength(1));
+    await tester.tap(
+      find
+          .descendant(
+            of: find.byType(AlertDialog),
+            matching: find.byType(TextButton),
+          )
+          .first,
+    );
+    await tester.pumpAndSettle();
+
+    await tester.ensureVisible(find.byKey(const Key('u19-pulse-start')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('u19-pulse-start')));
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find
+          .descendant(
+            of: find.byType(AlertDialog),
+            matching: find.byType(FilledButton),
+          )
+          .first,
+    );
+    await tester.pumpAndSettle();
+    expect(wearable.writes, hasLength(2));
+    expect(wearable.writes.last.$1, DeviceFeature.healthAssessment);
+    expect(wearable.writes.last.$2, {'operation': 'start'});
+    expect(find.byKey(const Key('u19-pulse-ended-on-watch')), findsOneWidget);
+    await tester.tap(find.byKey(const Key('u19-pulse-ended-on-watch')));
+    await tester.pumpAndSettle();
+    expect(wearable.writes, hasLength(2));
+    await tester.tap(
+      find
+          .descendant(
+            of: find.byType(AlertDialog),
+            matching: find.byType(FilledButton),
+          )
+          .first,
+    );
+    await tester.pumpAndSettle();
+    expect(wearable.writes, hasLength(3));
+    expect(wearable.writes.last.$2, {'operation': 'watchEnded'});
+  });
+
   testWidgets('Veepoo find watch retains start and stop actions', (
     tester,
   ) async {
@@ -806,6 +929,35 @@ class _FeatureWearable extends Fake implements WearableBridge {
     if (feature == DeviceFeature.findWatch) {
       findActionStates.add(enabled);
     }
+  }
+}
+
+class _U19FeatureWearable extends _FeatureWearable {
+  final List<(DeviceFeature, Map<String, Object?>)> writes = [];
+
+  @override
+  Future<Map<String, Object?>> readDeviceFeature(DeviceFeature feature) async =>
+      switch (feature) {
+        DeviceFeature.healthMonitoring => {
+          'heartRate': true,
+          'bloodOxygen': false,
+          'dynamicBloodPressure': {
+            'enabled': false,
+            'startHour': 8,
+            'dayIntervalMinutes': 60,
+            'nightIntervalMinutes': 60,
+          },
+        },
+        DeviceFeature.healthAssessment => {'pulse': null},
+        _ => super.readDeviceFeature(feature),
+      };
+
+  @override
+  Future<void> writeDeviceFeature(
+    DeviceFeature feature,
+    Map<String, Object?> values,
+  ) async {
+    writes.add((feature, values));
   }
 }
 

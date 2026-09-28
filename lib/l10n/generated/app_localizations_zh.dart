@@ -629,6 +629,11 @@ class AppLocalizationsZh extends AppLocalizations {
   String get autoBrightness => '自动调节亮度';
 
   @override
+  String screenTimeoutSeconds(int seconds) {
+    return '亮屏时长：$seconds 秒';
+  }
+
+  @override
   String get raiseToWake => '抬腕亮屏';
 
   @override
@@ -1925,6 +1930,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get finishMeasurementOnWatch => '请在手表上结束测量';
+
+  @override
+  String get startMeasurement => '开始测量';
 
   @override
   String get watchEndedMeasureAgain => '已在手表结束，重新测量';
@@ -2591,6 +2599,11 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
   String get autoBrightness => '自动调节亮度';
 
   @override
+  String screenTimeoutSeconds(int seconds) {
+    return '亮屏时长：$seconds 秒';
+  }
+
+  @override
   String get raiseToWake => '抬腕亮屏';
 
   @override
@@ -3889,6 +3902,9 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
   String get finishMeasurementOnWatch => '请在手表上结束测量';
 
   @override
+  String get startMeasurement => '开始测量';
+
+  @override
   String get watchEndedMeasureAgain => '已在手表结束，重新测量';
 
   @override
@@ -4551,6 +4567,11 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get autoBrightness => '自動調整亮度';
+
+  @override
+  String screenTimeoutSeconds(int seconds) {
+    return '亮屏時間：$seconds 秒';
+  }
 
   @override
   String get raiseToWake => '抬腕亮屏';
@@ -5849,6 +5870,9 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get finishMeasurementOnWatch => '請在手錶上結束測量';
+
+  @override
+  String get startMeasurement => '開始測量';
 
   @override
   String get watchEndedMeasureAgain => '已在手錶結束，重新測量';

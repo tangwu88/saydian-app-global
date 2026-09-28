@@ -13,8 +13,8 @@ abstract final class SaydianColors {
 
   static const ink = Color(0xFF17191C);
   static const muted = Color(0xFF5D646B);
-  static const canvas = Color(0xFFF6F7F7);
-  static const line = Color(0xFFE1E4E5);
+  static const canvas = Color(0xFFF8F8F6);
+  static const line = Color(0xFFE8E8E5);
   static const outline = Color(0xFF98A2B3);
   static const techBlue = Color(0xFF316EF5);
   static const techBlueSoft = Color(0xFFEAF1FF);
@@ -60,22 +60,22 @@ ThemeData buildSaydianTheme() {
     displayMedium: TextStyle(fontSize: 31, height: 1.22),
     displaySmall: TextStyle(fontSize: 28, height: 1.25),
     headlineLarge: TextStyle(
-      fontSize: 26,
+      fontSize: 24,
       height: 1.28,
       fontWeight: FontWeight.w800,
     ),
     headlineMedium: TextStyle(
-      fontSize: 24,
+      fontSize: 22,
       height: 1.3,
       fontWeight: FontWeight.w800,
     ),
     headlineSmall: TextStyle(
-      fontSize: 22,
+      fontSize: 20,
       height: 1.32,
       fontWeight: FontWeight.w700,
     ),
     titleLarge: TextStyle(
-      fontSize: 22,
+      fontSize: 20,
       height: 1.35,
       fontWeight: FontWeight.w800,
     ),
@@ -126,17 +126,19 @@ ThemeData buildSaydianTheme() {
       foregroundColor: SaydianColors.ink,
       titleTextStyle: TextStyle(
         color: SaydianColors.ink,
-        fontSize: 20,
+        fontSize: 18,
         height: 1.35,
         fontWeight: FontWeight.w800,
       ),
     ),
     cardTheme: CardThemeData(
-      elevation: 1,
-      shadowColor: const Color(0x17151B2B),
+      elevation: 0,
       margin: EdgeInsets.zero,
       color: Colors.white,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+      shape: RoundedRectangleBorder(
+        side: const BorderSide(color: SaydianColors.line),
+        borderRadius: BorderRadius.circular(18),
+      ),
     ),
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
@@ -222,7 +224,7 @@ ThemeData buildSaydianTheme() {
       space: 1,
     ),
     navigationBarTheme: NavigationBarThemeData(
-      height: 76,
+      height: 70,
       backgroundColor: Colors.white,
       elevation: 0,
       indicatorColor: Colors.transparent,
@@ -234,7 +236,7 @@ ThemeData buildSaydianTheme() {
           color: states.contains(WidgetState.selected)
               ? SaydianColors.brandRed
               : SaydianColors.muted,
-          size: states.contains(WidgetState.selected) ? 29 : 27,
+          size: states.contains(WidgetState.selected) ? 26 : 25,
         ),
       ),
       labelTextStyle: WidgetStateProperty.resolveWith(
@@ -242,7 +244,7 @@ ThemeData buildSaydianTheme() {
           color: states.contains(WidgetState.selected)
               ? SaydianColors.brandRed
               : SaydianColors.muted,
-          fontSize: 14,
+          fontSize: 12.5,
           fontWeight: states.contains(WidgetState.selected)
               ? FontWeight.w800
               : FontWeight.w600,

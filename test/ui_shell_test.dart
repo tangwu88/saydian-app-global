@@ -103,8 +103,8 @@ void main() {
     await tester.ensureVisible(find.text('全部数据'));
     await tester.tap(find.text('全部数据'));
     await tester.pumpAndSettle();
-    expect(find.text('全部健康数据'), findsOneWidget);
-    expect(find.text('健康数据总览'), findsOneWidget);
+    expect(find.text('健康记录'), findsOneWidget);
+    expect(find.text('健康数据'), findsOneWidget);
     expect(find.byKey(const Key('health-sport-entries')), findsNothing);
     await tester.pageBack();
     await tester.pumpAndSettle();
@@ -355,6 +355,68 @@ void main() {
       );
     },
   );
+
+  testWidgets('connected U19 hides unsupported sensors and workout controls', (
+    tester,
+  ) async {
+    final controller =
+        AppController(
+            MemorySessionVault(),
+            _NoopApi(),
+            MemoryHealthStore(),
+            _NoopWearable(),
+          )
+          ..connectedDevice = const DeviceInfo(
+            id: 'urion:synthetic',
+            name: 'U19',
+          )
+          ..deviceCapabilityState = DeviceCapabilityState.ready
+          ..capabilities = const DeviceCapabilities(
+            metrics: {HealthMetric.bloodPressure, HealthMetric.heartRate},
+            manualMetrics: {HealthMetric.bloodPressure, HealthMetric.heartRate},
+            sportModes: {},
+          )
+          ..healthRecords = [
+            for (final metric in [
+              HealthMetric.ecg,
+              HealthMetric.hrv,
+              HealthMetric.bodyTemperature,
+            ])
+              HealthRecord(
+                id: 'history-${metric.wireName}',
+                metric: metric,
+                values: const {'value': 37},
+                unit: metric.defaultUnit,
+                measuredAt: DateTime.now().toUtc(),
+                timezone: '+00:00',
+                deviceId: 'previous-watch',
+                firmwareVersion: 'test',
+                quality: 'device_reported',
+                source: MeasurementSource.wearable,
+                rawVersion: 1,
+              ),
+          ];
+    addTearDown(controller.dispose);
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildSaydianTheme(),
+        home: HealthPage(controller: controller),
+      ),
+    );
+    await tester.pump();
+    expect(find.text('心率'), findsOneWidget);
+    expect(find.text('心电'), findsNothing);
+    expect(find.text('HRV'), findsNothing);
+    expect(find.text('体温'), findsNothing);
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildSaydianTheme(),
+        home: DashboardPage(controller: controller),
+      ),
+    );
+    await tester.pump();
+    expect(find.byKey(const Key('health-sport-entries')), findsNothing);
+  });
 
   testWidgets('P40 Pro viewport and enlarged text remain overflow-free', (
     tester,

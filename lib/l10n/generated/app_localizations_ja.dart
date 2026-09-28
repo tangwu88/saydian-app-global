@@ -653,6 +653,11 @@ class AppLocalizationsJa extends AppLocalizations {
   String get autoBrightness => '明るさの自動調整';
 
   @override
+  String screenTimeoutSeconds(int seconds) {
+    return '画面点灯時間：$seconds 秒';
+  }
+
+  @override
   String get raiseToWake => '手首を上げて点灯';
 
   @override
@@ -1958,6 +1963,9 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get finishMeasurementOnWatch => '測定の終了は時計で操作してください。';
+
+  @override
+  String get startMeasurement => '測定を開始';
 
   @override
   String get watchEndedMeasureAgain => '時計で終了済み・再測定';

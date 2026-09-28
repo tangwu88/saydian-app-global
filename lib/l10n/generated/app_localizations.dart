@@ -1298,6 +1298,12 @@ abstract class AppLocalizations {
   /// **'Automatic brightness'**
   String get autoBrightness;
 
+  /// No description provided for @screenTimeoutSeconds.
+  ///
+  /// In en, this message translates to:
+  /// **'Screen timeout: {seconds} s'**
+  String screenTimeoutSeconds(int seconds);
+
   /// No description provided for @raiseToWake.
   ///
   /// In en, this message translates to:
@@ -3847,6 +3853,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'End the measurement on your watch.'**
   String get finishMeasurementOnWatch;
+
+  /// No description provided for @startMeasurement.
+  ///
+  /// In en, this message translates to:
+  /// **'Start measurement'**
+  String get startMeasurement;
 
   /// No description provided for @watchEndedMeasureAgain.
   ///

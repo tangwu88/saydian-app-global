@@ -708,6 +708,11 @@ class AppLocalizationsDe extends AppLocalizations {
   String get autoBrightness => 'Automatische Helligkeit';
 
   @override
+  String screenTimeoutSeconds(int seconds) {
+    return 'Bildschirm-Timeout: $seconds s';
+  }
+
+  @override
   String get raiseToWake => 'Zum Aktivieren anheben';
 
   @override
@@ -2068,6 +2073,9 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get finishMeasurementOnWatch =>
       'Beenden Sie die Messung auf Ihrer Uhr.';
+
+  @override
+  String get startMeasurement => 'Messung starten';
 
   @override
   String get watchEndedMeasureAgain => 'Auf Uhr beendet – erneut messen';
