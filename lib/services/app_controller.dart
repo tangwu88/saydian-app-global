@@ -1686,6 +1686,7 @@ class AppController extends ChangeNotifier {
       deviceMachine.transition(DeviceConnectionState.syncing);
       syncStatus = '正在同步设备数据';
       deviceMachine.transition(DeviceConnectionState.ready);
+      unawaited(_reportConnectedDevice(connectedDevice!, sessionGeneration));
       // Authentication is the connection boundary. Historical data is a
       // background follow-up and must not keep the add-device page spinning.
       unawaited(_syncInitialDeviceData(device.id));
@@ -1754,6 +1755,83 @@ class AppController extends ChangeNotifier {
     }
     notifyListeners();
     return false;
+  }
+
+  Future<void> _reportConnectedDevice(
+    DeviceInfo device,
+    int sessionGeneration,
+  ) async {
+    final deviceApi = _api is SaydianDeviceBindingApi
+        ? _api as SaydianDeviceBindingApi
+        : null;
+    if (deviceApi == null ||
+        _disposed ||
+        _accountTransitioning ||
+        !_isCurrentSessionGeneration(sessionGeneration) ||
+        connectedDevice?.id != device.id ||
+        deviceState != DeviceConnectionState.ready) {
+      return;
+    }
+    final deviceId = device.id.trim();
+    final displayName = device.name.trim();
+    final reportedModel = device.model?.trim();
+    final fallbackModel = device.displayModel;
+    final model = reportedModel?.isNotEmpty == true
+        ? reportedModel!
+        : fallbackModel == '--'
+        ? displayName
+        : fallbackModel;
+    if (deviceId.isEmpty || displayName.isEmpty || model.isEmpty) return;
+
+    final snapshot = capabilities;
+    final capabilityValues = <String>{};
+    if (snapshot != null) {
+      capabilityValues.addAll(
+        snapshot.metrics.map((metric) => 'metric:${metric.wireName}'),
+      );
+      capabilityValues.addAll(
+        (snapshot.manualMetrics ?? const <HealthMetric>{}).map(
+          (metric) => 'manual:${metric.wireName}',
+        ),
+      );
+      capabilityValues.addAll(
+        (snapshot.sportModes ?? const <SportMode>{}).map(
+          (mode) => 'sport:${mode.wireName}',
+        ),
+      );
+      capabilityValues.addAll(
+        snapshot.features.map((feature) => 'feature:${feature.wireName}'),
+      );
+      capabilityValues.addAll(
+        snapshot.integratedFeatures.map(
+          (feature) => 'integrated:${feature.wireName}',
+        ),
+      );
+      if (snapshot.supportsSportPause) {
+        capabilityValues.add('support:sport_pause');
+      }
+      if (snapshot.supportsBackgroundSync) {
+        capabilityValues.add('support:background_sync');
+      }
+      if (snapshot.supportsWatchFaces) {
+        capabilityValues.add('support:watch_faces');
+      }
+      if (snapshot.supportsOta) capabilityValues.add('support:ota');
+    }
+    final reportedCapabilities = capabilityValues.toList()..sort();
+    try {
+      await deviceApi.reportDeviceConnection(
+        deviceId: deviceId,
+        vendor: device.sdkSource.fullLabel,
+        model: model,
+        displayName: displayName,
+        firmware: device.firmwareVersion?.trim(),
+        capabilities: reportedCapabilities,
+      );
+    } catch (_) {
+      // Device reporting is best effort: a backend delay or outage must never
+      // turn a successful Bluetooth connection into a failed client session.
+    }
   }
 
   Future<void> _syncInitialDeviceData(String deviceId) async {
@@ -5202,6 +5280,7 @@ class AppController extends ChangeNotifier {
       syncStatus = '设备已自动重连';
       deviceMachine.transition(DeviceConnectionState.ready);
       notifyListeners();
+      unawaited(_reportConnectedDevice(connectedDevice!, sessionGeneration));
       unawaited(_syncInitialDeviceData(device.id));
     } on PlatformException catch (error) {
       connectedDevice = null;

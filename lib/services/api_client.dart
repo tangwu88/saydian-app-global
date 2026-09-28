@@ -199,6 +199,20 @@ abstract interface class SaydianNotificationApi {
   Future<bool> markNotificationEventRead({required String eventId});
 }
 
+/// Receives non-sensitive device metadata after a client-side connection is
+/// ready. The service hashes the source identifier within the signed-in member
+/// scope and does not expose a raw hardware identifier in administrator views.
+abstract interface class SaydianDeviceBindingApi {
+  Future<void> reportDeviceConnection({
+    required String deviceId,
+    required String vendor,
+    required String model,
+    required String displayName,
+    String? firmware,
+    List<String> capabilities = const [],
+  });
+}
+
 abstract interface class SaydianProfileUploadApi {
   Future<String> uploadProfileImage(String filePath);
 }

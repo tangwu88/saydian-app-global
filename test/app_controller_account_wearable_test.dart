@@ -13,14 +13,20 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   Future<
-    ({AppController controller, _Wearable wearable, MemoryHealthStore store})
+    ({
+      AppController controller,
+      _Api api,
+      _Wearable wearable,
+      MemoryHealthStore store,
+    })
   >
-  setup() async {
+  setup({bool failDeviceReport = false}) async {
     final wearable = _Wearable();
     final store = MemoryHealthStore();
+    final api = _Api()..failDeviceReport = failDeviceReport;
     final controller = AppController(
       MemorySessionVault(),
-      _Api(),
+      api,
       store,
       wearable,
     );
@@ -30,8 +36,36 @@ void main() {
     expect(await controller.login('owner-a', 'test-password'), isTrue);
     await controller.connectDevice(_Wearable.watch);
     await _settle();
-    return (controller: controller, wearable: wearable, store: store);
+    return (controller: controller, api: api, wearable: wearable, store: store);
   }
+
+  test(
+    'a ready connection reports a scoped device snapshot without delaying the connection',
+    () async {
+      final test = await setup();
+      expect(test.controller.deviceState, DeviceConnectionState.ready);
+      expect(test.api.deviceReports, [
+        {
+          'deviceId': 'veepoo:WATCH',
+          'vendor': 'Veepoo',
+          'model': 'W9S',
+          'displayName': 'W9S',
+          'firmware': null,
+          'capabilities': ['metric:heart_rate'],
+        },
+      ]);
+    },
+  );
+
+  test(
+    'a failed device report leaves an otherwise ready connection usable',
+    () async {
+      final test = await setup(failDeviceReport: true);
+      expect(test.api.deviceReportAttempts, 1);
+      expect(test.controller.deviceState, DeviceConnectionState.ready);
+      expect(test.controller.errorMessage, isNull);
+    },
+  );
 
   test(
     'same account reauthentication drains disconnect and freshly connects before sync',
@@ -196,7 +230,11 @@ HealthRecord _record(String id, {String deviceId = 'WATCH'}) => HealthRecord(
   rawVersion: 1,
 );
 
-class _Api extends Fake implements SaydianApi {
+class _Api extends Fake implements SaydianApi, SaydianDeviceBindingApi {
+  final deviceReports = <Map<String, Object?>>[];
+  var deviceReportAttempts = 0;
+  var failDeviceReport = false;
+
   @override
   Future<Session> login(String username, String password) async => Session(
     accessToken: 'test-token',
@@ -225,6 +263,29 @@ class _Api extends Fake implements SaydianApi {
       );
   @override
   Future<void> logout() async {}
+
+  @override
+  Future<void> reportDeviceConnection({
+    required String deviceId,
+    required String vendor,
+    required String model,
+    required String displayName,
+    String? firmware,
+    List<String> capabilities = const [],
+  }) async {
+    deviceReportAttempts++;
+    if (failDeviceReport) {
+      throw StateError('synthetic device reporting failure');
+    }
+    deviceReports.add({
+      'deviceId': deviceId,
+      'vendor': vendor,
+      'model': model,
+      'displayName': displayName,
+      'firmware': firmware,
+      'capabilities': capabilities,
+    });
+  }
 }
 
 class _Wearable extends Fake implements WearableBridge {
