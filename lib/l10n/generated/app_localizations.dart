@@ -3793,6 +3793,126 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count} in stock'**
   String stockCount(int count);
+
+  /// No description provided for @measurementContactEcg.
+  ///
+  /// In en, this message translates to:
+  /// **'No electrode contact detected. Wear your watch correctly and keep your finger on the ECG electrode.'**
+  String get measurementContactEcg;
+
+  /// No description provided for @measurementContactElectrode.
+  ///
+  /// In en, this message translates to:
+  /// **'No electrode contact detected. Wear your watch and follow its electrode instructions.'**
+  String get measurementContactElectrode;
+
+  /// No description provided for @measurementCheckFit.
+  ///
+  /// In en, this message translates to:
+  /// **'Check that your watch fits snugly against your wrist.'**
+  String get measurementCheckFit;
+
+  /// No description provided for @measurementWaitPressure.
+  ///
+  /// In en, this message translates to:
+  /// **'Measuring blood pressure. Keep your watch in place and your arm still while you wait.'**
+  String get measurementWaitPressure;
+
+  /// No description provided for @measurementWaitEcg.
+  ///
+  /// In en, this message translates to:
+  /// **'Wear your watch correctly and keep your finger on the ECG electrode.'**
+  String get measurementWaitEcg;
+
+  /// No description provided for @measurementWaitHrv.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep your watch against your wrist and stay still while waiting for the HRV result.'**
+  String get measurementWaitHrv;
+
+  /// No description provided for @measurementWaitElectrode.
+  ///
+  /// In en, this message translates to:
+  /// **'Follow the watch instructions and keep contact with the electrodes until the measurement ends.'**
+  String get measurementWaitElectrode;
+
+  /// No description provided for @measurementWaitStill.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep your watch in place and stay still while waiting for the result.'**
+  String get measurementWaitStill;
+
+  /// No description provided for @finishMeasurementOnWatch.
+  ///
+  /// In en, this message translates to:
+  /// **'End the measurement on your watch.'**
+  String get finishMeasurementOnWatch;
+
+  /// No description provided for @watchEndedMeasureAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Ended on watch — measure again'**
+  String get watchEndedMeasureAgain;
+
+  /// No description provided for @watchMeasurementEnded.
+  ///
+  /// In en, this message translates to:
+  /// **'I have ended it on my watch'**
+  String get watchMeasurementEnded;
+
+  /// No description provided for @viewMeasurementLater.
+  ///
+  /// In en, this message translates to:
+  /// **'View later'**
+  String get viewMeasurementLater;
+
+  /// No description provided for @stoppingMeasurement.
+  ///
+  /// In en, this message translates to:
+  /// **'Stopping…'**
+  String get stoppingMeasurement;
+
+  /// No description provided for @endMeasurement.
+  ///
+  /// In en, this message translates to:
+  /// **'End measurement'**
+  String get endMeasurement;
+
+  /// No description provided for @deviceDataReadComplete.
+  ///
+  /// In en, this message translates to:
+  /// **'Watch data read. Cloud upload is confirmed separately.'**
+  String get deviceDataReadComplete;
+
+  /// No description provided for @measurementPercent.
+  ///
+  /// In en, this message translates to:
+  /// **'Measurement progress: {percent}%'**
+  String measurementPercent(int percent);
+
+  /// No description provided for @cloudHealthUploading.
+  ///
+  /// In en, this message translates to:
+  /// **'Uploading saved records…'**
+  String get cloudHealthUploading;
+
+  /// No description provided for @cloudHealthLocalOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved on this phone. Sign in to upload.'**
+  String get cloudHealthLocalOnly;
+
+  /// No description provided for @cloudHealthPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Some records have not been uploaded. They remain saved on this phone.'**
+  String get cloudHealthPending;
+
+  /// No description provided for @cloudHealthConfirmed.
+  ///
+  /// In en, this message translates to:
+  /// **'The server has confirmed the uploaded records.'**
+  String get cloudHealthConfirmed;
 }
 
 class _AppLocalizationsDelegate

@@ -2795,7 +2795,9 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
                   busy: busy,
                   supportsStop:
                       widget.controller.connectedDevice?.sdkSource !=
-                      WearableSdkSource.yucheng,
+                          WearableSdkSource.yucheng &&
+                      widget.controller.connectedDevice?.sdkSource !=
+                          WearableSdkSource.urion,
                   onPressed: _toggleFind,
                 )
               else if (widget.feature == DeviceFeature.screenDisplay)

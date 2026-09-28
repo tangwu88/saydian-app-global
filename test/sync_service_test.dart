@@ -35,6 +35,7 @@ void main() {
     final outcome = await service.synchronizeNow();
 
     expect(outcome.uploaded, 1000);
+    expect(outcome.hasPending, isFalse);
     expect(outcome.rejected, 0);
     expect(api.receivedIds, hasLength(1000));
     expect(api.maximumBatchSize, lessThanOrEqualTo(10));
@@ -64,6 +65,7 @@ void main() {
 
     expect(outcome.uploaded, 0);
     expect(outcome.message, contains('未配置'));
+    expect(outcome.hasPending, isTrue);
     expect(await store.pending(), hasLength(1));
   });
 
@@ -86,6 +88,7 @@ void main() {
     expect(outcome.uploaded, 1);
     expect(api.receivedIds, {'regular'});
     expect(outcome.message, '已保存到本机，暂未同步');
+    expect(outcome.hasPending, isTrue);
     expect((await store.pending()).map((record) => record.id), ['daily-1']);
   });
 

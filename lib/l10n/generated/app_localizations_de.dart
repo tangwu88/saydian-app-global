@@ -2032,4 +2032,80 @@ class AppLocalizationsDe extends AppLocalizations {
   String stockCount(int count) {
     return '$count auf Lager';
   }
+
+  @override
+  String get measurementContactEcg =>
+      'Kein Elektrodenkontakt erkannt. Tragen Sie die Uhr richtig und halten Sie den Finger auf der EKG-Elektrode.';
+
+  @override
+  String get measurementContactElectrode =>
+      'Kein Elektrodenkontakt erkannt. Folgen Sie den Hinweisen auf der Uhr.';
+
+  @override
+  String get measurementCheckFit =>
+      'Prüfen Sie, ob die Uhr gut am Handgelenk anliegt.';
+
+  @override
+  String get measurementWaitPressure =>
+      'Blutdruckmessung läuft. Halten Sie Uhr und Arm ruhig und warten Sie auf das Ergebnis.';
+
+  @override
+  String get measurementWaitEcg =>
+      'Tragen Sie die Uhr richtig und halten Sie den Finger auf der EKG-Elektrode.';
+
+  @override
+  String get measurementWaitHrv =>
+      'Halten Sie die Uhr am Handgelenk und bleiben Sie bis zum HRV-Ergebnis ruhig.';
+
+  @override
+  String get measurementWaitElectrode =>
+      'Folgen Sie den Hinweisen der Uhr und halten Sie den Elektrodenkontakt bis zum Ende.';
+
+  @override
+  String get measurementWaitStill =>
+      'Halten Sie die Uhr in Position und warten Sie ruhig auf das Ergebnis.';
+
+  @override
+  String get finishMeasurementOnWatch =>
+      'Beenden Sie die Messung auf Ihrer Uhr.';
+
+  @override
+  String get watchEndedMeasureAgain => 'Auf Uhr beendet – erneut messen';
+
+  @override
+  String get watchMeasurementEnded =>
+      'Ich habe die Messung auf der Uhr beendet';
+
+  @override
+  String get viewMeasurementLater => 'Später ansehen';
+
+  @override
+  String get stoppingMeasurement => 'Wird beendet…';
+
+  @override
+  String get endMeasurement => 'Messung beenden';
+
+  @override
+  String get deviceDataReadComplete =>
+      'Uhrdaten gelesen. Der Cloud-Upload wird separat bestätigt.';
+
+  @override
+  String measurementPercent(int percent) {
+    return 'Messfortschritt: $percent%';
+  }
+
+  @override
+  String get cloudHealthUploading => 'Gespeicherte Daten werden hochgeladen…';
+
+  @override
+  String get cloudHealthLocalOnly =>
+      'Auf diesem Telefon gespeichert. Zum Hochladen anmelden.';
+
+  @override
+  String get cloudHealthPending =>
+      'Einige Daten wurden noch nicht hochgeladen. Sie bleiben auf diesem Telefon gespeichert.';
+
+  @override
+  String get cloudHealthConfirmed =>
+      'Der Server hat die hochgeladenen Daten bestätigt.';
 }

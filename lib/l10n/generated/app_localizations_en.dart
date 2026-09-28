@@ -2014,4 +2014,77 @@ class AppLocalizationsEn extends AppLocalizations {
   String stockCount(int count) {
     return '$count in stock';
   }
+
+  @override
+  String get measurementContactEcg =>
+      'No electrode contact detected. Wear your watch correctly and keep your finger on the ECG electrode.';
+
+  @override
+  String get measurementContactElectrode =>
+      'No electrode contact detected. Wear your watch and follow its electrode instructions.';
+
+  @override
+  String get measurementCheckFit =>
+      'Check that your watch fits snugly against your wrist.';
+
+  @override
+  String get measurementWaitPressure =>
+      'Measuring blood pressure. Keep your watch in place and your arm still while you wait.';
+
+  @override
+  String get measurementWaitEcg =>
+      'Wear your watch correctly and keep your finger on the ECG electrode.';
+
+  @override
+  String get measurementWaitHrv =>
+      'Keep your watch against your wrist and stay still while waiting for the HRV result.';
+
+  @override
+  String get measurementWaitElectrode =>
+      'Follow the watch instructions and keep contact with the electrodes until the measurement ends.';
+
+  @override
+  String get measurementWaitStill =>
+      'Keep your watch in place and stay still while waiting for the result.';
+
+  @override
+  String get finishMeasurementOnWatch => 'End the measurement on your watch.';
+
+  @override
+  String get watchEndedMeasureAgain => 'Ended on watch — measure again';
+
+  @override
+  String get watchMeasurementEnded => 'I have ended it on my watch';
+
+  @override
+  String get viewMeasurementLater => 'View later';
+
+  @override
+  String get stoppingMeasurement => 'Stopping…';
+
+  @override
+  String get endMeasurement => 'End measurement';
+
+  @override
+  String get deviceDataReadComplete =>
+      'Watch data read. Cloud upload is confirmed separately.';
+
+  @override
+  String measurementPercent(int percent) {
+    return 'Measurement progress: $percent%';
+  }
+
+  @override
+  String get cloudHealthUploading => 'Uploading saved records…';
+
+  @override
+  String get cloudHealthLocalOnly => 'Saved on this phone. Sign in to upload.';
+
+  @override
+  String get cloudHealthPending =>
+      'Some records have not been uploaded. They remain saved on this phone.';
+
+  @override
+  String get cloudHealthConfirmed =>
+      'The server has confirmed the uploaded records.';
 }

@@ -12,6 +12,9 @@ import 'package:saydian_app/services/wearable_bridge.dart';
 // test/ and does not join the default Flutter test suite.
 // Baseline 2026-09-28: one control passes and four correct-behavior assertions
 // fail, recording unresolved defects rather than making failures expected.
+// The subsequent fix promotes these cases into the default regression suite
+// at test/app_controller_measurement_lifecycle_test.dart. Keep this original
+// reproducer runnable so a handoff can compare the fix with the audit baseline.
 // Command: flutter test --no-pub tool/diagnostics/u19_measurement_lifecycle_test.dart
 // Public-API diagnostic, adapted from app_controller_account_wearable_test.dart.
 // All identities, sessions and health samples here are synthetic; no network,

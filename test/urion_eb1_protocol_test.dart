@@ -97,4 +97,133 @@ void main() {
       throwsFormatException,
     );
   });
+
+  test('BP count is bounded and its no-data sentinel ends a short history', () {
+    final collector = Eb1ResponseCollector(0x14, count: 50);
+    final sample = Eb1Frame.request(0x14, [1, 2, 3, 4, 80, 120, 65]);
+    expect(collector.add(sample), isNull);
+    final result = collector.add(Eb1Frame.request(0x14, [255, 255, 255, 255]));
+    expect(result, hasLength(1));
+    expect(Eb1ResponseCollector(0x14).add(sample), hasLength(1));
+    expect(() => Eb1ResponseCollector(0x14, count: 51), throwsRangeError);
+  });
+
+  test(
+    'indexed responses follow the header count and ignore exact repeats',
+    () {
+      final collector = Eb1ResponseCollector(0x2d);
+      final header = Eb1Frame.request(0x2d, [0, 4, 60]);
+      final first = Eb1Frame.request(0x2d, [
+        1,
+        1,
+        2,
+        3,
+        4,
+        ...List.filled(9, 98),
+      ]);
+      expect(collector.add(header), isNull);
+      expect(collector.add(first), isNull);
+      expect(collector.add(first), isNull);
+      expect(
+        collector.add(Eb1Frame.request(0x2d, [2, ...List.filled(13, 97)])),
+        isNull,
+      );
+      final frames = collector.add(Eb1Frame.request(0x2d, [3, 96, 95]));
+      expect(frames, hasLength(4));
+      final values = Eb1IndexedDay(
+        0x2d,
+        frames!,
+      ).decodeHourlyOrFiveMinuteValues(expectedInterval: 60);
+      expect(values, hasLength(24));
+      expect(values.take(9), everyElement(98));
+      expect(values.sublist(22), [96, 95]);
+    },
+  );
+
+  test(
+    'indexed no-data completes while missing or conflicting packets fail',
+    () {
+      final noData = Eb1ResponseCollector(
+        0x15,
+      ).add(Eb1Frame.request(0x15, [255]));
+      expect(
+        Eb1IndexedDay(
+          0x15,
+          noData!,
+        ).decodeHourlyOrFiveMinuteValues(expectedInterval: 5),
+        isEmpty,
+      );
+      final missing = Eb1ResponseCollector(0x15);
+      missing.add(Eb1Frame.request(0x15, [0, 24, 5]));
+      expect(
+        () => missing.add(Eb1Frame.request(0x15, [2])),
+        throwsFormatException,
+      );
+      final conflicting = Eb1ResponseCollector(0x15);
+      conflicting.add(Eb1Frame.request(0x15, [0, 24, 5]));
+      expect(
+        () => conflicting.add(Eb1Frame.request(0x15, [0, 24, 60])),
+        throwsFormatException,
+      );
+    },
+  );
+
+  test(
+    'a fresh timestamp proves its interpretation, not a fixed timezone shift',
+    () {
+      final start = DateTime.utc(2026, 9, 28, 12);
+      final end = start.add(const Duration(minutes: 2));
+      final raw =
+          start.add(const Duration(minutes: 1)).millisecondsSinceEpoch ~/ 1000;
+      DateTime decode(int seconds, Eb1TimestampEncoding encoding) {
+        final instant = DateTime.fromMillisecondsSinceEpoch(
+          seconds * 1000,
+          isUtc: true,
+        );
+        return encoding == Eb1TimestampEncoding.utc
+            ? instant
+            : instant.add(const Duration(hours: 4));
+      }
+
+      final proof = eb1MatchMeasurementTimestamp(
+        raw,
+        startedAt: start,
+        endedAt: end,
+        decode: decode,
+      );
+      expect(proof?.encoding, Eb1TimestampEncoding.utc);
+      expect(proof?.measuredAt, start.add(const Duration(minutes: 1)));
+      expect(
+        eb1MatchMeasurementTimestamp(
+          raw - 3600,
+          startedAt: start,
+          endedAt: end,
+          decode: decode,
+        ),
+        isNull,
+      );
+      expect(
+        eb1MatchMeasurementTimestamp(
+          raw,
+          startedAt: start,
+          endedAt: end.add(const Duration(hours: 4)),
+          decode: decode,
+        ),
+        isNull,
+      );
+    },
+  );
+
+  test('equal clock interpretations prove an instant but not an encoding', () {
+    final now = DateTime.utc(2026, 9, 28, 12);
+    final proof = eb1MatchMeasurementTimestamp(
+      now.millisecondsSinceEpoch ~/ 1000,
+      startedAt: now,
+      endedAt: now.add(const Duration(seconds: 1)),
+      decode: (seconds, _) =>
+          DateTime.fromMillisecondsSinceEpoch(seconds * 1000, isUtc: true),
+    );
+    expect(proof?.measuredAt, now);
+    expect(proof?.encoding, isNull);
+  });
 }

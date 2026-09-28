@@ -2034,4 +2034,78 @@ class AppLocalizationsFr extends AppLocalizations {
   String stockCount(int count) {
     return '$count en stock';
   }
+
+  @override
+  String get measurementContactEcg =>
+      'Aucun contact avec l’électrode détecté. Portez bien la montre et gardez le doigt sur l’électrode ECG.';
+
+  @override
+  String get measurementContactElectrode =>
+      'Aucun contact avec l’électrode détecté. Suivez les indications de la montre.';
+
+  @override
+  String get measurementCheckFit =>
+      'Vérifiez que la montre est bien ajustée au poignet.';
+
+  @override
+  String get measurementWaitPressure =>
+      'Mesure de la tension en cours. Gardez la montre en place et le bras immobile.';
+
+  @override
+  String get measurementWaitEcg =>
+      'Portez bien la montre et gardez le doigt sur l’électrode ECG.';
+
+  @override
+  String get measurementWaitHrv =>
+      'Gardez la montre contre le poignet et restez immobile en attendant le résultat VFC.';
+
+  @override
+  String get measurementWaitElectrode =>
+      'Suivez les indications de la montre et maintenez le contact jusqu’à la fin.';
+
+  @override
+  String get measurementWaitStill =>
+      'Gardez la montre en place et restez immobile en attendant le résultat.';
+
+  @override
+  String get finishMeasurementOnWatch => 'Terminez la mesure sur votre montre.';
+
+  @override
+  String get watchEndedMeasureAgain => 'Terminée sur la montre — remesurer';
+
+  @override
+  String get watchMeasurementEnded => 'J’ai terminé la mesure sur la montre';
+
+  @override
+  String get viewMeasurementLater => 'Voir plus tard';
+
+  @override
+  String get stoppingMeasurement => 'Arrêt en cours…';
+
+  @override
+  String get endMeasurement => 'Terminer la mesure';
+
+  @override
+  String get deviceDataReadComplete =>
+      'Données de la montre lues. L’envoi vers le cloud est confirmé séparément.';
+
+  @override
+  String measurementPercent(int percent) {
+    return 'Progression de la mesure : $percent%';
+  }
+
+  @override
+  String get cloudHealthUploading => 'Envoi des données enregistrées…';
+
+  @override
+  String get cloudHealthLocalOnly =>
+      'Enregistrées sur ce téléphone. Connectez-vous pour les envoyer.';
+
+  @override
+  String get cloudHealthPending =>
+      'Certaines données ne sont pas encore envoyées. Elles restent sur ce téléphone.';
+
+  @override
+  String get cloudHealthConfirmed =>
+      'Le serveur a confirmé la réception des données envoyées.';
 }

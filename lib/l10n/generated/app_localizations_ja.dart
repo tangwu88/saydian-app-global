@@ -1929,4 +1929,69 @@ class AppLocalizationsJa extends AppLocalizations {
   String stockCount(int count) {
     return '在庫 $count 点';
   }
+
+  @override
+  String get measurementContactEcg =>
+      '電極との接触を確認できません。時計を正しく装着し、心電図電極に指を当て続けてください。';
+
+  @override
+  String get measurementContactElectrode =>
+      '電極との接触を確認できません。時計を装着し、画面の案内に従ってください。';
+
+  @override
+  String get measurementCheckFit => '時計が手首にしっかり密着しているか確認してください。';
+
+  @override
+  String get measurementWaitPressure => '血圧を測定しています。時計を正しく装着し、腕を動かさずにお待ちください。';
+
+  @override
+  String get measurementWaitEcg => '時計を正しく装着し、心電図電極に指を当て続けてください。';
+
+  @override
+  String get measurementWaitHrv => '時計を手首に密着させ、動かずに HRV の結果をお待ちください。';
+
+  @override
+  String get measurementWaitElectrode => '時計の案内に従い、測定が終わるまで電極との接触を保ってください。';
+
+  @override
+  String get measurementWaitStill => '時計を正しく装着し、動かずに結果をお待ちください。';
+
+  @override
+  String get finishMeasurementOnWatch => '測定の終了は時計で操作してください。';
+
+  @override
+  String get watchEndedMeasureAgain => '時計で終了済み・再測定';
+
+  @override
+  String get watchMeasurementEnded => '時計で測定を終了しました';
+
+  @override
+  String get viewMeasurementLater => '後で確認';
+
+  @override
+  String get stoppingMeasurement => '停止しています…';
+
+  @override
+  String get endMeasurement => '測定を終了';
+
+  @override
+  String get deviceDataReadComplete =>
+      '時計のデータを読み取りました。クラウドへの送信結果は同期状態で確認してください。';
+
+  @override
+  String measurementPercent(int percent) {
+    return '測定の進行状況：$percent%';
+  }
+
+  @override
+  String get cloudHealthUploading => '保存済みの記録を送信しています…';
+
+  @override
+  String get cloudHealthLocalOnly => 'この端末に保存されています。送信するにはログインしてください。';
+
+  @override
+  String get cloudHealthPending => '未送信の記録があります。記録はこの端末に保存されています。';
+
+  @override
+  String get cloudHealthConfirmed => '送信した記録の受信をサーバーが確認しました。';
 }

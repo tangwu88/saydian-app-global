@@ -183,7 +183,8 @@ void main() {
     await tester.tap(find.text('Sync data'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Data synced'), findsOneWidget);
+    expect(find.text('Watch data read. Cloud upload is confirmed separately.'), findsOneWidget);
+    expect(find.text('Data synced'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 
@@ -448,45 +449,47 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('Yucheng find watch is one-shot and never sends a fake stop', (
-    tester,
-  ) async {
-    final wearable = _FeatureWearable();
-    final controller = AppController(
-      MemorySessionVault(),
-      _CoverageApi(),
-      MemoryHealthStore(),
-      wearable,
-    )..isBooting = false;
-    addTearDown(controller.dispose);
-    await controller.connectDevice(
-      const DeviceInfo(id: 'yucheng:WATCH:01', name: 'W8 Plus', model: 'JL'),
-    );
+  for (final source in ['yucheng', 'urion']) {
+    testWidgets('$source find watch is one-shot and never sends a fake stop', (
+      tester,
+    ) async {
+      final wearable = _FeatureWearable();
+      final controller = AppController(
+        MemorySessionVault(),
+        _CoverageApi(),
+        MemoryHealthStore(),
+        wearable,
+      )..isBooting = false;
+      addTearDown(controller.dispose);
+      await controller.connectDevice(
+        DeviceInfo(id: '$source:WATCH:01', name: 'Test watch', model: 'test'),
+      );
 
-    await tester.pumpWidget(
-      MaterialApp(
-        home: DeviceFeaturePage(
-          controller: controller,
-          feature: DeviceFeature.findWatch,
+      await tester.pumpWidget(
+        MaterialApp(
+          home: DeviceFeaturePage(
+            controller: controller,
+            feature: DeviceFeature.findWatch,
+          ),
         ),
-      ),
-    );
-    await tester.pumpAndSettle();
-    await tester.tap(find.widgetWithText(FilledButton, '开始查找'));
-    await tester.pump();
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(FilledButton, '开始查找'));
+      await tester.pump();
 
-    expect(wearable.findActionStates, [true]);
-    expect(find.widgetWithText(FilledButton, '正在查找'), findsOneWidget);
-    expect(find.text('停止查找'), findsNothing);
+      expect(wearable.findActionStates, [true]);
+      expect(find.widgetWithText(FilledButton, '正在查找'), findsOneWidget);
+      expect(find.text('停止查找'), findsNothing);
 
-    await tester.tap(find.widgetWithText(FilledButton, '正在查找'));
-    await tester.pump();
-    expect(wearable.findActionStates, [true]);
+      await tester.tap(find.widgetWithText(FilledButton, '正在查找'));
+      await tester.pump();
+      expect(wearable.findActionStates, [true]);
 
-    await tester.pump(const Duration(seconds: 6));
-    expect(find.widgetWithText(FilledButton, '开始查找'), findsOneWidget);
-    expect(tester.takeException(), isNull);
-  });
+      await tester.pump(const Duration(seconds: 6));
+      expect(find.widgetWithText(FilledButton, '开始查找'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+  }
 
   testWidgets('Veepoo find watch retains start and stop actions', (
     tester,

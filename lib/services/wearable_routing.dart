@@ -706,6 +706,7 @@ class RoutedWearableBridge
           event.type == 'reconnected' ||
           event.type == 'disconnected' ||
           event.type == 'syncProgress' ||
+          event.type == 'healthDataReady' ||
           event.type == 'cameraShutter') {
         final payload = Map<String, Object?>.from(event.payload);
         final usesPrimaryId =

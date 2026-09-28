@@ -32,7 +32,16 @@ internal class UrionGattTransport(private val context: Context) {
     private var observedAdvertisements = 0
     private var observedCompanyAdvertisements = 0
     private var gatt: BluetoothGatt? = null
-    private val retiringGatts = mutableMapOf<BluetoothGatt, Runnable>()
+    private val connectionDrain = UrionGattDrain<BluetoothGatt>(
+        disconnect = { it.disconnect() },
+        close = { it.close() },
+        scheduleTimeout = { completion ->
+            val deadline = Runnable { completion() }
+            handler.postDelayed(deadline, 2000)
+            val cancel: () -> Unit = { handler.removeCallbacks(deadline) }
+            cancel
+        },
+    )
     private var writer: BluetoothGattCharacteristic? = null
     private var pendingConnect: MethodChannel.Result? = null
     private var connectDeadline: Runnable? = null
@@ -59,7 +68,10 @@ internal class UrionGattTransport(private val context: Context) {
         }
         if (call.method == "disconnect") {
             closeConnection()
-            result.success(null)
+            connectionDrain.whenDrained { closed ->
+                if (closed) result.success(null)
+                else result.error("DISCONNECT_FAILED", "手表连接尚未关闭，请重新打开应用后重试", null)
+            }
             return
         }
         if (!hasPermission()) {
@@ -171,20 +183,32 @@ internal class UrionGattTransport(private val context: Context) {
         stopScan()
         closeConnection()
         generation++
-        nativeId = id
+        val requestGeneration = generation
         pendingConnect = result
-        gatt = device.connectGatt(context, false, callback, BluetoothDevice.TRANSPORT_LE)
-        if (gatt == null) {
-            failConnection()
-        } else {
-            val deadline = Runnable {
-                if (pendingConnect === result) {
-                    Log.d("U19GATT", "connection initialization timed out")
-                    failConnection()
-                }
+        connectionDrain.whenDrained { closed ->
+            if (pendingConnect !== result || generation != requestGeneration) return@whenDrained
+            if (!closed) {
+                failConnection()
+                return@whenDrained
             }
-            connectDeadline = deadline
-            handler.postDelayed(deadline, 25000)
+            nativeId = id
+            try {
+                gatt = device.connectGatt(context, false, callback, BluetoothDevice.TRANSPORT_LE)
+                if (gatt == null) {
+                    failConnection()
+                } else {
+                    val deadline = Runnable {
+                        if (pendingConnect === result) {
+                            Log.d("U19GATT", "connection initialization timed out")
+                            failConnection()
+                        }
+                    }
+                    connectDeadline = deadline
+                    handler.postDelayed(deadline, 25000)
+                }
+            } catch (_: Throwable) {
+                failConnection()
+            }
         }
     }
 
@@ -226,10 +250,7 @@ internal class UrionGattTransport(private val context: Context) {
             handler.post {
                 if (connection !== gatt) {
                     if (state == BluetoothProfile.STATE_DISCONNECTED) {
-                        retiringGatts.remove(connection)?.let { deadline ->
-                            handler.removeCallbacks(deadline)
-                            try { connection.close() } catch (_: Throwable) { }
-                        }
+                        connectionDrain.didDisconnect(connection)
                     }
                     return@post
                 }
@@ -256,6 +277,9 @@ internal class UrionGattTransport(private val context: Context) {
                     val wasReady = writer != null
                     val disconnectedId = nativeId
                     if (pendingConnect != null) failConnection() else closeConnection()
+                    if (state == BluetoothProfile.STATE_DISCONNECTED) {
+                        connectionDrain.didDisconnect(connection)
+                    }
                     if (wasReady) eventListener?.invoke(mapOf(
                         "type" to "disconnected",
                         "payload" to mapOf("deviceId" to (disconnectedId ?: "")),
@@ -395,19 +419,11 @@ internal class UrionGattTransport(private val context: Context) {
         writer = null
         softwareVersion = null
         hardwareVersion = null
-        gatt?.let { connection ->
-            // Closing before the disconnect callback can leave some Android BLE
-            // stacks unable to discover services on the next connection.
-            val deadline = Runnable {
-                retiringGatts.remove(connection)
-                try { connection.close() } catch (_: Throwable) { }
-            }
-            retiringGatts[connection] = deadline
-            try { connection.disconnect() } catch (_: Throwable) { }
-            handler.postDelayed(deadline, 2000)
-        }
+        val retiring = gatt
         gatt = null
         nativeId = null
+        // Detach first so late callbacks cannot mutate the next connection.
+        retiring?.let(connectionDrain::retire)
     }
 
     fun close() { stopScan(); closeConnection(); eventListener = null }

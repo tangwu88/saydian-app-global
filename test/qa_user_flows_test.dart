@@ -453,9 +453,9 @@ void main() {
         await tester.tap(find.text('连接'));
         await tester.pumpAndSettle();
 
-        expect(controller.syncStatus, '已同步 1 条');
+        expect(controller.syncStatus, '已读取 1 条手表记录');
         expect(controller.cloudSyncStatus, '批量健康同步接口未配置');
-        expect(controller.syncStatus, '已同步 1 条');
+        expect(controller.syncStatus, '已读取 1 条手表记录');
         expect(find.textContaining('设备同步：'), findsNothing);
         expect(find.textContaining('云端同步：'), findsNothing);
       } finally {

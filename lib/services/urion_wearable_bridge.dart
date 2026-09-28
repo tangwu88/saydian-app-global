@@ -21,7 +21,9 @@ class UrionWearableBridge
     EventChannel? eventChannel,
     this.requestTimeout = const Duration(seconds: 8),
     this.connectTimeout = const Duration(seconds: 30),
+    DateTime Function()? now,
   }) : _methods = methods ?? const MethodChannel('cc.saidian/urion_methods'),
+       _now = now ?? DateTime.now,
        _eventChannel =
            eventChannel ?? const EventChannel('cc.saidian/urion_events') {
     _subscription = _eventChannel.receiveBroadcastStream().listen(
@@ -33,6 +35,7 @@ class UrionWearableBridge
   final EventChannel _eventChannel;
   final Duration requestTimeout;
   final Duration connectTimeout;
+  final DateTime Function() _now;
   final SerialOperationQueue _queue = SerialOperationQueue();
   final FlutterSecureStorage _languageStorage = const FlutterSecureStorage();
   final Eb1FrameBuffer _buffer = Eb1FrameBuffer();
@@ -45,6 +48,13 @@ class UrionWearableBridge
   int _session = 0;
   DeviceInfo? _details;
   DeviceCapabilities? _capabilities;
+  int? _operationSession;
+  String? _operationDevice;
+  _Eb1Measurement? _measurement;
+  Eb1TimestampEncoding? _bloodPressureTimeEncoding;
+  DateTime? _bloodPressureVerifiedSince;
+  final Map<String, HealthRecord> _confirmedBloodPressureRecords = {};
+  bool _findSupported = true;
 
   String _languageKey(String id) =>
       'urion_time_language_${sha256.convert(utf8.encode(id))}';
@@ -90,12 +100,25 @@ class UrionWearableBridge
       bytes is Uint8List ? bytes : bytes as List<int>,
     )) {
       if (frame.command == 0x73 || frame.command == 0x33) {
-        _events.add(const WearableEvent(type: 'healthDataReady', payload: {}));
+        final bloodPressureChanged = frame.command == 0x33 || frame[1] == 2;
+        if (bloodPressureChanged) {
+          if (kDebugMode) debugPrint('[U19Measurement] completion notice');
+          _scheduleMeasurementRead();
+        }
+        if (frame.command == 0x33 || {1, 2, 3, 4, 6}.contains(frame[1])) {
+          _events.add(
+            WearableEvent(
+              type: 'healthDataReady',
+              payload: {'source': 'watchNotification', 'deviceId': _deviceId},
+            ),
+          );
+        }
         continue;
       }
       final pending = _pending;
       if (pending == null || pending.session != _session) continue;
       if (frame.isError && frame.command == (pending.command | 0x80)) {
+        if (frame.isUnsupported) _withdrawUnsupportedCommand(pending.command);
         pending.fail(
           PlatformException(
             code: frame.isUnsupported
@@ -120,7 +143,39 @@ class UrionWearableBridge
     _nativeGeneration = null;
     _details = null;
     _capabilities = null;
+    _measurement = null;
+    _bloodPressureTimeEncoding = null;
+    _bloodPressureVerifiedSince = null;
+    _confirmedBloodPressureRecords.clear();
+    _findSupported = true;
     _buffer.reset();
+  }
+
+  Future<T> _runConnected<T>(Future<T> Function() operation) {
+    final session = _session;
+    final id = _deviceId;
+    return _queue.run(() async {
+      void requireCurrent() {
+        if (id == null || session != _session || id != _deviceId) {
+          throw PlatformException(
+            code: 'DEVICE_CHANGED',
+            message: '手表连接已变化，请重试',
+          );
+        }
+      }
+
+      requireCurrent();
+      _operationSession = session;
+      _operationDevice = id;
+      try {
+        final result = await operation();
+        requireCurrent();
+        return result;
+      } finally {
+        _operationSession = null;
+        _operationDevice = null;
+      }
+    });
   }
 
   Future<List<Eb1Frame>> _exchange(
@@ -133,6 +188,9 @@ class UrionWearableBridge
       throw PlatformException(code: 'NOT_CONNECTED', message: '请先连接手表');
     }
     if (_pending != null) throw StateError('EB1 commands must be serial');
+    if (_operationSession != _session || _operationDevice != id) {
+      throw PlatformException(code: 'DEVICE_CHANGED', message: '手表连接已变化，请重试');
+    }
     final pending = _Eb1Pending(command, _session, count);
     _pending = pending;
     try {
@@ -141,20 +199,34 @@ class UrionWearableBridge
             'bytes': Eb1Frame.request(command, payload).bytes,
           })
           .timeout(requestTimeout);
-      return await pending.result.timeout(requestTimeout);
+      final frames = await pending.result.timeout(requestTimeout);
+      if (pending.session != _session || id != _deviceId) {
+        throw PlatformException(code: 'DEVICE_CHANGED', message: '手表连接已变化，请重试');
+      }
+      return frames;
     } on TimeoutException {
       // A late response has no request identifier. Retiring this GATT session
       // is the only safe way to prevent it matching a later same-command read.
-      _retireSession();
-      await _methods.invokeMethod<void>('disconnect');
-      _events.add(WearableEvent(
-        type: 'disconnected',
-        payload: {'deviceId': id},
-      ));
+      if (pending.session == _session && id == _deviceId) {
+        _retireSession();
+        await _methods.invokeMethod<void>('disconnect');
+        _events.add(
+          WearableEvent(type: 'disconnected', payload: {'deviceId': id}),
+        );
+      }
       throw PlatformException(
         code: 'DEVICE_TIMEOUT',
         message: '手表暂时无响应，请重新连接后重试',
       );
+    } on FormatException {
+      if (pending.session == _session && id == _deviceId) {
+        _retireSession();
+        await _methods.invokeMethod<void>('disconnect');
+        _events.add(
+          WearableEvent(type: 'disconnected', payload: {'deviceId': id}),
+        );
+      }
+      rethrow;
     } finally {
       if (identical(_pending, pending)) _pending = null;
     }
@@ -177,18 +249,24 @@ class UrionWearableBridge
     required WearableUserProfile profile,
   }) async {
     _retireSession();
+    final connectionSession = _session;
     final Map<Object?, Object?>? raw;
     try {
       raw = await _methods
           .invokeMapMethod<Object?, Object?>('connect', {'deviceId': deviceId})
           .timeout(connectTimeout);
     } on TimeoutException {
-      _retireSession();
-      await _methods.invokeMethod<void>('disconnect');
+      if (connectionSession == _session) {
+        _retireSession();
+        await _methods.invokeMethod<void>('disconnect');
+      }
       throw PlatformException(
         code: 'CONNECT_TIMEOUT',
         message: '连接超时，请将手表靠近手机后重试',
       );
+    }
+    if (connectionSession != _session) {
+      throw PlatformException(code: 'CONNECT_CANCELLED', message: '连接已取消');
     }
     _deviceId = deviceId;
     _nativeGeneration = (raw?['generation'] as num?)?.toInt();
@@ -197,6 +275,9 @@ class UrionWearableBridge
       throw PlatformException(code: 'CONNECT_FAILED', message: '暂时无法连接手表');
     }
     final details = await getConnectedDeviceDetails();
+    if (connectionSession != _session) {
+      throw PlatformException(code: 'CONNECT_CANCELLED', message: '连接已取消');
+    }
     if (details == null) {
       await disconnect();
       throw PlatformException(code: 'CONNECT_FAILED', message: '暂时无法连接手表');
@@ -204,7 +285,7 @@ class UrionWearableBridge
     // Notification subscription is completed by native before connect returns.
     // An EB1 read additionally verifies the byte-level session is responsive.
     try {
-      final battery = (await _queue.run(() => _exchange(0x03))).single;
+      final battery = (await _runConnected(() => _exchange(0x03))).single;
       final level = battery[1];
       if (level > 100) throw const FormatException('Invalid EB1 battery');
       _details = DeviceInfo(
@@ -220,7 +301,7 @@ class UrionWearableBridge
         WearableEvent(type: 'deviceDetails', payload: _details!.toJson()),
       );
     } catch (_) {
-      await disconnect();
+      if (connectionSession == _session) await disconnect();
       rethrow;
     }
   }
@@ -233,11 +314,18 @@ class UrionWearableBridge
 
   @override
   Future<DeviceInfo?> getConnectedDeviceDetails() async {
-    if (_deviceId == null) return null;
+    final id = _deviceId;
+    final session = _session;
+    if (id == null) return null;
     final raw = await _methods.invokeMapMethod<Object?, Object?>(
       'getDeviceDetails',
     );
-    if (raw == null || '${raw['id']}' != _deviceId) return null;
+    if (raw == null ||
+        '${raw['id']}' != id ||
+        id != _deviceId ||
+        session != _session) {
+      return null;
+    }
     final native = DeviceInfo.fromMap(raw);
     return _details = DeviceInfo(
       id: native.id,
@@ -251,10 +339,23 @@ class UrionWearableBridge
   }
 
   @override
-  Future<DeviceCapabilities> getCapabilities() => _queue.run(() async {
+  Future<DeviceCapabilities> getCapabilities() => _runConnected(() async {
     if (_capabilities != null) return _capabilities!;
     final metrics = <HealthMetric>{};
     final features = <DeviceFeature>{};
+    final manualMetrics = <HealthMetric>{};
+    if (_findSupported) features.add(DeviceFeature.findWatch);
+    try {
+      await _readBloodPressure(count: 1);
+      metrics.add(HealthMetric.bloodPressure);
+      manualMetrics.add(HealthMetric.bloodPressure);
+      if (kDebugMode) {
+        debugPrint('[U19Capability] BP history structure verified');
+      }
+    } on PlatformException catch (error) {
+      if (error.code != 'UNSUPPORTED_DEVICE') rethrow;
+      if (kDebugMode) debugPrint('[U19Capability] BP history unsupported');
+    }
     try {
       final daily = await _exchange(0x07, [0], 2);
       Eb1DailySnapshot.parse(daily[0], daily[1]);
@@ -295,11 +396,11 @@ class UrionWearableBridge
     } on PlatformException catch (error) {
       if (error.code != 'UNSUPPORTED_DEVICE') rethrow;
     }
-    // A feature is visible only after a safe read confirms this firmware's
-    // protocol shape. Manual starts and destructive writes are never probes.
+    // Measurements require a safe history read. Find uses the confirmed EB1
+    // channel's protocol support and is withdrawn on an unsupported response.
     _capabilities = DeviceCapabilities(
       metrics: metrics,
-      manualMetrics: const {},
+      manualMetrics: manualMetrics,
       stoppableManualMetrics: const {},
       sportModes: const {},
       features: features,
@@ -311,16 +412,20 @@ class UrionWearableBridge
   @override
   Future<List<HealthRecord>> syncHealthData({
     String? cursor,
-  }) => _queue.run(() async {
+  }) => _runConnected(() async {
     final packets = await _exchange(0x07, [0], 2);
     final snapshot = Eb1DailySnapshot.parse(packets[0], packets[1]);
     final today = DateTime.now();
     final watchDate = snapshot.localDate;
-    final dayDistance = DateTime.utc(today.year, today.month, today.day)
-        .difference(watchDate).inDays;
+    final dayDistance = DateTime.utc(
+      today.year,
+      today.month,
+      today.day,
+    ).difference(watchDate).inDays;
     final unexpectedDayIndex = snapshot.daysAgo != 0;
     final unexpectedDate = dayDistance.abs() > 1;
-    final invalidDuration = snapshot.sleepMinutes > 1440 ||
+    final invalidDuration =
+        snapshot.sleepMinutes > 1440 ||
         snapshot.deepMinutes > 1440 ||
         snapshot.lightMinutes > 1440;
     if (kDebugMode) {
@@ -331,8 +436,10 @@ class UrionWearableBridge
     }
     if (unexpectedDayIndex || unexpectedDate || invalidDuration) {
       if (kDebugMode) {
-        debugPrint('[U19Sync] daily rejected: index=$unexpectedDayIndex '
-            'date=$unexpectedDate duration=$invalidDuration');
+        debugPrint(
+          '[U19Sync] daily rejected: index=$unexpectedDayIndex '
+          'date=$unexpectedDate duration=$invalidDuration',
+        );
       }
       throw const FormatException('Unverified EB1 daily data');
     }
@@ -396,22 +503,53 @@ class UrionWearableBridge
         ),
       );
     }
+    if (_bloodPressureTimeEncoding != null &&
+        _capabilities?.metrics.contains(HealthMetric.bloodPressure) == true) {
+      final samples = await _readBloodPressure();
+      final now = _now().toUtc();
+      for (final sample in samples) {
+        final measuredAt = eb1DecodeTimestamp(
+          sample.rawTimestamp,
+          _bloodPressureTimeEncoding!,
+        );
+        // Earlier history may predate the user's clock correction. Keep it
+        // unverified instead of applying a newly proven encoding retroactively.
+        if (_bloodPressureVerifiedSince == null ||
+            measuredAt.isBefore(_bloodPressureVerifiedSince!) ||
+            measuredAt.isAfter(now)) {
+          continue;
+        }
+        result.add(
+          _confirmedBloodPressureRecords[sample.fingerprint] ??
+              _bloodPressureRecord(sample, measuredAt),
+        );
+      }
+    }
     return result;
   });
 
   @override
-  Future<void> startMeasurement(HealthMetric metric) => _queue.run(() async {
-    final command = switch (metric) {
-      HealthMetric.bloodPressure => 0x32,
-      HealthMetric.heartRate => 0x38,
-      HealthMetric.bloodOxygen => 0x39,
-      _ => throw PlatformException(
-        code: 'UNSUPPORTED_DEVICE',
-        message: '请在手表上操作',
-      ),
-    };
-    // 0x32/0x38/0x39 have fourteen zero payload bytes in the EB1 spec.
-    await _exchange(command);
+  Future<void> startMeasurement(HealthMetric metric) => _runConnected(() async {
+    if (metric != HealthMetric.bloodPressure ||
+        _capabilities?.manualMetrics?.contains(metric) != true) {
+      throw PlatformException(code: 'UNSUPPORTED_DEVICE', message: '请在手表上操作');
+    }
+    final before = await _readBloodPressure();
+    final measurement = _Eb1Measurement(
+      session: _session,
+      deviceId: _deviceId!,
+      startedAt: _now().toUtc(),
+      previous: before.map((sample) => sample.fingerprint).toSet(),
+    );
+    _measurement = measurement;
+    try {
+      await _exchange(0x32);
+      measurement.acknowledged = true;
+      if (kDebugMode) debugPrint('[U19Measurement] start acknowledged');
+    } catch (_) {
+      if (identical(_measurement, measurement)) _measurement = null;
+      rethrow;
+    }
   });
 
   @override
@@ -420,6 +558,162 @@ class UrionWearableBridge
         code: 'MEASUREMENT_STOP_UNSUPPORTED',
         message: '请在手表上结束测量',
       );
+
+  Future<List<Eb1BloodPressureSample>> _readBloodPressure({
+    int count = 50,
+  }) async {
+    final frames = await _exchange(0x14, [0, 0, 0, 0, 0, count], count);
+    return frames
+        .map(Eb1BloodPressureSample.parse)
+        .whereType<Eb1BloodPressureSample>()
+        .toList(growable: false);
+  }
+
+  void _scheduleMeasurementRead() {
+    final measurement = _measurement;
+    if (measurement == null ||
+        measurement.session != _session ||
+        measurement.deviceId != _deviceId) {
+      return;
+    }
+    measurement.notices++;
+    if (measurement.readQueued) return;
+    measurement.readQueued = true;
+    unawaited(
+      _runConnected(() async {
+        if (!identical(_measurement, measurement) ||
+            !measurement.acknowledged) {
+          return;
+        }
+        final notice = measurement.notices;
+        final samples = await _readBloodPressure();
+        if (!identical(_measurement, measurement) ||
+            measurement.session != _session) {
+          return;
+        }
+        final endedAt = _now().toUtc();
+        final candidates =
+            <String, (Eb1BloodPressureSample, Eb1TimestampMatch)>{};
+        for (final sample in samples) {
+          if (measurement.previous.contains(sample.fingerprint)) continue;
+          final proof = eb1MatchMeasurementTimestamp(
+            sample.rawTimestamp,
+            startedAt: measurement.startedAt,
+            endedAt: endedAt,
+          );
+          if (proof != null) candidates[sample.fingerprint] = (sample, proof);
+        }
+        // Multiple new samples or competing clock interpretations do not prove
+        // which result belongs to this single user-initiated measurement.
+        if (candidates.length == 1) {
+          final (sample, proof) = candidates.values.single;
+          _bloodPressureTimeEncoding = proof.encoding;
+          _bloodPressureVerifiedSince = DateTime.fromMillisecondsSinceEpoch(
+            measurement.startedAt.millisecondsSinceEpoch ~/ 1000 * 1000,
+            isUtc: true,
+          );
+          final record = _bloodPressureRecord(
+            sample,
+            proof.measuredAt,
+            origin: MeasurementOrigin.appMeasurement,
+          );
+          _confirmedBloodPressureRecords[sample.fingerprint] = record;
+          if (kDebugMode) {
+            debugPrint(
+              '[U19Measurement] unique new result verified '
+              'clock=${proof.encoding?.name ?? 'equivalentInstant'}',
+            );
+          }
+          _measurement = null;
+          _events.add(
+            WearableEvent(
+              type: 'healthRecord',
+              payload: {
+                ...record.toJson(),
+                'measurementStartedAt': measurement.startedAt.toIso8601String(),
+              },
+            ),
+          );
+        } else if (kDebugMode) {
+          debugPrint('[U19Measurement] waiting for a verified new result');
+        }
+        measurement.readQueued = false;
+        if (identical(_measurement, measurement) &&
+            measurement.notices != notice) {
+          _scheduleMeasurementRead();
+        }
+      }).catchError((Object _) {
+        measurement.readQueued = false;
+        if (kDebugMode) {
+          debugPrint('[U19Measurement] result read not completed');
+        }
+      }),
+    );
+  }
+
+  HealthRecord _bloodPressureRecord(
+    Eb1BloodPressureSample sample,
+    DateTime measuredAt, {
+    MeasurementOrigin origin = MeasurementOrigin.watchHistory,
+  }) {
+    final bytes = sha256
+        .convert(utf8.encode('$_deviceId|bp|${sample.fingerprint}'))
+        .bytes
+        .take(16)
+        .toList();
+    bytes[6] = (bytes[6] & 0x0f) | 0x50;
+    bytes[8] = (bytes[8] & 0x3f) | 0x80;
+    final hex = bytes
+        .map((value) => value.toRadixString(16).padLeft(2, '0'))
+        .join();
+    final offset = measuredAt.toLocal().timeZoneOffset.inMinutes;
+    return HealthRecord(
+      id: '${hex.substring(0, 8)}-${hex.substring(8, 12)}-${hex.substring(12, 16)}-${hex.substring(16, 20)}-${hex.substring(20)}',
+      metric: HealthMetric.bloodPressure,
+      values: {
+        'systolic': sample.systolic,
+        'diastolic': sample.diastolic,
+        'pulse': sample.pulse,
+      },
+      unit: 'mmHg',
+      measuredAt: measuredAt,
+      timezone:
+          '${offset < 0 ? '-' : '+'}${(offset.abs() ~/ 60).toString().padLeft(2, '0')}:${(offset.abs() % 60).toString().padLeft(2, '0')}',
+      deviceId: 'urion:$_deviceId',
+      firmwareVersion: _details?.firmwareVersion ?? '',
+      quality: 'valid',
+      source: MeasurementSource.wearable,
+      origin: origin,
+      rawVersion: 1,
+    );
+  }
+
+  void _withdrawUnsupportedCommand(int command) {
+    if (command == 0x50) _findSupported = false;
+    final previous = _capabilities;
+    if (previous == null || !{0x50, 0x14, 0x32}.contains(command)) return;
+    final next = DeviceCapabilities(
+      metrics: {...previous.metrics}
+        ..removeWhere(
+          (metric) => command == 0x14 && metric == HealthMetric.bloodPressure,
+        ),
+      manualMetrics: {...?previous.manualMetrics}
+        ..removeWhere(
+          (metric) => command != 0x50 && metric == HealthMetric.bloodPressure,
+        ),
+      stoppableManualMetrics: const {},
+      sportModes: const {},
+      features: {...previous.features}
+        ..removeWhere(
+          (feature) => command == 0x50 && feature == DeviceFeature.findWatch,
+        ),
+      integratedFeatures: previous.integratedFeatures,
+    );
+    _capabilities = next;
+    _events.add(
+      WearableEvent(type: 'capabilitiesUpdated', payload: next.toJson()),
+    );
+  }
 
   @override
   Future<void> startSport(SportMode mode) async =>
@@ -430,24 +724,25 @@ class UrionWearableBridge
   Future<List<SportRecord>> readSportRecords() async => const [];
 
   @override
-  Future<Map<String, bool>> readAutoMeasureSettings() => _queue.run(() async {
-    final result = <String, bool>{};
-    for (final entry in {'heartRate': 0x16, 'bloodOxygen': 0x2c}.entries) {
-      try {
-        final response = (await _exchange(entry.value, [1])).single;
-        if (response[1] == 1 && (response[2] == 1 || response[2] == 2)) {
-          result[entry.key] = response[2] == 1;
+  Future<Map<String, bool>> readAutoMeasureSettings() =>
+      _runConnected(() async {
+        final result = <String, bool>{};
+        for (final entry in {'heartRate': 0x16, 'bloodOxygen': 0x2c}.entries) {
+          try {
+            final response = (await _exchange(entry.value, [1])).single;
+            if (response[1] == 1 && (response[2] == 1 || response[2] == 2)) {
+              result[entry.key] = response[2] == 1;
+            }
+          } on PlatformException catch (error) {
+            if (error.code != 'UNSUPPORTED_DEVICE') rethrow;
+          }
         }
-      } on PlatformException catch (error) {
-        if (error.code != 'UNSUPPORTED_DEVICE') rethrow;
-      }
-    }
-    return result;
-  });
+        return result;
+      });
 
   @override
   Future<void> setAutoMeasureSetting(String type, bool enabled) =>
-      _queue.run(() async {
+      _runConnected(() async {
         final command = switch (type) {
           'heartRate' => 0x16,
           'bloodOxygen' => 0x2c,
@@ -477,7 +772,7 @@ class UrionWearableBridge
   @override
   Future<Map<String, Object?>> readDeviceFeature(
     DeviceFeature feature,
-  ) => _queue.run(() async {
+  ) => _runConnected(() async {
     if (feature == DeviceFeature.basicSettings) {
       final profile = (await _exchange(0x0a, [1])).single;
       final goals = (await _exchange(0x21, [1])).single;
@@ -529,10 +824,14 @@ class UrionWearableBridge
     DeviceFeature feature,
     Map<String, Object?> values,
   ) async {
+    final requestSession = _session;
+    final requestDevice = _deviceId;
     if (feature == DeviceFeature.basicSettings) {
-      await _queue.run(() async {
+      await _runConnected(() async {
         if (values.length != 1) {
-          throw const FormatException('Only one EB1 setting may change at a time');
+          throw const FormatException(
+            'Only one EB1 setting may change at a time',
+          );
         }
         final entry = values.entries.single;
         if (entry.key == 'syncTime') {
@@ -540,7 +839,9 @@ class UrionWearableBridge
               ? await _languageStorage.read(key: _languageKey(_deviceId!))
               : entry.value;
           if (selectedLanguage != 'zh' && selectedLanguage != 'en') {
-            throw const FormatException('Confirm watch language before time sync');
+            throw const FormatException(
+              'Confirm watch language before time sync',
+            );
           }
           final now = DateTime.now();
           final response = (await _exchange(0x01, [
@@ -568,7 +869,9 @@ class UrionWearableBridge
             throw const FormatException('Invalid EB1 step goal');
           }
           final before = (await _exchange(0x21, [1])).single;
-          if (before[1] != 1) throw const FormatException('Invalid EB1 goal read');
+          if (before[1] != 1) {
+            throw const FormatException('Invalid EB1 goal read');
+          }
           final payload = before.bytes.sublist(2, 15);
           payload[0] = goal & 0xff;
           payload[1] = (goal >> 8) & 0xff;
@@ -576,7 +879,10 @@ class UrionWearableBridge
           await _exchange(0x21, [2, ...payload]);
           final after = (await _exchange(0x21, [1])).single;
           if (after[1] != 1 || eb1UnsignedLittle(after, 2, 3) != goal) {
-            throw PlatformException(code: 'SETTING_NOT_CONFIRMED', message: '设置未生效，请重试');
+            throw PlatformException(
+              code: 'SETTING_NOT_CONFIRMED',
+              message: '设置未生效，请重试',
+            );
           }
           return;
         }
@@ -591,7 +897,9 @@ class UrionWearableBridge
         final value = entry.key == 'is24Hour'
             ? (entry.value == true ? 0 : 1)
             : entry.value;
-        if (value is! int || value < 0 || value > 255 ||
+        if (value is! int ||
+            value < 0 ||
+            value > 255 ||
             (entry.key == 'gender' && value > 1) ||
             (entry.key == 'age' && (value < 1 || value > 120)) ||
             (entry.key == 'heightCm' && (value < 50 || value > 240)) ||
@@ -599,13 +907,18 @@ class UrionWearableBridge
           throw const FormatException('Invalid EB1 profile value');
         }
         final before = (await _exchange(0x0a, [1])).single;
-        if (before[1] != 1) throw const FormatException('Invalid EB1 profile read');
+        if (before[1] != 1) {
+          throw const FormatException('Invalid EB1 profile read');
+        }
         final payload = before.bytes.sublist(2, 10);
         payload[field - 2] = value;
         await _exchange(0x0a, [2, ...payload]);
         final after = (await _exchange(0x0a, [1])).single;
         if (after[1] != 1 || after[field] != value) {
-          throw PlatformException(code: 'SETTING_NOT_CONFIRMED', message: '设置未生效，请重试');
+          throw PlatformException(
+            code: 'SETTING_NOT_CONFIRMED',
+            message: '设置未生效，请重试',
+          );
         }
       });
       return;
@@ -615,7 +928,7 @@ class UrionWearableBridge
       if (value is! num || value.toInt() < 1 || value.toInt() > 20) {
         throw const FormatException('Invalid screen timeout');
       }
-      await _queue.run(() async {
+      await _runConnected(() async {
         final before = (await _exchange(0x1f, [1])).single;
         if (before[1] != 1) throw const FormatException('Invalid setting read');
         await _exchange(0x1f, [2, value.toInt()]);
@@ -631,6 +944,12 @@ class UrionWearableBridge
     }
     if (feature == DeviceFeature.healthMonitoring) {
       for (final entry in values.entries) {
+        if (requestSession != _session || requestDevice != _deviceId) {
+          throw PlatformException(
+            code: 'DEVICE_CHANGED',
+            message: '手表连接已变化，请重试',
+          );
+        }
         if (entry.value is bool) {
           await setAutoMeasureSetting(entry.key, entry.value == true);
         }
@@ -645,18 +964,20 @@ class UrionWearableBridge
     DeviceFeature feature, {
     bool enabled = true,
   }) async {
-    if (feature != DeviceFeature.findWatch || !enabled) {
+    if (feature != DeviceFeature.findWatch || !enabled || !_findSupported) {
       throw PlatformException(
         code: 'UNSUPPORTED_DEVICE',
         message: '当前手表不支持此功能',
       );
     }
-    await _queue.run(() => _exchange(0x50, [0x55, 0xaa]));
+    await _runConnected(() => _exchange(0x50, [0x55, 0xaa]));
+    if (kDebugMode) debugPrint('[U19Find] acknowledged');
   }
 }
 
 class _Eb1Pending {
-  _Eb1Pending(this.command, this.session, this.count) {
+  _Eb1Pending(this.command, this.session, int count)
+    : _collector = Eb1ResponseCollector(command, count: count) {
     // A native write can fail before _exchange begins awaiting the response.
     // Register an error listener now so retiring that session is never an
     // unhandled asynchronous exception.
@@ -665,23 +986,38 @@ class _Eb1Pending {
 
   final int command;
   final int session;
-  final int count;
+  final Eb1ResponseCollector _collector;
   final Completer<List<Eb1Frame>> _completer = Completer<List<Eb1Frame>>();
-  final List<Eb1Frame> _frames = [];
 
   Future<List<Eb1Frame>> get result => _completer.future;
 
   void accept(Eb1Frame frame) {
     if (_completer.isCompleted) return;
-    if (count > 1 && frame[1] != _frames.length) {
-      fail(const FormatException('Out-of-order EB1 response'));
-      return;
+    try {
+      final frames = _collector.add(frame);
+      if (frames != null) _completer.complete(frames);
+    } catch (error) {
+      fail(error);
     }
-    _frames.add(frame);
-    if (_frames.length == count) _completer.complete(_frames);
   }
 
   void fail(Object error) {
     if (!_completer.isCompleted) _completer.completeError(error);
   }
+}
+
+class _Eb1Measurement {
+  _Eb1Measurement({
+    required this.session,
+    required this.deviceId,
+    required this.startedAt,
+    required this.previous,
+  });
+  final int session;
+  final String deviceId;
+  final DateTime startedAt;
+  final Set<String> previous;
+  bool acknowledged = false;
+  bool readQueued = false;
+  int notices = 0;
 }

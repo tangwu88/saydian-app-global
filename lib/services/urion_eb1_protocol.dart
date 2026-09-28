@@ -172,6 +172,8 @@ class Eb1BloodPressureSample {
   final int diastolic;
   final int pulse;
 
+  String get fingerprint => '$rawTimestamp|$systolic|$diastolic|$pulse';
+
   static Eb1BloodPressureSample? parse(Eb1Frame frame) {
     if (frame.command != 0x14) {
       throw const FormatException('Not an EB1 blood pressure packet');
@@ -203,7 +205,17 @@ class Eb1IndexedDay {
   final int command;
   final List<Eb1Frame> frames;
 
+  bool get hasNoData =>
+      frames.length == 1 &&
+      frames.single.command == command &&
+      frames.single[1] == 0xff;
+
+  int? get rawTimestamp => hasNoData || frames.length < 2
+      ? null
+      : eb1UnsignedLittle(frames[1], 2, 4);
+
   List<int> decodeHourlyOrFiveMinuteValues({required int expectedInterval}) {
+    if (hasNoData) return const [];
     if (frames.isEmpty ||
         frames.first.command != command ||
         frames.first[1] != 0 ||
@@ -233,4 +245,114 @@ class Eb1IndexedDay {
     }
     return values.take(expectedSlots).toList(growable: false);
   }
+}
+
+/// Collects an entire response before releasing the single-command channel.
+/// BP ends at the requested count or its sentinel; indexed data declares its
+/// own packet count in the header. Repeated identical indexed packets are safe.
+class Eb1ResponseCollector {
+  Eb1ResponseCollector(this.command, {this.count = 1}) {
+    if (count < 1 || count > 50) throw RangeError('Invalid EB1 response count');
+  }
+
+  final int command;
+  final int count;
+  final List<Eb1Frame> _frames = [];
+  int? _indexedTotal;
+  bool _complete = false;
+
+  List<Eb1Frame>? add(Eb1Frame frame) {
+    if (_complete) return null;
+    if (frame.command != command) {
+      throw const FormatException('Wrong EB1 response');
+    }
+    if (command == 0x14) {
+      final sample = Eb1BloodPressureSample.parse(frame);
+      if (sample == null) return _finish();
+      _frames.add(frame);
+      return _frames.length == count ? _finish() : null;
+    }
+    final indexed = command == 0x15 || command == 0x2d;
+    if (indexed && _frames.isEmpty) {
+      if (frame[1] == 0xff) {
+        _frames.add(frame);
+        return _finish();
+      }
+      if (frame[1] != 0 || frame[2] < 2 || frame[2] > 32) {
+        throw const FormatException('Invalid EB1 response header');
+      }
+      _indexedTotal = frame[2];
+    }
+    if (indexed || count > 1) {
+      final index = frame[1];
+      if (index < _frames.length) {
+        final previous = _frames[index].bytes;
+        if (List.generate(
+          16,
+          (i) => previous[i] == frame[i],
+        ).every((same) => same)) {
+          return null;
+        }
+        throw const FormatException('Conflicting EB1 repeated packet');
+      }
+      if (index != _frames.length) {
+        throw const FormatException('Missing EB1 response packet');
+      }
+    }
+    _frames.add(frame);
+    return _frames.length == (_indexedTotal ?? count) ? _finish() : null;
+  }
+
+  List<Eb1Frame> _finish() {
+    _complete = true;
+    return List.unmodifiable(_frames);
+  }
+}
+
+enum Eb1TimestampEncoding { utc, localWallClock }
+
+DateTime eb1DecodeTimestamp(int seconds, Eb1TimestampEncoding encoding) {
+  final raw = DateTime.fromMillisecondsSinceEpoch(seconds * 1000, isUtc: true);
+  if (encoding == Eb1TimestampEncoding.utc) return raw;
+  return DateTime(
+    raw.year,
+    raw.month,
+    raw.day,
+    raw.hour,
+    raw.minute,
+    raw.second,
+  ).toUtc();
+}
+
+class Eb1TimestampMatch {
+  const Eb1TimestampMatch(this.measuredAt, this.encoding);
+  final DateTime measuredAt;
+  final Eb1TimestampEncoding? encoding;
+}
+
+/// A new measurement is the only clock proof. Do not guess using old history
+/// or apply a fixed timezone correction. At UTC both interpretations can name
+/// the same instant: that instant is proven, but the encoding remains unknown.
+Eb1TimestampMatch? eb1MatchMeasurementTimestamp(
+  int rawTimestamp, {
+  required DateTime startedAt,
+  required DateTime endedAt,
+  DateTime Function(int, Eb1TimestampEncoding) decode = eb1DecodeTimestamp,
+}) {
+  final firstSecond = DateTime.fromMillisecondsSinceEpoch(
+    startedAt.millisecondsSinceEpoch ~/ 1000 * 1000,
+    isUtc: true,
+  );
+  final matches = <Eb1TimestampEncoding, DateTime>{};
+  for (final encoding in Eb1TimestampEncoding.values) {
+    final instant = decode(rawTimestamp, encoding).toUtc();
+    if (!instant.isBefore(firstSecond) && !instant.isAfter(endedAt.toUtc())) {
+      matches[encoding] = instant;
+    }
+  }
+  if (matches.isEmpty || matches.values.toSet().length != 1) return null;
+  return Eb1TimestampMatch(
+    matches.values.first,
+    matches.length == 1 ? matches.keys.single : null,
+  );
 }

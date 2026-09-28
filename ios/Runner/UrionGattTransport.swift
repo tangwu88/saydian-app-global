@@ -16,6 +16,9 @@ final class UrionGattTransport: NSObject, FlutterStreamHandler, CBCentralManager
   private var devices: [String: CBPeripheral] = [:]
   private var descriptions: [String: [String: Any]] = [:]
   private var active: CBPeripheral?
+  private var retiring: [UUID: CBPeripheral] = [:]
+  private var retirementWaiters: [(Bool) -> Void] = []
+  private var retirementTimer: Timer?
   private var nativeID: String?
   private var writer: CBCharacteristic?
   private var notify: CBCharacteristic?
@@ -65,6 +68,10 @@ final class UrionGattTransport: NSObject, FlutterStreamHandler, CBCentralManager
       finishScan()
       result(nil)
     case "connect":
+      guard pendingConnect == nil else {
+        result(FlutterError(code: "CONNECT_IN_PROGRESS", message: "正在连接手表", details: nil))
+        return
+      }
       guard let arguments = call.arguments as? [String: Any],
         let id = arguments["deviceId"] as? String,
         let peripheral = devices[id] else {
@@ -74,14 +81,25 @@ final class UrionGattTransport: NSObject, FlutterStreamHandler, CBCentralManager
       finishScan()
       closeConnection()
       generation += 1
-      nativeID = id
-      active = peripheral
+      let requestGeneration = generation
       pendingConnect = result
-      peripheral.delegate = self
-      central.connect(peripheral, options: nil)
+      whenRetired { [weak self] closed in
+        guard let self, self.generation == requestGeneration, self.pendingConnect != nil else { return }
+        guard closed else {
+          self.pendingConnect = nil
+          result(FlutterError(code: "DISCONNECT_PENDING", message: "手表连接尚未关闭，请稍后重试", details: nil))
+          return
+        }
+        self.nativeID = id
+        self.active = peripheral
+        peripheral.delegate = self
+        self.central.connect(peripheral, options: nil)
+      }
     case "disconnect":
       closeConnection()
-      result(nil)
+      whenRetired { closed in
+        result(closed ? nil : FlutterError(code: "DISCONNECT_PENDING", message: "手表连接尚未关闭，请稍后重试", details: nil))
+      }
     case "getDeviceDetails":
       result(details())
     case "writeFrame":
@@ -129,13 +147,52 @@ final class UrionGattTransport: NSObject, FlutterStreamHandler, CBCentralManager
     pendingConnect = nil
     pendingWrite?(FlutterError(code: "DISCONNECTED", message: "手表已断开连接", details: nil))
     pendingWrite = nil
-    if let peripheral = active { central.cancelPeripheralConnection(peripheral) }
+    let previous = active
     active = nil
     nativeID = nil
     writer = nil
     notify = nil
     firmware = nil
     hardware = nil
+    if let peripheral = previous {
+      peripheral.delegate = nil
+      if peripheral.state != .disconnected {
+        retiring[peripheral.identifier] = peripheral
+        central.cancelPeripheralConnection(peripheral)
+      }
+    }
+  }
+
+  private func whenRetired(_ completion: @escaping (Bool) -> Void) {
+    if retiring.isEmpty {
+      completion(true)
+      return
+    }
+    retirementWaiters.append(completion)
+    guard retirementTimer == nil else { return }
+    retirementTimer = Timer.scheduledTimer(withTimeInterval: 5, repeats: false) { [weak self] _ in
+      guard let self else { return }
+      self.retirementTimer = nil
+      // CoreBluetooth has no close() primitive. A timeout must not pretend
+      // that cancellation completed or allow a second connection to start.
+      let waiters = self.retirementWaiters
+      self.retirementWaiters.removeAll()
+      waiters.forEach { $0(false) }
+    }
+  }
+
+  @discardableResult
+  private func finishRetirement(_ peripheral: CBPeripheral) -> Bool {
+    guard retiring[peripheral.identifier] === peripheral else { return false }
+    retiring.removeValue(forKey: peripheral.identifier)
+    if retiring.isEmpty {
+      retirementTimer?.invalidate()
+      retirementTimer = nil
+      let waiters = retirementWaiters
+      retirementWaiters.removeAll()
+      waiters.forEach { $0(true) }
+    }
+    return true
   }
 
   private func failConnection() {
@@ -184,15 +241,21 @@ final class UrionGattTransport: NSObject, FlutterStreamHandler, CBCentralManager
   }
 
   func centralManager(_ central: CBCentralManager, didConnect peripheral: CBPeripheral) {
+    if retiring[peripheral.identifier] === peripheral {
+      central.cancelPeripheralConnection(peripheral)
+      return
+    }
     guard peripheral === active else { return }
     peripheral.discoverServices([serviceID, infoID])
   }
 
   func centralManager(_ central: CBCentralManager, didFailToConnect peripheral: CBPeripheral, error: Error?) {
+    if finishRetirement(peripheral) { return }
     if peripheral === active { failConnection() }
   }
 
   func centralManager(_ central: CBCentralManager, didDisconnectPeripheral peripheral: CBPeripheral, error: Error?) {
+    if finishRetirement(peripheral) { return }
     guard peripheral === active else { return }
     let id = nativeID
     let ready = writer != nil

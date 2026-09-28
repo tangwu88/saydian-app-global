@@ -8,11 +8,13 @@ class SyncOutcome {
     required this.uploaded,
     required this.rejected,
     this.message,
+    this.hasPending = false,
   });
 
   final int uploaded;
   final int rejected;
   final String? message;
+  final bool hasPending;
 }
 
 class HealthSyncService {
@@ -55,6 +57,7 @@ class HealthSyncService {
         return SyncOutcome(
           uploaded: uploaded,
           rejected: rejected,
+          hasPending: heldDaily,
           message: heldDaily
               ? '已保存到本机，暂未同步'
               : quarantined == 0
@@ -102,6 +105,7 @@ class HealthSyncService {
           return SyncOutcome(
             uploaded: uploaded,
             rejected: rejected,
+            hasPending: true,
             message: '服务器未接收任何记录，已保留本地队列',
           );
         }
@@ -109,6 +113,7 @@ class HealthSyncService {
         return SyncOutcome(
           uploaded: uploaded,
           rejected: rejected,
+          hasPending: true,
           message: error.message,
         );
       }

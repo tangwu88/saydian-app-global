@@ -50,6 +50,8 @@ enum PushDeviceRegistrationState {
 
 enum DeviceScanIssue { permissionsRequired, locationServiceDisabled }
 
+enum CloudHealthSyncState { idle, uploading, localOnly, pending, complete }
+
 const _defaultPushRegistrationRetryDelays = <Duration>[
   Duration(seconds: 2),
   Duration(seconds: 5),
@@ -613,11 +615,20 @@ class AppController extends ChangeNotifier {
   bool _appIsForeground = true;
   Timer? _measurementTimeout;
   HealthMetric? _activeMeasurementMetric;
+  int _measurementGeneration = 0;
+  int _measurementSessionId = 0;
+  DateTime? _measurementStartedAt;
+  HealthRecord? _measurementResult;
+  Set<String> _measurementExistingRecordIds = const {};
   bool _syncing = false;
   bool _accountTransitioning = false;
   Future<void>? _activeCloudSync;
   bool _disposed = false;
   int _deviceSyncGeneration = 0;
+  int _deviceConnectionGeneration = 0;
+  ({String deviceId, int session, int sync, bool definiteChange})?
+  _pendingHealthRefresh;
+  bool _deviceSyncAcceptsFollowUp = true;
   int _wearableRestoreGeneration = 0;
   Future<void>? _wearableRestoreInFlight;
   Future<void>? _wearableConnectInFlight;
@@ -659,6 +670,8 @@ class AppController extends ChangeNotifier {
   String sdkStatus = '等待连接';
   String syncStatus = '尚未同步';
   String cloudSyncStatus = '尚未上传';
+  CloudHealthSyncState cloudSyncState = CloudHealthSyncState.localOnly;
+  int cloudSyncUploadedCount = 0;
   DeviceInfo? connectedDevice;
   DeviceCapabilities? capabilities;
   DeviceCapabilityState deviceCapabilityState =
@@ -721,6 +734,9 @@ class AppController extends ChangeNotifier {
   bool get isAuthenticated => session != null;
   DeviceConnectionState get deviceState => deviceMachine.state;
   HealthMetric? get activeMeasurementMetric => _activeMeasurementMetric;
+  int get measurementSessionId => _measurementSessionId;
+  DateTime? get measurementStartedAt => _measurementStartedAt;
+  HealthRecord? get measurementResult => _measurementResult;
 
   Map<HealthMetric, HealthRecord> get latestByMetric {
     final result = <HealthMetric, HealthRecord>{};
@@ -806,6 +822,11 @@ class AppController extends ChangeNotifier {
 
   int _advanceSessionGeneration(Session? value) {
     _sessionGeneration++;
+    cloudSyncState = value == null
+        ? CloudHealthSyncState.localOnly
+        : CloudHealthSyncState.idle;
+    cloudSyncUploadedCount = 0;
+    cloudSyncStatus = value == null ? '未登录，数据仅保存在本机' : '尚未上传';
     _activeHealthOwner = _healthOwnerFor(value);
     _careInvitationRefresh = null;
     _pushRegistration = null;
@@ -822,10 +843,7 @@ class AppController extends ChangeNotifier {
       pushDeviceRegistrationIssueCode = null;
     }
     _invalidateDeviceSync();
-    _measurementTimeout?.cancel();
-    _measurementTimeout = null;
-    _activeMeasurementMetric = null;
-    _activeMeasurementSessionGeneration = null;
+    _retireMeasurementSession(clearResult: true);
     measurementProgress = 0;
     measurementSamples = const [];
     _clearAccountScopedMemory();
@@ -1388,10 +1406,7 @@ class AppController extends ChangeNotifier {
     _connectedDeviceSessionGeneration = null;
     _invalidateDeviceSync();
     final metric = _activeMeasurementMetric;
-    _measurementTimeout?.cancel();
-    _measurementTimeout = null;
-    _activeMeasurementMetric = null;
-    _activeMeasurementSessionGeneration = null;
+    _retireMeasurementSession(clearResult: true);
     measurementSamples = const [];
     measurementProgress = 0;
     if (!hasNativeSession) return true;
@@ -1642,15 +1657,21 @@ class AppController extends ChangeNotifier {
   }
 
   Future<void> _connectDevice(DeviceInfo device) async {
+    _deviceConnectionGeneration++;
     final sessionGeneration = _sessionGeneration;
     bool isCurrent() =>
         !_accountTransitioning &&
         _isCurrentSessionGeneration(sessionGeneration);
     errorMessage = null;
     _invalidateDeviceSync();
+    _retireMeasurementSession(clearResult: true);
+    measurementErrorMessage = null;
     _latestDeviceDetails = null;
     try {
-      if (_wearableNeedsDisconnect) await disconnectDevice();
+      if (_wearableNeedsDisconnect || connectedDevice != null) {
+        await disconnectDevice();
+        measurementErrorMessage = null;
+      }
       await _cancelPendingWearableRestore();
       if (!isCurrent()) return;
       if (deviceState == DeviceConnectionState.error) {
@@ -1780,7 +1801,11 @@ class AppController extends ChangeNotifier {
     return succeeded;
   }
 
-  Future<bool> _syncDeviceData(String deviceId, {required bool initial}) async {
+  Future<bool> _syncDeviceData(
+    String deviceId, {
+    required bool initial,
+    bool allowFollowUp = true,
+  }) async {
     if (_accountTransitioning ||
         connectedDevice?.id != deviceId ||
         isDeviceSyncing) {
@@ -1790,6 +1815,7 @@ class AppController extends ChangeNotifier {
     _connectedDeviceSessionGeneration ??= sessionGeneration;
     if (_connectedDeviceSessionGeneration != sessionGeneration) return false;
     final generation = ++_deviceSyncGeneration;
+    _deviceSyncAcceptsFollowUp = allowFollowUp;
     isDeviceSyncing = true;
     var succeeded = false;
     deviceSyncProgress = 0;
@@ -1852,7 +1878,7 @@ class AppController extends ChangeNotifier {
       for (final record in records) {
         _evaluateHealthWarning(record, expectedGeneration: sessionGeneration);
       }
-      syncStatus = records.isEmpty ? '设备暂无新数据' : '已同步 ${records.length} 条';
+      syncStatus = records.isEmpty ? '设备暂无新数据' : '已读取 ${records.length} 条手表记录';
       succeeded = true;
     } on PlatformException catch (error) {
       if (!_isDeviceSyncCurrent(generation, deviceId, sessionGeneration)) {
@@ -1880,6 +1906,34 @@ class AppController extends ChangeNotifier {
       if (_deviceSyncGeneration == generation) {
         isDeviceSyncing = false;
         deviceSyncProgress = 0;
+        final pending = _pendingHealthRefresh;
+        _pendingHealthRefresh = null;
+        if (pending != null &&
+            (allowFollowUp || pending.definiteChange) &&
+            pending.deviceId == deviceId &&
+            pending.session == sessionGeneration &&
+            pending.sync == generation) {
+          // Coalesce each burst into one serial read. Only an explicit watch
+          // change can schedule another follow-up; generic SDK read callbacks
+          // cannot create an unbounded self-refresh loop.
+          scheduleMicrotask(() async {
+            if (!_isDeviceSyncCurrent(
+                  generation,
+                  deviceId,
+                  sessionGeneration,
+                ) ||
+                isDeviceSyncing) {
+              return;
+            }
+            if (await _syncDeviceData(
+              deviceId,
+              initial: false,
+              allowFollowUp: false,
+            )) {
+              unawaited(synchronizeCloud());
+            }
+          });
+        }
         if (!_disposed) notifyListeners();
       }
     }
@@ -1901,6 +1955,7 @@ class AppController extends ChangeNotifier {
 
   void _invalidateDeviceSync() {
     _deviceSyncGeneration++;
+    _pendingHealthRefresh = null;
     isDeviceSyncing = false;
     deviceSyncProgress = 0;
     _clearDeviceSyncError();
@@ -1914,8 +1969,11 @@ class AppController extends ChangeNotifier {
   }
 
   Future<void> disconnectDevice() async {
-    await _cancelPendingWearableRestore();
+    _deviceConnectionGeneration++;
+    _retireMeasurementForDisconnect();
     _invalidateDeviceSync();
+    _connectedDeviceSessionGeneration = null;
+    await _cancelPendingWearableRestore();
     try {
       await _wearable.disconnect();
       _wearableNeedsDisconnect = false;
@@ -1939,11 +1997,20 @@ class AppController extends ChangeNotifier {
     final bridge = _wearable;
     if (current == null) return false;
     if (bridge is! WearableDeviceDetailsBridge) return true;
+    final sessionGeneration = _sessionGeneration;
+    final connectionGeneration = _deviceConnectionGeneration;
+    bool isCurrent() =>
+        !_accountTransitioning &&
+        _isCurrentSessionGeneration(sessionGeneration) &&
+        _deviceConnectionGeneration == connectionGeneration &&
+        connectedDevice?.id == current.id;
     try {
       final details = await (bridge as WearableDeviceDetailsBridge)
           .getConnectedDeviceDetails();
-      if (_disposed) return false;
+      if (!isCurrent()) return false;
       if (details == null) {
+        _deviceConnectionGeneration++;
+        _retireMeasurementForDisconnect();
         _invalidateDeviceSync();
         connectedDevice = null;
         _connectedDeviceSessionGeneration = null;
@@ -1963,18 +2030,18 @@ class AppController extends ChangeNotifier {
         notifyListeners();
         return false;
       }
-      if (connectedDevice?.id != current.id || details.id != current.id) {
-        return connectedDevice != null;
-      }
+      if (details.id != current.id) return false;
       _latestDeviceDetails = details;
       connectedDevice = _mergeDeviceDetails(current);
       notifyListeners();
       return true;
     } on PlatformException catch (error) {
+      if (!isCurrent()) return false;
       errorMessage = _wearableErrorMessage(error, fallback: '设备信息刷新失败，请稍后重试');
       notifyListeners();
       return false;
     } catch (_) {
+      if (!isCurrent()) return false;
       errorMessage = '设备信息刷新失败，请稍后重试';
       notifyListeners();
       return false;
@@ -2013,13 +2080,21 @@ class AppController extends ChangeNotifier {
       notifyListeners();
       return false;
     }
+    final measurementGeneration = ++_measurementGeneration;
+    _measurementSessionId++;
     try {
       final sessionGeneration = _sessionGeneration;
+      _measurementStartedAt = DateTime.now().toUtc();
+      _measurementResult = null;
+      _measurementExistingRecordIds = healthRecords
+          .map((record) => record.id)
+          .toSet();
       _activeMeasurementMetric = metric;
       _activeMeasurementSessionGeneration = sessionGeneration;
       deviceMachine.transition(DeviceConnectionState.measuring);
       await _wearable.startMeasurement(metric);
-      if (!_isCurrentSessionGeneration(sessionGeneration) ||
+      if (_measurementGeneration != measurementGeneration ||
+          !_isCurrentSessionGeneration(sessionGeneration) ||
           _activeMeasurementSessionGeneration != sessionGeneration ||
           _activeMeasurementMetric != metric ||
           measurementErrorMessage != null) {
@@ -2027,11 +2102,13 @@ class AppController extends ChangeNotifier {
       }
       _measurementTimeout = Timer(
         _measurementTimeoutFor(metric),
-        () => unawaited(_handleMeasurementTimeout(metric)),
+        () =>
+            unawaited(_handleMeasurementTimeout(metric, measurementGeneration)),
       );
       notifyListeners();
       return true;
     } on WearableSdkNotConfigured catch (_) {
+      if (_measurementGeneration != measurementGeneration) return false;
       _activeMeasurementMetric = null;
       _activeMeasurementSessionGeneration = null;
       measurementErrorMessage = '此功能暂时无法使用，请稍后再试';
@@ -2040,6 +2117,7 @@ class AppController extends ChangeNotifier {
         deviceMachine.transition(DeviceConnectionState.ready);
       }
     } on PlatformException catch (error) {
+      if (_measurementGeneration != measurementGeneration) return false;
       _activeMeasurementMetric = null;
       _activeMeasurementSessionGeneration = null;
       measurementErrorMessage = _wearableErrorMessage(
@@ -2051,6 +2129,7 @@ class AppController extends ChangeNotifier {
         deviceMachine.transition(DeviceConnectionState.ready);
       }
     } catch (_) {
+      if (_measurementGeneration != measurementGeneration) return false;
       _activeMeasurementMetric = null;
       _activeMeasurementSessionGeneration = null;
       measurementErrorMessage = '${metric.label}测量失败，请稍后重试';
@@ -2066,6 +2145,60 @@ class AppController extends ChangeNotifier {
   bool isMeasurementRunning(HealthMetric metric) =>
       _activeMeasurementMetric == metric;
 
+  void _retireMeasurementSession({bool clearResult = false}) {
+    _measurementGeneration++;
+    _measurementTimeout?.cancel();
+    _measurementTimeout = null;
+    _activeMeasurementMetric = null;
+    _activeMeasurementSessionGeneration = null;
+    _measurementExistingRecordIds = const {};
+    if (clearResult) {
+      _measurementStartedAt = null;
+      _measurementResult = null;
+    }
+  }
+
+  void _retireMeasurementForDisconnect() {
+    final wasMeasuring = _activeMeasurementMetric != null;
+    _retireMeasurementSession(clearResult: true);
+    measurementProgress = 0;
+    measurementSamples = const [];
+    if (wasMeasuring) {
+      measurementErrorMessage = '手表已断开连接，请重新连接后测量';
+    }
+  }
+
+  bool _isCurrentMeasurementResult(
+    HealthRecord record, {
+    DateTime? measurementStartedAt,
+  }) {
+    final startedAt = _measurementStartedAt;
+    if (_activeMeasurementMetric != record.metric ||
+        startedAt == null ||
+        _measurementExistingRecordIds.contains(record.id)) {
+      return false;
+    }
+    // Some SDKs return second-resolution timestamps. An old history record
+    // cannot complete a new App measurement simply because its metric matches.
+    final firstSecond = DateTime.fromMillisecondsSinceEpoch(
+      startedAt.millisecondsSinceEpoch ~/ 1000 * 1000,
+      isUtc: true,
+    );
+    if (!record.measuredAt.isBefore(firstSecond)) return true;
+    // Indexed watch samples can belong to a slot preceding the button press.
+    // Only a bridge-confirmed start/change/end proof for this measurement may
+    // complete it; retain the actual sample time instead of rewriting it.
+    return record.origin == MeasurementOrigin.appMeasurement &&
+        measurementStartedAt != null &&
+        _isCurrentMeasurementStartProof(measurementStartedAt);
+  }
+
+  bool _isCurrentMeasurementStartProof(DateTime proof) =>
+      _activeMeasurementMetric != null &&
+      _measurementStartedAt != null &&
+      !proof.isBefore(_measurementStartedAt!) &&
+      !proof.isAfter(DateTime.now().toUtc());
+
   bool requiresWatchMeasurementStop(HealthMetric metric) =>
       capabilities?.supportsManualMeasurement(metric) == true &&
       capabilities?.supportsMeasurementStop(metric) == false;
@@ -2075,10 +2208,7 @@ class AppController extends ChangeNotifier {
         _activeMeasurementMetric != metric) {
       return;
     }
-    _measurementTimeout?.cancel();
-    _measurementTimeout = null;
-    _activeMeasurementMetric = null;
-    _activeMeasurementSessionGeneration = null;
+    _retireMeasurementSession();
     measurementErrorMessage = null;
     measurementProgress = 0;
     if (deviceState == DeviceConnectionState.measuring) {
@@ -2093,10 +2223,8 @@ class AppController extends ChangeNotifier {
       notifyListeners();
       return;
     }
-    _measurementTimeout?.cancel();
-    _measurementTimeout = null;
-    _activeMeasurementMetric = null;
-    _activeMeasurementSessionGeneration = null;
+    _retireMeasurementSession();
+    final measurementGeneration = _measurementGeneration;
     measurementProgress = 0;
     measurementWearConfirmed = true;
     measurementSamples = const [];
@@ -2106,9 +2234,11 @@ class AppController extends ChangeNotifier {
           .stopMeasurement(metric)
           .timeout(const Duration(seconds: 5));
     } catch (_) {
+      if (_measurementGeneration != measurementGeneration) return;
       errorMessage = '停止测量失败';
     } finally {
-      if (deviceState == DeviceConnectionState.measuring) {
+      if (_measurementGeneration == measurementGeneration &&
+          deviceState == DeviceConnectionState.measuring) {
         deviceMachine.transition(DeviceConnectionState.ready);
       }
     }
@@ -2138,9 +2268,13 @@ class AppController extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> _handleMeasurementTimeout(HealthMetric metric) async {
+  Future<void> _handleMeasurementTimeout(
+    HealthMetric metric,
+    int measurementGeneration,
+  ) async {
     final generation = _activeMeasurementSessionGeneration;
-    if (_activeMeasurementMetric != metric ||
+    if (_measurementGeneration != measurementGeneration ||
+        _activeMeasurementMetric != metric ||
         generation == null ||
         !_isCurrentSessionGeneration(generation)) {
       return;
@@ -2855,6 +2989,8 @@ class AppController extends ChangeNotifier {
     if (_syncing || _disposed || _accountTransitioning) return;
     if (session == null) {
       cloudSyncStatus = '未登录，数据仅保存在本机';
+      cloudSyncState = CloudHealthSyncState.localOnly;
+      cloudSyncUploadedCount = 0;
       if (!_disposed) notifyListeners();
       return;
     }
@@ -2863,6 +2999,9 @@ class AppController extends ChangeNotifier {
     final activeFuture = completion.future;
     _activeCloudSync = activeFuture;
     _syncing = true;
+    cloudSyncState = CloudHealthSyncState.uploading;
+    cloudSyncUploadedCount = 0;
+    notifyListeners();
     try {
       final result = await _syncService.synchronizeNow(
         isCurrent: () =>
@@ -2871,9 +3010,21 @@ class AppController extends ChangeNotifier {
       if (!_isCurrentSessionGeneration(generation)) return;
       cloudSyncStatus =
           result.message ?? '已上传 ${result.uploaded} 条，拒绝 ${result.rejected} 条';
+      cloudSyncUploadedCount = result.uploaded;
+      cloudSyncState =
+          result.hasPending || result.rejected > 0 || result.message != null
+          ? CloudHealthSyncState.pending
+          : result.uploaded > 0
+          ? CloudHealthSyncState.complete
+          : CloudHealthSyncState.idle;
     } on ApiException catch (error) {
       if (!_isCurrentSessionGeneration(generation)) return;
       cloudSyncStatus = _apiErrorMessage(error, fallback: '数据上传失败，请稍后重试');
+      cloudSyncState = CloudHealthSyncState.pending;
+    } catch (_) {
+      if (!_isCurrentSessionGeneration(generation)) return;
+      cloudSyncStatus = '数据上传失败，请稍后重试';
+      cloudSyncState = CloudHealthSyncState.pending;
     } finally {
       _syncing = false;
       if (!completion.isCompleted) completion.complete();
@@ -5074,29 +5225,66 @@ class AppController extends ChangeNotifier {
       }
       try {
         var record = HealthRecord.fromJson(event.payload);
-        String nativeId(String id) =>
-            id.replaceFirst(RegExp(r'^(veepoo|yucheng):'), '').toLowerCase();
+        final measurementStartedAt = DateTime.tryParse(
+          '${event.payload['measurementStartedAt'] ?? ''}',
+        );
+        if (event.payload.containsKey('measurementStartedAt') &&
+            (measurementStartedAt == null ||
+                record.origin != MeasurementOrigin.appMeasurement ||
+                !_isCurrentMeasurementStartProof(measurementStartedAt))) {
+          return;
+        }
+        String nativeId(String id) => id
+            .replaceFirst(RegExp(r'^(veepoo|yucheng|urion):'), '')
+            .toLowerCase();
         if (nativeId(record.deviceId) != nativeId(connectedDevice!.id)) return;
-        if (_activeMeasurementMetric == record.metric &&
+        if (_isCurrentMeasurementResult(
+              record,
+              measurementStartedAt: measurementStartedAt,
+            ) &&
             record.origin == MeasurementOrigin.watchHistory) {
           record = record.copyWith(origin: MeasurementOrigin.appMeasurement);
         }
         record = sanitizeWearableTransportRecord(record);
         if (!hasSaneWearableTransportValues(record)) {
-          _finishRejectedWearableMeasurement(record);
+          if (_isCurrentMeasurementResult(
+            record,
+            measurementStartedAt: measurementStartedAt,
+          )) {
+            _finishRejectedWearableMeasurement(record);
+          }
         } else {
           unawaited(
-            _saveWearableRecord(record, expectedGeneration: eventGeneration),
+            _saveWearableRecord(
+              record,
+              expectedGeneration: eventGeneration,
+              measurementStartedAt: measurementStartedAt,
+            ),
           );
         }
       } catch (_) {
         errorMessage = '收到无法识别的设备数据';
       }
     } else if (event.type == 'healthDataReady') {
+      final eventDeviceId = '${event.payload['deviceId'] ?? ''}';
+      final definiteChange = event.payload['source'] == 'watchNotification';
       if (connectedDevice != null &&
           _connectedDeviceSessionGeneration == _sessionGeneration &&
-          !isDeviceSyncing) {
-        unawaited(syncDeviceData());
+          (eventDeviceId.isEmpty || eventDeviceId == connectedDevice!.id)) {
+        if (isDeviceSyncing) {
+          if (_deviceSyncAcceptsFollowUp || definiteChange) {
+            _pendingHealthRefresh = (
+              deviceId: connectedDevice!.id,
+              session: _sessionGeneration,
+              sync: _deviceSyncGeneration,
+              definiteChange:
+                  definiteChange ||
+                  (_pendingHealthRefresh?.definiteChange ?? false),
+            );
+          }
+        } else {
+          unawaited(syncDeviceData());
+        }
       }
     } else if (event.type == 'measurementProgress') {
       final metric = HealthMetric.fromWire(
@@ -5161,7 +5349,9 @@ class AppController extends ChangeNotifier {
           activeDeviceId.toLowerCase() != eventDeviceId.toLowerCase()) {
         return;
       }
+      _deviceConnectionGeneration++;
       _invalidateDeviceSync();
+      _retireMeasurementForDisconnect();
       connectedDevice = null;
       _connectedDeviceSessionGeneration = null;
       _latestDeviceDetails = null;
@@ -5260,6 +5450,7 @@ class AppController extends ChangeNotifier {
         deviceState != DeviceConnectionState.disconnected) {
       return;
     }
+    _deviceConnectionGeneration++;
     _latestDeviceDetails = device;
     errorMessage = null;
     try {
@@ -5358,18 +5549,22 @@ class AppController extends ChangeNotifier {
   Future<void> _saveWearableRecord(
     HealthRecord record, {
     required int expectedGeneration,
+    DateTime? measurementStartedAt,
   }) async {
     if (!_isCurrentSessionGeneration(expectedGeneration) ||
         !hasSaneWearableTransportValues(record)) {
       return;
     }
-    final shouldStopMeasurement = _activeMeasurementMetric == record.metric;
-    if (shouldStopMeasurement &&
-        (capabilities?.supportsMeasurementStop(record.metric) ?? true)) {
-      _measurementTimeout?.cancel();
-      _measurementTimeout = null;
-      _activeMeasurementMetric = null;
-      _activeMeasurementSessionGeneration = null;
+    final completesMeasurement = _isCurrentMeasurementResult(
+      record,
+      measurementStartedAt: measurementStartedAt,
+    );
+    final shouldStopMeasurement =
+        completesMeasurement &&
+        (capabilities?.supportsMeasurementStop(record.metric) ?? true);
+    if (completesMeasurement) {
+      _measurementResult = record;
+      _retireMeasurementSession();
       measurementErrorMessage = null;
     }
 
@@ -5385,7 +5580,7 @@ class AppController extends ChangeNotifier {
       healthRecords = healthRecords.take(200).toList(growable: false);
     }
     _evaluateHealthWarning(record, expectedGeneration: expectedGeneration);
-    if (shouldStopMeasurement &&
+    if (completesMeasurement &&
         deviceState == DeviceConnectionState.measuring) {
       deviceMachine.transition(DeviceConnectionState.ready);
     }
@@ -5409,9 +5604,10 @@ class AppController extends ChangeNotifier {
       notifyListeners();
       unawaited(synchronizeCloud());
     } catch (error) {
+      if (!_isCurrentSessionGeneration(expectedGeneration)) return;
       debugPrint('Health record persistence failed: ${error.runtimeType}');
       errorMessage = '测量结果已显示，但暂时无法保存到本机';
-      if (_isCurrentSessionGeneration(expectedGeneration)) notifyListeners();
+      notifyListeners();
     }
   }
 

@@ -2028,4 +2028,79 @@ class AppLocalizationsEs extends AppLocalizations {
   String stockCount(int count) {
     return '$count en stock';
   }
+
+  @override
+  String get measurementContactEcg =>
+      'No se detecta contacto con el electrodo. Coloque bien el reloj y mantenga el dedo en el electrodo de ECG.';
+
+  @override
+  String get measurementContactElectrode =>
+      'No se detecta contacto con el electrodo. Siga las instrucciones del reloj.';
+
+  @override
+  String get measurementCheckFit =>
+      'Compruebe que el reloj quede bien ajustado a la muñeca.';
+
+  @override
+  String get measurementWaitPressure =>
+      'Midiendo la presión arterial. Mantenga el reloj en su sitio y el brazo inmóvil.';
+
+  @override
+  String get measurementWaitEcg =>
+      'Coloque bien el reloj y mantenga el dedo en el electrodo de ECG.';
+
+  @override
+  String get measurementWaitHrv =>
+      'Mantenga el reloj contra la muñeca y permanezca inmóvil hasta obtener el resultado de VFC.';
+
+  @override
+  String get measurementWaitElectrode =>
+      'Siga las instrucciones del reloj y mantenga el contacto hasta el final.';
+
+  @override
+  String get measurementWaitStill =>
+      'Mantenga el reloj en su sitio y espere el resultado sin moverse.';
+
+  @override
+  String get finishMeasurementOnWatch => 'Finalice la medición en el reloj.';
+
+  @override
+  String get watchEndedMeasureAgain =>
+      'Finalizada en el reloj — volver a medir';
+
+  @override
+  String get watchMeasurementEnded => 'He finalizado la medición en el reloj';
+
+  @override
+  String get viewMeasurementLater => 'Ver más tarde';
+
+  @override
+  String get stoppingMeasurement => 'Deteniendo…';
+
+  @override
+  String get endMeasurement => 'Finalizar medición';
+
+  @override
+  String get deviceDataReadComplete =>
+      'Datos del reloj leídos. La subida a la nube se confirma por separado.';
+
+  @override
+  String measurementPercent(int percent) {
+    return 'Progreso de la medición: $percent%';
+  }
+
+  @override
+  String get cloudHealthUploading => 'Subiendo los registros guardados…';
+
+  @override
+  String get cloudHealthLocalOnly =>
+      'Guardados en este teléfono. Inicie sesión para subirlos.';
+
+  @override
+  String get cloudHealthPending =>
+      'Algunos registros aún no se han subido. Siguen guardados en este teléfono.';
+
+  @override
+  String get cloudHealthConfirmed =>
+      'El servidor ha confirmado la recepción de los registros subidos.';
 }

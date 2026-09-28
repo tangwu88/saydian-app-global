@@ -1714,23 +1714,43 @@ class _HealthMeasurementDialog extends StatefulWidget {
 }
 
 class _HealthMeasurementDialogState extends State<_HealthMeasurementDialog> {
-  late final DateTime _startedAt = DateTime.now();
+  int? _sessionId;
   bool _stopping = false;
 
   @override
   void initState() {
     super.initState();
-    if (!widget.controller.isMeasurementRunning(widget.metric)) {
-      unawaited(widget.controller.startMeasurement(widget.metric));
+    if (widget.controller.isMeasurementRunning(widget.metric)) {
+      _sessionId = widget.controller.measurementSessionId;
+    } else {
+      _start();
     }
+  }
+
+  void _start() {
+    final controller = widget.controller;
+    final previousSession = controller.measurementSessionId;
+    final pending = controller.startMeasurement(widget.metric);
+    _sessionId = controller.measurementSessionId != previousSession
+        ? controller.measurementSessionId
+        : null;
+    unawaited(pending);
+  }
+
+  HealthRecord? get _result {
+    final controller = widget.controller;
+    final result = controller.measurementResult;
+    return _sessionId == controller.measurementSessionId &&
+            result?.metric == widget.metric
+        ? result
+        : null;
   }
 
   Future<void> _finish() async {
     if (_stopping) return;
     setState(() => _stopping = true);
-    final record = widget.controller.latestByMetric[widget.metric];
-    final completed = record != null && record.measuredAt.isAfter(_startedAt);
-    if (completed) {
+    if (_result != null ||
+        !widget.controller.isMeasurementRunning(widget.metric)) {
       if (mounted) Navigator.of(context).pop();
       return;
     }
@@ -1754,8 +1774,10 @@ class _HealthMeasurementDialogState extends State<_HealthMeasurementDialog> {
       await widget.controller.stopMeasurement(widget.metric);
     }
     if (!mounted) return;
-    setState(() => _stopping = false);
-    await widget.controller.startMeasurement(widget.metric);
+    setState(() {
+      _stopping = false;
+      _start();
+    });
   }
 
   @override
@@ -1768,176 +1790,210 @@ class _HealthMeasurementDialogState extends State<_HealthMeasurementDialog> {
       child: ListenableBuilder(
         listenable: widget.controller,
         builder: (context, _) {
-          final record = widget.controller.latestByMetric[widget.metric];
-          final isNew = record != null && record.measuredAt.isAfter(_startedAt);
-          final failure = widget.controller.measurementErrorMessage;
+          final record = _result;
+          final isNew = record != null;
+          final failure =
+              widget.controller.measurementErrorMessage ??
+              (!widget.controller.isMeasurementRunning(widget.metric) && !isNew
+                  ? widget.controller.errorMessage
+                  : null);
           final failed = !isNew && failure != null;
-          final watchStop = widget.controller.requiresWatchMeasurementStop(widget.metric);
+          final watchStop = widget.controller.requiresWatchMeasurementStop(
+            widget.metric,
+          );
           final waitingMessage = !widget.controller.measurementWearConfirmed
               ? switch (widget.metric) {
-                  HealthMetric.ecg => '未检测到电极接触，请正确佩戴手表并将手指持续贴在心电电极上',
+                  HealthMetric.ecg => context.l10n.measurementContactEcg,
                   HealthMetric.bodyComposition ||
-                  HealthMetric.bloodComposition => '未检测到正确接触，请佩戴手表并按手表提示接触电极',
-                  _ => '未检测到正确佩戴，请将手表贴合手腕后继续测量',
+                  HealthMetric.bloodComposition =>
+                    context.l10n.measurementContactElectrode,
+                  _ => context.l10n.measurementCheckFit,
                 }
               : switch (widget.metric) {
-                  HealthMetric.bloodPressure => '正在测量血压，请保持手表贴合手腕、手臂静止并等待结果',
-                  HealthMetric.ecg => '请正确佩戴手表，并将手指持续贴在心电电极上',
-                  HealthMetric.hrv => '请将手表贴合手腕并保持静止，等待 HRV 测量结果',
+                  HealthMetric.bloodPressure =>
+                    context.l10n.measurementWaitPressure,
+                  HealthMetric.ecg => context.l10n.measurementWaitEcg,
+                  HealthMetric.hrv => context.l10n.measurementWaitHrv,
                   HealthMetric.bodyComposition ||
-                  HealthMetric.bloodComposition => '请按手表提示保持正确接触，测量完成前不要移动',
-                  _ => '请保持正确佩戴并静止，等待手表返回结果',
+                  HealthMetric.bloodComposition =>
+                    context.l10n.measurementWaitElectrode,
+                  _ => context.l10n.measurementWaitStill,
                 };
           return AlertDialog(
+            key: const Key('health-measurement-dialog'),
             title: Text(
               context.l10n.metricMeasurement(
                 context.l10n.metricName(widget.metric),
               ),
             ),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  isNew
-                      ? Icons.check_circle_rounded
-                      : failed
-                      ? Icons.error_outline_rounded
-                      : Icons.monitor_heart_rounded,
-                  color: isNew
-                      ? SaydianColors.green
-                      : failed
-                      ? SaydianColors.danger
-                      : SaydianColors.pink,
-                  size: 54,
-                ),
-                const SizedBox(height: 14),
-                Text(
-                  isNew
-                      ? '${_healthDisplayValue(record, widget.controller)} ${_healthDisplayUnit(widget.metric, record, widget.controller)}'
-                      : failed
-                      ? failure
-                  : watchStop ? '$waitingMessage\n请在手表上结束测量' : waitingMessage,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: isNew ? 24 : 16,
-                    fontWeight: isNew ? FontWeight.w900 : FontWeight.w600,
-                    height: 1.5,
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    isNew
+                        ? Icons.check_circle_rounded
+                        : failed
+                        ? Icons.error_outline_rounded
+                        : Icons.monitor_heart_rounded,
+                    color: isNew
+                        ? SaydianColors.green
+                        : failed
+                        ? SaydianColors.danger
+                        : SaydianColors.pink,
+                    size: 54,
                   ),
-                ),
-                if (isNew) ...[
-                  const SizedBox(height: 12),
-                  Builder(
-                    builder: (context) {
-                      final interpretation = interpretHealthRecord(record);
-                      return Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: SaydianColors.brandRedSoft,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              interpretation.title,
-                              style: const TextStyle(
-                                color: SaydianColors.brandRedDark,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              interpretation.detail,
-                              style: const TextStyle(
-                                fontSize: 13,
-                                height: 1.45,
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
-                ],
-                if (!isNew &&
-                    !failed &&
-                    widget.metric == HealthMetric.ecg &&
-                    widget.controller.measurementSamples.length > 1) ...[
                   const SizedBox(height: 14),
-                  Container(
-                    height: 160,
-                    width: double.infinity,
-                    clipBehavior: Clip.antiAlias,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF08090B),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: CustomPaint(
-                      painter: _LiveEcgPainter(
-                        widget.controller.measurementSamples,
-                        sampleFrequency:
-                            widget.controller.measurementSampleFrequency,
-                      ),
+                  Text(
+                    isNew
+                        ? '${_healthDisplayValue(record, widget.controller)} ${_healthDisplayUnit(widget.metric, record, widget.controller)}'
+                        : failed
+                        ? failure
+                        : watchStop
+                        ? '$waitingMessage\n${context.l10n.finishMeasurementOnWatch}'
+                        : waitingMessage,
+                    key: isNew ? const Key('health-measurement-result') : null,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: isNew ? 24 : 16,
+                      fontWeight: isNew ? FontWeight.w900 : FontWeight.w600,
+                      height: 1.5,
                     ),
                   ),
-                ],
-                if (!isNew && !failed) ...[
-                  if (widget.metric == HealthMetric.bloodPressure) ...[
+                  if (isNew) ...[
+                    const SizedBox(height: 12),
+                    Builder(
+                      builder: (context) {
+                        final interpretation = interpretHealthRecord(record);
+                        return Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: SaydianColors.brandRedSoft,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                interpretation.title,
+                                style: const TextStyle(
+                                  color: SaydianColors.brandRedDark,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                interpretation.detail,
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  height: 1.45,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                  if (!isNew &&
+                      !failed &&
+                      widget.metric == HealthMetric.ecg &&
+                      widget.controller.measurementSamples.length > 1) ...[
                     const SizedBox(height: 14),
                     Container(
-                      padding: const EdgeInsets.all(10),
+                      height: 160,
+                      width: double.infinity,
+                      clipBehavior: Clip.antiAlias,
                       decoration: BoxDecoration(
-                        color: SaydianColors.brandGoldSoft,
-                        borderRadius: BorderRadius.circular(10),
+                        color: const Color(0xFF08090B),
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                      child: Text(
-                        context.l10n.spotCheckCuffHint,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(fontSize: 13, height: 1.45),
+                      child: CustomPaint(
+                        painter: _LiveEcgPainter(
+                          widget.controller.measurementSamples,
+                          sampleFrequency:
+                              widget.controller.measurementSampleFrequency,
+                        ),
                       ),
                     ),
                   ],
-                  const SizedBox(height: 16),
-                  LinearProgressIndicator(
-                    value: !watchStop && widget.controller.measurementProgress > 0
-                        ? widget.controller.measurementProgress / 100
-                        : null,
-                  ),
-                  if (!watchStop && widget.controller.measurementProgress > 0) ...[
-                    const SizedBox(height: 6),
-                    Text(
-                      '测量进度 ${widget.controller.measurementProgress}%',
-                      style: const TextStyle(
-                        color: SaydianColors.muted,
-                        fontSize: 14,
+                  if (!isNew && !failed) ...[
+                    if (widget.metric == HealthMetric.bloodPressure) ...[
+                      const SizedBox(height: 14),
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: SaydianColors.brandGoldSoft,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text(
+                          context.l10n.spotCheckCuffHint,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(fontSize: 13, height: 1.45),
+                        ),
                       ),
+                    ],
+                    const SizedBox(height: 16),
+                    LinearProgressIndicator(
+                      value:
+                          !watchStop &&
+                              widget.controller.measurementProgress > 0
+                          ? widget.controller.measurementProgress / 100
+                          : null,
                     ),
+                    if (!watchStop &&
+                        widget.controller.measurementProgress > 0) ...[
+                      const SizedBox(height: 6),
+                      Text(
+                        context.l10n.measurementPercent(
+                          widget.controller.measurementProgress,
+                        ),
+                        style: const TextStyle(
+                          color: SaydianColors.muted,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
                   ],
                 ],
-              ],
+              ),
             ),
             actions: [
-              if (failed)
+              if (failed &&
+                  widget.controller.connectedDevice != null &&
+                  widget.controller.capabilities?.supportsManualMeasurement(widget.metric) == true)
                 FilledButton(
                   onPressed: _stopping ? null : _retry,
-                  child: Text(watchStop ? '已在手表结束，重新测量' : context.l10n.measureAgain),
+                  child: Text(
+                    watchStop
+                        ? context.l10n.watchEndedMeasureAgain
+                        : context.l10n.measureAgain,
+                  ),
                 ),
               if (watchStop && !failed && !isNew)
                 TextButton(
                   onPressed: _stopping
                       ? null
                       : () {
-                          widget.controller.confirmWatchMeasurementEnded(widget.metric);
+                          widget.controller.confirmWatchMeasurementEnded(
+                            widget.metric,
+                          );
                           Navigator.of(context).pop();
                         },
-                  child: const Text('已在手表结束'),
+                  child: Text(context.l10n.watchMeasurementEnded),
                 ),
               TextButton(
                 onPressed: _stopping ? null : _finish,
-                child: Text(watchStop
-                    ? '稍后查看'
-                    : _stopping ? '正在停止' : (failed ? '关闭' : '结束测量')),
+                child: Text(
+                  isNew || failed
+                      ? context.l10n.close
+                      : watchStop
+                      ? context.l10n.viewMeasurementLater
+                      : _stopping
+                      ? context.l10n.stoppingMeasurement
+                      : context.l10n.endMeasurement,
+                ),
               ),
             ],
           );
@@ -4342,7 +4398,7 @@ class DevicePage extends StatelessWidget {
                                   SnackBar(
                                     content: Text(
                                       succeeded
-                                          ? context.l10n.syncComplete
+                                          ? context.l10n.deviceDataReadComplete
                                           : context.l10n.syncFailedTryAgain,
                                     ),
                                   ),
@@ -4382,6 +4438,31 @@ class DevicePage extends StatelessWidget {
                     ),
                   ],
                 ),
+                if (controller.cloudSyncState != CloudHealthSyncState.idle) ...[
+                  const SizedBox(height: 8),
+                  Row(
+                    key: const Key('device-cloud-sync-status'),
+                    children: [
+                      Expanded(
+                        child: Text(
+                          switch (controller.cloudSyncState) {
+                            CloudHealthSyncState.uploading => context.l10n.cloudHealthUploading,
+                            CloudHealthSyncState.localOnly => context.l10n.cloudHealthLocalOnly,
+                            CloudHealthSyncState.pending => context.l10n.cloudHealthPending,
+                            CloudHealthSyncState.complete => context.l10n.cloudHealthConfirmed,
+                            CloudHealthSyncState.idle => '',
+                          },
+                          style: const TextStyle(fontSize: 12, height: 1.4, color: SaydianColors.muted),
+                        ),
+                      ),
+                      if (controller.cloudSyncState == CloudHealthSyncState.pending)
+                        TextButton(
+                          onPressed: controller.synchronizeCloud,
+                          child: Text(context.l10n.retry),
+                        ),
+                    ],
+                  ),
+                ],
               ],
             ),
           )

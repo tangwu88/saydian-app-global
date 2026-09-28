@@ -1898,6 +1898,68 @@ class AppLocalizationsZh extends AppLocalizations {
   String stockCount(int count) {
     return '库存 $count 件';
   }
+
+  @override
+  String get measurementContactEcg => '未检测到电极接触，请正确佩戴手表并将手指持续贴在心电电极上';
+
+  @override
+  String get measurementContactElectrode => '未检测到正确接触，请佩戴手表并按手表提示接触电极';
+
+  @override
+  String get measurementCheckFit => '未检测到正确佩戴，请将手表贴合手腕后继续测量';
+
+  @override
+  String get measurementWaitPressure => '正在测量血压，请保持手表贴合手腕、手臂静止并等待结果';
+
+  @override
+  String get measurementWaitEcg => '请正确佩戴手表，并将手指持续贴在心电电极上';
+
+  @override
+  String get measurementWaitHrv => '请将手表贴合手腕并保持静止，等待 HRV 测量结果';
+
+  @override
+  String get measurementWaitElectrode => '请按手表提示保持正确接触，测量完成前不要移动';
+
+  @override
+  String get measurementWaitStill => '请保持正确佩戴并静止，等待手表返回结果';
+
+  @override
+  String get finishMeasurementOnWatch => '请在手表上结束测量';
+
+  @override
+  String get watchEndedMeasureAgain => '已在手表结束，重新测量';
+
+  @override
+  String get watchMeasurementEnded => '已在手表结束';
+
+  @override
+  String get viewMeasurementLater => '稍后查看';
+
+  @override
+  String get stoppingMeasurement => '正在停止';
+
+  @override
+  String get endMeasurement => '结束测量';
+
+  @override
+  String get deviceDataReadComplete => '已读取手表数据，云端上传结果请查看同步状态';
+
+  @override
+  String measurementPercent(int percent) {
+    return '测量进度 $percent%';
+  }
+
+  @override
+  String get cloudHealthUploading => '正在上传已保存的记录…';
+
+  @override
+  String get cloudHealthLocalOnly => '数据仅保存在本机，登录后可上传';
+
+  @override
+  String get cloudHealthPending => '部分记录暂未上传，已保存在本机';
+
+  @override
+  String get cloudHealthConfirmed => '云端已确认接收本次上传的记录';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hans`).
@@ -3794,6 +3856,68 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
   String stockCount(int count) {
     return '库存 $count 件';
   }
+
+  @override
+  String get measurementContactEcg => '未检测到电极接触，请正确佩戴手表并将手指持续贴在心电电极上';
+
+  @override
+  String get measurementContactElectrode => '未检测到正确接触，请佩戴手表并按手表提示接触电极';
+
+  @override
+  String get measurementCheckFit => '未检测到正确佩戴，请将手表贴合手腕后继续测量';
+
+  @override
+  String get measurementWaitPressure => '正在测量血压，请保持手表贴合手腕、手臂静止并等待结果';
+
+  @override
+  String get measurementWaitEcg => '请正确佩戴手表，并将手指持续贴在心电电极上';
+
+  @override
+  String get measurementWaitHrv => '请将手表贴合手腕并保持静止，等待 HRV 测量结果';
+
+  @override
+  String get measurementWaitElectrode => '请按手表提示保持正确接触，测量完成前不要移动';
+
+  @override
+  String get measurementWaitStill => '请保持正确佩戴并静止，等待手表返回结果';
+
+  @override
+  String get finishMeasurementOnWatch => '请在手表上结束测量';
+
+  @override
+  String get watchEndedMeasureAgain => '已在手表结束，重新测量';
+
+  @override
+  String get watchMeasurementEnded => '已在手表结束';
+
+  @override
+  String get viewMeasurementLater => '稍后查看';
+
+  @override
+  String get stoppingMeasurement => '正在停止';
+
+  @override
+  String get endMeasurement => '结束测量';
+
+  @override
+  String get deviceDataReadComplete => '已读取手表数据，云端上传结果请查看同步状态';
+
+  @override
+  String measurementPercent(int percent) {
+    return '测量进度 $percent%';
+  }
+
+  @override
+  String get cloudHealthUploading => '正在上传已保存的记录…';
+
+  @override
+  String get cloudHealthLocalOnly => '数据仅保存在本机，登录后可上传';
+
+  @override
+  String get cloudHealthPending => '部分记录暂未上传，已保存在本机';
+
+  @override
+  String get cloudHealthConfirmed => '云端已确认接收本次上传的记录';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hant`).
@@ -5690,4 +5814,66 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String stockCount(int count) {
     return '庫存 $count 件';
   }
+
+  @override
+  String get measurementContactEcg => '未偵測到電極接觸，請正確佩戴手錶並將手指持續貼在心電電極上';
+
+  @override
+  String get measurementContactElectrode => '未偵測到正確接觸，請佩戴手錶並依手錶提示接觸電極';
+
+  @override
+  String get measurementCheckFit => '未偵測到正確佩戴，請將手錶貼合手腕後繼續測量';
+
+  @override
+  String get measurementWaitPressure => '正在測量血壓，請保持手錶貼合手腕、手臂靜止並等待結果';
+
+  @override
+  String get measurementWaitEcg => '請正確佩戴手錶，並將手指持續貼在心電電極上';
+
+  @override
+  String get measurementWaitHrv => '請將手錶貼合手腕並保持靜止，等待 HRV 測量結果';
+
+  @override
+  String get measurementWaitElectrode => '請依手錶提示保持正確接觸，測量完成前不要移動';
+
+  @override
+  String get measurementWaitStill => '請保持正確佩戴並靜止，等待手錶傳回結果';
+
+  @override
+  String get finishMeasurementOnWatch => '請在手錶上結束測量';
+
+  @override
+  String get watchEndedMeasureAgain => '已在手錶結束，重新測量';
+
+  @override
+  String get watchMeasurementEnded => '已在手錶結束';
+
+  @override
+  String get viewMeasurementLater => '稍後查看';
+
+  @override
+  String get stoppingMeasurement => '正在停止';
+
+  @override
+  String get endMeasurement => '結束測量';
+
+  @override
+  String get deviceDataReadComplete => '已讀取手錶資料，雲端上傳結果請查看同步狀態';
+
+  @override
+  String measurementPercent(int percent) {
+    return '測量進度 $percent%';
+  }
+
+  @override
+  String get cloudHealthUploading => '正在上傳已儲存的記錄…';
+
+  @override
+  String get cloudHealthLocalOnly => '資料僅儲存在本機，登入後可上傳';
+
+  @override
+  String get cloudHealthPending => '部分記錄暫未上傳，已儲存在本機';
+
+  @override
+  String get cloudHealthConfirmed => '雲端已確認接收本次上傳的記錄';
 }
