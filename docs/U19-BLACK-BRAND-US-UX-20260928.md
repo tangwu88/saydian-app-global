@@ -46,6 +46,7 @@
 - 内部 QA APK SHA-256：`B47665CCF1BC83BDA9A2AA9050EA970C64EB8F1836C482B654909BC626070881`；Debug APK SHA-256：`C46251C905C690A38098A5D5F41380310E676CD74360E04F76DC24715AB3BAEB`。可交付副本位于忽略的 `build/qa-u19-black-brand-20260928/`，不入 Git。
 - 首版 1006 在用户确认系统风险提示后覆盖安装成功，真机截图发现页眉标志白方块；修复后把追加的 AI 医生图一同打进 1007。1007 再次由用户确认系统安装提示，`adb install -r` 返回 `Success`；包管理器确认 `versionCode=1007`、`versionName=0.1.23`。未卸载、清库或覆盖健康历史。
 - 1007 冷启动真机截图在忽略的 `build/u19-black-brand-1007-home.png`：黑白圆形标志与页面融合，AI 医生头部与肩部完整，黑色主按钮、三项健康快捷入口与健康数据首屏布局可读，商城入口不可见。当前进程仍在，按进程筛选日志的崩溃／ANR／RenderFlex overflow 命中数为 0。已登录测试账号保留此前中文语言选择，故该截图不是全新用户英文默认的真机验收。
+- 源码提交 `7c620bfc38b0514e0d6cb3240250a37f0bc2329a` 已推送 `tangwu88/saydian-app-global` 的 `feature/u19-eb1`，远端提交号核对一致。自动检查 [run 36417728759](https://github.com/tangwu88/saydian-app-global/actions/runs/36417728759) 在作业启动前即失败：GitHub 提示账户近期付款失败或 Actions 支出上限需提高；此前基线 run `36409792607` 为同一外部原因。Android/iOS 作业因此跳过，不能称为云端 CI 通过；账户方处理计费后须重新运行。该失败不由本次测试断言或编译错误造成，但仍是发布门禁。
 
 ## 验收边界与后续
 
