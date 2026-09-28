@@ -34,6 +34,8 @@ import '../services/health_analysis.dart';
 import 'app_theme.dart';
 import 'app_update_gate_scope.dart';
 import 'brand_assets.dart';
+import 'feature_visibility.dart';
+import 'health_alert_copy.dart';
 import 'watch_face_market_page.dart';
 
 class RegistrationPage extends StatefulWidget {
@@ -523,7 +525,7 @@ class _HealthWarningPageState extends State<HealthWarningPage> {
         systolic == null ||
         diastolic == null ||
         temperature == null) {
-      _message('请填写正确的报警数值');
+      _message(_usText(context, 'Enter a valid alert limit.', '请填写正确的报警数值'));
       return;
     }
     final success = await widget.controller.saveHealthWarningSettings(
@@ -539,7 +541,12 @@ class _HealthWarningPageState extends State<HealthWarningPage> {
     );
     if (!mounted) return;
     _message(
-      success ? '健康预警设置已保存' : widget.controller.errorMessage ?? '保存失败，请稍后重试',
+      success
+          ? _usText(context, 'Alert settings saved.', '健康预警设置已保存')
+          : _safeNotice(
+              widget.controller.errorMessage,
+              _usText(context, 'Couldn’t save. Try again.', '保存失败，请稍后重试'),
+            ),
     );
   }
 
@@ -577,10 +584,26 @@ class _HealthWarningPageState extends State<HealthWarningPage> {
               orElse: () => '',
             );
     final normalized = raw.toLowerCase();
-    if (normalized.contains('high') || raw.contains('高')) return '偏高';
-    if (normalized.contains('low') || raw.contains('低')) return '偏低';
-    if (normalized.contains('abnormal') || raw.contains('异常')) return '异常';
-    return raw.isEmpty ? '异常提醒' : raw;
+    if (normalized.contains('high') || raw.contains('高')) {
+      return _usText(context, 'High', '偏高');
+    }
+    if (normalized.contains('low') || raw.contains('低')) {
+      return _usText(context, 'Low', '偏低');
+    }
+    if (normalized.contains('abnormal') || raw.contains('异常')) {
+      return _usText(context, 'Needs attention', '异常');
+    }
+    return _safeNotice(raw, _usText(context, 'Alert', '异常提醒'));
+  }
+
+  String _safeNotice(Object? value, String fallback) {
+    final text = '${value ?? ''}'.trim();
+    if (text.isEmpty) return fallback;
+    if (Localizations.localeOf(context).languageCode != 'zh' &&
+        RegExp(r'[\u4e00-\u9fff]').hasMatch(text)) {
+      return fallback;
+    }
+    return text;
   }
 
   @override
@@ -589,18 +612,24 @@ class _HealthWarningPageState extends State<HealthWarningPage> {
         .where(_isExplicitHealthWarning)
         .toList();
     final loading = widget.controller.notificationStatus == '正在加载';
+    final device = widget.controller.connectedDevice;
+    final showTemperature =
+        (!widget.controller.isGlobalEdition || device != null) &&
+        device?.sdkSource != WearableSdkSource.urion;
     return Scaffold(
       appBar: AppBar(title: Text(context.l10n.healthAlerts)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          FeatureStateCard(
-            message: context.l10n.setHealthUpperLimits,
-            detail: context.l10n.healthUpperLimitHint,
-            icon: Icons.notifications_active_outlined,
-            color: SaydianColors.orange,
-          ),
-          const SizedBox(height: 12),
+          if (!widget.controller.isGlobalEdition) ...[
+            FeatureStateCard(
+              message: context.l10n.setHealthUpperLimits,
+              detail: context.l10n.healthUpperLimitHint,
+              icon: Icons.notifications_active_outlined,
+              color: SaydianColors.orange,
+            ),
+            const SizedBox(height: 12),
+          ],
           Card(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(8, 8, 8, 14),
@@ -647,24 +676,26 @@ class _HealthWarningPageState extends State<HealthWarningPage> {
                       unit: 'mmHg',
                     ),
                   ],
-                  const Divider(height: 12),
-                  SwitchListTile(
-                    key: const Key('warning-temperature-switch'),
-                    value: _temperatureEnabled,
-                    onChanged: (value) =>
-                        setState(() => _temperatureEnabled = value),
-                    title: Text(context.l10n.temperatureAlertLabel),
-                    subtitle: Text(context.l10n.temperatureAlertHint),
-                    secondary: const Icon(Icons.thermostat_rounded),
-                  ),
-                  if (_temperatureEnabled)
-                    _WarningThresholdField(
-                      key: const Key('warning-temperature-threshold'),
-                      label: context.l10n.temperatureUpperLimit,
-                      controller: _temperatureUpper,
-                      unit: '℃',
-                      decimal: true,
+                  if (showTemperature) ...[
+                    const Divider(height: 12),
+                    SwitchListTile(
+                      key: const Key('warning-temperature-switch'),
+                      value: _temperatureEnabled,
+                      onChanged: (value) =>
+                          setState(() => _temperatureEnabled = value),
+                      title: Text(context.l10n.temperatureAlertLabel),
+                      subtitle: Text(context.l10n.temperatureAlertHint),
+                      secondary: const Icon(Icons.thermostat_rounded),
                     ),
+                    if (_temperatureEnabled)
+                      _WarningThresholdField(
+                        key: const Key('warning-temperature-threshold'),
+                        label: context.l10n.temperatureUpperLimit,
+                        controller: _temperatureUpper,
+                        unit: '℃',
+                        decimal: true,
+                      ),
+                  ],
                   const SizedBox(height: 12),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -693,10 +724,18 @@ class _HealthWarningPageState extends State<HealthWarningPage> {
                   Icons.warning_amber_rounded,
                   color: SaydianColors.danger,
                 ),
-                title: Text(alert.title),
-                subtitle: Text('${alert.message}\n来源：${alert.origin.label}'),
+                title: Text(healthAlertTitle(context, alert)),
+                subtitle: Text(
+                  '${healthAlertMessage(context, alert)}\n${_usText(context, 'Source: ', '来源：')}${healthAlertOrigin(context, alert.origin)}',
+                ),
                 trailing: Text(
-                  DateFormat('yyyy-MM-dd\nHH:mm').format(alert.triggeredAt),
+                  Localizations.localeOf(context).languageCode == 'zh'
+                      ? DateFormat(
+                          'yyyy-MM-dd\nHH:mm',
+                        ).format(alert.triggeredAt)
+                      : DateFormat.MMMd(
+                          context.l10n.localeName,
+                        ).add_jm().format(alert.triggeredAt),
                   textAlign: TextAlign.right,
                 ),
               ),
@@ -714,8 +753,15 @@ class _HealthWarningPageState extends State<HealthWarningPage> {
               message:
                   widget.controller.notificationStatus == '已加载' ||
                       widget.controller.notificationStatus == '暂无消息'
-                  ? '暂无健康预警'
-                  : widget.controller.notificationStatus,
+                  ? _usText(context, 'No alerts', '暂无健康预警')
+                  : _safeNotice(
+                      widget.controller.notificationStatus,
+                      _usText(
+                        context,
+                        'Couldn’t load alerts. Pull to retry.',
+                        '暂时无法读取预警',
+                      ),
+                    ),
               icon: Icons.health_and_safety_outlined,
               color: SaydianColors.green,
             )
@@ -729,7 +775,10 @@ class _HealthWarningPageState extends State<HealthWarningPage> {
                     color: SaydianColors.orange,
                   ),
                   title: Text(
-                    '${warning['title'] ?? warning['name'] ?? '健康提醒'}',
+                    _safeNotice(
+                      warning['title'] ?? warning['name'],
+                      _usText(context, 'Health alert', '健康提醒'),
+                    ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -758,7 +807,16 @@ class _HealthWarningPageState extends State<HealthWarningPage> {
                         ),
                         const SizedBox(height: 5),
                         Text(
-                          '${warning['content'] ?? warning['message'] ?? warning['created_at'] ?? '健康预警'}',
+                          _safeNotice(
+                            warning['content'] ??
+                                warning['message'] ??
+                                warning['created_at'],
+                            _usText(
+                              context,
+                              'Check your latest reading.',
+                              '健康预警',
+                            ),
+                          ),
                           maxLines: 4,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -768,11 +826,52 @@ class _HealthWarningPageState extends State<HealthWarningPage> {
                 ),
               ),
           const SizedBox(height: 14),
-          FeatureStateCard(
-            message: context.l10n.seekProfessionalCare,
-            detail: context.l10n.watchHealthReference,
-            icon: Icons.medical_information_outlined,
-          ),
+          if (widget.controller.isGlobalEdition)
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(
+                      Icons.medical_information_outlined,
+                      color: SaydianColors.info,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            context.l10n.seekProfessionalCare,
+                            style: const TextStyle(
+                              fontSize: 15,
+                              height: 1.4,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 5),
+                          Text(
+                            context.l10n.watchHealthReference,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              height: 1.4,
+                              color: SaydianColors.muted,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          else
+            FeatureStateCard(
+              message: context.l10n.seekProfessionalCare,
+              detail: context.l10n.watchHealthReference,
+              icon: Icons.medical_information_outlined,
+            ),
         ],
       ),
     );
@@ -1508,9 +1607,9 @@ class HealthRecordDetailPage extends StatelessWidget {
       return _EcgRecordDetailPage(record: record);
     }
     final time = HealthAnalysisService.displayTime(record);
-    final date =
-        '${time.year}-${time.month.toString().padLeft(2, '0')}-${time.day.toString().padLeft(2, '0')} '
-        '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
+    final date = Localizations.localeOf(context).languageCode == 'zh'
+        ? DateFormat('yyyy-MM-dd HH:mm').format(time)
+        : DateFormat.yMMMd(context.l10n.localeName).add_jm().format(time);
     final values = <MapEntry<String, num>>[...record.values.entries];
     return Scaffold(
       appBar: AppBar(
@@ -1534,7 +1633,7 @@ class HealthRecordDetailPage extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    record.unit,
+                    _localizedRecordUnit(context, record.unit),
                     style: const TextStyle(color: SaydianColors.muted),
                   ),
                   const SizedBox(height: 12),
@@ -1544,7 +1643,11 @@ class HealthRecordDetailPage extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    '数据来源：${record.origin.label}',
+                    _usText(
+                      context,
+                      'Source: ${_englishRecordOrigin(record.origin)}',
+                      '数据来源：${record.origin.label}',
+                    ),
                     style: const TextStyle(
                       color: SaydianColors.techBlue,
                       fontWeight: FontWeight.w700,
@@ -1562,10 +1665,14 @@ class HealthRecordDetailPage extends StatelessWidget {
                   for (var index = 0; index < values.length; index++) ...[
                     ListTile(
                       title: Text(
-                        healthValueLabel(values[index].key, record.metric),
+                        _localizedHealthValueLabel(
+                          context,
+                          values[index].key,
+                          record.metric,
+                        ),
                       ),
                       trailing: Text(
-                        '${_formatRecordNumber(values[index].value)} ${healthValueUnit(values[index].key, record)}',
+                        '${_formatRecordNumber(values[index].value)} ${_localizedRecordUnit(context, healthValueUnit(values[index].key, record))}',
                         style: const TextStyle(fontWeight: FontWeight.w700),
                       ),
                     ),
@@ -1587,7 +1694,10 @@ class HealthRecordDetailPage extends StatelessWidget {
           const SizedBox(height: 12),
           Builder(
             builder: (context) {
-              final interpretation = interpretHealthRecord(record);
+              final interpretation = interpretHealthRecord(
+                record,
+                english: Localizations.localeOf(context).languageCode != 'zh',
+              );
               return FeatureStateCard(
                 message: interpretation.title,
                 detail: interpretation.detail,
@@ -2498,7 +2608,16 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
     );
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(saved ? '屏幕设置已保存' : '屏幕设置保存失败，请稍后重试')),
+      SnackBar(
+        content: Text(
+          saved
+              ? _watchText('屏幕设置已保存', 'Display settings saved')
+              : _watchText(
+                  '屏幕设置保存失败，请稍后重试',
+                  'Could not save display settings. Try again.',
+                ),
+        ),
+      ),
     );
   }
 
@@ -2517,7 +2636,10 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
         content: Text(
           saved
               ? successMessage
-              : widget.controller.errorMessage ?? '保存失败，请稍后重试',
+              : _watchText(
+                  widget.controller.errorMessage ?? '保存失败，请稍后重试',
+                  'Could not save this setting. Try again.',
+                ),
         ),
       ),
     );
@@ -2824,7 +2946,7 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
               if (!availability.isReady)
                 FeatureStateCard(
                   message: availability.message,
-                  detail: _deviceFeatureDescription(widget.feature),
+                  detail: _deviceFeatureDescription(context, widget.feature),
                   icon: _deviceFeatureIcon(widget.feature),
                 )
               else if (widget.feature == DeviceFeature.findWatch)
@@ -2879,8 +3001,8 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
     DeviceFeature.healthAssessment => _buildHealthAssessmentPanel(busy),
     DeviceFeature.healthMonitoring => _buildHealthMonitoringPanel(),
     _ => FeatureStateCard(
-      message: '请在手表上操作',
-      detail: _deviceFeatureDescription(widget.feature),
+      message: context.l10n.useWatch,
+      detail: _deviceFeatureDescription(context, widget.feature),
       icon: _deviceFeatureIcon(widget.feature),
     ),
   };
@@ -3101,10 +3223,15 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
   }
 
   Widget _loadingCard(bool busy, String label) => FeatureStateCard(
-    message: busy ? '正在读取$label' : '暂时未读取到$label',
-    detail: '请保持手表靠近手机后重试。',
+    message: busy
+        ? _watchText('正在读取$label', 'Loading $label…')
+        : _watchText('暂时未读取到$label', 'Could not load $label'),
+    detail: _watchText(
+      '请保持手表靠近手机后重试。',
+      'Keep your watch nearby and try again.',
+    ),
     icon: _deviceFeatureIcon(widget.feature),
-    actionLabel: busy ? null : '重新读取',
+    actionLabel: busy ? null : context.l10n.retry,
     onAction: busy ? null : _loadFeature,
   );
 
@@ -4260,7 +4387,9 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
                   for (var value = 0; value < 24; value++)
                     DropdownMenuItem(
                       value: value,
-                      child: Text('${value.toString().padLeft(2, '0')}:00'),
+                      child: Text(
+                        TimeOfDay(hour: value, minute: 0).format(context),
+                      ),
                     ),
                 ],
                 onChanged: (value) {
@@ -4379,7 +4508,7 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
                     plan['enabled'] == true
                         ? _watchText(
                             '已开启 · ${plan['startHour']}:00 起 · 白天 ${plan['dayIntervalMinutes']} 分钟 / 夜间 ${plan['nightIntervalMinutes']} 分钟',
-                            'On · from ${plan['startHour']}:00 · day ${plan['dayIntervalMinutes']} min / night ${plan['nightIntervalMinutes']} min',
+                            'On · from ${_watchHour(context, plan['startHour'])} · day ${plan['dayIntervalMinutes']} min / night ${plan['nightIntervalMinutes']} min',
                           )
                         : _watchText('已关闭', 'Off'),
                   ),
@@ -5361,10 +5490,16 @@ class _ScreenSettingsPanel extends StatelessWidget {
     final value = settings;
     if (value == null) {
       return FeatureStateCard(
-        message: busy ? '正在读取手表设置' : '暂时未读取到屏幕设置',
-        detail: '请保持手表靠近手机后重试。',
+        message: busy
+            ? _usText(context, 'Loading display settings…', '正在读取手表设置')
+            : _usText(context, 'Could not load display settings', '暂时未读取到屏幕设置'),
+        detail: _usText(
+          context,
+          'Keep your watch nearby and try again.',
+          '请保持手表靠近手机后重试。',
+        ),
         icon: Icons.brightness_6_outlined,
-        actionLabel: busy ? null : '重新读取',
+        actionLabel: busy ? null : context.l10n.retry,
         onAction: busy ? null : onReload,
       );
     }
@@ -5390,7 +5525,13 @@ class _ScreenSettingsPanel extends StatelessWidget {
               ),
               const Divider(),
               const SizedBox(height: 12),
-              Text('屏幕亮度  $current / $maximum'),
+              Text(
+                _usText(
+                  context,
+                  'Brightness  $current / $maximum',
+                  '屏幕亮度  $current / $maximum',
+                ),
+              ),
               Slider(
                 value: current.toDouble(),
                 min: 1,
@@ -5453,14 +5594,20 @@ class _ScreenSettingsPanel extends StatelessWidget {
                   contentPadding: EdgeInsets.zero,
                   title: Text(context.l10n.activeTime),
                   subtitle: Text(
-                    '${_timeLabel(value.raiseToWakeStartMinutes)}–${_timeLabel(value.raiseToWakeEndMinutes)}',
+                    '${_timeLabel(context, value.raiseToWakeStartMinutes)}–${_timeLabel(context, value.raiseToWakeEndMinutes)}',
                   ),
                   trailing: const Icon(Icons.chevron_right_rounded),
                   onTap: busy
                       ? null
                       : () => _pickRaiseTime(context, value, onChanged),
                 ),
-                Text('抬腕灵敏度  ${value.raiseToWakeSensitivity} / 10'),
+                Text(
+                  _usText(
+                    context,
+                    'Raise-to-wake sensitivity  ${value.raiseToWakeSensitivity} / 10',
+                    '抬腕灵敏度  ${value.raiseToWakeSensitivity} / 10',
+                  ),
+                ),
                 Slider(
                   value: value.raiseToWakeSensitivity.toDouble().clamp(1, 10),
                   min: 1,
@@ -5495,7 +5642,7 @@ class _ScreenSettingsPanel extends StatelessWidget {
   ) async {
     final start = await showTimePicker(
       context: context,
-      helpText: '选择开始时间',
+      helpText: _usText(context, 'Start time', '选择开始时间'),
       initialTime: TimeOfDay(
         hour: value.raiseToWakeStartMinutes ~/ 60,
         minute: value.raiseToWakeStartMinutes % 60,
@@ -5504,7 +5651,7 @@ class _ScreenSettingsPanel extends StatelessWidget {
     if (start == null || !context.mounted) return;
     final end = await showTimePicker(
       context: context,
-      helpText: '选择结束时间',
+      helpText: _usText(context, 'End time', '选择结束时间'),
       initialTime: TimeOfDay(
         hour: value.raiseToWakeEndMinutes ~/ 60,
         minute: value.raiseToWakeEndMinutes % 60,
@@ -5519,8 +5666,8 @@ class _ScreenSettingsPanel extends StatelessWidget {
     );
   }
 
-  String _timeLabel(int value) =>
-      '${(value ~/ 60).toString().padLeft(2, '0')}:${(value % 60).toString().padLeft(2, '0')}';
+  String _timeLabel(BuildContext context, int value) =>
+      TimeOfDay(hour: value ~/ 60, minute: value % 60).format(context);
 }
 
 class FeedbackPage extends StatefulWidget {
@@ -5548,12 +5695,18 @@ class _FeedbackPageState extends State<FeedbackPage> {
 
   Future<void> _submit() async {
     if (_content.text.trim().length < 5) {
-      setState(() => _result = '请至少填写 5 个字的问题说明');
+      setState(
+        () => _result = _usText(
+          context,
+          'Please add a few more details (at least 5 characters).',
+          '请至少填写 5 个字的问题说明',
+        ),
+      );
       return;
     }
     final controller = widget.controller;
     if (controller == null) {
-      setState(() => _result = '此功能暂时无法使用，请稍后再试');
+      setState(() => _result = context.l10n.serviceUnavailable);
       return;
     }
     setState(() {
@@ -5569,8 +5722,12 @@ class _FeedbackPageState extends State<FeedbackPage> {
     setState(() {
       _submitting = false;
       _result = success
-          ? '反馈已提交，感谢你的建议'
-          : controller.errorMessage ?? '反馈提交失败，请稍后重试';
+          ? _usText(context, 'Thanks — your feedback was sent.', '反馈已提交，感谢你的建议')
+          : _usText(
+              context,
+              'Could not send feedback. Please try again.',
+              controller.errorMessage ?? '反馈提交失败，请稍后重试',
+            );
       if (success) _content.clear();
     });
   }
@@ -5583,7 +5740,7 @@ class _FeedbackPageState extends State<FeedbackPage> {
         padding: const EdgeInsets.all(16),
         children: [
           Text(
-            '问题反馈',
+            context.l10n.feedback,
             style: Theme.of(
               context,
             ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
@@ -5592,11 +5749,24 @@ class _FeedbackPageState extends State<FeedbackPage> {
           DropdownButtonFormField<String>(
             initialValue: _category,
             decoration: InputDecoration(labelText: context.l10n.issueType),
-            items: const [
-              DropdownMenuItem(value: '功能建议', child: Text('功能建议')),
-              DropdownMenuItem(value: '设备连接', child: Text('设备连接')),
-              DropdownMenuItem(value: '数据问题', child: Text('数据问题')),
-              DropdownMenuItem(value: '商城订单', child: Text('商城订单')),
+            items: [
+              DropdownMenuItem(
+                value: '功能建议',
+                child: Text(_usText(context, 'Feature suggestion', '功能建议')),
+              ),
+              DropdownMenuItem(
+                value: '设备连接',
+                child: Text(_usText(context, 'Watch connection', '设备连接')),
+              ),
+              DropdownMenuItem(
+                value: '数据问题',
+                child: Text(_usText(context, 'Readings', '数据问题')),
+              ),
+              if (showSaydianMall)
+                DropdownMenuItem(
+                  value: '商城订单',
+                  child: Text(_usText(context, 'Shop order', '商城订单')),
+                ),
             ],
             onChanged: (value) =>
                 setState(() => _category = value ?? _category),
@@ -5629,30 +5799,56 @@ class _FeedbackPageState extends State<FeedbackPage> {
           const SizedBox(height: 18),
           FilledButton(
             onPressed: _submitting ? null : _submit,
-            child: Text(_submitting ? '正在提交…' : '提交反馈'),
+            child: Text(
+              _submitting
+                  ? _usText(context, 'Sending…', '正在提交…')
+                  : _usText(context, 'Send feedback', '提交反馈'),
+            ),
           ),
           const SizedBox(height: 28),
           Text(
-            '常见问题',
+            _usText(context, 'Common questions', '常见问题'),
             style: Theme.of(
               context,
             ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
           ),
           const SizedBox(height: 10),
-          const Card(
+          Card(
             child: Column(
               children: [
                 ExpansionTile(
-                  title: Text('如何连接手表？'),
-                  childrenPadding: EdgeInsets.fromLTRB(16, 0, 16, 16),
-                  children: [Text('打开“设备”页并选择添加设备。搜索时让手表保持亮屏、靠近手机，并在手表端确认配对。')],
-                ),
-                Divider(height: 1),
-                ExpansionTile(
-                  title: Text('为什么健康数据暂时为空？'),
-                  childrenPadding: EdgeInsets.fromLTRB(16, 0, 16, 16),
+                  title: Text(
+                    _usText(context, 'How do I connect my watch?', '如何连接手表？'),
+                  ),
+                  childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                   children: [
-                    Text('请确认设备已连接并完成同步。设备不支持的项目不会开放入口；新测量数据同步后才会显示趋势。'),
+                    Text(
+                      _usText(
+                        context,
+                        'Open Watch, tap Search for watches, and keep your watch nearby. Confirm on the watch if prompted.',
+                        '打开“设备”页并选择添加设备。搜索时让手表保持亮屏、靠近手机，并在手表端确认配对。',
+                      ),
+                    ),
+                  ],
+                ),
+                const Divider(height: 1),
+                ExpansionTile(
+                  title: Text(
+                    _usText(
+                      context,
+                      'Why are my readings empty?',
+                      '为什么健康数据暂时为空？',
+                    ),
+                  ),
+                  childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                  children: [
+                    Text(
+                      _usText(
+                        context,
+                        'Connect your watch and sync it. New readings appear after they are received.',
+                        '请确认设备已连接并完成同步。设备不支持的项目不会开放入口；新测量数据同步后才会显示趋势。',
+                      ),
+                    ),
                   ],
                 ),
               ],
@@ -5770,7 +5966,7 @@ class AboutSaydianPage extends StatefulWidget {
 class _AboutSaydianPageState extends State<AboutSaydianPage> {
   String _version = '--';
   String _build = '--';
-  String _introduction = '记录日常健康趋势，连接家人与设备，让健康管理更简单。';
+  String? _introduction;
   bool _checking = false;
 
   @override
@@ -5828,7 +6024,15 @@ class _AboutSaydianPageState extends State<AboutSaydianPage> {
       }
       await gate.checkNow();
     } catch (_) {
-      if (mounted) _message('暂时无法检查更新，请稍后再试');
+      if (mounted) {
+        _message(
+          _usText(
+            context,
+            'Could not check for updates. Try again later.',
+            '暂时无法检查更新，请稍后再试',
+          ),
+        );
+      }
     } finally {
       if (mounted) setState(() => _checking = false);
     }
@@ -5842,6 +6046,13 @@ class _AboutSaydianPageState extends State<AboutSaydianPage> {
 
   @override
   Widget build(BuildContext context) {
+    final introduction =
+        _introduction ??
+        _usText(
+          context,
+          'Everyday wellness insights from your watch.',
+          '记录日常健康趋势，连接家人与设备，让健康管理更简单。',
+        );
     return Scaffold(
       appBar: AppBar(title: Text(context.l10n.aboutApp)),
       body: ListView(
@@ -5850,13 +6061,7 @@ class _AboutSaydianPageState extends State<AboutSaydianPage> {
           const Center(child: SaydianBrandLockup(width: 176)),
           const SizedBox(height: 26),
           Text(
-            context.l10n.brandHealthTitle,
-            textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            _introduction,
+            introduction,
             textAlign: TextAlign.center,
             style: TextStyle(color: SaydianColors.muted, height: 1.6),
           ),
@@ -6254,20 +6459,147 @@ IconData _deviceFeatureIcon(DeviceFeature feature) => switch (feature) {
   DeviceFeature.basicSettings => Icons.tune_rounded,
 };
 
-String _deviceFeatureDescription(DeviceFeature feature) => switch (feature) {
-  DeviceFeature.watchFaces => '选择并管理手表表盘',
-  DeviceFeature.photoWatchFace => '用自己的照片制作表盘',
-  DeviceFeature.findWatch => '让附近的手表响铃或振动',
-  DeviceFeature.camera => '使用手表控制手机拍照',
-  DeviceFeature.phoneCalls => '管理手表通话相关设置',
-  DeviceFeature.contacts => '管理手表中的常用联系人',
-  DeviceFeature.notifications => '选择需要在手表上提醒的消息',
-  DeviceFeature.alarms => '管理手表闹钟和重复日期',
-  DeviceFeature.weather => '把所在城市天气同步到手表',
-  DeviceFeature.worldClock => '在手表上查看其他城市时间',
-  DeviceFeature.healthReminders => '设置久坐、饮水和日常提醒',
-  DeviceFeature.healthMonitoring => '设置自动检测和健康提醒',
-  DeviceFeature.healthAssessment => '查看手表支持的辅助评估',
-  DeviceFeature.screenDisplay => '调节亮度和亮屏方式',
-  DeviceFeature.basicSettings => '设置手表时间、目标和个人资料',
+String _usText(BuildContext context, String english, String chinese) =>
+    Localizations.localeOf(context).languageCode == 'zh' ? chinese : english;
+
+String _englishRecordOrigin(MeasurementOrigin origin) => switch (origin) {
+  MeasurementOrigin.watchHistory => 'Watch history',
+  MeasurementOrigin.appMeasurement => 'Started in the app',
+  MeasurementOrigin.remoteMember => 'Shared family reading',
+  MeasurementOrigin.manualEntry => 'Manual entry',
+  MeasurementOrigin.imported => 'Imported',
+  MeasurementOrigin.unknown => 'Unknown',
 };
+
+String _localizedRecordUnit(BuildContext context, String unit) {
+  if (Localizations.localeOf(context).languageCode == 'zh') return unit;
+  return switch (unit) {
+    '步' => 'steps',
+    '次/分' => 'breaths/min',
+    '千卡' => 'kcal',
+    'kcal/日' => 'kcal/day',
+    '℃' => '°C',
+    _ => unit,
+  };
+}
+
+String _localizedHealthValueLabel(
+  BuildContext context,
+  String key,
+  HealthMetric metric,
+) {
+  if (Localizations.localeOf(context).languageCode == 'zh') {
+    return healthValueLabel(key, metric);
+  }
+  return switch (key) {
+    'value' => context.l10n.metricName(metric),
+    'systolic' => 'Systolic',
+    'diastolic' => 'Diastolic',
+    'pulse' || 'meanHeartRate' || 'averageHeartRate' => 'Heart rate',
+    'skinTemperature' => 'Skin temperature',
+    'averageHRV' || 'hrv' => 'HRV',
+    'averageTimeInterval' || 'qt' => 'QT interval',
+    'respiratoryRate' => 'Breathing rate',
+    'sampleFrequency' => 'Sample rate',
+    'BMI' || 'bmi' => 'BMI',
+    'durationMinutes' => 'Duration',
+    _ => _readableHealthKey(key),
+  };
+}
+
+String _readableHealthKey(String key) {
+  final words = key
+      .replaceAllMapped(
+        RegExp(r'([a-z])([A-Z])'),
+        (match) => '${match[1]} ${match[2]}',
+      )
+      .replaceAll('_', ' ')
+      .trim();
+  if (words.isEmpty) return 'Reading';
+  return '${words[0].toUpperCase()}${words.substring(1)}';
+}
+
+String _watchHour(BuildContext context, Object? value) {
+  final hour = int.tryParse('$value');
+  if (hour == null || hour < 0 || hour > 23) return '—';
+  return TimeOfDay(hour: hour, minute: 0).format(context);
+}
+
+String _deviceFeatureDescription(BuildContext context, DeviceFeature feature) =>
+    switch (feature) {
+      DeviceFeature.watchFaces => _usText(
+        context,
+        'Choose a watch face',
+        '选择并管理手表表盘',
+      ),
+      DeviceFeature.photoWatchFace => _usText(
+        context,
+        'Use a photo as your watch face',
+        '用自己的照片制作表盘',
+      ),
+      DeviceFeature.findWatch => _usText(
+        context,
+        'Make your nearby watch vibrate',
+        '让附近的手表响铃或振动',
+      ),
+      DeviceFeature.camera => _usText(
+        context,
+        'Take photos with your watch',
+        '使用手表控制手机拍照',
+      ),
+      DeviceFeature.phoneCalls => _usText(
+        context,
+        'Manage calls on your watch',
+        '管理手表通话相关设置',
+      ),
+      DeviceFeature.contacts => _usText(
+        context,
+        'Manage watch contacts',
+        '管理手表中的常用联系人',
+      ),
+      DeviceFeature.notifications => _usText(
+        context,
+        'Choose notifications for your watch',
+        '选择需要在手表上提醒的消息',
+      ),
+      DeviceFeature.alarms => _usText(
+        context,
+        'Set alarms on your watch',
+        '管理手表闹钟和重复日期',
+      ),
+      DeviceFeature.weather => _usText(
+        context,
+        'Show local weather on your watch',
+        '把所在城市天气同步到手表',
+      ),
+      DeviceFeature.worldClock => _usText(
+        context,
+        'See other time zones on your watch',
+        '在手表上查看其他城市时间',
+      ),
+      DeviceFeature.healthReminders => _usText(
+        context,
+        'Set daily reminders',
+        '设置久坐、饮水和日常提醒',
+      ),
+      DeviceFeature.healthMonitoring => _usText(
+        context,
+        'Choose automatic readings',
+        '设置自动检测和健康提醒',
+      ),
+      DeviceFeature.healthAssessment => _usText(
+        context,
+        'View watch-provided insights',
+        '查看手表支持的辅助评估',
+      ),
+      DeviceFeature.screenDisplay => _usText(
+        context,
+        'Set display brightness and timeout',
+        '调节亮度和亮屏方式',
+      ),
+      DeviceFeature.basicSettings => _usText(
+        context,
+        'Set watch time and goals',
+        '设置手表时间、目标和个人资料',
+      ),
+    };

@@ -32,6 +32,19 @@ import 'shop_pages.dart';
 import 'feature_visibility.dart';
 import 'watch_face_market_page.dart';
 
+String _localeCopy(BuildContext context, String english, String chinese) =>
+    Localizations.localeOf(context).languageCode == 'zh' ? chinese : english;
+
+String _safeUiError(BuildContext context, String? error, String fallback) {
+  final message = error?.trim() ?? '';
+  if (message.isEmpty ||
+      (Localizations.localeOf(context).languageCode != 'zh' &&
+          RegExp(r'[\u4e00-\u9fff]').hasMatch(message))) {
+    return fallback;
+  }
+  return message;
+}
+
 class LoginPage extends StatefulWidget {
   const LoginPage({required this.controller, super.key});
 
@@ -461,7 +474,20 @@ class DashboardPage extends StatelessWidget {
       HealthMetric.sleep,
     ];
     final metrics = supportedMetrics
-        .where(controller.shouldShowHealthMetric)
+        .where((metric) {
+          if (controller.isGlobalEdition &&
+              disconnected &&
+              const {
+                HealthMetric.bodyTemperature,
+                HealthMetric.ecg,
+                HealthMetric.hrv,
+                HealthMetric.bodyComposition,
+                HealthMetric.bloodComposition,
+              }.contains(metric)) {
+            return false;
+          }
+          return controller.shouldShowHealthMetric(metric);
+        })
         .toList(growable: false);
     final textScale = MediaQuery.textScalerOf(context).scale(1).clamp(1.0, 2.0);
     return SafeArea(
@@ -575,8 +601,9 @@ class DashboardPage extends StatelessWidget {
                         );
                       },
                     ),
-                  if (controller.connectedDevice?.sdkSource !=
-                      WearableSdkSource.urion) ...[
+                  if ((!controller.isGlobalEdition || !disconnected) &&
+                      controller.connectedDevice?.sdkSource !=
+                          WearableSdkSource.urion) ...[
                     const SizedBox(height: 18),
                     Text(
                       context.l10n.workoutsAndRecords,
@@ -1004,7 +1031,7 @@ class _FeatureEntryGrid extends StatelessWidget {
               child: _FeatureEntry(
                 label: context.l10n.remoteCare,
                 icon: Icons.family_restroom_rounded,
-                color: SaydianColors.ink,
+                color: SaydianColors.sky,
                 onTap: onCare,
               ),
             ),
@@ -1012,7 +1039,7 @@ class _FeatureEntryGrid extends StatelessWidget {
               child: _FeatureEntry(
                 label: context.l10n.healthLibrary,
                 icon: Icons.menu_book_rounded,
-                color: SaydianColors.ink,
+                color: SaydianColors.sage,
                 onTap: onEncyclopedia,
               ),
             ),
@@ -1020,7 +1047,7 @@ class _FeatureEntryGrid extends StatelessWidget {
               child: _FeatureEntry(
                 label: context.l10n.healthAlerts,
                 icon: Icons.health_and_safety_rounded,
-                color: SaydianColors.ink,
+                color: SaydianColors.clay,
                 onTap: onWarning,
               ),
             ),
@@ -1067,7 +1094,7 @@ class _FeatureEntry extends StatelessWidget {
               width: 47,
               height: 47,
               decoration: BoxDecoration(
-                color: SaydianColors.brandRedSoft,
+                color: color.withValues(alpha: 0.10),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(icon, color: color, size: 25),
@@ -1198,8 +1225,14 @@ class _MetricCard extends StatelessWidget {
       HealthMetric.bloodComposition => Icons.science_outlined,
       _ => Icons.monitor_heart_outlined,
     };
-    const iconColor = SaydianColors.ink;
-    const chartColor = SaydianColors.ink;
+    final iconColor = switch (metric) {
+      HealthMetric.bloodPressure => SaydianColors.clay,
+      HealthMetric.heartRate => SaydianColors.heart,
+      HealthMetric.bloodOxygen => SaydianColors.sky,
+      HealthMetric.sleep => SaydianColors.sage,
+      _ => SaydianColors.sky,
+    };
+    final chartColor = iconColor;
     final status = _homeMetricStatus(controller, record);
     final needsAttention = !{
       _HomeMetricStatus.normal,
@@ -1264,7 +1297,11 @@ class _MetricCard extends StatelessWidget {
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text(
-                      context.l10n.metricName(metric),
+                      metric == HealthMetric.bodyTemperature &&
+                              Localizations.localeOf(context).languageCode !=
+                                  'zh'
+                          ? 'Temp.'
+                          : context.l10n.metricName(metric),
                       maxLines: 2,
                       style: const TextStyle(
                         fontSize: 15,
@@ -1272,7 +1309,7 @@ class _MetricCard extends StatelessWidget {
                       ),
                     ),
                   ),
-                  if (needsAttention || status == _HomeMetricStatus.noData) ...[
+                  if (needsAttention) ...[
                     const SizedBox(width: 4),
                     Flexible(
                       child: Container(
@@ -1843,7 +1880,12 @@ class _HealthMeasurementDialogState extends State<_HealthMeasurementDialog> {
                     const SizedBox(height: 12),
                     Builder(
                       builder: (context) {
-                        final interpretation = interpretHealthRecord(record);
+                        final interpretation = interpretHealthRecord(
+                          record,
+                          english:
+                              Localizations.localeOf(context).languageCode !=
+                              'zh',
+                        );
                         return Container(
                           width: double.infinity,
                           padding: const EdgeInsets.all(12),
@@ -2972,12 +3014,12 @@ class _HealthRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final status = record != null
-        ? '最近 ${DateFormat('MM-dd HH:mm').format(record!.measuredAt.toLocal())}'
+        ? '${context.l10n.recentData} · ${DateFormat.MMMd(context.l10n.localeName).add_jm().format(record!.measuredAt.toLocal())}'
         : !connected
-        ? '连接手表后使用'
+        ? context.l10n.connectWatch
         : supported == false
-        ? '请在手表上操作'
-        : '暂无测量记录';
+        ? context.l10n.useWatch
+        : context.l10n.noData;
     final icon = switch (metric) {
       HealthMetric.heartRate => Icons.favorite_rounded,
       HealthMetric.bloodOxygen => Icons.water_drop_rounded,
@@ -4297,7 +4339,7 @@ class DevicePage extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: SaydianColors.skySoft,
               border: Border.all(color: const Color(0xFFE8E8EA)),
               borderRadius: BorderRadius.circular(18),
               boxShadow: const [
@@ -4316,7 +4358,7 @@ class DevicePage extends StatelessWidget {
                       width: 56,
                       height: 56,
                       decoration: BoxDecoration(
-                        color: const Color(0xFF171B2B),
+                        color: SaydianColors.ink,
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(
@@ -4463,7 +4505,7 @@ class DevicePage extends StatelessWidget {
                     height: 118,
                     decoration: const BoxDecoration(
                       gradient: LinearGradient(
-                        colors: [Color(0xFFDCEBFF), Color(0xFFEEF5FF)],
+                        colors: [Color(0xFFF0F1F2), Color(0xFFFFFFFF)],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
@@ -4471,7 +4513,7 @@ class DevicePage extends StatelessWidget {
                     ),
                     child: const Icon(
                       Icons.watch_outlined,
-                      color: SaydianColors.blue,
+                      color: SaydianColors.ink,
                       size: 62,
                     ),
                   ),
@@ -4690,12 +4732,12 @@ class DevicePage extends StatelessWidget {
                 width: 38,
                 height: 38,
                 decoration: BoxDecoration(
-                  color: SaydianColors.brandRedSoft,
+                  color: _deviceFeatureColor(feature).withValues(alpha: 0.10),
                   borderRadius: BorderRadius.circular(11),
                 ),
                 child: Icon(
-                  _featureIcon(feature),
-                  color: SaydianColors.ink,
+                  isU19Pulse ? Icons.show_chart_rounded : _featureIcon(feature),
+                  color: _deviceFeatureColor(feature),
                   size: 22,
                 ),
               ),
@@ -4779,6 +4821,13 @@ class DevicePage extends StatelessWidget {
     DeviceFeature.screenDisplay => Icons.brightness_6_outlined,
     DeviceFeature.basicSettings => Icons.tune_rounded,
   };
+
+  Color _deviceFeatureColor(DeviceFeature feature) => switch (feature) {
+    DeviceFeature.findWatch || DeviceFeature.screenDisplay => SaydianColors.sky,
+    DeviceFeature.healthMonitoring ||
+    DeviceFeature.healthAssessment => SaydianColors.sage,
+    _ => SaydianColors.clay,
+  };
 }
 
 class _BatteryBadge extends StatelessWidget {
@@ -4796,10 +4845,19 @@ class _BatteryBadge extends StatelessWidget {
       DeviceBatteryInfo(isPercent: true, value: <= 35) => SaydianColors.orange,
       _ => SaydianColors.green,
     };
-    final label = value?.displayLabel ?? '--';
+    final chinese = Localizations.localeOf(context).languageCode == 'zh';
+    final label = value == null
+        ? '--'
+        : value.isPercent
+        ? '${value.value}%'
+        : chinese
+        ? value.displayLabel
+        : '${value.value}/${value.scale}';
     final semantics = value == null
-        ? '手表电量暂未读取'
-        : '手表电量 $label，${value.chargeState.label}';
+        ? (chinese ? '手表电量暂未读取' : 'Watch battery unavailable')
+        : chinese
+        ? '手表电量 $label，${value.chargeState.label}'
+        : 'Watch battery ${value.isPercent ? label : '${value.value} of ${value.scale} bars'}, ${_batteryChargeLabel(context, value.chargeState)}';
     return Semantics(
       label: semantics,
       child: Row(
@@ -4832,6 +4890,22 @@ class _BatteryBadge extends StatelessWidget {
       ),
     );
   }
+}
+
+String _batteryChargeLabel(
+  BuildContext context,
+  DeviceBatteryChargeState state,
+) {
+  if (Localizations.localeOf(context).languageCode == 'zh') {
+    return state.label;
+  }
+  return switch (state) {
+    DeviceBatteryChargeState.charging => 'charging',
+    DeviceBatteryChargeState.lowPressureDeprecated => 'low battery',
+    DeviceBatteryChargeState.normal => 'not charging',
+    DeviceBatteryChargeState.fullUnreliable ||
+    DeviceBatteryChargeState.unknown => 'charge status unavailable',
+  };
 }
 
 class _DeviceWatchFaceMarketStrip extends StatefulWidget {
@@ -5531,7 +5605,11 @@ class _DeviceInfoPageState extends State<DeviceInfoPage> {
                     const Divider(indent: 16),
                     ListTile(
                       title: Text(context.l10n.connectionStatus),
-                      trailing: Text(device == null ? '未连接' : '已连接'),
+                      trailing: Text(
+                        device == null
+                            ? context.l10n.notConnected
+                            : context.l10n.connected,
+                      ),
                     ),
                     const Divider(indent: 16),
                     ListTile(
@@ -5544,7 +5622,7 @@ class _DeviceInfoPageState extends State<DeviceInfoPage> {
                       subtitle: battery?.updatedAt == null
                           ? null
                           : Text(
-                              '更新于 ${DateFormat('MM-dd HH:mm').format(battery!.updatedAt!.toLocal())}',
+                              '${Localizations.localeOf(context).languageCode == 'zh' ? '更新于' : 'Updated'} ${DateFormat.yMMMd(context.l10n.localeName).add_jm().format(battery!.updatedAt!.toLocal())}',
                             ),
                       trailing: _BatteryBadge(battery: battery),
                     ),
@@ -5552,17 +5630,28 @@ class _DeviceInfoPageState extends State<DeviceInfoPage> {
                       const Divider(indent: 16),
                       ListTile(
                         title: Text(context.l10n.chargingStatus),
-                        trailing: Text(battery.chargeState.label),
+                        trailing: Text(
+                          _batteryChargeLabel(context, battery.chargeState),
+                        ),
                       ),
                     ],
                     const Divider(indent: 16),
                     ListTile(
                       title: Text(
                         device?.macAddress != null
-                            ? 'MAC 地址'
+                            ? (Localizations.localeOf(context).languageCode ==
+                                      'zh'
+                                  ? 'MAC 地址'
+                                  : 'MAC address')
                             : defaultTargetPlatform == TargetPlatform.iOS
-                            ? 'iOS 设备标识'
-                            : '设备标识',
+                            ? (Localizations.localeOf(context).languageCode ==
+                                      'zh'
+                                  ? 'iOS 设备标识'
+                                  : 'iOS device ID')
+                            : (Localizations.localeOf(context).languageCode ==
+                                      'zh'
+                                  ? '设备标识'
+                                  : 'Device ID'),
                       ),
                       subtitle: Text(
                         device?.macAddress ?? device?.nativeId ?? '--',
@@ -7787,7 +7876,7 @@ class SettingsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final profile = controller.memberProfile;
     final name =
-        '${profile['nickname'] ?? controller.session?.displayName ?? (controller.isPreviewMode ? '体验用户' : context.l10n.defaultUser)}';
+        '${profile['nickname'] ?? controller.session?.displayName ?? (controller.isPreviewMode ? (Localizations.localeOf(context).languageCode == 'zh' ? '体验用户' : 'Guest') : context.l10n.defaultUser)}';
     final memberId =
         '${profile['promo_code'] ?? controller.session?.memberId ?? '--'}';
     final avatarUrl = '${profile['head_portrait'] ?? ''}'.trim();
@@ -7803,27 +7892,34 @@ class SettingsPage extends StatelessWidget {
             child: InkWell(
               borderRadius: BorderRadius.circular(16),
               onTap: () => unawaited(controller.logout()),
-              child: const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 13,
+                ),
                 child: Row(
                   children: [
-                    Icon(
+                    const Icon(
                       Icons.account_circle_outlined,
                       color: SaydianColors.brandRed,
                     ),
-                    SizedBox(width: 11),
+                    const SizedBox(width: 11),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            '当前为体验模式',
-                            style: TextStyle(fontWeight: FontWeight.w800),
+                            Localizations.localeOf(context).languageCode == 'zh'
+                                ? '当前为体验模式'
+                                : 'Guest mode',
+                            style: const TextStyle(fontWeight: FontWeight.w800),
                           ),
-                          SizedBox(height: 2),
+                          const SizedBox(height: 2),
                           Text(
-                            '登录后可保存健康数据、设备和订单信息',
-                            style: TextStyle(
+                            Localizations.localeOf(context).languageCode == 'zh'
+                                ? '登录后可保存健康数据、设备和订单信息'
+                                : 'Sign in to save your readings and watch.',
+                            style: const TextStyle(
                               color: SaydianColors.muted,
                               fontSize: 13,
                             ),
@@ -7832,13 +7928,13 @@ class SettingsPage extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      '立即登录',
-                      style: TextStyle(
+                      context.l10n.signIn,
+                      style: const TextStyle(
                         color: SaydianColors.brandRed,
                         fontWeight: FontWeight.w800,
                       ),
                     ),
-                    Icon(
+                    const Icon(
                       Icons.chevron_right_rounded,
                       color: SaydianColors.brandRed,
                     ),
@@ -7914,9 +8010,11 @@ class SettingsPage extends StatelessWidget {
                 icon: Icons.watch_outlined,
                 label: context.l10n.device,
                 value: controller.connectedDevice == null
-                    ? context.l10n.notConnected
-                    : context.l10n.online,
-                color: SaydianColors.ink,
+                    ? (Localizations.localeOf(context).languageCode == 'zh'
+                          ? context.l10n.notConnected
+                          : 'No watch')
+                    : context.l10n.connected,
+                color: SaydianColors.sky,
                 onTap: () => controller.selectTab(1),
               ),
             ),
@@ -7926,10 +8024,10 @@ class SettingsPage extends StatelessWidget {
                 key: const Key('profile-stat-health-records'),
                 icon: Icons.monitor_heart_outlined,
                 label: context.l10n.healthRecords,
-                value: context.l10n.recordCount(
-                  controller.healthRecords.length,
-                ),
-                color: SaydianColors.brandRed,
+                value: Localizations.localeOf(context).languageCode == 'zh'
+                    ? context.l10n.recordCount(controller.healthRecords.length)
+                    : '${controller.healthRecords.length}',
+                color: SaydianColors.sage,
                 onTap: () => _openPage(
                   context,
                   AllHealthDataPage(
@@ -7945,8 +8043,10 @@ class SettingsPage extends StatelessWidget {
                 key: const Key('profile-stat-care-members'),
                 icon: Icons.family_restroom_rounded,
                 label: context.l10n.careMembers,
-                value: context.l10n.memberCount(controller.careMembers.length),
-                color: SaydianColors.ink,
+                value: Localizations.localeOf(context).languageCode == 'zh'
+                    ? context.l10n.memberCount(controller.careMembers.length)
+                    : '${controller.careMembers.length}',
+                color: SaydianColors.clay,
                 onTap: () => _openPage(
                   context,
                   Scaffold(
@@ -8055,7 +8155,7 @@ class SettingsPage extends StatelessWidget {
               _MyQuickEntry(
                 title: context.l10n.unitSettings,
                 icon: Icons.straighten_rounded,
-                color: SaydianColors.ink,
+                color: SaydianColors.sky,
                 onTap: () => _openPage(
                   context,
                   UnitSettingsPage(controller: controller),
@@ -8068,7 +8168,7 @@ class SettingsPage extends StatelessWidget {
                   title: context.l10n.language,
                   subtitle: GlobalLocaleScope.of(context).languageName,
                   icon: Icons.language_rounded,
-                  color: SaydianColors.ink,
+                  color: SaydianColors.sage,
                   onTap: () => showGlobalLanguagePicker(context),
                 ),
               ],
@@ -8234,7 +8334,9 @@ class _ProfileStat extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Semantics(
     button: true,
-    label: '$label，$value',
+    label: Localizations.localeOf(context).languageCode == 'zh'
+        ? '$label，$value'
+        : '$label, $value',
     hint: Localizations.localeOf(context).languageCode == 'zh'
         ? '点击查看$label'
         : 'Open $label',
@@ -8307,42 +8409,47 @@ class _MyServicesGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final entries = <({String label, IconData icon, Widget page})>[
+    final entries = <({String label, IconData icon, Color color, Widget page})>[
       (
         label: context.l10n.healthProfile,
         icon: Icons.assignment_ind_outlined,
+        color: SaydianColors.sky,
         page: HealthProfilePage(controller: controller),
       ),
       (
         label: context.l10n.accountSettings,
         icon: Icons.manage_accounts_outlined,
+        color: SaydianColors.sage,
         page: AccountSettingsPage(controller: controller),
       ),
       (
         label: context.l10n.permissions,
         icon: Icons.admin_panel_settings_outlined,
+        color: SaydianColors.clay,
         page: PermissionManagementPage(controller: controller),
       ),
       (
-        label: '帮助反馈',
+        label: context.l10n.helpFeedback,
         icon: Icons.help_outline_rounded,
+        color: SaydianColors.sky,
         page: FeedbackPage(controller: controller),
       ),
       (
         label: context.l10n.customerService,
         icon: Icons.headset_mic_outlined,
+        color: SaydianColors.sage,
         page: CustomerServicePage(isGlobalEdition: controller.isGlobalEdition),
       ),
       (
         label: context.l10n.aboutApp,
         icon: Icons.info_outline_rounded,
+        color: SaydianColors.clay,
         page: AboutSaydianPage(controller: controller),
       ),
     ];
     return LayoutBuilder(
       builder: (context, constraints) {
-        final textScale = MediaQuery.textScalerOf(context).scale(1);
-        final columns = textScale > 1.25 || constraints.maxWidth < 340 ? 3 : 5;
+        final columns = constraints.maxWidth < 270 ? 2 : 3;
         final width = constraints.maxWidth / columns;
         return Wrap(
           alignment: WrapAlignment.start,
@@ -8354,6 +8461,7 @@ class _MyServicesGrid extends StatelessWidget {
                 child: _MyServiceEntry(
                   label: entry.label,
                   icon: entry.icon,
+                  color: entry.color,
                   onTap: () => Navigator.of(
                     context,
                   ).push(MaterialPageRoute<void>(builder: (_) => entry.page)),
@@ -8499,11 +8607,13 @@ class _MyServiceEntry extends StatelessWidget {
   const _MyServiceEntry({
     required this.label,
     required this.icon,
+    required this.color,
     required this.onTap,
   });
 
   final String label;
   final IconData icon;
+  final Color color;
   final VoidCallback onTap;
 
   @override
@@ -8519,10 +8629,10 @@ class _MyServiceEntry extends StatelessWidget {
               width: 46,
               height: 46,
               decoration: BoxDecoration(
-                color: SaydianColors.brandRedSoft,
+                color: color.withValues(alpha: 0.10),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(icon, color: SaydianColors.brandRedDark, size: 24),
+              child: Icon(icon, color: color, size: 24),
             ),
             const SizedBox(height: 7),
             Text(
@@ -9712,9 +9822,13 @@ class _GoalSettingsPageState extends State<GoalSettingsPage> {
         steps <= 0 ||
         distance <= 0 ||
         calories <= 0) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('请输入有效的目标数值')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            _localeCopy(context, 'Enter valid goals.', '请输入有效的目标数值'),
+          ),
+        ),
+      );
       return;
     }
     final saved = await widget.controller.saveActivityGoals(
@@ -9726,7 +9840,13 @@ class _GoalSettingsPageState extends State<GoalSettingsPage> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          saved ? '目标已保存' : widget.controller.errorMessage ?? '保存失败',
+          saved
+              ? _localeCopy(context, 'Goals saved.', '目标已保存')
+              : _safeUiError(
+                  context,
+                  widget.controller.errorMessage,
+                  _localeCopy(context, 'Couldn’t save. Try again.', '保存失败'),
+                ),
         ),
       ),
     );
@@ -9804,19 +9924,21 @@ class AccountSettingsPage extends StatelessWidget {
                   ),
                   trailing: const Icon(Icons.chevron_right_rounded),
                 ),
-                const Divider(indent: 56),
-                ListTile(
-                  onTap: () => Navigator.of(context).push(
-                    MaterialPageRoute<void>(
-                      builder: (_) =>
-                          ShopAddressBookPage(controller: controller),
+                if (showSaydianMall) ...[
+                  const Divider(indent: 56),
+                  ListTile(
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) =>
+                            ShopAddressBookPage(controller: controller),
+                      ),
                     ),
+                    leading: const Icon(Icons.location_on_outlined),
+                    title: Text(context.l10n.deliveryAddresses),
+                    subtitle: Text(context.l10n.viewAccountAddresses),
+                    trailing: const Icon(Icons.chevron_right_rounded),
                   ),
-                  leading: const Icon(Icons.location_on_outlined),
-                  title: Text(context.l10n.deliveryAddresses),
-                  subtitle: Text(context.l10n.viewAccountAddresses),
-                  trailing: const Icon(Icons.chevron_right_rounded),
-                ),
+                ],
                 const Divider(indent: 56),
                 ListTile(
                   onTap: () => Navigator.of(context).push(
@@ -9873,7 +9995,11 @@ class AccountSettingsPage extends StatelessWidget {
                       Navigator.of(context).popUntil((route) => route.isFirst);
                     }
                   },
-            child: Text(controller.isPreviewMode ? '退出体验' : '退出登录'),
+            child: Text(
+              controller.isPreviewMode
+                  ? _localeCopy(context, 'Leave guest mode', '退出体验')
+                  : context.l10n.signOut,
+            ),
           ),
           TextButton(
             onPressed: controller.session == null
@@ -10072,7 +10198,15 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
     setState(() {
       _isLoadingProfile = false;
       if (profile.isEmpty) {
-        _profileLoadError = widget.controller.errorMessage ?? '个人资料读取失败，请稍后重试';
+        _profileLoadError = _safeUiError(
+          context,
+          widget.controller.errorMessage,
+          _localeCopy(
+            context,
+            'Couldn’t load your profile. Try again.',
+            '个人资料读取失败，请稍后重试',
+          ),
+        );
         return;
       }
       _registeredMobile = _mobileFromProfile(profile);
@@ -10094,9 +10228,13 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
 
   Future<void> _pickAvatar() async {
     if (widget.controller.session == null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('登录后可更换头像')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            _localeCopy(context, 'Sign in to change your photo.', '登录后可更换头像'),
+          ),
+        ),
+      );
       return;
     }
     setState(() => _isPickingAvatar = true);
@@ -10111,9 +10249,17 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
       final bytes = await image.readAsBytes();
       if (bytes.length > 6 * 1024 * 1024) {
         if (!mounted) return;
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('图片过大，请选择较小的照片')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              _localeCopy(
+                context,
+                'Choose a photo under 6 MB.',
+                '图片过大，请选择较小的照片',
+              ),
+            ),
+          ),
+        );
         return;
       }
       if (!mounted) return;
@@ -10123,9 +10269,17 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
       });
     } catch (_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('无法读取照片，请检查相册权限后重试')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            _localeCopy(
+              context,
+              'Couldn’t open the photo. Check photo access.',
+              '无法读取照片，请检查相册权限后重试',
+            ),
+          ),
+        ),
+      );
     } finally {
       if (mounted) setState(() => _isPickingAvatar = false);
     }
@@ -10134,9 +10288,11 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
   Future<void> _save() async {
     if (_isPickingAvatar) return;
     if (_gender != 1 && _gender != 2) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('请选择性别')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_localeCopy(context, 'Choose a gender.', '请选择性别')),
+        ),
+      );
       return;
     }
     final height = double.tryParse(_height.text);
@@ -10150,7 +10306,15 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
         weight < 10 ||
         weight > 500) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('请完整填写资料，身高 50~300 cm、体重 10~500 kg')),
+        SnackBar(
+          content: Text(
+            _localeCopy(
+              context,
+              'Complete all fields. Height: 50–300 cm; weight: 10–500 kg.',
+              '请完整填写资料，身高 50~300 cm、体重 10~500 kg',
+            ),
+          ),
+        ),
       );
       return;
     }
@@ -10166,7 +10330,13 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          saved ? '个人资料已保存' : widget.controller.errorMessage ?? '保存失败',
+          saved
+              ? _localeCopy(context, 'Profile saved.', '个人资料已保存')
+              : _safeUiError(
+                  context,
+                  widget.controller.errorMessage,
+                  _localeCopy(context, 'Couldn’t save. Try again.', '保存失败'),
+                ),
         ),
       ),
     );
@@ -10178,8 +10348,16 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(isPreview ? '退出体验？' : '退出登录？'),
-        content: Text(isPreview ? '退出后将返回登录页面。' : '确认退出当前账号吗？'),
+        title: Text(
+          isPreview
+              ? _localeCopy(context, 'Leave guest mode?', '退出体验？')
+              : _localeCopy(context, 'Sign out?', '退出登录？'),
+        ),
+        content: Text(
+          isPreview
+              ? _localeCopy(context, 'You’ll return to sign in.', '退出后将返回登录页面。')
+              : _localeCopy(context, 'Sign out of this account?', '确认退出当前账号吗？'),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
@@ -10208,7 +10386,7 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
           Center(
             child: Semantics(
               button: true,
-              label: '更换头像',
+              label: _localeCopy(context, 'Change profile photo', '更换头像'),
               child: GestureDetector(
                 key: const Key('profile-avatar-picker'),
                 onTap: _isPickingAvatar ? null : _pickAvatar,
@@ -10224,7 +10402,9 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
           ),
           const SizedBox(height: 10),
           Text(
-            _avatarFilePath == null ? '点击头像更换照片' : '已选择新头像，保存后生效',
+            _avatarFilePath == null
+                ? _localeCopy(context, 'Tap to change photo', '点击头像更换照片')
+                : _localeCopy(context, 'New photo selected', '已选择新头像，保存后生效'),
             textAlign: TextAlign.center,
             style: const TextStyle(color: SaydianColors.muted),
           ),
@@ -10289,10 +10469,19 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
             key: ValueKey('profile-gender-$_gender'),
             initialValue: _gender,
             decoration: InputDecoration(labelText: context.l10n.gender),
-            items: const [
-              DropdownMenuItem(value: 0, child: Text('未设置')),
-              DropdownMenuItem(value: 1, child: Text('男')),
-              DropdownMenuItem(value: 2, child: Text('女')),
+            items: [
+              DropdownMenuItem(
+                value: 0,
+                child: Text(_localeCopy(context, 'Not set', '未设置')),
+              ),
+              DropdownMenuItem(
+                value: 1,
+                child: Text(_localeCopy(context, 'Male', '男')),
+              ),
+              DropdownMenuItem(
+                value: 2,
+                child: Text(_localeCopy(context, 'Female', '女')),
+              ),
             ],
             onChanged: _isLoadingProfile
                 ? null
@@ -10346,7 +10535,11 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
                     _isLoadingProfile
                 ? null
                 : _save,
-            child: Text(_isPickingAvatar ? '正在读取照片' : '保存资料'),
+            child: Text(
+              _isPickingAvatar
+                  ? _localeCopy(context, 'Opening photo…', '正在读取照片')
+                  : context.l10n.saveChanges,
+            ),
           ),
           const SizedBox(height: 12),
           OutlinedButton.icon(
@@ -10358,7 +10551,11 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
               minimumSize: const Size.fromHeight(48),
             ),
             icon: const Icon(Icons.logout_rounded),
-            label: Text(widget.controller.isPreviewMode ? '退出体验' : '退出登录'),
+            label: Text(
+              widget.controller.isPreviewMode
+                  ? _localeCopy(context, 'Leave guest mode', '退出体验')
+                  : context.l10n.signOut,
+            ),
           ),
         ],
       ),

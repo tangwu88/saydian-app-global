@@ -153,6 +153,49 @@ void main() {
     },
   );
 
+  testWidgets('US watch details use English battery and connection labels', (
+    tester,
+  ) async {
+    final controller = _controller()
+      ..connectedDevice = DeviceInfo(
+        id: 'urion:watch-1',
+        name: 'U19S',
+        battery: DeviceBatteryInfo(
+          value: 3,
+          scale: 4,
+          isPercent: false,
+          chargeState: DeviceBatteryChargeState.normal,
+          updatedAt: DateTime.utc(2026, 9, 28, 12),
+        ),
+      );
+    addTearDown(controller.dispose);
+    await tester.pumpWidget(
+      MaterialApp(
+        locale: const Locale('en'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: DeviceInfoPage(controller: controller),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Connected'), findsOneWidget);
+    expect(find.text('3/4'), findsOneWidget);
+    expect(find.text('not charging'), findsOneWidget);
+    expect(find.textContaining('Updated '), findsOneWidget);
+    expect(find.text('Device ID'), findsOneWidget);
+    expect(
+      find.byWidgetPredicate(
+        (widget) =>
+            widget is Semantics &&
+            widget.properties.label ==
+                'Watch battery 3 of 4 bars, not charging',
+      ),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('device sync gives a clear completion message', (tester) async {
     final controller =
         AppController(
@@ -182,11 +225,13 @@ void main() {
         home: Scaffold(body: DevicePage(controller: controller)),
       ),
     );
-    await tester.tap(find.text('Sync data'));
+    await tester.tap(find.text('Sync watch'));
     await tester.pumpAndSettle();
 
     expect(
-      find.text('Watch data read. Cloud upload is confirmed separately.'),
+      find.text(
+        'Watch readings received. Online backup is checked separately.',
+      ),
       findsOneWidget,
     );
     expect(find.text('Data synced'), findsNothing);
@@ -454,6 +499,38 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('US watch display settings use readable labels and local time', (
+    tester,
+  ) async {
+    final controller = AppController(
+      MemorySessionVault(),
+      _CoverageApi(),
+      MemoryHealthStore(),
+      _UsScreenWearable(),
+    )..isBooting = false;
+    addTearDown(controller.dispose);
+    await controller.connectDevice(
+      const DeviceInfo(id: 'urion:watch-1', name: 'U19S'),
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        locale: const Locale('en'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: DeviceFeaturePage(
+          controller: controller,
+          feature: DeviceFeature.screenDisplay,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('Brightness'), findsOneWidget);
+    expect(find.textContaining('Raise-to-wake sensitivity'), findsOneWidget);
+    expect(find.textContaining('8:00 AM'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   for (final source in ['yucheng', 'urion']) {
     testWidgets('$source find watch is one-shot and never sends a fake stop', (
       tester,
@@ -713,12 +790,71 @@ void main() {
     expect(find.text('赛电'), findsOneWidget);
     expect(find.text('添加客服'), findsOneWidget);
 
-    await tester.pumpWidget(const MaterialApp(home: FeedbackPage()));
+    await tester.pumpWidget(
+      const MaterialApp(
+        locale: Locale('zh'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: FeedbackPage(),
+      ),
+    );
     await tester.pumpAndSettle();
-    expect(find.text('问题反馈'), findsOneWidget);
+    expect(find.text('意见反馈'), findsOneWidget);
     await tester.drag(find.byType(ListView).last, const Offset(0, -600));
     await tester.pumpAndSettle();
     expect(find.text('常见问题'), findsOneWidget);
+  });
+
+  testWidgets('US about and feedback pages have concise English copy', (
+    tester,
+  ) async {
+    final controller = AppController(
+      MemorySessionVault(),
+      _CoverageGlobalApi(),
+      MemoryHealthStore(),
+      _CoverageWearable(),
+    )..isBooting = false;
+    addTearDown(controller.dispose);
+    await tester.pumpWidget(
+      MaterialApp(
+        locale: const Locale('en'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: AboutSaydianPage(
+          controller: controller,
+          packageInfoLoader: () async => PackageInfo(
+            appName: 'SAYDIAN Health',
+            packageName: 'cn.saydian.app.global',
+            version: '0.1.23',
+            buildNumber: '1007',
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(
+      find.text('Everyday wellness insights from your watch.'),
+      findsOneWidget,
+    );
+    expect(find.text('SAYDIAN Health'), findsNothing);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        locale: const Locale('en'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: const FeedbackPage(),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Feedback'), findsOneWidget);
+    expect(find.text('Feature suggestion'), findsOneWidget);
+    expect(find.text('Shop order'), findsNothing);
+    await tester.drag(find.byType(ListView).last, const Offset(0, -600));
+    await tester.pumpAndSettle();
+    expect(find.text('Common questions'), findsOneWidget);
+    expect(find.text('How do I connect my watch?'), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('关于我们手动检查统一交给根级更新门禁', (tester) async {
@@ -780,7 +916,10 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('手动阀'), findsNothing);
-    expect(find.text('记录日常健康趋势，连接家人与设备，让健康管理更简单。'), findsOneWidget);
+    expect(
+      find.text('Everyday wellness insights from your watch.'),
+      findsOneWidget,
+    );
   });
 
   test('release UI source does not contain developer-facing copy', () {
@@ -827,6 +966,8 @@ class _CoverageApi extends Fake implements SaydianApi {
     'content': '<p>赛电健康服务说明</p>',
   };
 }
+
+class _CoverageGlobalApi extends _CoverageApi implements GlobalAccountApi {}
 
 class _ShortAboutApi extends _CoverageApi {
   @override
@@ -929,6 +1070,30 @@ class _FeatureWearable extends Fake implements WearableBridge {
     if (feature == DeviceFeature.findWatch) {
       findActionStates.add(enabled);
     }
+  }
+}
+
+class _UsScreenWearable extends _FeatureWearable {
+  @override
+  Future<Map<String, Object?>> readDeviceFeature(DeviceFeature feature) async {
+    if (feature == DeviceFeature.screenDisplay) {
+      return {
+        'brightness': 4,
+        'maximumBrightness': 5,
+        'automaticBrightness': false,
+        'brightnessSupported': true,
+        'durationSeconds': 15,
+        'minimumDurationSeconds': 5,
+        'maximumDurationSeconds': 30,
+        'raiseToWakeEnabled': true,
+        'raiseToWakeSupported': true,
+        'raiseToWakeCustomTimeSupported': true,
+        'raiseToWakeStartMinutes': 480,
+        'raiseToWakeEndMinutes': 1320,
+        'raiseToWakeSensitivity': 5,
+      };
+    }
+    return super.readDeviceFeature(feature);
   }
 }
 

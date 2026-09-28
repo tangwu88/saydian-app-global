@@ -39,6 +39,35 @@ void main() {
     expect(result.detail, contains('不是医学诊断'));
   });
 
+  test('US watch copy preserves caution without diagnosing a reading', () {
+    final elevated = interpretHealthRecord(
+      record(HealthMetric.bloodPressure, const {
+        'systolic': 145,
+        'diastolic': 91,
+      }),
+      english: true,
+    );
+    expect(elevated.title, 'Higher reading');
+    expect(elevated.detail, contains('measure again'));
+
+    final borderline = interpretHealthRecord(
+      record(HealthMetric.bloodPressure, const {
+        'systolic': 132,
+        'diastolic': 84,
+      }),
+      english: true,
+    );
+    expect(borderline.title, 'Reading saved');
+    expect(borderline.detail, isNot(contains('normal')));
+
+    final oxygen = interpretHealthRecord(
+      record(HealthMetric.bloodOxygen, const {'value': 94}),
+      english: true,
+    );
+    expect(oxygen.title, 'Lower oxygen estimate');
+    expect(oxygen.detail, contains('medical care'));
+  });
+
   test('body and blood component fields have distinct labels and units', () {
     final body = record(HealthMetric.bodyComposition, const {'bmi': 22.6});
     final blood = record(HealthMetric.bloodComposition, const {

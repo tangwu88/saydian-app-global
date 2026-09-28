@@ -29,6 +29,9 @@ class _GlobalPageController extends Fake implements AppController {
   bool get isGlobalEdition => true;
 
   @override
+  DeviceInfo? get connectedDevice => null;
+
+  @override
   Future<GlobalAuthCapabilities> globalAuthCapabilities() async =>
       const GlobalAuthCapabilities(
         email: false,
@@ -235,6 +238,10 @@ void main() {
             HealthWarningPage(controller: controller),
             locale: locale,
             viewport: const Size(375, 812),
+          );
+          expect(
+            find.byKey(const Key('warning-temperature-switch')),
+            findsNothing,
           );
           final labels = AppLocalizations.of(
             tester.element(find.byType(HealthWarningPage)),

@@ -18,6 +18,17 @@ import 'ui/brand_assets.dart';
 import 'ui/pages.dart';
 import 'ui/prototype_pages.dart';
 import 'ui/global_auth_page.dart';
+import 'ui/health_alert_copy.dart';
+
+String _englishSafeCopy(BuildContext context, String value, String fallback) {
+  final copy = value.trim();
+  if (copy.isEmpty ||
+      (Localizations.localeOf(context).languageCode != 'zh' &&
+          RegExp(r'[\u4e00-\u9fff]').hasMatch(copy))) {
+    return fallback;
+  }
+  return copy;
+}
 
 class DismissKeyboardOnBackgroundTap extends StatefulWidget {
   const DismissKeyboardOnBackgroundTap({required this.child, super.key});
@@ -373,9 +384,17 @@ class _SaydianAppState extends State<SaydianApp> with WidgetsBindingObserver {
     } on AppUpdateException catch (error) {
       final context = _navigatorKey.currentContext;
       if (context != null && context.mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(error.message)));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              _englishSafeCopy(
+                context,
+                error.message,
+                'Couldn’t check for updates. Try again.',
+              ),
+            ),
+          ),
+        );
       }
     } finally {
       _updateCheckRunning = false;
@@ -395,7 +414,11 @@ class _SaydianAppState extends State<SaydianApp> with WidgetsBindingObserver {
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: Text(
-          info.title.isNotEmpty ? info.title : dialogContext.l10n.updateReady,
+          _englishSafeCopy(
+            dialogContext,
+            info.title,
+            dialogContext.l10n.updateReady,
+          ),
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -407,9 +430,13 @@ class _SaydianAppState extends State<SaydianApp> with WidgetsBindingObserver {
                 info.currentBuild,
               ),
             ),
-            if (info.releaseNotes.isNotEmpty) ...[
+            if (_englishSafeCopy(
+              dialogContext,
+              info.releaseNotes,
+              '',
+            ).isNotEmpty) ...[
               const SizedBox(height: 12),
-              Text(info.releaseNotes),
+              Text(_englishSafeCopy(dialogContext, info.releaseNotes, '')),
             ],
           ],
         ),
@@ -550,14 +577,16 @@ class _SaydianAppState extends State<SaydianApp> with WidgetsBindingObserver {
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
                                         Text(
-                                          alert.title,
+                                          healthAlertTitle(context, alert),
                                           style: const TextStyle(
                                             fontWeight: FontWeight.w900,
                                             color: SaydianColors.danger,
                                           ),
                                         ),
                                         const SizedBox(height: 3),
-                                        Text(alert.message),
+                                        Text(
+                                          healthAlertMessage(context, alert),
+                                        ),
                                         const SizedBox(height: 3),
                                         Text(
                                           context.l10n.healthSafetyAdvice,
@@ -710,7 +739,15 @@ class _UpdateActionPageState extends State<_UpdateActionPage> {
         await widget.service.openDestination(widget.info);
       }
     } on AppUpdateException catch (error) {
-      if (mounted) setState(() => _error = error.message);
+      if (mounted) {
+        setState(() {
+          _error = _englishSafeCopy(
+            context,
+            error.message,
+            'Couldn’t start the update. Try again.',
+          );
+        });
+      }
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -741,11 +778,13 @@ class _UpdateActionPageState extends State<_UpdateActionPage> {
                   ),
                   const SizedBox(height: 18),
                   Text(
-                    widget.info.title.isNotEmpty
-                        ? widget.info.title
-                        : widget.required
-                        ? context.l10n.updateRequired
-                        : context.l10n.updateReady,
+                    _englishSafeCopy(
+                      context,
+                      widget.info.title,
+                      widget.required
+                          ? context.l10n.updateRequired
+                          : context.l10n.updateReady,
+                    ),
                     textAlign: TextAlign.center,
                     style: const TextStyle(
                       fontSize: 24,
@@ -760,9 +799,15 @@ class _UpdateActionPageState extends State<_UpdateActionPage> {
                     ),
                     textAlign: TextAlign.center,
                   ),
-                  if (widget.info.releaseNotes.isNotEmpty) ...[
+                  if (_englishSafeCopy(
+                    context,
+                    widget.info.releaseNotes,
+                    '',
+                  ).isNotEmpty) ...[
                     const SizedBox(height: 16),
-                    Text(widget.info.releaseNotes),
+                    Text(
+                      _englishSafeCopy(context, widget.info.releaseNotes, ''),
+                    ),
                   ],
                   if (_busy) ...[
                     const SizedBox(height: 20),

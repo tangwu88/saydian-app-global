@@ -7,7 +7,11 @@ class HealthInterpretation {
   final String detail;
 }
 
-HealthInterpretation interpretHealthRecord(HealthRecord record) {
+HealthInterpretation interpretHealthRecord(
+  HealthRecord record, {
+  bool english = false,
+}) {
+  if (english) return _englishHealthInterpretation(record);
   final values = record.values;
   switch (record.metric) {
     case HealthMetric.bloodPressure:
@@ -115,6 +119,98 @@ HealthInterpretation interpretHealthRecord(HealthRecord record) {
       );
   }
 }
+
+// Keep the device values and thresholds unchanged. The English presentation
+// avoids calling an unvalidated watch reading a diagnosis or a "normal" result.
+HealthInterpretation _englishHealthInterpretation(HealthRecord record) {
+  final values = record.values;
+  switch (record.metric) {
+    case HealthMetric.bloodPressure:
+      final systolic = values['systolic'];
+      final diastolic = values['diastolic'];
+      if (systolic == null || diastolic == null) return _insufficientEnglish;
+      if (systolic >= 140 || diastolic >= 90) {
+        return const HealthInterpretation(
+          title: 'Higher reading',
+          detail:
+              'Rest and measure again. If readings stay high or you feel unwell, contact a healthcare professional.',
+        );
+      }
+      if (systolic < 90 || diastolic < 60) {
+        return const HealthInterpretation(
+          title: 'Lower reading',
+          detail:
+              'Check the fit and repeat after resting. If you feel faint or unwell, contact a healthcare professional.',
+        );
+      }
+      return const HealthInterpretation(
+        title: 'Reading saved',
+        detail:
+            'One reading is a snapshot. Track your readings over time and discuss concerns with a healthcare professional.',
+      );
+    case HealthMetric.heartRate:
+      final value = values['value'];
+      if (value == null) return _insufficientEnglish;
+      if (value < 60 || value > 100) {
+        return const HealthInterpretation(
+          title: 'Resting heart rate outside a common range',
+          detail:
+              'Activity, stress and medication can affect heart rate. Rest and repeat; seek advice if it persists or you feel unwell.',
+        );
+      }
+      return const HealthInterpretation(
+        title: 'Reading saved',
+        detail:
+            'Compare with your usual resting pattern. One reading is not a diagnosis.',
+      );
+    case HealthMetric.bloodOxygen:
+      final value = values['value'];
+      if (value == null) return _insufficientEnglish;
+      if (value < 95) {
+        return const HealthInterpretation(
+          title: 'Lower oxygen estimate',
+          detail:
+              'Sit still, check the watch fit and repeat. If you have breathing symptoms or feel unwell, seek medical care.',
+        );
+      }
+      return const HealthInterpretation(
+        title: 'Reading saved',
+        detail:
+            'Watch oxygen estimates have limitations. Do not rely on one reading to assess your health.',
+      );
+    case HealthMetric.ecg:
+      final flagged = [
+        values['deviceAbnormalFlags'] ?? 0,
+        values['diseaseRisk'] ?? 0,
+        values['myocarditisRisk'] ?? 0,
+        values['chdRisk'] ?? 0,
+        values['angioscleroticRisk'] ?? 0,
+      ].any((value) => value > 0);
+      return flagged
+          ? const HealthInterpretation(
+              title: 'Watch flagged a pattern for review',
+              detail:
+                  'This is not a diagnosis. If it recurs or you have symptoms, share the full recording with a healthcare professional.',
+            )
+          : const HealthInterpretation(
+              title: 'ECG reading saved',
+              detail:
+                  'Use this for wellness trends. It does not replace a clinical ECG.',
+            );
+    default:
+      if (values.isEmpty) return _insufficientEnglish;
+      return const HealthInterpretation(
+        title: 'Reading saved',
+        detail:
+            'Watch readings are for personal wellness tracking, not diagnosis or treatment.',
+      );
+  }
+}
+
+const _insufficientEnglish = HealthInterpretation(
+  title: 'Not enough data',
+  detail: 'Check the watch fit and take another reading.',
+);
 
 const _insufficient = HealthInterpretation(
   title: '本次数据不足',

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:saydian_app/domain/health_report_models.dart';
 import 'package:saydian_app/domain/models.dart';
+import 'package:saydian_app/l10n/generated/app_localizations.dart';
 import 'package:saydian_app/services/api_client.dart';
 import 'package:saydian_app/services/app_controller.dart';
 import 'package:saydian_app/services/app_payment_bridge.dart';
@@ -92,18 +93,57 @@ void main() {
     expect(find.textContaining('如有明显不适，请及时就医'), findsOneWidget);
     expect(find.byKey(const Key('health-report-share')), findsOneWidget);
   });
+
+  testWidgets('English report screens hide untranslated server text', (
+    tester,
+  ) async {
+    final api = _HealthReportApi(
+      eligibility: _eligibility(eligible: true, distinctDays: 4),
+      reports: const [_readyReport],
+    );
+    final controller = _controller(api);
+    addTearDown(controller.dispose);
+
+    await _pumpPage(tester, controller, locale: const Locale('en', 'US'));
+    expect(find.text('Last 30 days'), findsOneWidget);
+    await tester.scrollUntilVisible(find.text('View report'), 280);
+    expect(find.text('Wellness report'), findsOneWidget);
+    final openButton = find.widgetWithText(TextButton, 'View report');
+    await tester.ensureVisible(openButton);
+    await tester.pumpAndSettle();
+    await tester.tap(openButton);
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('health-report-detail')), findsOneWidget);
+    expect(find.text('Overview unavailable.'), findsOneWidget);
+    _expectNoChineseText(tester);
+  });
 }
 
-Future<void> _pumpPage(WidgetTester tester, AppController controller) async {
+Future<void> _pumpPage(
+  WidgetTester tester,
+  AppController controller, {
+  Locale locale = const Locale('zh', 'CN'),
+}) async {
   await tester.binding.setSurfaceSize(const Size(390, 844));
   addTearDown(() => tester.binding.setSurfaceSize(null));
   await tester.pumpWidget(
     MaterialApp(
+      locale: locale,
+      supportedLocales: const [Locale('en', 'US'), Locale('zh', 'CN')],
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
       theme: buildSaydianTheme(),
       home: HealthProfilePage(controller: controller),
     ),
   );
   await tester.pumpAndSettle();
+}
+
+void _expectNoChineseText(WidgetTester tester) {
+  final han = RegExp(r'[\u4e00-\u9fff]');
+  for (final widget in tester.widgetList<Text>(find.byType(Text))) {
+    expect(han.hasMatch(widget.data ?? ''), isFalse, reason: widget.data);
+  }
 }
 
 AppController _controller(

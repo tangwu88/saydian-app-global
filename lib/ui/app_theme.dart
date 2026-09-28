@@ -19,6 +19,15 @@ abstract final class SaydianColors {
   static const techBlue = Color(0xFF316EF5);
   static const techBlueSoft = Color(0xFFEAF1FF);
 
+  // Subtle color cues echo the cool, airy U19S imagery on saydian.com while
+  // leaving the logo, primary actions, and reading values high-contrast.
+  static const sky = Color(0xFF276782);
+  static const skySoft = Color(0xFFEAF4F8);
+  static const sage = Color(0xFF367360);
+  static const sageSoft = Color(0xFFEDF5F0);
+  static const clay = Color(0xFFA45D45);
+  static const claySoft = Color(0xFFFAF0EA);
+
   // Semantic colors stay independent from the brand palette. This keeps a
   // successful/normal state green and a warning amber after the chrome turns
   // black and silver. All are dark enough for text on white.

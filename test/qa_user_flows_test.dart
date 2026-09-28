@@ -231,7 +231,7 @@ void main() {
     controller.selectTab(2);
     await tester.pump();
     expect(find.byKey(const Key('preview-login-prompt')), findsOneWidget);
-    expect(find.text('立即登录'), findsOneWidget);
+    expect(find.text('登录'), findsOneWidget);
     await tester.tap(find.byKey(const Key('preview-login-prompt')));
     await tester.pumpAndSettle();
     expect(controller.isPreviewMode, isFalse);
@@ -251,7 +251,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byKey(const Key('my-add-device')), findsNothing);
-    expect(find.text('在线'), findsOneWidget);
+    expect(find.text('已连接'), findsOneWidget);
   });
 
   testWidgets('sharing management authorizes accepted incoming caregiver', (
@@ -1239,7 +1239,7 @@ void main() {
     await tester.tap(find.text('账号设置'));
     await tester.pumpAndSettle();
     expect(find.text('个人资料'), findsOneWidget);
-    expect(find.text('收货地址'), findsOneWidget);
+    expect(find.text('收货地址'), findsNothing);
     expect(find.text('注销账号'), findsOneWidget);
 
     await tester.fling(

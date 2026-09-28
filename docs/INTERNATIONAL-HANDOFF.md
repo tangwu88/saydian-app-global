@@ -16,7 +16,7 @@ Server workspace: `F:/xcodeplace/saydian-server-global`, branch `codex/global-ap
 
 | Layer | International value |
 |---|---|
-| App name | Saydian |
+| App name | SAYDIAN Health |
 | Android application ID / iOS bundle ID | `cn.saydian.app.global` |
 | Native Harmony bundle | `cn.saydian.app.global.hm` |
 | First-party root | `https://app.saydian.cn` |

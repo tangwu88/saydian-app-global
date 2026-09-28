@@ -236,25 +236,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get heartRateAlertLabel => 'Heart rate alert';
 
   @override
-  String get heartRateAlertHint =>
-      'Alerts when heart rate exceeds the set limit';
+  String get heartRateAlertHint => 'Above your limit';
 
   @override
   String get bloodPressureAlertLabel => 'Blood pressure alert';
 
   @override
-  String get bloodPressureAlertHint =>
-      'Alerts when systolic or diastolic pressure exceeds the set limit';
+  String get bloodPressureAlertHint => 'Systolic or diastolic above your limit';
 
   @override
   String get temperatureAlertLabel => 'Temperature alert';
 
   @override
-  String get temperatureAlertHint =>
-      'Alerts when temperature exceeds the set limit';
+  String get temperatureAlertHint => 'Above your limit';
 
   @override
-  String get saveHealthAlerts => 'Save alert settings';
+  String get saveHealthAlerts => 'Save';
 
   @override
   String get healthAlertHistory => 'Alert history';
@@ -435,15 +432,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get trendUnavailable => 'Trends are temporarily unavailable.';
 
   @override
-  String get recentData => 'Recent data';
+  String get recentData => 'Last reading';
 
   @override
-  String get trendReferenceOnly =>
-      'Trends are for everyday wellness reference only.';
+  String get trendReferenceOnly => 'For wellness, not diagnosis.';
 
   @override
   String get trendVariationSafety =>
-      'Individual and period-to-period changes may be affected by fit, activity and surroundings and do not replace a medical diagnosis.';
+      'Readings can vary with fit, activity and surroundings. Seek medical care if you feel unwell.';
 
   @override
   String get watchFaceDownloadHint =>
@@ -1161,7 +1157,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get connectionInstructions =>
-      '1. Turn on Bluetooth and allow nearby device access.\n2. Charge your watch and place it near your phone.\n3. Tap Find devices and select your watch.\n4. Confirm on the watch if prompted.';
+      '1. Turn on Bluetooth and allow nearby device access.\n2. Keep your watch charged and near your phone.\n3. Tap Search for watches and select your watch.\n4. Confirm on the watch if prompted.';
 
   @override
   String get syncNearbyHint =>
@@ -1185,14 +1181,13 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get addSmartDevice => 'Add a smart device';
+  String get addSmartDevice => 'Connect a watch';
 
   @override
-  String get watchNearbyHint =>
-      'Turn on Bluetooth and keep your watch near your phone';
+  String get watchNearbyHint => 'Turn on Bluetooth and keep your watch nearby';
 
   @override
-  String get startSearch => 'Find devices';
+  String get startSearch => 'Search for watches';
 
   @override
   String get readingData => 'Reading data…';
@@ -1381,19 +1376,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get health => 'Health';
 
   @override
-  String get device => 'Device';
+  String get device => 'Watch';
 
   @override
-  String get profile => 'Me';
+  String get profile => 'Profile';
 
   @override
-  String get healthData => 'Health data';
+  String get healthData => 'Latest readings';
 
   @override
   String get allData => 'All data';
 
   @override
-  String get healthRecords => 'Health records';
+  String get healthRecords => 'Readings';
 
   @override
   String get workoutsAndRecords => 'Workouts and records';
@@ -1440,7 +1435,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get connectWatch => 'Connect a watch';
 
   @override
-  String get addDevice => 'Add device';
+  String get addDevice => 'Connect a watch';
 
   @override
   String get connectWatchForData =>
@@ -1462,7 +1457,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get online => 'Online';
 
   @override
-  String get syncData => 'Sync data';
+  String get syncData => 'Sync watch';
 
   @override
   String get syncComplete => 'Data synced';
@@ -1475,22 +1470,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get disconnect => 'Disconnect';
 
   @override
-  String get findWatch => 'Find watch';
+  String get findWatch => 'Find my watch';
 
   @override
   String get watchFaces => 'Watch faces';
 
   @override
-  String get deviceFeatures => 'Device features';
+  String get deviceFeatures => 'Watch controls';
 
   @override
-  String get aboutDevice => 'About device';
+  String get aboutDevice => 'About this watch';
 
   @override
   String get connectionHelp => 'Connection help';
 
   @override
-  String get searchNearbyWatch => 'Find and connect a nearby Saydian watch';
+  String get searchNearbyWatch => 'Search for a nearby watch';
 
   @override
   String get useWatch => 'Please use this feature on your watch';
@@ -1523,7 +1518,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get unitSettingsHint => 'Choose distance, temperature and other units';
 
   @override
-  String get myServices => 'My services';
+  String get myServices => 'Settings & support';
 
   @override
   String get accountSettings => 'Account settings';
@@ -2075,7 +2070,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get deviceDataReadComplete =>
-      'Watch data read. Cloud upload is confirmed separately.';
+      'Watch readings received. Online backup is checked separately.';
 
   @override
   String measurementPercent(int percent) {

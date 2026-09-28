@@ -515,7 +515,7 @@ abstract class AppLocalizations {
   /// No description provided for @heartRateAlertHint.
   ///
   /// In en, this message translates to:
-  /// **'Alerts when heart rate exceeds the set limit'**
+  /// **'Above your limit'**
   String get heartRateAlertHint;
 
   /// No description provided for @bloodPressureAlertLabel.
@@ -527,7 +527,7 @@ abstract class AppLocalizations {
   /// No description provided for @bloodPressureAlertHint.
   ///
   /// In en, this message translates to:
-  /// **'Alerts when systolic or diastolic pressure exceeds the set limit'**
+  /// **'Systolic or diastolic above your limit'**
   String get bloodPressureAlertHint;
 
   /// No description provided for @temperatureAlertLabel.
@@ -539,13 +539,13 @@ abstract class AppLocalizations {
   /// No description provided for @temperatureAlertHint.
   ///
   /// In en, this message translates to:
-  /// **'Alerts when temperature exceeds the set limit'**
+  /// **'Above your limit'**
   String get temperatureAlertHint;
 
   /// No description provided for @saveHealthAlerts.
   ///
   /// In en, this message translates to:
-  /// **'Save alert settings'**
+  /// **'Save'**
   String get saveHealthAlerts;
 
   /// No description provided for @healthAlertHistory.
@@ -851,19 +851,19 @@ abstract class AppLocalizations {
   /// No description provided for @recentData.
   ///
   /// In en, this message translates to:
-  /// **'Recent data'**
+  /// **'Last reading'**
   String get recentData;
 
   /// No description provided for @trendReferenceOnly.
   ///
   /// In en, this message translates to:
-  /// **'Trends are for everyday wellness reference only.'**
+  /// **'For wellness, not diagnosis.'**
   String get trendReferenceOnly;
 
   /// No description provided for @trendVariationSafety.
   ///
   /// In en, this message translates to:
-  /// **'Individual and period-to-period changes may be affected by fit, activity and surroundings and do not replace a medical diagnosis.'**
+  /// **'Readings can vary with fit, activity and surroundings. Seek medical care if you feel unwell.'**
   String get trendVariationSafety;
 
   /// No description provided for @watchFaceDownloadHint.
@@ -2201,7 +2201,7 @@ abstract class AppLocalizations {
   /// No description provided for @connectionInstructions.
   ///
   /// In en, this message translates to:
-  /// **'1. Turn on Bluetooth and allow nearby device access.\n2. Charge your watch and place it near your phone.\n3. Tap Find devices and select your watch.\n4. Confirm on the watch if prompted.'**
+  /// **'1. Turn on Bluetooth and allow nearby device access.\n2. Keep your watch charged and near your phone.\n3. Tap Search for watches and select your watch.\n4. Confirm on the watch if prompted.'**
   String get connectionInstructions;
 
   /// No description provided for @syncNearbyHint.
@@ -2243,19 +2243,19 @@ abstract class AppLocalizations {
   /// No description provided for @addSmartDevice.
   ///
   /// In en, this message translates to:
-  /// **'Add a smart device'**
+  /// **'Connect a watch'**
   String get addSmartDevice;
 
   /// No description provided for @watchNearbyHint.
   ///
   /// In en, this message translates to:
-  /// **'Turn on Bluetooth and keep your watch near your phone'**
+  /// **'Turn on Bluetooth and keep your watch nearby'**
   String get watchNearbyHint;
 
   /// No description provided for @startSearch.
   ///
   /// In en, this message translates to:
-  /// **'Find devices'**
+  /// **'Search for watches'**
   String get startSearch;
 
   /// No description provided for @readingData.
@@ -2615,19 +2615,19 @@ abstract class AppLocalizations {
   /// No description provided for @device.
   ///
   /// In en, this message translates to:
-  /// **'Device'**
+  /// **'Watch'**
   String get device;
 
   /// No description provided for @profile.
   ///
   /// In en, this message translates to:
-  /// **'Me'**
+  /// **'Profile'**
   String get profile;
 
   /// No description provided for @healthData.
   ///
   /// In en, this message translates to:
-  /// **'Health data'**
+  /// **'Latest readings'**
   String get healthData;
 
   /// No description provided for @allData.
@@ -2639,7 +2639,7 @@ abstract class AppLocalizations {
   /// No description provided for @healthRecords.
   ///
   /// In en, this message translates to:
-  /// **'Health records'**
+  /// **'Readings'**
   String get healthRecords;
 
   /// No description provided for @workoutsAndRecords.
@@ -2729,7 +2729,7 @@ abstract class AppLocalizations {
   /// No description provided for @addDevice.
   ///
   /// In en, this message translates to:
-  /// **'Add device'**
+  /// **'Connect a watch'**
   String get addDevice;
 
   /// No description provided for @connectWatchForData.
@@ -2771,7 +2771,7 @@ abstract class AppLocalizations {
   /// No description provided for @syncData.
   ///
   /// In en, this message translates to:
-  /// **'Sync data'**
+  /// **'Sync watch'**
   String get syncData;
 
   /// No description provided for @syncComplete.
@@ -2795,7 +2795,7 @@ abstract class AppLocalizations {
   /// No description provided for @findWatch.
   ///
   /// In en, this message translates to:
-  /// **'Find watch'**
+  /// **'Find my watch'**
   String get findWatch;
 
   /// No description provided for @watchFaces.
@@ -2807,13 +2807,13 @@ abstract class AppLocalizations {
   /// No description provided for @deviceFeatures.
   ///
   /// In en, this message translates to:
-  /// **'Device features'**
+  /// **'Watch controls'**
   String get deviceFeatures;
 
   /// No description provided for @aboutDevice.
   ///
   /// In en, this message translates to:
-  /// **'About device'**
+  /// **'About this watch'**
   String get aboutDevice;
 
   /// No description provided for @connectionHelp.
@@ -2825,7 +2825,7 @@ abstract class AppLocalizations {
   /// No description provided for @searchNearbyWatch.
   ///
   /// In en, this message translates to:
-  /// **'Find and connect a nearby Saydian watch'**
+  /// **'Search for a nearby watch'**
   String get searchNearbyWatch;
 
   /// No description provided for @useWatch.
@@ -2891,7 +2891,7 @@ abstract class AppLocalizations {
   /// No description provided for @myServices.
   ///
   /// In en, this message translates to:
-  /// **'My services'**
+  /// **'Settings & support'**
   String get myServices;
 
   /// No description provided for @accountSettings.
@@ -3893,7 +3893,7 @@ abstract class AppLocalizations {
   /// No description provided for @deviceDataReadComplete.
   ///
   /// In en, this message translates to:
-  /// **'Watch data read. Cloud upload is confirmed separately.'**
+  /// **'Watch readings received. Online backup is checked separately.'**
   String get deviceDataReadComplete;
 
   /// No description provided for @measurementPercent.

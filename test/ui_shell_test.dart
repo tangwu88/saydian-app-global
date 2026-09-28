@@ -7,6 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:saydian_app/domain/feature_models.dart';
 import 'package:saydian_app/domain/models.dart';
+import 'package:saydian_app/l10n/generated/app_localizations.dart';
 import 'package:saydian_app/services/api_client.dart';
 import 'package:saydian_app/services/app_controller.dart';
 import 'package:saydian_app/services/local_health_store.dart';
@@ -20,7 +21,10 @@ import 'package:saydian_app/ui/prototype_pages.dart';
 void main() {
   // Legacy page hosts deliberately retain Chinese copy. DateFormat now uses
   // the explicit page locale rather than a hard-coded numeric pattern.
-  setUpAll(() => initializeDateFormatting('zh_Hans'));
+  setUpAll(() async {
+    await initializeDateFormatting('zh_Hans');
+    await initializeDateFormatting('en');
+  });
 
   testWidgets('home mini chart does not duplicate its parent empty status', (
     tester,
@@ -44,6 +48,55 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(find.byType(Text), findsNothing);
+    expect(find.byType(LineChart), findsNothing);
+  });
+
+  testWidgets('mini chart hides readings from one short burst', (tester) async {
+    final store = MemoryHealthStore();
+    final at = DateTime.now().subtract(const Duration(minutes: 1));
+    final controller = AppController(
+      MemorySessionVault(),
+      _NoopApi(),
+      store,
+      _NoopWearable(),
+    );
+    addTearDown(controller.dispose);
+    await store.upsert([
+      for (var index = 0; index < 2; index++)
+        HealthRecord(
+          id: 'short-burst-$index',
+          metric: HealthMetric.heartRate,
+          values: {'value': 72 + index},
+          unit: 'bpm',
+          measuredAt: at.toUtc().add(Duration(seconds: index * 10)),
+          timezone: '+00:00',
+          deviceId: 'qa-watch',
+          firmwareVersion: '1.0',
+          quality: 'device_reported',
+          source: MeasurementSource.wearable,
+          rawVersion: 1,
+        ),
+    ]);
+    final day = DateTime(at.year, at.month, at.day);
+    expect(
+      await controller.loadHealthRecords(
+        metric: HealthMetric.heartRate,
+        start: day,
+        end: day.add(const Duration(days: 1)),
+      ),
+      hasLength(2),
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        home: HealthMetricMiniChart(
+          controller: controller,
+          metric: HealthMetric.heartRate,
+          color: Colors.red,
+          showEmptyLabel: false,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
     expect(find.byType(LineChart), findsNothing);
   });
 
@@ -175,6 +228,63 @@ void main() {
     }
   });
 
+  testWidgets('US navigation uses familiar Health, Watch and Profile labels', (
+    tester,
+  ) async {
+    final controller = AppController(
+      MemorySessionVault(),
+      _NoopApi(),
+      MemoryHealthStore(),
+      _NoopWearable(),
+    )..enterPreview();
+    controller.healthRecords = [
+      HealthRecord(
+        id: 'us-temperature-card',
+        metric: HealthMetric.bodyTemperature,
+        values: const {'value': 36.7},
+        unit: '℃',
+        measuredAt: DateTime.utc(2026, 9, 28),
+        timezone: '+00:00',
+        deviceId: 'previous-watch',
+        firmwareVersion: '1.0',
+        quality: 'device_reported',
+        source: MeasurementSource.wearable,
+        rawVersion: 1,
+      ),
+    ];
+    addTearDown(controller.dispose);
+    await tester.pumpWidget(
+      MaterialApp(
+        locale: const Locale('en'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        theme: buildSaydianTheme(),
+        home: ListenableBuilder(
+          listenable: controller,
+          builder: (context, _) => AppShell(controller: controller),
+        ),
+      ),
+    );
+
+    final destinations = tester
+        .widget<NavigationBar>(find.byType(NavigationBar))
+        .destinations
+        .cast<NavigationDestination>()
+        .map((destination) => destination.label);
+    expect(destinations, ['Health', 'Watch', 'Profile']);
+    expect(find.text('Temp.'), findsOneWidget);
+    controller.selectTab(2);
+    await tester.pump();
+    expect(find.text('Guest mode'), findsOneWidget);
+    expect(find.text('No watch'), findsOneWidget);
+    expect(find.text('Connect a watch'), findsOneWidget);
+    await tester.drag(find.byKey(const Key('my-page')), const Offset(0, -500));
+    await tester.pumpAndSettle();
+    expect(find.text('Settings & support'), findsOneWidget);
+    expect(find.text('Help and feedback'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('core tabs remain overflow-free at 375 x 812', (tester) async {
     await tester.binding.setSurfaceSize(const Size(375, 812));
     addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -246,7 +356,73 @@ void main() {
     ]) {
       expect(find.byKey(ValueKey('health-metric-$metric')), findsOneWidget);
     }
+    expect(find.text('暂无数据'), findsNothing);
     expect(find.byKey(const ValueKey('health-metric-heartRate')), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('global dashboard keeps history but hides unknown sensors', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(390, 844));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final controller =
+        AppController(
+            MemorySessionVault(),
+            _GlobalNoopApi(),
+            MemoryHealthStore(),
+            _NoopWearable(),
+          )
+          ..healthRecords = [
+            HealthRecord(
+              id: 'bp-history',
+              metric: HealthMetric.bloodPressure,
+              values: const {'systolic': 108, 'diastolic': 72},
+              unit: 'mmHg',
+              measuredAt: DateTime.now().toUtc(),
+              timezone: '-04:00',
+              deviceId: 'previous-watch',
+              firmwareVersion: '1.0',
+              quality: 'device_reported',
+              source: MeasurementSource.wearable,
+              rawVersion: 1,
+            ),
+            HealthRecord(
+              id: 'temp-history',
+              metric: HealthMetric.bodyTemperature,
+              values: const {'temperature': 36.5},
+              unit: 'C',
+              measuredAt: DateTime.now().toUtc(),
+              timezone: '-04:00',
+              deviceId: 'previous-watch',
+              firmwareVersion: '1.0',
+              quality: 'device_reported',
+              source: MeasurementSource.wearable,
+              rawVersion: 1,
+            ),
+          ];
+    addTearDown(controller.dispose);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        locale: const Locale('en'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        theme: buildSaydianTheme(),
+        home: DashboardPage(controller: controller),
+      ),
+    );
+    await tester.pump();
+
+    expect(controller.healthRecords.length, 2);
+    expect(
+      find.byKey(const ValueKey('health-metric-bloodPressure')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('health-metric-bodyTemperature')),
+      findsNothing,
+    );
     expect(tester.takeException(), isNull);
   });
 
@@ -944,6 +1120,9 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
+        locale: const Locale('zh'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         theme: buildSaydianTheme(),
         home: HealthWarningPage(controller: controller),
       ),
@@ -967,6 +1146,80 @@ void main() {
     expect(vault.healthWarningSettings.bloodPressureEnabled, isTrue);
     expect(vault.healthWarningSettings.temperatureEnabled, isTrue);
     expect(find.text('健康预警设置已保存'), findsOneWidget);
+  });
+
+  testWidgets('English U19 alerts hide unsupported temperature settings', (
+    tester,
+  ) async {
+    final controller = AppController(
+      MemorySessionVault(),
+      _NoopApi(),
+      MemoryHealthStore(),
+      _NoopWearable(),
+    )..connectedDevice = const DeviceInfo(id: 'urion:qa', name: 'U19S');
+    addTearDown(controller.dispose);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        locale: const Locale('en'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        theme: buildSaydianTheme(),
+        home: HealthWarningPage(controller: controller),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('warning-temperature-switch')), findsNothing);
+    _expectNoHanText(tester);
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('warning-save')),
+      220,
+      scrollable: find.byType(Scrollable).first,
+    );
+    _expectNoHanText(tester);
+  });
+
+  testWidgets('English profile edit uses concise copy at large text size', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(375, 812));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final controller = AppController(
+      MemorySessionVault(),
+      _GlobalNoopApi(),
+      MemoryHealthStore(),
+      _NoopWearable(),
+    );
+    addTearDown(controller.dispose);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        locale: const Locale('en'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        theme: buildSaydianTheme(),
+        builder: (context, child) => MediaQuery(
+          data: MediaQuery.of(
+            context,
+          ).copyWith(textScaler: const TextScaler.linear(1.5)),
+          child: child!,
+        ),
+        home: ProfileEditPage(controller: controller),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Tap to change photo'), findsOneWidget);
+    expect(find.text('Not set'), findsOneWidget);
+    _expectNoHanText(tester);
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('profile-save')),
+      220,
+      scrollable: find.byType(Scrollable).first,
+    );
+    _expectNoHanText(tester);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('device health monitoring hides unsupported model features', (
@@ -1266,6 +1519,9 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
+        locale: const Locale('zh'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         theme: buildSaydianTheme(),
         home: HealthRecordDetailPage(controller: controller, record: record),
       ),
@@ -1473,6 +1729,9 @@ void main() {
 
       await tester.pumpWidget(
         MaterialApp(
+          locale: const Locale('zh'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           theme: buildSaydianTheme(),
           home: HealthTrendPage(
             controller: controller,
@@ -1654,6 +1913,9 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
+        locale: const Locale('zh'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         theme: buildSaydianTheme(),
         home: HealthTrendPage(
           controller: controller,
@@ -1692,6 +1954,65 @@ void main() {
     await tester.tap(recordTiles.last);
     await tester.pumpAndSettle();
     expect(find.text('心率详情'), findsOneWidget);
+  });
+
+  testWidgets('English health trend has concise labels and no Chinese hints', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(375, 812));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final now = DateTime.now();
+    final store = MemoryHealthStore();
+    await store.initialize();
+    await store.upsert([
+      for (var index = 0; index < 2; index++)
+        HealthRecord(
+          id: 'us-heart-$index',
+          metric: HealthMetric.heartRate,
+          values: {'value': 70 + index * 2},
+          unit: 'bpm',
+          measuredAt: DateTime(now.year, now.month, now.day, 9 + index),
+          timezone: '-04:00',
+          deviceId: 'u19-test',
+          firmwareVersion: 'test',
+          quality: 'good',
+          source: MeasurementSource.wearable,
+          rawVersion: 1,
+        ),
+    ]);
+    final controller = AppController(
+      MemorySessionVault(),
+      _NoopApi(),
+      store,
+      _NoopWearable(),
+    );
+    addTearDown(controller.dispose);
+
+    final semantics = tester.ensureSemantics();
+    await tester.pumpWidget(
+      MaterialApp(
+        locale: const Locale('en'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        theme: buildSaydianTheme(),
+        home: HealthTrendPage(
+          controller: controller,
+          metric: HealthMetric.heartRate,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Day'), findsOneWidget);
+    expect(find.text('Average'), findsOneWidget);
+    expect(find.text('2'), findsWidgets);
+    final han = RegExp(r'[\u4e00-\u9fff]');
+    for (final text in tester.widgetList<Text>(find.byType(Text))) {
+      expect(text.data ?? '', isNot(matches(han)));
+    }
+    for (final item in tester.widgetList<Semantics>(find.byType(Semantics))) {
+      expect(item.properties.label ?? '', isNot(matches(han)));
+    }
+    semantics.dispose();
   });
 
   testWidgets('care blood composition detail uses readable Chinese fields', (
@@ -2212,6 +2533,15 @@ HealthRecord _historicalHeartRateRecord() => HealthRecord(
   source: MeasurementSource.wearable,
   rawVersion: 1,
 );
+
+void _expectNoHanText(WidgetTester tester) {
+  final han = RegExp(r'[\u4e00-\u9fff]');
+  for (final widget in tester.widgetList<Text>(find.byType(Text))) {
+    expect(han.hasMatch(widget.data ?? ''), isFalse, reason: widget.data);
+  }
+}
+
+class _GlobalNoopApi extends Fake implements SaydianApi, GlobalAccountApi {}
 
 HealthRecord _historicalBloodPressureRecord() => HealthRecord(
   id: 'history-blood-pressure',

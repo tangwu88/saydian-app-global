@@ -13,6 +13,21 @@ import '../services/health_analysis.dart';
 import 'app_theme.dart';
 import 'prototype_pages.dart';
 
+bool _english(BuildContext context) =>
+    Localizations.localeOf(context).languageCode != 'zh';
+
+String _copy(BuildContext context, String english, String chinese) =>
+    _english(context) ? english : chinese;
+
+String _periodName(BuildContext context, HealthTrendPeriod period) =>
+    _english(context)
+    ? switch (period) {
+        HealthTrendPeriod.day => 'Day',
+        HealthTrendPeriod.week => 'Week',
+        HealthTrendPeriod.month => 'Month',
+      }
+    : period.label;
+
 class HealthMetricMiniChart extends StatelessWidget {
   const HealthMetricMiniChart({
     required this.controller,
@@ -54,10 +69,13 @@ class HealthMetricMiniChart extends StatelessWidget {
             return const SizedBox.shrink();
           }
           if (records.length < 2) {
+            if (!showEmptyLabel) return const SizedBox.shrink();
             return Align(
               alignment: Alignment.centerLeft,
               child: Text(
-                records.isEmpty ? '暂无数据' : '仅 1 条记录',
+                records.isEmpty
+                    ? _copy(context, 'No data yet', '暂无数据')
+                    : _copy(context, '1 reading', '仅 1 条记录'),
                 style: const TextStyle(
                   color: SaydianColors.muted,
                   fontSize: 13,
@@ -73,26 +91,34 @@ class HealthMetricMiniChart extends StatelessWidget {
             anchor: now,
           );
           if (data.points.length < 2) return const SizedBox.shrink();
+          final spots = data.points
+              .map(
+                (point) =>
+                    FlSpot(point.at.hour + point.at.minute / 60, point.value),
+              )
+              .toList(growable: false);
+          final firstHour = spots.map((spot) => spot.x).reduce(math.min);
+          final lastHour = spots.map((spot) => spot.x).reduce(math.max);
+          // Several readings in one short burst should not become a vertical
+          // line that looks like a day-long trend.
+          if (lastHour - firstHour < 0.25) return const SizedBox.shrink();
           return Semantics(
-            label: '${metric.label}今日趋势，共${data.points.length}个数据点',
+            label: _copy(
+              context,
+              '${context.l10n.metricName(metric)} trend today, ${data.points.length} points',
+              '${metric.label}今日趋势，共${data.points.length}个数据点',
+            ),
             child: LineChart(
               LineChartData(
-                minX: 0,
-                maxX: 24,
+                minX: math.max(0, firstHour - 0.5),
+                maxX: math.min(24, lastHour + 0.5),
                 gridData: const FlGridData(show: false),
                 borderData: FlBorderData(show: false),
                 titlesData: const FlTitlesData(show: false),
                 lineTouchData: const LineTouchData(enabled: false),
                 lineBarsData: [
                   LineChartBarData(
-                    spots: data.points
-                        .map(
-                          (point) => FlSpot(
-                            point.at.hour + point.at.minute / 60,
-                            point.value,
-                          ),
-                        )
-                        .toList(),
+                    spots: spots,
                     isCurved: true,
                     curveSmoothness: 0.22,
                     color: color,
@@ -231,7 +257,7 @@ class _HealthTrendPageState extends State<HealthTrendPage> {
       initialDate: _anchor,
       firstDate: DateTime(2020),
       lastDate: DateTime.now(),
-      helpText: '选择查看日期',
+      helpText: _copy(context, 'Select date', '选择查看日期'),
     );
     if (picked == null || !mounted) return;
     setState(() => _anchor = picked);
@@ -278,12 +304,27 @@ class _HealthTrendPageState extends State<HealthTrendPage> {
   @override
   Widget build(BuildContext context) {
     final range = HealthTrendRange.forPeriod(_period, _anchor);
-    final rangeLabel = switch (_period) {
-      HealthTrendPeriod.day => DateFormat('yyyy年M月d日').format(range.start),
-      HealthTrendPeriod.week =>
-        '${DateFormat('M月d日').format(range.start)} - ${DateFormat('M月d日').format(range.end.subtract(const Duration(days: 1)))}',
-      HealthTrendPeriod.month => DateFormat('yyyy年M月').format(range.start),
-    };
+    final rangeLabel = _english(context)
+        ? switch (_period) {
+            HealthTrendPeriod.day => DateFormat.yMMMd(
+              context.l10n.localeName,
+            ).format(range.start),
+            HealthTrendPeriod.week =>
+              '${DateFormat.MMMd(context.l10n.localeName).format(range.start)} – ${DateFormat.MMMd(context.l10n.localeName).format(range.end.subtract(const Duration(days: 1)))}',
+            HealthTrendPeriod.month => DateFormat.yMMMM(
+              context.l10n.localeName,
+            ).format(range.start),
+          }
+        : switch (_period) {
+            HealthTrendPeriod.day => DateFormat(
+              'yyyy年M月d日',
+            ).format(range.start),
+            HealthTrendPeriod.week =>
+              '${DateFormat('M月d日').format(range.start)} - ${DateFormat('M月d日').format(range.end.subtract(const Duration(days: 1)))}',
+            HealthTrendPeriod.month => DateFormat(
+              'yyyy年M月',
+            ).format(range.start),
+          };
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -299,7 +340,10 @@ class _HealthTrendPageState extends State<HealthTrendPage> {
             SegmentedButton<HealthTrendPeriod>(
               segments: [
                 for (final period in HealthTrendPeriod.values)
-                  ButtonSegment(value: period, label: Text(period.label)),
+                  ButtonSegment(
+                    value: period,
+                    label: Text(_periodName(context, period)),
+                  ),
               ],
               selected: {_period},
               onSelectionChanged: (selection) {
@@ -311,7 +355,11 @@ class _HealthTrendPageState extends State<HealthTrendPage> {
             Row(
               children: [
                 IconButton(
-                  tooltip: '上一${_period.label}',
+                  tooltip: _copy(
+                    context,
+                    'Previous ${_periodName(context, _period)}',
+                    '上一${_period.label}',
+                  ),
                   onPressed: () => _shift(-1),
                   icon: const Icon(Icons.chevron_left_rounded),
                 ),
@@ -323,7 +371,11 @@ class _HealthTrendPageState extends State<HealthTrendPage> {
                   ),
                 ),
                 IconButton(
-                  tooltip: '下一${_period.label}',
+                  tooltip: _copy(
+                    context,
+                    'Next ${_periodName(context, _period)}',
+                    '下一${_period.label}',
+                  ),
                   onPressed: range.end.isAfter(DateTime.now())
                       ? null
                       : () => _shift(1),
@@ -344,7 +396,11 @@ class _HealthTrendPageState extends State<HealthTrendPage> {
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
                       : const Icon(Icons.monitor_heart_outlined),
-                  label: Text(_measuring ? '测量中' : '手动测量'),
+                  label: Text(
+                    _measuring
+                        ? _copy(context, 'Measuring…', '测量中')
+                        : _copy(context, 'Measure now', '手动测量'),
+                  ),
                 ),
               ),
               const SizedBox(height: 14),
@@ -359,8 +415,12 @@ class _HealthTrendPageState extends State<HealthTrendPage> {
             else if (_error != null)
               _MessageCard(
                 icon: Icons.error_outline_rounded,
-                title: '数据读取失败',
-                detail: '请稍后重试，本机记录不会被删除。',
+                title: _copy(context, 'Couldn’t load readings', '数据读取失败'),
+                detail: _copy(
+                  context,
+                  'Try again. Your saved readings are safe.',
+                  '请稍后重试，本机记录不会被删除。',
+                ),
                 action: _load,
               )
             else
@@ -388,12 +448,20 @@ class _HealthTrendPageState extends State<HealthTrendPage> {
         const SizedBox(height: 12),
       ],
       if (data.records.isEmpty)
-        const _MessageCard(icon: Icons.show_chart_rounded, title: '该时间段暂无数据')
+        _MessageCard(
+          icon: Icons.show_chart_rounded,
+          title: _copy(context, 'No readings for this period', '该时间段暂无数据'),
+        )
       else ...[
         _SummaryCard(
           metric: widget.metric,
           summary: data.summary,
-          unit: _unit(widget.metric, data.records.first, data.valueKey),
+          unit: _unit(
+            context,
+            widget.metric,
+            data.records.first,
+            data.valueKey,
+          ),
           valueKey: data.valueKey,
         ),
         const SizedBox(height: 12),
@@ -408,7 +476,11 @@ class _HealthTrendPageState extends State<HealthTrendPage> {
             ),
             const Spacer(),
             Text(
-              '${data.records.length} 条',
+              _copy(
+                context,
+                '${data.records.length}',
+                '${data.records.length} 条',
+              ),
               style: const TextStyle(color: SaydianColors.muted),
             ),
           ],
@@ -430,7 +502,13 @@ class _HealthTrendPageState extends State<HealthTrendPage> {
               key: Key('health-all-records-${widget.metric.wireName}'),
               onPressed: () => _showAllRecords(data),
               icon: const Icon(Icons.list_alt_rounded),
-              label: Text('查看全部 ${data.records.length} 条数据'),
+              label: Text(
+                _copy(
+                  context,
+                  'View all ${data.records.length}',
+                  '查看全部 ${data.records.length} 条数据',
+                ),
+              ),
             ),
           ),
       ],
@@ -471,11 +549,15 @@ class _HealthTrendPageState extends State<HealthTrendPage> {
                         ),
                       ),
                       Text(
-                        '${data.records.length} 条',
+                        _copy(
+                          context,
+                          '${data.records.length}',
+                          '${data.records.length} 条',
+                        ),
                         style: const TextStyle(color: SaydianColors.muted),
                       ),
                       IconButton(
-                        tooltip: '关闭',
+                        tooltip: _copy(context, 'Close', '关闭'),
                         onPressed: () => Navigator.of(context).pop(),
                         icon: const Icon(Icons.close_rounded),
                       ),
@@ -523,7 +605,7 @@ class _MetricFieldSelector extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.only(right: 8),
               child: ChoiceChip(
-                label: Text(_fieldLabel(key)),
+                label: Text(_fieldLabel(context, key)),
                 selected: selected == key,
                 onSelected: (_) => onSelected(key),
               ),
@@ -550,15 +632,18 @@ class _SummaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final values = <(String, String)>[
-      ('平均值', _format(summary.average, unit)),
-      ('最大值', _format(summary.maximum, unit)),
-      ('最小值', _format(summary.minimum, unit)),
-      ('记录数', '${summary.recordCount} 条'),
+      (_copy(context, 'Average', '平均值'), _format(summary.average, unit)),
+      (_copy(context, 'High', '最大值'), _format(summary.maximum, unit)),
+      (_copy(context, 'Low', '最小值'), _format(summary.minimum, unit)),
+      (
+        _copy(context, 'Readings', '记录数'),
+        _copy(context, '${summary.recordCount}', '${summary.recordCount} 条'),
+      ),
     ];
     if (metric == HealthMetric.bloodPressure &&
         summary.secondaryAverage != null) {
       values[0] = (
-        '平均血压',
+        _copy(context, 'Average BP', '平均血压'),
         '${_number(summary.average)}/${_number(summary.secondaryAverage)} $unit',
       );
     }
@@ -570,7 +655,7 @@ class _SummaryCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              _fieldLabel(valueKey),
+              _fieldLabel(context, valueKey),
               style: const TextStyle(fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 12),
@@ -604,7 +689,11 @@ class _SummaryCard extends StatelessWidget {
             if (change != null) ...[
               const SizedBox(height: 13),
               Text(
-                '较上一周期 ${change >= 0 ? '+' : ''}${change.toStringAsFixed(1)} $unit',
+                _copy(
+                  context,
+                  '${change >= 0 ? '+' : ''}${change.toStringAsFixed(1)} $unit vs previous period',
+                  '较上一周期 ${change >= 0 ? '+' : ''}${change.toStringAsFixed(1)} $unit',
+                ),
                 style: const TextStyle(
                   color: SaydianColors.muted,
                   fontSize: 14,
@@ -627,10 +716,14 @@ class _TrendChartCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (data.points.isEmpty) {
-      return const _MessageCard(
+      return _MessageCard(
         icon: Icons.show_chart_rounded,
-        title: '暂无可绘制数据',
-        detail: '记录中没有该指标的有效数值。',
+        title: _copy(context, 'No chart available', '暂无可绘制数据'),
+        detail: _copy(
+          context,
+          'No valid values in these readings.',
+          '记录中没有该指标的有效数值。',
+        ),
       );
     }
     final isBar =
@@ -642,8 +735,11 @@ class _TrendChartCard extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.fromLTRB(12, 18, 16, 12),
         child: Semantics(
-          label:
-              '${metric.label}趋势图，${data.points.length}个数据点，平均${_number(data.summary.average)}',
+          label: _copy(
+            context,
+            '${context.l10n.metricName(metric)} trend, ${data.points.length} points, average ${_number(data.summary.average)}',
+            '${metric.label}趋势图，${data.points.length}个数据点，平均${_number(data.summary.average)}',
+          ),
           child: SizedBox(
             height: 250,
             child: isBar
@@ -883,13 +979,17 @@ class _RecordTile extends StatelessWidget {
           child: const Icon(Icons.monitor_heart_outlined),
         ),
         title: Text(
-          '$value ${_unit(record.metric, record, valueKey)}',
+          '$value ${_unit(context, record.metric, record, valueKey)}',
           style: const TextStyle(fontWeight: FontWeight.w800),
         ),
         subtitle: Text(
-          DateFormat(
-            'yyyy-MM-dd HH:mm:ss',
-          ).format(HealthAnalysisService.displayTime(record)),
+          _english(context)
+              ? DateFormat.yMMMd(
+                  context.l10n.localeName,
+                ).add_jm().format(HealthAnalysisService.displayTime(record))
+              : DateFormat(
+                  'yyyy-MM-dd HH:mm:ss',
+                ).format(HealthAnalysisService.displayTime(record)),
         ),
         trailing: const Icon(Icons.chevron_right_rounded),
       ),
@@ -953,37 +1053,72 @@ Color _metricColor(HealthMetric metric) => switch (metric) {
   _ => SaydianColors.green,
 };
 
-String _fieldLabel(String key) => switch (key) {
-  'value' => '趋势概况',
-  'systolic' => '收缩压',
-  'diastolic' => '舒张压',
-  'pulse' => '脉搏',
-  'meanHeartRate' || 'averageHeartRate' => '平均心率',
-  'averageTimeInterval' || 'qt' => 'QT间期',
-  'averageHRV' || 'hrv' => 'HRV',
-  'BMI' || 'bmi' => 'BMI',
-  'bodyFatRate' || 'bodyFatPercentage' => '体脂率',
-  'fatMass' => '脂肪量',
-  'fatFreeMass' => '去脂体重',
-  'muscleRate' => '肌肉率',
-  'muscleMass' => '肌肉量',
-  'subcutaneousFat' => '皮下脂肪率',
-  'bodyWaterRate' || 'bodyMoisture' => '体水分率',
-  'waterMass' => '水分量',
-  'skeletalMuscleRate' => '骨骼肌率',
-  'boneMass' => '骨量',
-  'proteinRate' => '蛋白质率',
-  'proteinMass' => '蛋白质量',
-  'basalMetabolicRate' || 'basalMetabolism' => '基础代谢',
-  'uricAcid' => '尿酸',
-  'totalCholesterol' => '总胆固醇',
-  'triglycerides' => '甘油三酯',
-  'highDensityLipoprotein' => '高密度脂蛋白',
-  'lowDensityLipoprotein' => '低密度脂蛋白',
-  _ => key,
-};
+String _fieldLabel(BuildContext context, String key) => _english(context)
+    ? switch (key) {
+        'value' => 'Overview',
+        'systolic' => 'Systolic',
+        'diastolic' => 'Diastolic',
+        'pulse' => 'Pulse',
+        'meanHeartRate' || 'averageHeartRate' => 'Average heart rate',
+        'averageTimeInterval' || 'qt' => 'QT interval',
+        'averageHRV' || 'hrv' => 'HRV',
+        'BMI' || 'bmi' => 'BMI',
+        'bodyFatRate' || 'bodyFatPercentage' => 'Body fat',
+        'fatMass' => 'Fat mass',
+        'fatFreeMass' => 'Lean mass',
+        'muscleRate' => 'Muscle rate',
+        'muscleMass' => 'Muscle mass',
+        'subcutaneousFat' => 'Subcutaneous fat',
+        'bodyWaterRate' || 'bodyMoisture' => 'Body water',
+        'waterMass' => 'Water mass',
+        'skeletalMuscleRate' => 'Skeletal muscle',
+        'boneMass' => 'Bone mass',
+        'proteinRate' => 'Protein rate',
+        'proteinMass' => 'Protein mass',
+        'basalMetabolicRate' || 'basalMetabolism' => 'Resting metabolism',
+        'uricAcid' => 'Uric acid',
+        'totalCholesterol' => 'Total cholesterol',
+        'triglycerides' => 'Triglycerides',
+        'highDensityLipoprotein' => 'HDL cholesterol',
+        'lowDensityLipoprotein' => 'LDL cholesterol',
+        _ => key,
+      }
+    : switch (key) {
+        'value' => '趋势概况',
+        'systolic' => '收缩压',
+        'diastolic' => '舒张压',
+        'pulse' => '脉搏',
+        'meanHeartRate' || 'averageHeartRate' => '平均心率',
+        'averageTimeInterval' || 'qt' => 'QT间期',
+        'averageHRV' || 'hrv' => 'HRV',
+        'BMI' || 'bmi' => 'BMI',
+        'bodyFatRate' || 'bodyFatPercentage' => '体脂率',
+        'fatMass' => '脂肪量',
+        'fatFreeMass' => '去脂体重',
+        'muscleRate' => '肌肉率',
+        'muscleMass' => '肌肉量',
+        'subcutaneousFat' => '皮下脂肪率',
+        'bodyWaterRate' || 'bodyMoisture' => '体水分率',
+        'waterMass' => '水分量',
+        'skeletalMuscleRate' => '骨骼肌率',
+        'boneMass' => '骨量',
+        'proteinRate' => '蛋白质率',
+        'proteinMass' => '蛋白质量',
+        'basalMetabolicRate' || 'basalMetabolism' => '基础代谢',
+        'uricAcid' => '尿酸',
+        'totalCholesterol' => '总胆固醇',
+        'triglycerides' => '甘油三酯',
+        'highDensityLipoprotein' => '高密度脂蛋白',
+        'lowDensityLipoprotein' => '低密度脂蛋白',
+        _ => key,
+      };
 
-String _unit(HealthMetric metric, HealthRecord record, String key) {
+String _unit(
+  BuildContext context,
+  HealthMetric metric,
+  HealthRecord record,
+  String key,
+) {
   if (metric == HealthMetric.bodyComposition) {
     if (const {
       'bodyFatRate',
@@ -1008,7 +1143,7 @@ String _unit(HealthMetric metric, HealthRecord record, String key) {
       return 'kg';
     }
     if (key == 'basalMetabolicRate' || key == 'basalMetabolism') {
-      return 'kcal/日';
+      return _copy(context, 'kcal/day', 'kcal/日');
     }
     return '';
   }
