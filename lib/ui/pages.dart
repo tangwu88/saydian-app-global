@@ -26,6 +26,7 @@ import 'global_auth_page.dart';
 import 'global_legal_page.dart';
 import 'global_care_page.dart';
 import 'health_reports_page.dart';
+import 'health_alert_copy.dart';
 import 'health_trend_page.dart';
 import 'prototype_pages.dart';
 import 'shop_pages.dart';
@@ -675,7 +676,7 @@ class _DashboardHeader extends StatelessWidget {
             children: [
               Text(
                 context.l10n.welcome(name),
-                maxLines: 1,
+                maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
                   fontSize: 21,
@@ -4639,22 +4640,25 @@ class DevicePage extends StatelessWidget {
               style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 10),
-            GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                mainAxisSpacing: 12,
-                crossAxisSpacing: 12,
-                mainAxisExtent:
-                    78 +
-                    (MediaQuery.textScalerOf(context).scale(1).clamp(1, 2) -
-                            1) *
-                        72,
-              ),
-              itemCount: primaryFeatures.length,
-              itemBuilder: (context, index) =>
-                  _deviceFeatureCard(context, primaryFeatures[index]),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final singleColumn =
+                    MediaQuery.textScalerOf(context).scale(14) > 20;
+                final width = singleColumn
+                    ? constraints.maxWidth
+                    : (constraints.maxWidth - 12) / 2;
+                return Wrap(
+                  spacing: 12,
+                  runSpacing: 12,
+                  children: [
+                    for (final feature in primaryFeatures)
+                      SizedBox(
+                        width: width,
+                        child: _deviceFeatureCard(context, feature),
+                      ),
+                  ],
+                );
+              },
             ),
             const SizedBox(height: 12),
           ],
@@ -4739,7 +4743,10 @@ class DevicePage extends StatelessWidget {
         onTap: () => _openDeviceFeature(context, feature),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-          child: Row(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
             children: [
               Container(
                 width: 38,
@@ -4754,39 +4761,28 @@ class DevicePage extends StatelessWidget {
                   size: 22,
                 ),
               ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      isU19Pulse
-                          ? (Localizations.localeOf(context).languageCode ==
-                                    'zh'
-                                ? '脉搏分析'
-                                : 'Pulse insights')
-                          : context.l10n.deviceFeatureName(feature),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontWeight: FontWeight.w800),
-                    ),
-                    if (!availability.isReady) ...[
-                      const SizedBox(height: 3),
-                      Text(
-                        availability.message,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: SaydianColors.muted,
-                          fontSize: 12,
-                          height: 1.25,
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
+              const SizedBox(height: 8),
+              Text(
+                isU19Pulse
+                    ? (Localizations.localeOf(context).languageCode == 'zh'
+                          ? '脉搏分析'
+                          : 'Pulse insights')
+                    : context.l10n.deviceFeatureName(feature),
+                style: const TextStyle(fontWeight: FontWeight.w800),
               ),
+              if (!availability.isReady) ...[
+                const SizedBox(height: 3),
+                Text(
+                  availability.message,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: SaydianColors.muted,
+                    fontSize: 12,
+                    height: 1.25,
+                  ),
+                ),
+              ],
             ],
           ),
         ),
@@ -5728,6 +5724,56 @@ class NotificationsPage extends StatefulWidget {
 }
 
 class _NotificationsPageState extends State<NotificationsPage> {
+  Widget _emptyMessagesState() {
+    final status = widget.controller.notificationStatus;
+    final loading = status == '等待加载' || status == '正在加载';
+    final signedOut = status == '请先登录';
+    final empty = status == '暂无消息' || status == '已加载';
+    final failed = !loading && !signedOut && !empty;
+    return RefreshIndicator(
+      onRefresh: widget.controller.refreshNotifications,
+      child: CustomScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        slivers: [
+          SliverFillRemaining(
+            hasScrollBody: false,
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      loading
+                          ? context.l10n.loading
+                          : signedOut
+                          ? context.l10n.signInCloudHint
+                          : empty
+                          ? _localeCopy(context, 'No messages yet', '暂无消息')
+                          : _localeCopy(
+                              context,
+                              'Could not load messages. Try again.',
+                              '消息暂时无法加载，请重试。',
+                            ),
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(color: SaydianColors.muted),
+                    ),
+                    if (failed)
+                      TextButton(
+                        key: const Key('messages-retry'),
+                        onPressed: widget.controller.refreshNotifications,
+                        child: Text(context.l10n.retry),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   void initState() {
     super.initState();
@@ -5792,8 +5838,8 @@ class _NotificationsPageState extends State<NotificationsPage> {
                   '_eventType': NotificationEventType.healthWarning.name,
                   'event_id': eventId,
                   'is_read': event?.isRead ?? true,
-                  'title': entry.value.title,
-                  'content': entry.value.message,
+                  'title': healthAlertTitle(context, entry.value),
+                  'content': healthAlertMessage(context, entry.value),
                   'created_at': DateFormat(
                     'yyyy-MM-dd HH:mm',
                   ).format(entry.value.triggeredAt.toLocal()),
@@ -5815,15 +5861,38 @@ class _NotificationsPageState extends State<NotificationsPage> {
                   'entity_id': event.entityId,
                   'is_read': event.isRead,
                   'title': switch (event.type) {
-                    NotificationEventType.careInvitation => '关爱邀请',
-                    NotificationEventType.healthWarning => '健康预警',
-                    NotificationEventType.system => '系统消息',
+                    NotificationEventType.careInvitation => _localeCopy(
+                      context,
+                      'Care invitation',
+                      '关爱邀请',
+                    ),
+                    NotificationEventType.healthWarning => _localeCopy(
+                      context,
+                      'Health alert',
+                      '健康预警',
+                    ),
+                    NotificationEventType.system => _localeCopy(
+                      context,
+                      'System message',
+                      '系统消息',
+                    ),
                   },
                   'content': switch (event.type) {
-                    NotificationEventType.careInvitation =>
+                    NotificationEventType.careInvitation => _localeCopy(
+                      context,
+                      'You have a new care request. Open it to check its current status.',
                       '您有新的关爱请求，请点击查看最新状态。',
-                    NotificationEventType.healthWarning => '有新的健康预警，请打开预警记录查看。',
-                    NotificationEventType.system => '您有一条新消息。',
+                    ),
+                    NotificationEventType.healthWarning => _localeCopy(
+                      context,
+                      'You have a new health alert. Open your alert history to view it.',
+                      '有新的健康预警，请打开预警记录查看。',
+                    ),
+                    NotificationEventType.system => _localeCopy(
+                      context,
+                      'You have a new message.',
+                      '您有一条新消息。',
+                    ),
                   },
                   'created_at': DateFormat(
                     'yyyy-MM-dd HH:mm',
@@ -5871,9 +5940,15 @@ class _NotificationsPageState extends State<NotificationsPage> {
                           );
                         }
                       },
-                      itemBuilder: (_) => const [
-                        PopupMenuItem(value: 'request', child: Text('允许通知')),
-                        PopupMenuItem(value: 'settings', child: Text('系统设置')),
+                      itemBuilder: (_) => [
+                        PopupMenuItem(
+                          value: 'request',
+                          child: Text(context.l10n.allowNotifications),
+                        ),
+                        PopupMenuItem(
+                          value: 'settings',
+                          child: Text(context.l10n.openSystemSettings),
+                        ),
                       ],
                     ),
                   ),
@@ -5884,15 +5959,11 @@ class _NotificationsPageState extends State<NotificationsPage> {
               ?permissionCard,
               Expanded(
                 child: values.isEmpty
-                    ? Center(
-                        child: Text(
-                          widget.controller.notificationStatus,
-                          style: const TextStyle(color: SaydianColors.muted),
-                        ),
-                      )
+                    ? _emptyMessagesState()
                     : RefreshIndicator(
                         onRefresh: widget.controller.refreshNotifications,
                         child: ListView.separated(
+                          physics: const AlwaysScrollableScrollPhysics(),
                           padding: const EdgeInsets.all(16),
                           itemCount: values.length,
                           separatorBuilder: (_, _) =>
@@ -5927,7 +5998,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
                                   children: [
                                     Expanded(
                                       child: Text(
-                                        '${item['title'] ?? item['name'] ?? '系统消息'}',
+                                        '${item['title'] ?? item['name'] ?? _localeCopy(context, 'System message', '系统消息')}',
                                         style: TextStyle(
                                           fontWeight: unread
                                               ? FontWeight.w900
@@ -5948,7 +6019,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
                                 ),
                                 subtitle: Text(
                                   [
-                                        _notificationPreview(item),
+                                        _notificationPreview(context, item),
                                         '${item['created_at'] ?? item['createdAt'] ?? ''}',
                                       ]
                                       .where((value) => value.trim().isNotEmpty)
@@ -6006,9 +6077,10 @@ class _NotificationDetailPageState extends State<NotificationDetailPage> {
 
   @override
   Widget build(BuildContext context) {
-    final title = '${_value['title'] ?? _value['name'] ?? '消息详情'}';
+    final title =
+        '${_value['title'] ?? _value['name'] ?? context.l10n.messageDetails}';
     final raw = '${_value['content'] ?? _value['description'] ?? ''}';
-    final content = _resolveNotificationContent(_value, raw);
+    final content = _resolveNotificationContent(context, _value, raw);
     final isHealthWarning = _value['kind'] == 'health_warning';
     final createdAt = '${_value['created_at'] ?? _value['createdAt'] ?? ''}';
     return Scaffold(
@@ -6070,7 +6142,9 @@ class _NotificationDetailPageState extends State<NotificationDetailPage> {
             child: Padding(
               padding: const EdgeInsets.all(18),
               child: Text(
-                content.isEmpty ? '暂无消息正文' : content,
+                content.isEmpty
+                    ? _localeCopy(context, 'No message content', '暂无消息正文')
+                    : content,
                 style: const TextStyle(fontSize: 16, height: 1.75),
               ),
             ),
@@ -6089,14 +6163,20 @@ class _NotificationDetailPageState extends State<NotificationDetailPage> {
   }
 }
 
-String _notificationPreview(Map<String, Object?> value) {
+String _notificationPreview(BuildContext context, Map<String, Object?> value) {
   final raw = '${value['content'] ?? value['description'] ?? ''}';
-  return _resolveNotificationContent(value, raw);
+  return _resolveNotificationContent(context, value, raw);
 }
 
-String _resolveNotificationContent(Map<String, Object?> value, String raw) {
+String _resolveNotificationContent(
+  BuildContext context,
+  Map<String, Object?> value,
+  String raw,
+) {
   final orderNumber = _notificationOrderNumber(value);
-  final fallback = orderNumber ?? '订单号暂未返回';
+  final fallback =
+      orderNumber ??
+      _localeCopy(context, 'Order number unavailable', '订单号暂未返回');
   return _plainTextFromHtml(raw).replaceAll('#order_sn#', fallback);
 }
 
@@ -8400,7 +8480,8 @@ class _ProfileStat extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(
                       label,
-                      maxLines: 1,
+                      maxLines: 2,
+                      textAlign: TextAlign.center,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
                         color: SaydianColors.muted,
@@ -10606,6 +10687,9 @@ class PermissionManagementPage extends StatefulWidget {
 class _PermissionManagementPageState extends State<PermissionManagementPage>
     with WidgetsBindingObserver {
   Map<Permission, PermissionStatus> _statuses = const {};
+  bool _refreshing = false;
+  bool _requesting = false;
+  bool _checkFailed = false;
 
   List<Permission> get _permissions =>
       defaultTargetPlatform == TargetPlatform.android
@@ -10654,37 +10738,111 @@ class _PermissionManagementPageState extends State<PermissionManagementPage>
   }
 
   Future<void> _refresh() async {
+    if (_refreshing) return;
+    _refreshing = true;
     final statuses = <Permission, PermissionStatus>{};
+    var failed = false;
     for (final permission in _permissions) {
-      statuses[permission] = await permission.status;
+      try {
+        statuses[permission] = await permission.status;
+      } catch (_) {
+        failed = true;
+      }
     }
-    if (mounted) setState(() => _statuses = statuses);
+    _refreshing = false;
+    if (mounted) {
+      setState(() {
+        _statuses = statuses;
+        _checkFailed = failed;
+      });
+    }
   }
 
   Future<void> _request(Permission permission) async {
-    if (permission == Permission.notification) {
-      await openAppSettings();
-    } else {
-      await permission.request();
+    if (_requesting) return;
+    setState(() => _requesting = true);
+    try {
+      final status = await permission.status;
+      if (status.isGranted ||
+          status.isPermanentlyDenied ||
+          status.isRestricted ||
+          status.isLimited ||
+          status.isProvisional) {
+        if (!await openAppSettings()) throw StateError('Settings unavailable');
+      } else {
+        await permission.request();
+      }
+      await _refresh();
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              _localeCopy(
+                context,
+                'Could not open permission settings. Try again.',
+                '暂时无法打开权限设置，请重试',
+              ),
+            ),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _requesting = false);
     }
-    await _refresh();
   }
 
   String _name(Permission permission) {
-    if (permission == Permission.bluetoothScan) return '附近设备扫描';
-    if (permission == Permission.bluetoothConnect) return '蓝牙设备连接';
-    if (permission == Permission.bluetooth) return '蓝牙';
-    if (permission == Permission.locationWhenInUse) return '位置';
-    if (permission == Permission.photos) return '照片';
-    if (permission == Permission.camera) return '相机';
-    if (permission == Permission.contacts) return '联系人';
-    return '通知';
+    if (permission == Permission.bluetoothScan) {
+      return _localeCopy(context, 'Nearby devices', '附近设备扫描');
+    }
+    if (permission == Permission.bluetoothConnect) {
+      return _localeCopy(context, 'Bluetooth connection', '蓝牙设备连接');
+    }
+    if (permission == Permission.bluetooth) {
+      return _localeCopy(context, 'Bluetooth', '蓝牙');
+    }
+    if (permission == Permission.locationWhenInUse) {
+      return _localeCopy(context, 'Location', '位置');
+    }
+    if (permission == Permission.photos) {
+      return _localeCopy(context, 'Photos', '照片');
+    }
+    if (permission == Permission.camera) {
+      return _localeCopy(context, 'Camera', '相机');
+    }
+    if (permission == Permission.contacts) return context.l10n.contacts;
+    return context.l10n.notifications;
+  }
+
+  String _permissionStatus(Permission permission) {
+    final status = _statuses[permission];
+    if (status == null) {
+      return _checkFailed
+          ? _localeCopy(context, 'Unavailable', '暂时无法读取')
+          : context.l10n.loading;
+    }
+    if (status.isGranted) return _localeCopy(context, 'Allowed', '已允许');
+    if (status.isLimited) return _localeCopy(context, 'Limited access', '部分授权');
+    if (status.isProvisional) {
+      return _localeCopy(context, 'Quiet notifications', '静默通知');
+    }
+    if (status.isRestricted) {
+      return _localeCopy(context, 'Restricted by system', '受系统限制');
+    }
+    return _localeCopy(context, 'Not allowed', '未允许');
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(widget.healthOnly ? '健康监测' : '权限管理')),
+      appBar: AppBar(
+        title: Text(
+          widget.healthOnly
+              ? context.l10n.healthMonitoring
+              : context.l10n.permissions,
+        ),
+      ),
       body: ListenableBuilder(
         listenable: widget.controller,
         builder: (context, _) => ListView(
@@ -10692,6 +10850,21 @@ class _PermissionManagementPageState extends State<PermissionManagementPage>
           children: [
             if (widget.healthOnly) ..._healthMonitoringContent(),
             if (!widget.healthOnly) ...[
+              if (_checkFailed)
+                ListTile(
+                  title: Text(
+                    _localeCopy(
+                      context,
+                      'Could not check permissions. Try again.',
+                      '暂时无法读取权限，请重试',
+                    ),
+                  ),
+                  trailing: TextButton(
+                    key: const Key('permissions-retry'),
+                    onPressed: _refresh,
+                    child: Text(context.l10n.retry),
+                  ),
+                ),
               const SizedBox(height: 20),
               Text(
                 context.l10n.appPermissions,
@@ -10712,14 +10885,16 @@ class _PermissionManagementPageState extends State<PermissionManagementPage>
                               : SaydianColors.orange,
                         ),
                         title: Text(_name(permission)),
-                        subtitle: Text(
-                          _statuses[permission]?.isGranted == true
-                              ? '已允许'
-                              : '未允许',
-                        ),
+                        subtitle: Text(_permissionStatus(permission)),
                         trailing: TextButton(
-                          onPressed: () => _request(permission),
-                          child: Text(context.l10n.settings),
+                          onPressed: _requesting
+                              ? null
+                              : () => _request(permission),
+                          child: Text(
+                            _statuses[permission]?.isDenied == true
+                                ? _localeCopy(context, 'Allow', '允许')
+                                : context.l10n.settings,
+                          ),
                         ),
                       ),
                       if (permission != _permissions.last)
