@@ -57,11 +57,18 @@
 | --- | --- |
 | 定向 Widget 回归 | 新测试先失败 `Steps` 不存在，修改后通过；连接 U19 仅支持 BP/心率时，历史旧手表步数不显示为当前功能。英文步数行与历史详情不显示中文单位。 |
 | `dart format --output=none --set-exit-if-changed lib test`、`flutter analyze --no-pub` | 156 个文件检查 0 变更；静态检查无问题。首个 `flutter` 命令因当前 PowerShell `PATH` 未包含 Flutter 而未启动，改用已核实的 `D:/Dev/Flutter/3.44.9/bin/flutter.bat` 后执行，不把命令未启动记为测试失败。 |
-| `flutter test --no-pub --reporter compact` | 补充“不支持步数时隐藏”的断言后，定向测试通过；本地时区 928/928、`TZ=UTC` 928/928 再次通过。新提交的 CI 仍须另行核对。 |
+| `flutter test --no-pub --reporter compact` | 补充“不支持步数时隐藏”的断言后，定向测试通过；本地时区 928/928、`TZ=UTC` 928/928 再次通过。 |
 | Android `:app:testDebugUnitTest --offline --no-daemon` | BUILD SUCCESSFUL。Flutter/Gradle 与旧插件兼容警告未阻塞，不在本次范围修改插件。 |
 | Android Debug、内部 QA Release 双 ARM 构建 | 均通过；Debug SHA-256 `BCFB7AA6FD8D77BBB1D0A32DE725FFB4B2E8655F254A511C4AD5C1E1E6054B17`，QA Release `1A4551E49D76FAA850B38E986CFA3CDDDA0898746BBDD7D37B2779F173A8BE0E`，产物不入 Git。QA Release 不是商店签名。 |
 | Android 覆盖安装与页面 | 两次 `adb install -r -t` 返回 Success，手机安装器的两级“继续安装”按既有用户授权确认，未卸载、未清数据。第一次安装的修正版可见 `Steps`/`steps` 和详情入口，因当前无可核实非零记录显示 `No data yet`，不伪造数值。第二次安装含 GATT 改动。 |
 | 新包 U19 真机 | 02:21 与 02:24 两次建立连接、服务发现 `status=0`、CCCD `status=0`、`ready`、当天汇总 `dayOffset=0`；两次均未触发新恢复分支。扫描列表位置会变化，曾有一次坐标点错但未启动其他设备连接，重新核对目标后成功。结束保持 U19 连接。 |
 | 服务端能力 | `GET https://app.saydian.cn/global/api/saydian-app/v2/health/capabilities` 仍 404；未取得 `acceptedIds`、GET/统计折叠及真实非零样本回读，联合数据闭环未通过。 |
 
-前一提交 `6a7ac99` 的 [mobile-ci #36527293452](https://github.com/tangwu88/saydian-app-global/actions/runs/36527293452) 最终 quality/Android/iOS/Harmony 作业全部通过。上述新修改提交后必须以**新** CI 为准。Windows 未做 iOS 本地构建，iOS/Harmony 实机、GATT 故障分支的成功恢复以及云端日汇总继续列为未验收。
+App 源码提交 `06b9337` 的 [mobile-ci #36532199650](https://github.com/tangwu88/saydian-app-global/actions/runs/36532199650) 最终 quality/Android/iOS/Harmony 作业全部通过。Windows 未做 iOS 本地构建；iOS/Harmony 实机、GATT 故障分支的成功恢复以及云端日汇总继续列为未验收。
+
+## 追加：服务端隔离分支交接（2026-09-29）
+
+- “导入 saydianserver 项目”任务已在独立分支 `fix/global-health-daily-summary-capabilities` 提交 [`ef51e66`](https://github.com/tangwu88/saydianserver/commit/ef51e665babdc3c9e5cd1b7a7dbb24e918c84695)，[草稿 PR #1](https://github.com/tangwu88/saydianserver/pull/1) 供审阅。[服务端 CI #36534031343](https://github.com/tangwu88/saydianserver/actions/runs/36534031343) 的 `verify` 成功，`auto-deploy` 为 skipped；这不是生产部署。
+- 服务端新增受国际会员鉴权的 `GET /global/api/saydian-app/v2/health/capabilities`，预期标准 V2 响应的 `data.dailySummaryVersions` 为 `true`。服务端专项、API、数据库迁移与容器验证由其任务记录；本 App 任务未冒用其测试为真机云端通过。
+- 服务端已按反馈将关爱历史的日汇总日期窗口改用 `foldedHealthRecordPeriodWhere(from,to)`，避免只按补读时间筛选旧日汇总。App 侧发送的 `aggregation: {kind: daily_summary, localDate}` 和 `source.deviceId` 契约已与服务端当前源码对照。
+- 再次实测生产 `/health/ready` revision 为 `3dab610c447ad2ce92e63b73ed65c3781580b46b`，上述能力路由仍 HTTP 404。未获得可用的隔离远程测试 URL、服务端部署和真实非零 U19 数据前，不上传、不虚构 `acceptedIds` 或重新读取结果。下一步先取得明确部署/隔离环境授权，再按真实设备数据完成端到端联验。
