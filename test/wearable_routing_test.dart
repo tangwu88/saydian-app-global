@@ -7,63 +7,84 @@ import 'package:saydian_app/services/wearable_bridge.dart';
 import 'package:saydian_app/services/wearable_routing.dart';
 
 void main() {
-  test('Urion health change notices keep their source and scoped device', () async {
-    final urion = _FakeWearableBridge(scanned: const [
-      DeviceInfo(id: 'fixture-u19', name: 'Protocol fixture'),
-    ]);
-    final bridge = RoutedWearableBridge(
-      veepoo: _FakeWearableBridge(scanned: const []),
-      yucheng: _FakeWearableBridge(scanned: const []),
-      urion: urion,
-      preferenceStore: _MemoryTransportPreference(),
-    );
-    final received = <WearableEvent>[];
-    final subscription = bridge.events.listen(received.add);
-    await bridge.scanDevices();
-    await bridge.connect('urion:fixture-u19', profile: _profile);
-    for (final id in ['fixture-u19', 'urion:fixture-u19']) {
-      urion.emit(WearableEvent(type: 'healthDataReady', payload: {
-        'deviceId': id, 'source': 'watchNotification',
-      }));
-    }
-    await pumpEventQueue();
-    expect(received, hasLength(2));
-    expect(received.every((event) => event.payload['deviceId'] == 'urion:fixture-u19'
-        && event.payload['source'] == 'watchNotification'), isTrue);
-    await subscription.cancel();
-    await bridge.dispose();
-  });
+  test(
+    'Urion health change notices keep their source and scoped device',
+    () async {
+      final urion = _FakeWearableBridge(
+        scanned: const [
+          DeviceInfo(id: 'fixture-u19', name: 'Protocol fixture'),
+        ],
+      );
+      final bridge = RoutedWearableBridge(
+        veepoo: _FakeWearableBridge(scanned: const []),
+        yucheng: _FakeWearableBridge(scanned: const []),
+        urion: urion,
+        preferenceStore: _MemoryTransportPreference(),
+      );
+      final received = <WearableEvent>[];
+      final subscription = bridge.events.listen(received.add);
+      await bridge.scanDevices();
+      await bridge.connect('urion:fixture-u19', profile: _profile);
+      for (final id in ['fixture-u19', 'urion:fixture-u19']) {
+        urion.emit(
+          WearableEvent(
+            type: 'healthDataReady',
+            payload: {'deviceId': id, 'source': 'watchNotification'},
+          ),
+        );
+      }
+      await pumpEventQueue();
+      expect(received, hasLength(2));
+      expect(
+        received.every(
+          (event) =>
+              event.payload['deviceId'] == 'urion:fixture-u19' &&
+              event.payload['source'] == 'watchNotification',
+        ),
+        isTrue,
+      );
+      await subscription.cancel();
+      await bridge.dispose();
+    },
+  );
 
-  test('one MAC found by two scanners is shown and routed once as Urion', () async {
-    const commonAddress = 'AA:BB:CC:00:19:01';
-    final veepoo = _FakeWearableBridge(scanned: const [
-      DeviceInfo(
-        id: commonAddress,
-        name: 'Unverified watch',
-        hardwareAddress: commonAddress,
-      ),
-    ]);
-    final urion = _FakeWearableBridge(scanned: const [
-      DeviceInfo(
-        id: commonAddress,
-        name: 'U19',
-        hardwareAddress: commonAddress,
-      ),
-    ]);
-    final bridge = RoutedWearableBridge(
-      veepoo: veepoo,
-      yucheng: _FakeWearableBridge(scanned: const []),
-      urion: urion,
-      preferenceStore: _MemoryTransportPreference(),
-    );
+  test(
+    'one MAC found by two scanners is shown and routed once as Urion',
+    () async {
+      const commonAddress = 'AA:BB:CC:00:19:01';
+      final veepoo = _FakeWearableBridge(
+        scanned: const [
+          DeviceInfo(
+            id: commonAddress,
+            name: 'Unverified watch',
+            hardwareAddress: commonAddress,
+          ),
+        ],
+      );
+      final urion = _FakeWearableBridge(
+        scanned: const [
+          DeviceInfo(
+            id: commonAddress,
+            name: 'U19',
+            hardwareAddress: commonAddress,
+          ),
+        ],
+      );
+      final bridge = RoutedWearableBridge(
+        veepoo: veepoo,
+        yucheng: _FakeWearableBridge(scanned: const []),
+        urion: urion,
+        preferenceStore: _MemoryTransportPreference(),
+      );
 
-    final devices = await bridge.scanDevices();
-    expect(devices, hasLength(1));
-    expect(devices.single.sdkSource, WearableSdkSource.urion);
-    await bridge.connect(devices.single.id, profile: _profile);
-    expect(urion.connectCalls, [commonAddress]);
-    expect(veepoo.connectCalls, isEmpty);
-  });
+      final devices = await bridge.scanDevices();
+      expect(devices, hasLength(1));
+      expect(devices.single.sdkSource, WearableSdkSource.urion);
+      await bridge.connect(devices.single.id, profile: _profile);
+      expect(urion.connectCalls, [commonAddress]);
+      expect(veepoo.connectCalls, isEmpty);
+    },
+  );
 
   test(
     'production router forwards Vep native market and download only',

@@ -16,9 +16,7 @@ void main() {
       final yucheng = _FakeBridge(const [
         DeviceInfo(id: 'YC-01', name: 'W8 Pro'),
       ]);
-      final urion = _FakeBridge(const [
-        DeviceInfo(id: 'UR-01', name: 'U19S'),
-      ]);
+      final urion = _FakeBridge(const [DeviceInfo(id: 'UR-01', name: 'U19S')]);
       final bridge = createProductionWearableBridge(
         veepoo: veepoo,
         yucheng: yucheng,

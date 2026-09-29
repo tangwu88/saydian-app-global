@@ -860,7 +860,8 @@ class EncryptedHealthStore implements HealthStore, HealthStoreRecoveryStatus {
       () => _db.query(
         'health_records',
         columns: ['payload'],
-        where: 'owner_id = ? AND metric = ? AND synced != -1 AND ('
+        where:
+            'owner_id = ? AND metric = ? AND synced != -1 AND ('
             '(aggregation_kind IS NULL AND measured_at >= ? AND measured_at < ?) '
             'OR (aggregation_kind = ? AND aggregation_local_date >= ? '
             'AND aggregation_local_date <= ?))',
@@ -1270,24 +1271,22 @@ class MemoryHealthStore implements HealthStore {
     required DateTime start,
     required DateTime end,
   }) async {
-    final values =
-        _records.values
-            .where(
-              (record) {
-                final localDate = record.aggregation?.localDate;
-                final inRange = localDate == null
-                    ? !record.measuredAt.isBefore(start) &&
-                        record.measuredAt.isBefore(end)
-                    : localDate.compareTo(_calendarKey(start)) >= 0 &&
-                          localDate.compareTo(_calendarKey(
-                            end.subtract(const Duration(microseconds: 1)),
-                          )) <= 0;
-                return !_invalid.contains(record.id) &&
-                    record.metric == metric && inRange;
-              },
-            )
-            .toList()
-          ..sort((a, b) => a.measuredAt.compareTo(b.measuredAt));
+    final values = _records.values.where((record) {
+      final localDate = record.aggregation?.localDate;
+      final inRange = localDate == null
+          ? !record.measuredAt.isBefore(start) &&
+                record.measuredAt.isBefore(end)
+          : localDate.compareTo(_calendarKey(start)) >= 0 &&
+                localDate.compareTo(
+                      _calendarKey(
+                        end.subtract(const Duration(microseconds: 1)),
+                      ),
+                    ) <=
+                    0;
+      return !_invalid.contains(record.id) &&
+          record.metric == metric &&
+          inRange;
+    }).toList()..sort((a, b) => a.measuredAt.compareTo(b.measuredAt));
     return values;
   }
 

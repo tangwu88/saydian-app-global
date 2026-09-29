@@ -11,8 +11,8 @@ void main() {
   test('stalled native connection is closed before the next attempt', () async {
     const methods = MethodChannel('test/urion-stalled-methods');
     const events = EventChannel('test/urion-stalled-events');
-    final messenger = TestDefaultBinaryMessengerBinding.instance
-        .defaultBinaryMessenger;
+    final messenger =
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
     final stalledConnect = Completer<Map<Object?, Object?>>();
     var disconnects = 0;
     messenger.setMockMethodCallHandler(methods, (call) async {
@@ -53,11 +53,13 @@ void main() {
           targetSteps: 6000,
         ),
       ),
-      throwsA(isA<PlatformException>().having(
-        (error) => error.code,
-        'code',
-        'CONNECT_TIMEOUT',
-      )),
+      throwsA(
+        isA<PlatformException>().having(
+          (error) => error.code,
+          'code',
+          'CONNECT_TIMEOUT',
+        ),
+      ),
     );
     expect(disconnects, 1);
   });
