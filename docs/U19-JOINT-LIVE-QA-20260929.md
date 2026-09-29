@@ -72,3 +72,10 @@ App 源码提交 `06b9337` 的 [mobile-ci #36532199650](https://github.com/tangw
 - 服务端新增受国际会员鉴权的 `GET /global/api/saydian-app/v2/health/capabilities`，预期标准 V2 响应的 `data.dailySummaryVersions` 为 `true`。服务端专项、API、数据库迁移与容器验证由其任务记录；本 App 任务未冒用其测试为真机云端通过。
 - 服务端已按反馈将关爱历史的日汇总日期窗口改用 `foldedHealthRecordPeriodWhere(from,to)`，避免只按补读时间筛选旧日汇总。App 侧发送的 `aggregation: {kind: daily_summary, localDate}` 和 `source.deviceId` 契约已与服务端当前源码对照。
 - 再次实测生产 `/health/ready` revision 为 `3dab610c447ad2ce92e63b73ed65c3781580b46b`，上述能力路由仍 HTTP 404。未获得可用的隔离远程测试 URL、服务端部署和真实非零 U19 数据前，不上传、不虚构 `acceptedIds` 或重新读取结果。下一步先取得明确部署/隔离环境授权，再按真实设备数据完成端到端联验。
+
+## 追加：隔离环境准备与客户端能力门禁测试（2026-09-29）
+
+- 用户在“是否允许先部署独立隔离测试环境”的请求后回复“继续”；已把**仅限隔离测试、不合并或发布生产**的范围转达“导入 saydianserver 项目”任务。服务端需先核实独立数据库、缓存、存储、密钥、测试账号和回滚方案；尚无可用测试地址，不推测已经部署。
+- 在 `test/global_api_test.dart` 增加纯模拟响应测试：同一个经国际会员鉴权的 `GET https://app.saydian.cn/global/api/saydian-app/v2/health/capabilities`，依次返回 404、`data.dailySummaryVersions=false`、`true`；客户端结果分别为 `false/false/true`。同时核对请求方法、完整国际路径与授权头。无真实健康数据或生产写入。
+- 定向测试通过；`dart format --output=none --set-exit-if-changed lib test` 检查 156 个文件、0 变更，`flutter analyze --no-pub` 无问题；全量 Flutter 测试本地时区 929/929、`TZ=UTC` 929/929 通过。服务端隔离部署、真机非零日汇总上传、`acceptedIds` 及 GET 回读仍待独立验收。
+- 独立只读公网复核：`GET /global/health/ready` 返回 `database=ok`、revision `ef2f64323df46ddfe6ffeb415795429d3ed3e37e`；未带 token 请求上述能力路径仍 HTTP 404。生产版本虽已变化，但不能视为 U19 日汇总分支已发布。

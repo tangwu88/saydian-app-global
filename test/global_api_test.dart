@@ -57,6 +57,36 @@ Map<String, Object?> capabilities({
 };
 
 void main() {
+  test('daily summaries require the authenticated global capability', () async {
+    final vault = MemorySessionVault()..session = session();
+    final requests = <http.Request>[];
+    final responses = <http.Response>[
+      http.Response('{"message":"Not Found"}', 404),
+      ok({'dailySummaryVersions': false}),
+      ok({'dailySummaryVersions': true}),
+    ];
+    final api = GlobalSaydianApiClient(
+      vault,
+      client: MockClient((request) async {
+        requests.add(request);
+        return responses.removeAt(0);
+      }),
+    );
+
+    expect(await api.supportsDailySummaries(), isFalse);
+    expect(await api.supportsDailySummaries(), isFalse);
+    expect(await api.supportsDailySummaries(), isTrue);
+    expect(requests, hasLength(3));
+    for (final request in requests) {
+      expect(request.method, 'GET');
+      expect(
+        request.url.toString(),
+        '${GlobalEnvironment.origin}${GlobalEnvironment.apiPrefix}/health/capabilities',
+      );
+      expect(request.headers['Authorization'], 'Bearer global-test-access');
+    }
+  });
+
   test('legacy auth entry points never submit a global request', () async {
     var requests = 0;
     final api = GlobalSaydianApiClient(
