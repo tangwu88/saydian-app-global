@@ -1150,7 +1150,10 @@ String _unit(
   if (metric == HealthMetric.bloodComposition) {
     return key == 'uricAcid' ? 'μmol/L' : 'mmol/L';
   }
-  return record.unit.isEmpty ? metric.defaultUnit : record.unit;
+  return context.l10n.metricUnit(
+    metric,
+    record.unit.isEmpty ? metric.defaultUnit : record.unit,
+  );
 }
 
 String _format(double? value, String unit) =>

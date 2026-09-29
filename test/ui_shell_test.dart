@@ -585,6 +585,7 @@ void main() {
               HealthMetric.ecg,
               HealthMetric.hrv,
               HealthMetric.bodyTemperature,
+              HealthMetric.steps,
             ])
               HealthRecord(
                 id: 'history-${metric.wireName}',
@@ -612,6 +613,7 @@ void main() {
     expect(find.text('心电'), findsNothing);
     expect(find.text('HRV'), findsNothing);
     expect(find.text('体温'), findsNothing);
+    expect(find.text('步数'), findsNothing);
     await tester.pumpWidget(
       MaterialApp(
         theme: buildSaydianTheme(),
@@ -621,6 +623,64 @@ void main() {
     await tester.pump();
     expect(find.byKey(const Key('health-sport-entries')), findsNothing);
   });
+
+  testWidgets(
+    'English U19 shows supported step history without Chinese units',
+    (tester) async {
+      final store = MemoryHealthStore();
+      final record = HealthRecord(
+        id: 'u19-steps-today',
+        metric: HealthMetric.steps,
+        values: const {'value': 1234},
+        unit: '步',
+        measuredAt: DateTime.now().toUtc(),
+        timezone: '+00:00',
+        deviceId: 'urion:synthetic',
+        firmwareVersion: 'test',
+        quality: 'device_reported',
+        source: MeasurementSource.wearable,
+        rawVersion: 1,
+      );
+      await store.upsert([record]);
+      final controller =
+          AppController(
+              MemorySessionVault(),
+              _NoopApi(),
+              store,
+              _NoopWearable(),
+            )
+            ..connectedDevice = const DeviceInfo(
+              id: 'urion:synthetic',
+              name: 'U19',
+            )
+            ..deviceCapabilityState = DeviceCapabilityState.ready
+            ..capabilities = const DeviceCapabilities(
+              metrics: {HealthMetric.steps},
+            )
+            ..healthRecords = [record];
+      addTearDown(controller.dispose);
+      await tester.pumpWidget(
+        MaterialApp(
+          locale: const Locale('en'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          theme: buildSaydianTheme(),
+          home: HealthPage(controller: controller),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Steps'), findsOneWidget);
+      expect(find.text('1234'), findsOneWidget);
+      expect(find.text('steps'), findsOneWidget);
+      _expectNoHanText(tester);
+
+      await tester.tap(find.text('Steps'));
+      await tester.pumpAndSettle();
+      expect(find.byType(HealthTrendPage), findsOneWidget);
+      _expectNoHanText(tester);
+    },
+  );
 
   testWidgets('P40 Pro viewport and enlarged text remain overflow-free', (
     tester,

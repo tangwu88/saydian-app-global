@@ -1374,7 +1374,12 @@ class _MetricCard extends StatelessWidget {
                         fit: BoxFit.scaleDown,
                         alignment: Alignment.centerLeft,
                         child: Text(
-                          _healthDisplayUnit(metric, record, controller),
+                          _healthDisplayUnit(
+                            context,
+                            metric,
+                            record,
+                            controller,
+                          ),
                           maxLines: 1,
                           softWrap: false,
                           style: const TextStyle(color: SaydianColors.muted),
@@ -1560,6 +1565,7 @@ class HealthPage extends StatelessWidget {
     HealthMetric.hrv,
     HealthMetric.bodyComposition,
     HealthMetric.bloodComposition,
+    HealthMetric.steps,
     HealthMetric.sleep,
   ];
 
@@ -1868,7 +1874,7 @@ class _HealthMeasurementDialogState extends State<_HealthMeasurementDialog> {
                   const SizedBox(height: 14),
                   Text(
                     isNew
-                        ? '${_healthDisplayValue(record, widget.controller)} ${_healthDisplayUnit(widget.metric, record, widget.controller)}'
+                        ? '${_healthDisplayValue(record, widget.controller)} ${_healthDisplayUnit(context, widget.metric, record, widget.controller)}'
                         : failed
                         ? failure
                         : watchStop
@@ -2988,6 +2994,7 @@ String _healthDisplayValue(HealthRecord? record, AppController controller) {
 }
 
 String _healthDisplayUnit(
+  BuildContext context,
   HealthMetric metric,
   HealthRecord? record,
   AppController controller,
@@ -2999,7 +3006,7 @@ String _healthDisplayUnit(
       controller.temperatureUnit == '华氏度（℉）') {
     return '℉';
   }
-  return record?.unit ?? metric.defaultUnit;
+  return context.l10n.metricUnit(metric, record?.unit ?? metric.defaultUnit);
 }
 
 class _HealthRow extends StatelessWidget {
@@ -3109,7 +3116,7 @@ class _HealthRow extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    _healthDisplayUnit(metric, record, controller),
+                    _healthDisplayUnit(context, metric, record, controller),
                     style: const TextStyle(
                       color: SaydianColors.muted,
                       fontSize: 14,

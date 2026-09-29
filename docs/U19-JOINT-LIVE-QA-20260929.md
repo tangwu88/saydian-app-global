@@ -23,7 +23,7 @@
 ## 国际服务契约
 
 - App 实际调用 `GET https://app.saydian.cn/global/api/saydian-app/v2/health/capabilities`，需返回 `data.dailySummaryVersions=true` 才上传 U19 每日汇总。2026-09-29 实测该路由 **404**；同域 `auth/capabilities` 为 200，`/health/ready` 为 200 且 `revision=7d355a4ee65146c16f2e056cafe4cf1813cefc92`。开始曾试探无 `/health` 的错误路径 `/global/api/saydian-app/v2/capabilities`，也为 404；已以源码核对并改用正确路由复验。
-- 真机脱敏网络样本中上述失败请求仅到 `app.saydian.cn:443`；这只是本轮采样，非全 App 全链路域名审计。无服务端 `acceptedIds` 或重新读取证据，日汇总继续留本机待同步，不得记为上传成功。
+- 真机脱敏网络样本中上述失败请求仅到 `app.saydian.cn:443`；这只是本轮采样，非全 App 全链路域名审计。无服务端 `acceptedIds` 或重新读取证据；如果本机已有非零日汇总，应按客户端能力门禁留待同步。本轮手表恢复出厂设置后 App 未显示可核实的非零步数/睡眠记录，不能臆测待上传条数，更不能记为上传成功。
 - 已向独立的“导入 saydianserver 项目”任务发送精确路由、期待字段和线上 revision，请其给出隔离测试地址、契约/数据库折叠测试和部署版本；不能以设备表 `capabilities` 或普通登录能力接口替代日汇总能力声明。
 
 ## CI 格式门禁收口与回归
@@ -41,3 +41,27 @@
 1. U19 GATT 服务发现间歇超时仍为 P1。需要在可复现的失败现场增加状态取证、验证是否有未完成的旧发现操作；不能只增加等待时间或绕过服务/通知校验。
 2. 国际服务日汇总能力与版本折叠未部署/未验收，当前准确路由 404。待服务端任务给出隔离环境及契约后，用已登录授权测试账号核对“手表→本机待同步→服务器接受→重新读取”，不上传未经确认的健康原始数据。
 3. 格式门禁修复提交后核对新 CI，只有 Android/iOS 作业确实完成才能标记平台云构建通过。iOS 和 Harmony 实机仍未验收。
+
+## 追加：步数入口与服务发现恢复（手机当地时间 02:04–02:25）
+
+### 问题、范围与修改
+
+- 复现：U19 能力含步数，但“全部健康数据”没有步数行；英文界面的历史原始单位 `步` 也可能直出。新增 Widget 测试先失败于找不到 `Steps`。仅在能力或已有记录允许时增加步数行，并把该单位按现有八语的步数名称显示；未恢复 U19 不支持的运动模式。
+- 复现：覆盖安装后的冷启动能扫描到目标 U19；02:06:24 GATT 连接状态为成功，02:06:24.671 `discoverServices()` 返回 `true`，随后 7 秒在同一 GATT 上重发仍无 `onServicesDiscovered`，02:06:48 达到原 25 秒总超时。用户在 App 内再次选择同一目标，建立**新** GATT 客户端后 02:08:54 服务发现、通知订阅和读取均成功。Android 官方 `discoverServices()` 是异步操作，成功返回表示已启动，完成仍须等 `onServicesDiscovered`：[BluetoothGatt 文档](https://developer.android.com/reference/android/bluetooth/BluetoothGatt)。
+- 据此将无回调时的同连接重发改为：仅一次关闭旧 GATT、等待排空，再建立新客户端；保留同一 25 秒总超时、会话代数检查和服务/特征/通知全部校验。旧回调不能完成新会话。不改 Veepoo/玉成连接、不延长无界等待。该恢复分支尚未在新包真机故障现场触发，不能标为根治。
+- 服务端任务“导入 saydianserver 项目”已收到精确路由、客户端 `aggregation` 契约和“无非零样本”边界。追加复核时 `/health/ready` 已变为 `3dab610c447ad2ce92e63b73ed65c3781580b46b`，但线上日汇总能力路由仍为 404；已把新版本号和阻塞反馈服务端任务。服务端会话/工作树由独立任务处理，App 任务没有发布服务端。
+
+### 逐项验证与边界
+
+| 步骤 | 结果 |
+| --- | --- |
+| 定向 Widget 回归 | 新测试先失败 `Steps` 不存在，修改后通过；连接 U19 仅支持 BP/心率时，历史旧手表步数不显示为当前功能。英文步数行与历史详情不显示中文单位。 |
+| `dart format --output=none --set-exit-if-changed lib test`、`flutter analyze --no-pub` | 156 个文件检查 0 变更；静态检查无问题。首个 `flutter` 命令因当前 PowerShell `PATH` 未包含 Flutter 而未启动，改用已核实的 `D:/Dev/Flutter/3.44.9/bin/flutter.bat` 后执行，不把命令未启动记为测试失败。 |
+| `flutter test --no-pub --reporter compact` | 补充“不支持步数时隐藏”的断言后，定向测试通过；本地时区 928/928、`TZ=UTC` 928/928 再次通过。新提交的 CI 仍须另行核对。 |
+| Android `:app:testDebugUnitTest --offline --no-daemon` | BUILD SUCCESSFUL。Flutter/Gradle 与旧插件兼容警告未阻塞，不在本次范围修改插件。 |
+| Android Debug、内部 QA Release 双 ARM 构建 | 均通过；Debug SHA-256 `BCFB7AA6FD8D77BBB1D0A32DE725FFB4B2E8655F254A511C4AD5C1E1E6054B17`，QA Release `1A4551E49D76FAA850B38E986CFA3CDDDA0898746BBDD7D37B2779F173A8BE0E`，产物不入 Git。QA Release 不是商店签名。 |
+| Android 覆盖安装与页面 | 两次 `adb install -r -t` 返回 Success，手机安装器的两级“继续安装”按既有用户授权确认，未卸载、未清数据。第一次安装的修正版可见 `Steps`/`steps` 和详情入口，因当前无可核实非零记录显示 `No data yet`，不伪造数值。第二次安装含 GATT 改动。 |
+| 新包 U19 真机 | 02:21 与 02:24 两次建立连接、服务发现 `status=0`、CCCD `status=0`、`ready`、当天汇总 `dayOffset=0`；两次均未触发新恢复分支。扫描列表位置会变化，曾有一次坐标点错但未启动其他设备连接，重新核对目标后成功。结束保持 U19 连接。 |
+| 服务端能力 | `GET https://app.saydian.cn/global/api/saydian-app/v2/health/capabilities` 仍 404；未取得 `acceptedIds`、GET/统计折叠及真实非零样本回读，联合数据闭环未通过。 |
+
+前一提交 `6a7ac99` 的 [mobile-ci #36527293452](https://github.com/tangwu88/saydian-app-global/actions/runs/36527293452) 最终 quality/Android/iOS/Harmony 作业全部通过。上述新修改提交后必须以**新** CI 为准。Windows 未做 iOS 本地构建，iOS/Harmony 实机、GATT 故障分支的成功恢复以及云端日汇总继续列为未验收。

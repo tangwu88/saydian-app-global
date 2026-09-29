@@ -48,6 +48,7 @@ internal class UrionGattTransport(private val context: Context) {
     private var pendingWrite: MethodChannel.Result? = null
     private var nativeId: String? = null
     private var generation = 0
+    private var discoveryRecoveryUsed = false
     private var softwareVersion: String? = null
     private var hardwareVersion: String? = null
     var eventListener: ((Map<String, Any?>) -> Unit)? = null
@@ -269,8 +270,7 @@ internal class UrionGattTransport(private val context: Context) {
                     }, 600)
                     handler.postDelayed({
                         if (connection === gatt && pendingConnect != null && writer == null) {
-                            Log.d("U19GATT", "service discovery retry")
-                            if (!connection.discoverServices()) failConnection()
+                            recoverStalledDiscovery(connection)
                         }
                     }, 7000)
                 } else {
@@ -401,6 +401,29 @@ internal class UrionGattTransport(private val context: Context) {
         details()?.let { eventListener?.invoke(mapOf("type" to "deviceDetails", "payload" to it)) }
     }
 
+    private fun recoverStalledDiscovery(connection: BluetoothGatt) {
+        if (discoveryRecoveryUsed) return
+        val request = pendingConnect ?: return
+        val requestGeneration = generation
+        discoveryRecoveryUsed = true
+        Log.d("U19GATT", "service discovery stalled; replacing GATT client")
+        gatt = null
+        connectionDrain.retire(connection)
+        connectionDrain.whenDrained { closed ->
+            if (pendingConnect !== request || generation != requestGeneration) return@whenDrained
+            if (!closed) {
+                failConnection()
+                return@whenDrained
+            }
+            try {
+                gatt = connection.device.connectGatt(context, false, callback, BluetoothDevice.TRANSPORT_LE)
+                if (gatt == null) failConnection()
+            } catch (_: Throwable) {
+                failConnection()
+            }
+        }
+    }
+
     private fun failConnection() {
         Log.d("U19GATT", "connection failed")
         pendingConnect?.error("CONNECT_FAILED", "暂时无法连接手表，请重试", null)
@@ -412,6 +435,7 @@ internal class UrionGattTransport(private val context: Context) {
         connectDeadline?.let(handler::removeCallbacks)
         connectDeadline = null
         generation++
+        discoveryRecoveryUsed = false
         pendingWrite?.error("DISCONNECTED", "手表已断开连接", null)
         pendingWrite = null
         pendingConnect?.error("DISCONNECTED", "手表已断开连接", null)

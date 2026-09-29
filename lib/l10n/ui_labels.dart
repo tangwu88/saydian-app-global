@@ -26,6 +26,15 @@ extension LocalizedModelLabels on AppLocalizations {
     HealthMetric.bloodComposition => bloodComposition,
   };
 
+  String metricUnit(HealthMetric metric, String unit) {
+    if (metric == HealthMetric.steps &&
+        unit == '步' &&
+        !localeName.startsWith('zh')) {
+      return steps.toLowerCase();
+    }
+    return unit;
+  }
+
   String deviceFeatureName(DeviceFeature feature) => switch (feature) {
     DeviceFeature.watchFaces => watchFaces,
     DeviceFeature.photoWatchFace => photoWatchFace,
