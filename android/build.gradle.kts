@@ -34,6 +34,9 @@ allprojects {
 
     configurations.configureEach {
         resolutionStrategy {
+            // JPush's open-ended JCore dependency must stay on the version
+            // approved by scripts/release/release_gate.py for its ABI exception.
+            force("cn.jiguang.sdk:jcore:5.5.2")
             // Flutter's integration_test plugin still declares dynamic
             // AndroidX test versions. Pin the versions already used by this
             // project so release builds remain reproducible and do not need

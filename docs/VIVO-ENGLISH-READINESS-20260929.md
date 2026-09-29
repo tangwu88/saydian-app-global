@@ -100,6 +100,21 @@
   此初版包不作为最终交付。计划仅在 android/build.gradle.kts 固定
   `cn.jiguang.sdk:jcore:5.5.2`，保持既有门禁版本，不放宽规则、不升级 SDK。
   影响范围为 Android 打包可复现性；需要重做 Debug/QA Release、原生测试及包体检查。
+- UI 与已执行验证先 checkpoint 为 `73ae900`。本机未配置 Git 身份，首次提交
+  失败；改用本次命令级 `Codex <codex@local.invalid>`，未改全局 Git 身份。
+- checkpoint 后再次 fetch，发现远端 `8a30584` 仅追加隔离 API 准备文档；
+  无运行时代码变化。固定 JCore 后 releaseRuntimeClasspath 报告解析为 5.5.2，
+  `:app:dependencies --configuration releaseRuntimeClasspath --max-workers=2` 通过。
+- 固定依赖后的 QA Release 重建成功（93.7s），`apk-abis` 已通过两种 ARM
+  架构及既有 JPush 例外校验；这只代表包体架构检查通过，不代表生产发布门禁全通过。
+- **最终交付 QA APK** SHA-256：
+  `30D527103AEA0DE07DF04567BA420699C6909274C569D73950190BA182DC0BA8`。
+  包名/版本/build/签名再次核验一致，minSdk 26；68,359,544 字节。
+  确认旧输出仍是本轮初版哈希后替换 qa 下的新包，未动原交接 0.1.23 APK。
+- 固定依赖后 Debug 再构建成功（51.2s）；原生测试同命令再通过（18s），
+  22 项、0 failures、0 errors。Dart 源码与已通过 938 项的版本完全相同。
+- 最终交付说明位于上级 `qa/README-US-VIVO-0.1.24.md`；本轮未推送远端，
+  未安装、未部署服务端、未启动测量、未写入手表设置。
 
 ### 验收边界
 
