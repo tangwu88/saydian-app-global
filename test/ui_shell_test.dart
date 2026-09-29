@@ -51,6 +51,34 @@ void main() {
     expect(find.byType(LineChart), findsNothing);
   });
 
+  testWidgets('English shell does not show a Chinese watch sync failure', (
+    tester,
+  ) async {
+    final controller = AppController(
+      MemorySessionVault(),
+      _NoopApi(),
+      MemoryHealthStore(),
+      _NoopWearable(),
+    )..enterPreview();
+    controller.errorMessage = '设备已连接，但数据读取失败，请稍后重试';
+    addTearDown(controller.dispose);
+    await tester.pumpWidget(
+      MaterialApp(
+        locale: const Locale('en'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: AppShell(controller: controller),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(
+      find.text('Could not sync. Keep your watch nearby and try again.'),
+      findsOneWidget,
+    );
+    expect(find.textContaining('设备已连接'), findsNothing);
+  });
+
   testWidgets('mini chart hides readings from one short burst', (tester) async {
     final store = MemoryHealthStore();
     final at = DateTime.now().subtract(const Duration(minutes: 1));

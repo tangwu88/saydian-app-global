@@ -390,12 +390,18 @@ class _AppShellState extends State<AppShell> {
     if (message == null || message.isEmpty || message == _scheduledError) {
       return;
     }
+    final fallback = message.contains('数据读取失败') || message.contains('数据同步失败')
+        ? context.l10n.syncFailedTryAgain
+        : widget.controller.deviceState == DeviceConnectionState.error
+        ? context.l10n.searchRecovery
+        : context.l10n.serviceUnavailable;
+    final visibleMessage = _safeUiError(context, message, fallback);
     _scheduledError = message;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(content: Text(message)));
+        ..showSnackBar(SnackBar(content: Text(visibleMessage)));
       widget.controller.clearError();
       _scheduledError = null;
     });
@@ -5276,7 +5282,11 @@ class _DeviceSearchPageState extends State<DeviceSearchPage>
                             false) ...[
                           const SizedBox(height: 14),
                           _InlineNotice(
-                            message: controller.errorMessage!,
+                            message: _safeUiError(
+                              context,
+                              controller.errorMessage,
+                              context.l10n.searchRecovery,
+                            ),
                             icon: Icons.error_outline_rounded,
                             color: Theme.of(context).colorScheme.error,
                           ),
@@ -5403,12 +5413,20 @@ class _DeviceSearchPageState extends State<DeviceSearchPage>
                           const SizedBox(height: 8),
                           _InlineNotice(
                             message:
-                                controller.deviceState ==
-                                        DeviceConnectionState.connecting ||
-                                    controller.deviceState ==
-                                        DeviceConnectionState.authenticating
-                                ? '正在连接；如手表弹出确认，请在 12 秒内确认，并保持手表靠近手机…'
-                                : '正在${_deviceStateLabel(controller.deviceState)}，请保持手表靠近手机…',
+                                Localizations.localeOf(context).languageCode ==
+                                    'zh'
+                                ? controller.deviceState ==
+                                              DeviceConnectionState
+                                                  .connecting ||
+                                          controller.deviceState ==
+                                              DeviceConnectionState
+                                                  .authenticating
+                                      ? '正在连接；如手表弹出确认，请在 12 秒内确认，并保持手表靠近手机…'
+                                      : '正在${_deviceStateLabel(controller.deviceState)}，请保持手表靠近手机…'
+                                : controller.deviceState ==
+                                      DeviceConnectionState.syncing
+                                ? context.l10n.readingData
+                                : context.l10n.connecting,
                             icon: Icons.bluetooth_connected_rounded,
                             color: SaydianColors.blue,
                           ),
@@ -5518,7 +5536,7 @@ class _DeviceSearchEmpty extends StatelessWidget {
               : issue != null
               ? _scanIssueHint(context, issue!)
               : (errorMessage?.trim().isNotEmpty ?? false)
-              ? errorMessage!
+              ? _safeUiError(context, errorMessage, context.l10n.searchRecovery)
               : context.l10n.checkWatchConnection,
           textAlign: TextAlign.center,
           style: const TextStyle(color: SaydianColors.muted, height: 1.5),

@@ -265,6 +265,24 @@ class UrionWearableBridge
     }
   }
 
+  Future<void> _sendWatchTime(String language) async {
+    final now = _now();
+    final response = (await _exchange(0x01, [
+      eb1EncodeBcd(now.year % 100),
+      eb1EncodeBcd(now.month),
+      eb1EncodeBcd(now.day),
+      eb1EncodeBcd(now.hour),
+      eb1EncodeBcd(now.minute),
+      eb1EncodeBcd(now.second),
+      language == 'zh' ? 0 : 1,
+    ])).single;
+    if (response.command != 0x01) {
+      throw const FormatException('Invalid EB1 time acknowledgement');
+    }
+    // EB1 has no clock readback. Daily data is still checked against the
+    // phone date before it can become a health record.
+  }
+
   @override
   Future<List<DeviceInfo>> scanDevices() async {
     final raw = await _methods.invokeListMethod<Map<Object?, Object?>>(
@@ -480,6 +498,10 @@ class UrionWearableBridge
   Future<List<HealthRecord>> syncHealthData({
     String? cursor,
   }) => _runConnected(() async {
+    final language = await _languageStorage.read(key: _languageKey(_deviceId!));
+    if (language != null && (language == 'zh' || language == 'en')) {
+      await _sendWatchTime(language);
+    }
     final packets = await _exchange(0x07, [0], 2);
     final snapshot = Eb1DailySnapshot.parse(packets[0], packets[1]);
     final today = DateTime.now();
@@ -1241,23 +1263,10 @@ class UrionWearableBridge
               'Confirm watch language before time sync',
             );
           }
-          final now = DateTime.now();
-          final response = (await _exchange(0x01, [
-            eb1EncodeBcd(now.year % 100),
-            eb1EncodeBcd(now.month),
-            eb1EncodeBcd(now.day),
-            eb1EncodeBcd(now.hour),
-            eb1EncodeBcd(now.minute),
-            eb1EncodeBcd(now.second),
-            selectedLanguage == 'zh' ? 0 : 1,
-          ])).single;
-          if (response.command != 0x01) {
-            throw const FormatException('Invalid EB1 time acknowledgement');
-          }
-          // The protocol has no clock readback. Do not claim verification.
+          await _sendWatchTime(selectedLanguage as String);
           await _languageStorage.write(
             key: _languageKey(_deviceId!),
-            value: selectedLanguage as String,
+            value: selectedLanguage,
           );
           return;
         }

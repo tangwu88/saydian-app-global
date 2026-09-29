@@ -410,6 +410,47 @@ void main() {
       expect(screen['durationSeconds'], 15);
     },
   );
+
+  test(
+    'data sync sets phone time before reading daily data when language was confirmed',
+    () async {
+      await watch.connect();
+      await watch.bridge.writeDeviceFeature(DeviceFeature.basicSettings, {
+        'syncTime': 'en',
+      });
+      watch.writes.clear();
+      await watch.bridge.syncHealthData();
+      expect(watch.writes.take(2).map((write) => write.$2.command), [
+        0x01,
+        0x07,
+      ]);
+      expect(watch.writes.first.$2[7], 1);
+      expect(watch.writes.first.$2[1], eb1EncodeBcd(watch.now.year % 100));
+      await watch.bridge.disconnect();
+      await watch.connect();
+      watch.writes.clear();
+      await watch.bridge.syncHealthData();
+      expect(watch.writes.take(2).map((write) => write.$2.command), [
+        0x01,
+        0x07,
+      ]);
+      expect(watch.writes.first.$2[7], 1);
+    },
+  );
+
+  test(
+    'data sync does not guess a watch language before confirmation',
+    () async {
+      await watch.connect();
+      watch.writes.clear();
+      await watch.bridge.syncHealthData();
+      expect(watch.writes.first.$2.command, 0x07);
+      expect(
+        watch.writes.map((write) => write.$2.command),
+        isNot(contains(0x01)),
+      );
+    },
+  );
 }
 
 Future<void> _flush() => Future<void>.delayed(const Duration(milliseconds: 10));
@@ -440,7 +481,15 @@ class _Watch {
     );
     messenger.setMockMethodCallHandler(
       const MethodChannel('plugins.it_nomads.com/flutter_secure_storage'),
-      (_) async => null,
+      (call) async {
+        final arguments = Map<Object?, Object?>.from(call.arguments as Map);
+        final key = '${arguments['key']}';
+        if (call.method == 'read') return secureValues[key];
+        if (call.method == 'write') {
+          secureValues[key] = '${arguments['value']}';
+        }
+        return null;
+      },
     );
     bridge = UrionWearableBridge(
       methods: methods,
@@ -470,6 +519,7 @@ class _Watch {
   int screenDuration = 10;
   final events = <WearableEvent>[];
   final writes = <(String, Eb1Frame)>[];
+  final secureValues = <String, String>{};
   Completer<void>? historyGate;
   Completer<void>? findGate;
   bool historyGateTaken = false;
