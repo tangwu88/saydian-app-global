@@ -118,6 +118,13 @@
 - 依赖修正提交 `c2778bc` 后合入远端 `8a30584` 文档更新；索引同位置插入
   产生一次冲突，保留双方条目后解决。此次合并不改变运行时代码，未复跑相同测试。
 - 最终 Debug SHA-256：`4B504C09AF35BCF6DD4DC1E0B0441F39CB1CA203248FD8F67266460C9BD9B35B`。
+- 源码归档基于合并提交 `5dae316f5cbd16072d985502040ff4e02f36dfa6`，
+  输出 `../source/saydian-app-global-vivo-0.1.24-source.zip`，SHA-256：
+  `C53AF8574045D207863B09CC40AE300B24229822600350CDA7B4DEC3CB885F42`。
+  ZIP CRC 校验通过，1,361 个条目；pages.dart 与 Android 构建配置在归档与
+  实际构建副本中逐字节一致（仅统一 CRLF/LF 后比较）。
+- APK 与源码校验清单：`../qa/SHA256SUMS-US-vivo-0.1.24.txt`。
+  此归档验收追加记录是纯文档，不改变已验证代码或重建安装包。
 
 ### 验收边界
 
