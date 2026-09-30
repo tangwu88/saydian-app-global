@@ -89,3 +89,11 @@ flutter run -d <connected-iphone-udid> --debug --no-pub \
 - 启动后的国际业务 API 有 `200/201` 响应；更新清单仍返回已知 `404`。本轮只验证调试启动与连接，未重复执行热重载或完整业务流程。
 - 调试会话保持运行，手机连接和解锁状态由现场继续维持。
 - 后续现场手表操作的日志先显示 `[U19Capability] BP history structure verified`，接着两次出现 `[U19Sync] daily: index=0 dayOffset=0` 与 `[U19Sync] StateError`；同一进程仍在运行。源码 `app_controller.dart` 的捕获分支会将这类错误显示为数据读取失败，本轮尚未取得堆栈或确认实际页面提示，不能计为每日数据同步通过。
+
+## 23:12 再次开启 iPhone 真机调试
+
+- 开始时上次 Flutter 会话已报告 `Lost connection to device`，设备上 `0.1.23 (1007)` 保留但对应进程未运行；iPhone 15 Pro Max 仍有线连接，分支基线 `b1b79b6`，工作树干净。
+- 以相同国际生产域名参数执行 `flutter run -d <connected-iphone-udid> --debug --no-build --no-pub`。Xcode 构建成功，耗时 `12.9s`；安装与启动耗时 `113.0s`，VM Service 发现超过 60 秒，最终文件同步耗时 `121ms`。
+- Dart VM Service 与 DevTools USB 隧道建立；设备回读安装容器 `F8256591-9B05-457F-BAD6-A6BD262B7361`，运行进程 PID `22584` 与该容器路径一致，同时存在 `debugserver`、`flutter run` 和两个 `iproxy` 进程。
+- 国际业务 API 在启动时返回 `200/201`，更新清单仍为 `404`；日志再次出现 `[U19Sync] daily: index=0 dayOffset=0` 后的 `[U19Sync] StateError`。本轮未取得堆栈、页面提示或完整同步结果，继续列为待定位。
+- 调试会话保持运行；本轮未改业务源码或重复执行热重载。
