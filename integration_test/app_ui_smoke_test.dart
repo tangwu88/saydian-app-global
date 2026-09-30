@@ -21,10 +21,23 @@ void main() {
     );
     expect(navigationBar.destinations, hasLength(3));
     expect(find.byKey(const Key('dashboard-ai-assistant')), findsOneWidget);
-    for (final entry in const ['远程关爱', '健康百科', '健康预警', '赛电商城']) {
+    for (final entry in const ['远程关爱', '健康百科', '健康预警']) {
       expect(find.text(entry), findsOneWidget, reason: '$entry 首页入口缺失');
     }
+    expect(find.text('赛电商城'), findsNothing, reason: '国际版不应显示国内商城入口');
     expect(find.text('健康数据'), findsOneWidget);
+
+    for (final entry in const ['远程关爱', '健康百科', '健康预警']) {
+      await tester.tap(find.text(entry));
+      await tester.pump(const Duration(seconds: 2));
+      expect(
+        find.byType(NavigationBar),
+        findsNothing,
+        reason: '$entry 未打开独立页面',
+      );
+      await _popRoute(tester);
+      await tester.pumpAndSettle();
+    }
 
     await tester.tap(find.byKey(const Key('dashboard-ai-ask')));
     await tester.pumpAndSettle();
@@ -42,12 +55,7 @@ void main() {
     await tester.tap(heartRate);
     await tester.pumpAndSettle();
     expect(find.text('心率分析'), findsOneWidget);
-    expect(find.text('连接支持该指标的手表后测量'), findsOneWidget);
-    expect(
-      find.byKey(const ValueKey('health-measure-heart_rate')),
-      findsNothing,
-      reason: '未连接支持设备时不应显示可执行的心率测量按钮',
-    );
+    expect(find.byType(NavigationBar), findsNothing);
     await tester.tap(find.text('周'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('月'));
@@ -70,9 +78,7 @@ void main() {
       scrollable: find.byType(Scrollable).first,
     );
     await tester.pumpAndSettle();
-    for (final sport in const ['跑步', '步行', '骑行', '徒步', '运动记录']) {
-      expect(find.text(sport), findsWidgets, reason: '$sport 健康首页入口缺失');
-    }
+    expect(find.text('运动记录'), findsWidgets);
 
     controller.selectTab(1);
     await tester.pumpAndSettle();
@@ -86,14 +92,17 @@ void main() {
 
     controller.selectTab(2);
     await tester.pumpAndSettle();
-    expect(find.byKey(const Key('my-add-device')), findsOneWidget);
-    expect(find.byKey(const Key('my-ai-question')), findsOneWidget);
+    expect(
+      find.byKey(const Key('my-add-device')),
+      controller.connectedDevice == null ? findsOneWidget : findsNothing,
+    );
+    expect(find.byKey(const Key('settings-language')), findsOneWidget);
     expect(find.text('目标设置'), findsNothing);
     await tester.ensureVisible(find.text('联系客服'));
     await tester.tap(find.text('联系客服'));
     await tester.pumpAndSettle();
-    expect(find.text('4006386738'), findsOneWidget);
-    expect(find.text('添加客服'), findsOneWidget);
+    expect(find.byKey(const Key('global-customer-service')), findsOneWidget);
+    expect(find.text('4006386738'), findsNothing);
     await _popRoute(tester);
     await tester.pumpAndSettle();
 

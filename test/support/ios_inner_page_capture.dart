@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:saydian_app/domain/models.dart';
 import 'package:saydian_app/domain/feature_models.dart';
 import 'package:saydian_app/services/api_client.dart';
@@ -103,6 +104,7 @@ void main() {
         Size(double.parse(width), double.parse(height)),
       );
       addTearDown(() => tester.binding.setSurfaceSize(null));
+      await initializeDateFormatting();
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.resetDevicePixelRatio);
       final controller =

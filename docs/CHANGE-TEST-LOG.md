@@ -12,6 +12,7 @@
 
 ## 最近记录
 
+- [2026-09-30 iPhone 15 Pro Max 逐页检查与 Debug 恢复](QA-20260930-IOS-PAGE-DEBUG.md) — 修正过期国际版真机测试断言，离线 34 页渲染检查及双时区 929 项回归通过；真机逐页自动化因 VM 通道断开未完成，缓存重建后 Flutter Debug/DevTools 恢复并保持运行。
 - [2026-09-30 U19 最新交接说明](U19-HANDOFF-20260930.md) — 固定国际 App/服务端分支、当前 QA APK、真实验收边界及下一轮安全接手顺序；交接包清单与哈希另见打包校验记录。
 - [2026-09-30 iOS U19 最新分支更新、覆盖重装与真机调试](QA-20260930-IOS-U19-LATEST-BRANCH.md) — 本地跟踪 `origin/feature/u19-eb1`；iPhone 15 Pro Max 已覆盖安装 `0.1.23 (1007)`，Dart VM Service、DevTools 与 285ms 热重载通过；22:24 新建 `flutter run` 会话并再次核对安装容器、运行进程、debugserver 与 USB 端口转发，当前保持运行。
 - [2026-09-30 U19 Android 内部 QA 包与 Git 交付](release/U19-ANDROID-QA-20260930.md) — 记录国际仓库改回 Private、JCore 动态依赖漂移与固定版本、双时区/原生/ABI 门禁、安装包哈希和真机/线上未验收边界；APK 作为私有 GitHub 预发布附件，不入源码历史。
