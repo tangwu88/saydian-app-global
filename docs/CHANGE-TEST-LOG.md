@@ -12,6 +12,7 @@
 
 ## 最近记录
 
+- [2026-09-30 U19 最新交接说明](U19-HANDOFF-20260930.md) — 固定国际 App/服务端分支、当前 QA APK、真实验收边界及下一轮安全接手顺序；交接包清单与哈希另见打包校验记录。
 - [2026-09-30 iOS U19 最新分支更新、覆盖重装与真机调试](QA-20260930-IOS-U19-LATEST-BRANCH.md) — 本地跟踪 `origin/feature/u19-eb1`；iPhone 15 Pro Max 已覆盖安装 `0.1.23 (1007)`，安装容器与运行进程一致；用户允许本地网络后，Dart VM Service、DevTools 与 285ms 热重载通过，单次通道丢失后 `flutter attach` 已恢复并保持运行。
 - [2026-09-30 U19 Android 内部 QA 包与 Git 交付](release/U19-ANDROID-QA-20260930.md) — 记录国际仓库改回 Private、JCore 动态依赖漂移与固定版本、双时区/原生/ABI 门禁、安装包哈希和真机/线上未验收边界；APK 作为私有 GitHub 预发布附件，不入源码历史。
 - [2026-09-29 U19 隔离 API 真机联调准备](U19-ISOLATED-API-PREP-20260929.md) — 本机 API 与 `/global` 路径差异、仅本机代理、隔离 Debug APK 构建及哈希；手机不在 ADB 列表，安装、真实日汇总上传/回读未执行。
