@@ -60,3 +60,13 @@ flutter run -d <connected-iphone-udid> --debug --no-pub \
 - 随后在 Xcode 打开 `ios/Runner.xcworkspace`，Run 目标为 `Runner / iPhone15pm`。Xcode 状态实核为 `Running Runner on iPhone15pm`，设备同时存在 `debugserver`。
 - 设备应用列表实核安装版本仍为 `0.1.23 (1007)`，安装容器为 `8DDB4F56-078C-48E5-81EB-62057E4437EC`；运行进程 PID `21891` 的路径与该容器完全一致。
 - 结论：**覆盖重装、签名、版本回读、Xcode/LLDB 有线真机调试均通过，调试会话保持运行。** Flutter VM Service/热重载仍受此前手机“本地网络”权限状态影响，本轮不把 Xcode 调试通过扩大为热重载通过。
+
+## 21:22 本地网络授权后 Flutter 热重载复验
+
+- 用户在 iPhone 允许本地网络访问后，Xcode 控制台不再出现 `FlutterDartVMServicePublisher` 权限拒绝，并确认 `0.1.23 (1007)` 的 Dart VM Service 已监听。
+- 首次切换到 `flutter run` 时，生成态 `.flutter-plugins-dependencies` 只列出部分插件，`pod install` 因此临时缩减 `Podfile.lock`，Xcode 构建失败。执行 `flutter pub get` 和 `cd ios && pod install` 后恢复完整的 15 个 iOS 插件，`Podfile.lock` 回到已提交状态；未手工改依赖或业务源码。
+- 第二次 `flutter run` 的 Xcode 构建成功，耗时 `99.7s`；安装与启动后，Flutter 超过 60 秒才发现服务，最终完成文件同步并建立 VM Service 与 DevTools 的本机 USB 隧道。
+- 执行热重载成功：`Reloaded 0 libraries in 285ms`。随后调试通道短暂丢失，但设备仍连接，App 进程未退出。
+- 使用 `flutter attach -d <connected-iphone-udid>` 重新连接成功，文件同步耗时 `8.2s`，VM Service/DevTools 隧道重新建立；持续观察 15 秒未再断开，当前调试会话保持运行。
+- 设备再次回读为 `cn.saydian.app.global`、`0.1.23 (1007)`；安装容器 `F465D2B0-231C-4161-897B-7743EA5292A1` 与运行进程 PID `21958` 路径一致，主机存在对应 `flutter attach` 与 `iproxy` 进程。
+- 结论：**本地网络授权生效，Dart VM Service、DevTools 和热重载均已真机通过。** 首次热重载后的单次 USB 调试通道丢失已如实保留，不扩大为长期稳定性通过。
