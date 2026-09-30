@@ -70,3 +70,12 @@ flutter run -d <connected-iphone-udid> --debug --no-pub \
 - 使用 `flutter attach -d <connected-iphone-udid>` 重新连接成功，文件同步耗时 `8.2s`，VM Service/DevTools 隧道重新建立；持续观察 15 秒未再断开，当前调试会话保持运行。
 - 设备再次回读为 `cn.saydian.app.global`、`0.1.23 (1007)`；安装容器 `F465D2B0-231C-4161-897B-7743EA5292A1` 与运行进程 PID `21958` 路径一致，主机存在对应 `flutter attach` 与 `iproxy` 进程。
 - 结论：**本地网络授权生效，Dart VM Service、DevTools 和热重载均已真机通过。** 首次热重载后的单次 USB 调试通道丢失已如实保留，不扩大为长期稳定性通过。
+
+## 22:24 新真机调试会话
+
+- 上一轮 Flutter 会话已断开，但 iPhone 15 Pro Max 仍有线连接，设备上保留 `cn.saydian.app.global` 的 `0.1.23 (1007)`。
+- 以相同国际生产域名参数执行 `flutter run -d <connected-iphone-udid> --debug --no-build --no-pub`；Xcode 增量构建成功，耗时 `17.0s`。
+- 安装和启动阶段耗时 `103.6s`，其中 Dart VM Service 发现超过 60 秒；最终设备文件同步耗时 `127ms`，VM Service 与 DevTools 的本机 USB 隧道均建立成功。
+- 设备回读安装容器为 `C42033DF-1238-42F3-B0ED-A4A32505CFF3`，运行进程 PID `22282` 与该容器路径一致；`debugserver`、`flutter run` 和两个 `iproxy` 端口转发进程同时存在。
+- 启动日志中业务 API 返回 `200/201`；国际更新清单仍返回已知 `404`，不影响调试连接，但不记作更新能力通过。
+- 连续观察 10 秒未断开。本轮按用户要求保持 Flutter 真机调试会话运行，未重复触发已在上一轮通过的热重载。
