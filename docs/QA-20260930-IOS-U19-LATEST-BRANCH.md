@@ -88,3 +88,4 @@ flutter run -d <connected-iphone-udid> --debug --no-pub \
 - 设备安装容器为 `C00B0671-48FB-4B34-9261-070194D6E313`，运行进程 PID `22568` 与该容器路径一致；同时核对到 `debugserver`、`flutter run` 和两个 `iproxy` 进程。
 - 启动后的国际业务 API 有 `200/201` 响应；更新清单仍返回已知 `404`。本轮只验证调试启动与连接，未重复执行热重载或完整业务流程。
 - 调试会话保持运行，手机连接和解锁状态由现场继续维持。
+- 后续现场手表操作的日志先显示 `[U19Capability] BP history structure verified`，接着两次出现 `[U19Sync] daily: index=0 dayOffset=0` 与 `[U19Sync] StateError`；同一进程仍在运行。源码 `app_controller.dart` 的捕获分支会将这类错误显示为数据读取失败，本轮尚未取得堆栈或确认实际页面提示，不能计为每日数据同步通过。
