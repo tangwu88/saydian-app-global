@@ -12,7 +12,7 @@
 
 ## 最近记录
 
-- [2026-09-30 iOS 真机 Debug 启动](QA-20260930-IOS-DEBUG-START.md) — 国际版 `cn.saydian.app.global` 在 iPhone 15 Pro Max 完成 Debug 构建、开发签名、安装与启动；Dart VM Service、DevTools 和 760ms 热重载通过，更新清单 404 与一次系统键盘约束警告如实保留，Profile 独立冷启动、账号、手表、APNs 与业务流程未扩大验收。
+- [2026-09-30 iOS 真机 Debug 启动](QA-20260930-IOS-DEBUG-START.md) — 国际版 `cn.saydian.app.global` 在 iPhone 15 Pro Max 完成 Debug 构建、开发签名、安装与启动；首次及同机恢复均连接 Dart VM/DevTools，最终 267ms 热重载通过。Archives 窗口、服务发布权限、更新清单 404 与键盘约束警告如实保留，Profile 独立冷启动、账号、手表、APNs 与业务流程未扩大验收。
 - [2026-09-13 国际商城账号、推广与 App 支付隔离](INTERNATIONAL-COMMERCE-AUTH-REFERRAL-PAYMENT-20260913.md) — 原生支付只接受独立 App 配置，客户端结果不冒充到账；双时区各 841 项、域名 37 项、Android 原生 16 项及 Debug/QA Release 构建通过，真实交易和真机支付回跳仍明确未验收。
 - [2026-09-13 国际 App 商城与 H5 能力对齐](INTERNATIONAL-COMMERCE-PARITY-20260913.md) — 源码、双时区 837 项、服务端 755 项、域名 37 项及 Debug/QA Release 构建已完成；华为手机拒绝 USB 安装，待开启手机端安装权限后做冷启动验收；仍未推送或发布。
 - [2026-09-12 Android 真机 Debug 启动](QA-20260912-ANDROID-DEBUG-START.md) — 从最新干净 `main` 以 `app.saydian.cn` 配置覆盖安装并保持 Flutter Debug；登录和手表自动连接恢复、当前进程无崩溃，国际更新清单 404、闭源 SDK Debug 原始日志和单次启动跳帧继续明确记录。

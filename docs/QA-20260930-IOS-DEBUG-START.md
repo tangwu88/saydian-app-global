@@ -62,3 +62,13 @@ flutter run -d <connected-iphone-udid> --debug --no-pub \
 - 已通过：国际版 Debug 编译、开发签名、真机安装、启动、进程存活、Dart VM Service、DevTools 和热重载。
 - 未执行：Profile 独立冷启动、三次桌面启动、APNs、真实登录、手表连接/同步、健康数据、支付、完整自动测试与发布构建矩阵。
 - 当前 `flutter run` 必须保持运行才能继续 Debug；退出该进程后 Debug App 不作为独立桌面启动验收。
+
+## 20:19–20:38 同机恢复记录
+
+- 用户确认继续使用 iPhone 15 Pro Max。先执行 `fetch --prune` 与 `pull --ff-only origin main`；本地和远端均为 `72a31f1`，没有新提交，也没有生成空提交。
+- 第一次恢复时 Debug 编译成功，但 Xcode 自动化返回 `Failed to find project Runner: 不能获取对象`。检查发现 Xcode 活动窗口停在 Archives，而不是 `Runner.xcworkspace`。
+- 打开正确工作区后，Scheme 为 `Runner`、目标为 `iPhone15pm`。Xcode 直接 Run 可完成安装并显示 `Running Runner on iPhone15pm`，证明项目、签名、设备和原生调试器可用。
+- Xcode 控制台确认 Dart JIT VM 在设备端监听，但 iOS 拒绝 `FlutterDartVMServicePublisher` 的本地网络服务发布；外部 `flutter attach` 因此无法自动发现。本轮没有擅自修改手机隐私权限。
+- 停止该临时会话后，仅删除本轮可重建的 Runner DerivedData、ModuleCache 和一个旧 Runner DerivedData；源码、Pods、`build/ios`、签名及手机数据均保留。
+- 保持 Runner 工作区为活动窗口后重跑原 `flutter run`：Xcode 构建 `69.5s`，安装/启动 `95.1s`，Dart VM Service 与 DevTools 连接成功。
+- 最终热重载：`Reloaded 0 libraries in 267ms`。国际更新清单仍返回 HTTP `404`，与首次记录一致；Debug 会话保持运行。
