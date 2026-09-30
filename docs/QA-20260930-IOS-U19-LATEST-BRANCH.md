@@ -48,3 +48,15 @@ flutter run -d <connected-iphone-udid> --debug --no-pub \
 - 已停止无结果的等待，没有卸载 App、清除数据、改变 Bundle ID 或绕过手机隐私设置。
 - 结论：**最新线上功能分支已更新并安装成功；真机 Flutter Debug/热重载尚未通过。**
 - 下一步需要在 iPhone 打开“设置 → 隐私与安全性 → 本地网络 → SAYDIAN Health”，再重新执行 `flutter run` 并验证 VM Service 与热重载。
+
+## 21:13 覆盖重装与 Xcode 有线调试复验
+
+- 复验前 `feature/u19-eb1` 与 `origin/feature/u19-eb1` 一致，基线为 `c4bbb58faccc73b301cfbcfd6728c90109144641`；没有修改业务源码。
+- 使用相同生产国际域名参数执行 `flutter build ios --debug --no-pub`，Xcode 构建成功，耗时 `42.8s`。
+- `codesign --verify --deep --strict` 通过；产物标识为 `cn.saydian.app.global`、版本 `0.1.23 (1007)`、团队 `W7SXQ4A226`，并带 `get-task-allow=true`。
+- `devicectl device install app` 对 iPhone 15 Pro Max 执行覆盖安装成功；未卸载 App、未清除手机数据、未改变 Bundle ID。
+- 直接从 `devicectl` 独立启动 Debug 包时，应用按 Flutter 限制明确终止并提示必须由 Flutter 工具或 Xcode 启动；该结果不能记作桌面独立启动通过。
+- 为检查独立启动路径，尝试 Profile 构建；Xcode 因未登录开发者账号，且现有通配 Provisioning Profile 不包含 Push Notifications 与 Associated Domains 能力而拒绝签名。没有删除 entitlement 或降级能力绕过门禁。
+- 随后在 Xcode 打开 `ios/Runner.xcworkspace`，Run 目标为 `Runner / iPhone15pm`。Xcode 状态实核为 `Running Runner on iPhone15pm`，设备同时存在 `debugserver`。
+- 设备应用列表实核安装版本仍为 `0.1.23 (1007)`，安装容器为 `8DDB4F56-078C-48E5-81EB-62057E4437EC`；运行进程 PID `21891` 的路径与该容器完全一致。
+- 结论：**覆盖重装、签名、版本回读、Xcode/LLDB 有线真机调试均通过，调试会话保持运行。** Flutter VM Service/热重载仍受此前手机“本地网络”权限状态影响，本轮不把 Xcode 调试通过扩大为热重载通过。
