@@ -41,6 +41,9 @@ allprojects {
             force("androidx.test:runner:1.3.0")
             force("androidx.test:rules:1.2.0")
             force("androidx.test.espresso:espresso-core:3.3.0")
+            // JPush 6.2.0 requests a dynamic JCore version. Keep the
+            // previously audited ABI exception reproducible across builds.
+            force("cn.jiguang.sdk:jcore:5.5.2")
         }
     }
 }
