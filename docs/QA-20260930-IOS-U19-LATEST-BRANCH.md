@@ -79,3 +79,12 @@ flutter run -d <connected-iphone-udid> --debug --no-pub \
 - 设备回读安装容器为 `C42033DF-1238-42F3-B0ED-A4A32505CFF3`，运行进程 PID `22282` 与该容器路径一致；`debugserver`、`flutter run` 和两个 `iproxy` 端口转发进程同时存在。
 - 启动日志中业务 API 返回 `200/201`；国际更新清单仍返回已知 `404`，不影响调试连接，但不记作更新能力通过。
 - 连续观察 10 秒未断开。本轮按用户要求保持 Flutter 真机调试会话运行，未重复触发已在上一轮通过的热重载。
+
+## 23:00 重新开启 iPhone 真机调试
+
+- 开始时 `feature/u19-eb1@2c625e7` 与远端一致，工作树干净；iPhone 15 Pro Max 有线连接，设备上的 `cn.saydian.app.global` 为 `0.1.23 (1007)`，先前的 Flutter 调试会话已结束。
+- 以相同国际生产域名参数执行 `flutter run -d <connected-iphone-udid> --debug --no-build --no-pub`；Xcode 构建成功，耗时 `13.6s`。
+- 安装与启动阶段耗时 `124.0s`，VM Service 发现超过 60 秒，最终文件同步耗时 `114ms`，Dart VM Service 与 DevTools USB 隧道建立成功。
+- 设备安装容器为 `C00B0671-48FB-4B34-9261-070194D6E313`，运行进程 PID `22568` 与该容器路径一致；同时核对到 `debugserver`、`flutter run` 和两个 `iproxy` 进程。
+- 启动后的国际业务 API 有 `200/201` 响应；更新清单仍返回已知 `404`。本轮只验证调试启动与连接，未重复执行热重载或完整业务流程。
+- 调试会话保持运行，手机连接和解锁状态由现场继续维持。
