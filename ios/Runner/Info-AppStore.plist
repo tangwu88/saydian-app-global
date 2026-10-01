@@ -24,38 +24,8 @@
 	<string>????</string>
 	<key>CFBundleVersion</key>
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
-	<key>CFBundleURLTypes</key>
-	<array>
-		<dict>
-			<key>CFBundleTypeRole</key>
-			<string>Editor</string>
-			<key>CFBundleURLName</key>
-			<string>cn.saydian.app.global.payment.wechat</string>
-			<key>CFBundleURLSchemes</key>
-			<array>
-				<string>$(SAIDIAN_WECHAT_APP_ID)</string>
-			</array>
-		</dict>
-		<dict>
-			<key>CFBundleTypeRole</key>
-			<string>Editor</string>
-			<key>CFBundleURLName</key>
-			<string>cn.saydian.app.global.payment.alipay</string>
-			<key>CFBundleURLSchemes</key>
-			<array>
-				<string>$(SAIDIAN_ALIPAY_URL_SCHEME)</string>
-			</array>
-		</dict>
-	</array>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
-	<key>LSApplicationQueriesSchemes</key>
-	<array>
-		<string>weixin</string>
-		<string>weixinULAPI</string>
-		<string>alipay</string>
-		<string>alipayshare</string>
-	</array>
 	<key>NSBluetoothAlwaysUsageDescription</key>
 	<string>Connect to your watch and sync health data you choose to share.</string>
 	<key>NSBluetoothPeripheralUsageDescription</key>
@@ -70,12 +40,6 @@
 	<string>Choose photos for your watch face.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>Save photos taken with the camera remote.</string>
-	<key>SaidianAlipayUrlScheme</key>
-	<string>$(SAIDIAN_ALIPAY_URL_SCHEME)</string>
-	<key>SaidianWechatAppId</key>
-	<string>$(SAIDIAN_WECHAT_APP_ID)</string>
-	<key>SaidianWechatUniversalLink</key>
-	<string>$(SAIDIAN_WECHAT_UNIVERSAL_LINK)</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>bluetooth-central</string>

@@ -7,6 +7,7 @@ import base64
 import importlib.util
 import json
 import os
+import plistlib
 import subprocess
 import tempfile
 import textwrap
@@ -634,50 +635,68 @@ class XcodeReleaseBuildGateTest(unittest.TestCase):
             {
                 "CONFIGURATION": "Release",
                 "SAIDIAN_PRODUCTION_RELEASE": "true",
-                "JPUSH_APP_KEY": "test-app-key",
-                "PRODUCT_BUNDLE_IDENTIFIER": "cc.saidian.app",
-                "APS_ENVIRONMENT": "production",
+                "PRODUCT_BUNDLE_IDENTIFIER": "cn.saydian.app.global",
+                "TARGETED_DEVICE_FAMILY": "1",
+                "INFOPLIST_FILE": "Runner/Info-AppStore.plist",
+                "CODE_SIGN_ENTITLEMENTS": "Runner/RunnerAppStore.entitlements",
                 "SAIDIAN_DEVELOPMENT_TEAM": "TESTTEAM",
                 "SAIDIAN_CODE_SIGN_IDENTITY": "Apple Distribution",
-                "SAIDIAN_PROVISIONING_PROFILE_SPECIFIER": "Test Ad Hoc",
-                "SAYDIAN_API_BASE_URL": "https://api.example.invalid",
-                "SAYDIAN_UPDATE_MANIFEST_URL":
-                    "https://downloads.example.invalid/app-update.json",
-                "SAYDIAN_UPDATE_ALLOWED_HOSTS":
-                    "downloads.example.invalid,apps.apple.com",
-                "SAIDIAN_WECHAT_APP_ID": "wx1234567890abcdef",
-                "SAIDIAN_WECHAT_UNIVERSAL_LINK":
-                    "https://pay.example.invalid/wechat/",
-                "SAIDIAN_WECHAT_UNIVERSAL_LINK_HOST": "pay.example.invalid",
-                "SAIDIAN_ALIPAY_URL_SCHEME": "cc.saidian.app.alipay",
+                "SAIDIAN_PROVISIONING_PROFILE_SPECIFIER": "Global App Store",
+                "SAYDIAN_API_BASE_URL": "https://app.saydian.cn",
             }
         )
         self.assertEqual(0, complete.returncode, complete.stderr)
 
-    def test_production_release_rejects_inconsistent_payment_configuration(self) -> None:
+    def test_production_release_rejects_domestic_or_unapproved_configuration(self) -> None:
         environment = {
             "CONFIGURATION": "Release",
             "SAIDIAN_PRODUCTION_RELEASE": "true",
-            "JPUSH_APP_KEY": "test-app-key",
-            "PRODUCT_BUNDLE_IDENTIFIER": "cc.saidian.app",
-            "APS_ENVIRONMENT": "production",
+            "PRODUCT_BUNDLE_IDENTIFIER": "cn.saydian.app.global",
+            "TARGETED_DEVICE_FAMILY": "1",
+            "INFOPLIST_FILE": "Runner/Info-AppStore.plist",
+            "CODE_SIGN_ENTITLEMENTS": "Runner/RunnerAppStore.entitlements",
             "SAIDIAN_DEVELOPMENT_TEAM": "TESTTEAM",
             "SAIDIAN_CODE_SIGN_IDENTITY": "Apple Distribution",
-            "SAIDIAN_PROVISIONING_PROFILE_SPECIFIER": "Test Ad Hoc",
-            "SAYDIAN_API_BASE_URL": "https://api.example.invalid",
-            "SAYDIAN_UPDATE_MANIFEST_URL":
-                "https://downloads.example.invalid/app-update.json",
-            "SAYDIAN_UPDATE_ALLOWED_HOSTS":
-                "downloads.example.invalid,apps.apple.com",
-            "SAIDIAN_WECHAT_APP_ID": "wx1234567890abcdef",
-            "SAIDIAN_WECHAT_UNIVERSAL_LINK":
-                "https://wrong.example.invalid/wechat/",
-            "SAIDIAN_WECHAT_UNIVERSAL_LINK_HOST": "pay.example.invalid",
-            "SAIDIAN_ALIPAY_URL_SCHEME": "cc.saidian.app.alipay",
+            "SAIDIAN_PROVISIONING_PROFILE_SPECIFIER": "Global App Store",
+            "SAYDIAN_API_BASE_URL": "https://app.saydian.cn",
         }
-        result = self.run_gate(environment)
-        self.assertNotEqual(0, result.returncode)
-        self.assertIn("must match its host", result.stderr)
+        for override in (
+            {"PRODUCT_BUNDLE_IDENTIFIER": "cc.saidian.app"},
+            {"SAYDIAN_API_BASE_URL": "https://api.example.invalid"},
+            {"JPUSH_APP_KEY": "unapproved"},
+            {"TARGETED_DEVICE_FAMILY": "1,2"},
+            {"INFOPLIST_FILE": "Runner/Info.plist"},
+            {"CODE_SIGN_ENTITLEMENTS": "Runner/Runner.entitlements"},
+            {"SAYDIAN_UPDATE_MANIFEST_URL":
+                "https://app.saidian.cc/app-update.json"},
+        ):
+            with self.subTest(override=override):
+                result = self.run_gate(environment | override)
+                self.assertNotEqual(0, result.returncode)
+
+    def test_app_store_metadata_excludes_unconfigured_providers_and_ipad(self) -> None:
+        root = HERE.parent.parent
+        project = (root / "ios/Runner.xcodeproj/project.pbxproj").read_text()
+        self.assertEqual(3, project.count("TARGETED_DEVICE_FAMILY = 1;"))
+        self.assertNotIn('TARGETED_DEVICE_FAMILY = "1,2";', project)
+        self.assertIn("INFOPLIST_FILE = Runner/Info-AppStore.plist;", project)
+        self.assertIn(
+            "CODE_SIGN_ENTITLEMENTS = Runner/RunnerAppStore.entitlements;",
+            project,
+        )
+        with (root / "ios/Runner/Info-AppStore.plist").open("rb") as source:
+            info = plistlib.load(source)
+        for key in (
+            "CFBundleURLTypes",
+            "LSApplicationQueriesSchemes",
+            "SaidianWechatAppId",
+            "SaidianWechatUniversalLink",
+            "SaidianAlipayUrlScheme",
+            "UISupportedInterfaceOrientations~ipad",
+        ):
+            self.assertNotIn(key, info)
+        with (root / "ios/Runner/RunnerAppStore.entitlements").open("rb") as source:
+            self.assertEqual({}, plistlib.load(source))
 
     def test_release_rejects_ambiguous_or_misspelled_modes(self) -> None:
         ambiguous = self.run_gate(

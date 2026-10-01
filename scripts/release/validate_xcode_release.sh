@@ -34,13 +34,19 @@ if [ "$qa_release" = "true" ]; then
   exit 0
 fi
 
-if [ "${PRODUCT_BUNDLE_IDENTIFIER:-}" != "cc.saidian.app" ]; then
-  echo "error: Production iOS Release requires PRODUCT_BUNDLE_IDENTIFIER=cc.saidian.app." >&2
+if [ "${PRODUCT_BUNDLE_IDENTIFIER:-}" != "cn.saydian.app.global" ]; then
+  echo "error: Production iOS Release requires PRODUCT_BUNDLE_IDENTIFIER=cn.saydian.app.global." >&2
   exit 1
 fi
 
-if [ "${APS_ENVIRONMENT:-}" != "production" ]; then
-  echo "error: Production iOS Release requires APS_ENVIRONMENT=production." >&2
+if [ "${TARGETED_DEVICE_FAMILY:-}" != "1" ]; then
+  echo "error: Production iOS Release must target iPhone only." >&2
+  exit 1
+fi
+
+if [ "${INFOPLIST_FILE:-}" != "Runner/Info-AppStore.plist" ] || \
+   [ "${CODE_SIGN_ENTITLEMENTS:-}" != "Runner/RunnerAppStore.entitlements" ]; then
+  echo "error: Production iOS Release requires the payment- and push-free App Store plist and entitlements." >&2
   exit 1
 fi
 
@@ -56,66 +62,27 @@ require_value() {
   fi
 }
 
-require_https() {
-  case "$2" in
-    https://*) ;;
-    *)
-      echo "error: Production iOS Release requires HTTPS $1." >&2
-      exit 1
-      ;;
-  esac
-}
-
-require_value JPUSH_APP_KEY "${JPUSH_APP_KEY:-}"
 require_value SAIDIAN_DEVELOPMENT_TEAM "${SAIDIAN_DEVELOPMENT_TEAM:-}"
 require_value SAIDIAN_CODE_SIGN_IDENTITY "${SAIDIAN_CODE_SIGN_IDENTITY:-}"
 require_value SAIDIAN_PROVISIONING_PROFILE_SPECIFIER \
   "${SAIDIAN_PROVISIONING_PROFILE_SPECIFIER:-}"
-require_value SAYDIAN_UPDATE_ALLOWED_HOSTS "${SAYDIAN_UPDATE_ALLOWED_HOSTS:-}"
-require_https SAYDIAN_API_BASE_URL "${SAYDIAN_API_BASE_URL:-}"
-require_https SAYDIAN_UPDATE_MANIFEST_URL "${SAYDIAN_UPDATE_MANIFEST_URL:-}"
-require_value SAIDIAN_WECHAT_APP_ID "${SAIDIAN_WECHAT_APP_ID:-}"
-require_value SAIDIAN_WECHAT_UNIVERSAL_LINK \
-  "${SAIDIAN_WECHAT_UNIVERSAL_LINK:-}"
-require_value SAIDIAN_WECHAT_UNIVERSAL_LINK_HOST \
-  "${SAIDIAN_WECHAT_UNIVERSAL_LINK_HOST:-}"
-require_value SAIDIAN_ALIPAY_URL_SCHEME "${SAIDIAN_ALIPAY_URL_SCHEME:-}"
-
-if ! printf '%s' "$SAIDIAN_WECHAT_APP_ID" | grep -Eq '^wx[0-9A-Za-z]{8,}$'; then
-  echo "error: SAIDIAN_WECHAT_APP_ID is not a valid WeChat AppID." >&2
-  exit 1
-fi
-
-if ! printf '%s' "$SAIDIAN_WECHAT_UNIVERSAL_LINK_HOST" | \
-  grep -Eq '^[A-Za-z0-9]([A-Za-z0-9.-]*[A-Za-z0-9])?$'; then
-  echo "error: SAIDIAN_WECHAT_UNIVERSAL_LINK_HOST is invalid." >&2
-  exit 1
-fi
-
-require_https SAIDIAN_WECHAT_UNIVERSAL_LINK \
-  "$SAIDIAN_WECHAT_UNIVERSAL_LINK"
-case "$SAIDIAN_WECHAT_UNIVERSAL_LINK" in
-  *\?*|*\#*)
-    echo "error: WeChat Universal Link cannot contain a query or fragment." >&2
-    exit 1
-    ;;
-  "https://$SAIDIAN_WECHAT_UNIVERSAL_LINK_HOST/"|\
-  "https://$SAIDIAN_WECHAT_UNIVERSAL_LINK_HOST/"*/)
-    ;;
+case "${SAYDIAN_API_BASE_URL:-}" in
+  https://app.saydian.cn|https://app.saydian.cn/) ;;
   *)
-    echo "error: WeChat Universal Link must match its host and end with /." >&2
+    echo "error: Production iOS Release requires the approved global API origin." >&2
     exit 1
     ;;
 esac
 
-if ! printf '%s' "$SAIDIAN_ALIPAY_URL_SCHEME" | \
-  grep -Eq '^[A-Za-z][A-Za-z0-9+.-]*$'; then
-  echo "error: SAIDIAN_ALIPAY_URL_SCHEME is invalid." >&2
+if [ -n "${JPUSH_APP_KEY:-}" ]; then
+  echo "error: International App Store MVP must not activate unconfigured JPush." >&2
   exit 1
 fi
-case "$SAIDIAN_ALIPAY_URL_SCHEME" in
-  *unconfigured*)
-    echo "error: SAIDIAN_ALIPAY_URL_SCHEME is not configured." >&2
+
+case "${SAYDIAN_UPDATE_MANIFEST_URL:-}" in
+  ""|https://app.saydian.cn/global/*) ;;
+  *)
+    echo "error: Optional update manifest must remain under the global service." >&2
     exit 1
     ;;
 esac

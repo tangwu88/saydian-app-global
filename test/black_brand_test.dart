@@ -24,5 +24,6 @@ void main() {
       SaydianColors.brandRed,
     );
     expect(showSaydianMall, isFalse);
+    expect(showPaidHealthProfile, isFalse);
   });
 }

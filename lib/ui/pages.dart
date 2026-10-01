@@ -8435,12 +8435,13 @@ class _MyServicesGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final entries = <({String label, IconData icon, Color color, Widget page})>[
-      (
-        label: context.l10n.healthProfile,
-        icon: Icons.assignment_ind_outlined,
-        color: SaydianColors.sky,
-        page: HealthProfilePage(controller: controller),
-      ),
+      if (showPaidHealthProfile)
+        (
+          label: context.l10n.healthProfile,
+          icon: Icons.assignment_ind_outlined,
+          color: SaydianColors.sky,
+          page: HealthProfilePage(controller: controller),
+        ),
       (
         label: context.l10n.accountSettings,
         icon: Icons.manage_accounts_outlined,
