@@ -698,6 +698,17 @@ class XcodeReleaseBuildGateTest(unittest.TestCase):
         with (root / "ios/Runner/RunnerAppStore.entitlements").open("rb") as source:
             self.assertEqual({}, plistlib.load(source))
 
+    def test_localized_iphone_icon_names_match_new_app(self) -> None:
+        runner = HERE.parent.parent / "ios/Runner"
+        locales = {"en", "zh-Hans", "zh-Hant", "de", "fr", "es", "ja", "ko"}
+        actual = {path.parent.name.removesuffix(".lproj") for path in runner.glob("*.lproj/InfoPlist.strings")}
+        self.assertEqual(locales, actual)
+        for locale in locales:
+            with self.subTest(locale=locale):
+                content = (runner / f"{locale}.lproj/InfoPlist.strings").read_text(encoding="utf-8")
+                self.assertIn('"CFBundleDisplayName" = "SAYDIAN Health";', content)
+                self.assertNotIn('"CFBundleDisplayName" = "Saydian";', content)
+
     def test_release_rejects_ambiguous_or_misspelled_modes(self) -> None:
         ambiguous = self.run_gate(
             {
