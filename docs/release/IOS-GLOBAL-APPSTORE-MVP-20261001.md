@@ -65,3 +65,18 @@
 - 在独立工作树扩展现有离线 Flutter 页面截图工具，以英语（美国）、1284 × 2778 像素渲染未改动的国际版 Health 首页；使用合成 `SAYDIAN User` 与无手表/无健康读数状态，不访问生产账号或接口。先发现图片异步加载导致品牌图标空白，增加预缓存后目标测试通过并重新渲染。最终无 alpha 的 JPEG 为 [ios-global-health-home-en-65.jpg](assets/ios-global-health-home-en-65.jpg)，SHA-256 `9dbcf13dbe3e5fc67f19f47e0d67c9643fea59279c5f25c2cb2b137e214deddd`。首次空白图标版已从 App Store Connect 移除；刷新后确认只有修正版，6.5 英寸 iPhone 截图为 1/10。未上传实机个人健康数据。
 - Apple“添加以供审核”最新校验不再报告缺截图，只列三项：必须选择构建、具有“管理”职能的用户填写 App 隐私信息、填写正式隐私政策 URL。现网 `/global/api/saydian-app/v2/auth/capabilities?locale=en` 仍返回 `consentVersion=global-qa-2026-09-10`；对应英文政策标题仍为 `Saydian Global Pre-release Privacy Notice` 且正文称 test service，不可冒充正式上架政策。客户端不填写或发布未经核实的法律与隐私声明。
 - 已把现网能力和政策版本回读交给现有“导入-app服务端”任务复核；其中 `login.email=false` 不能单独推断邮箱密码登录失败，须按前述服务端实现与端到端复测判断。App Store 审核账号当前字段未被本轮验证为可登录账号。
+
+## 18:50 二次送审候选准备
+
+- 原因：1010 在 Xcode Organizer 显示已上传但超过六小时仍未进入 TestFlight，无法被 App Store 版本选择；Apple 状态日志唯一上传警告为 iOS 13 最低版本将在 2027 年 4 月后不再符合要求。为避免将未来兼容警告带入新的候选构建，准备独立的 1011。
+- 修改：`pubspec.yaml` 从 `1.0.0+1009` 调整为 `1.0.0+1011`；`ios/Runner.xcodeproj/project.pbxproj` 的 Debug、Profile、Release 最低 iOS 版本统一由 13.0 提升至 15.0。该修改不改变业务、API、健康算法、权限声明、设备协议或数据模型。
+- 构建环境：共享磁盘曾仅余约 1.5 GiB；已确认没有运行中的 Flutter、Dart 或 Xcode 构建进程后执行 `flutter clean`，只删除该 worktree 可重建的 `build/`、`.dart_tool/` 和 Flutter 生成配置。Xcode 已签名归档和 IPA 均保留。首次 `flutter pub get` 无网络套接字且持续无输出，已对两个精确 PID 正常终止；未修改依赖锁或源文件，后续将以离线依赖恢复和真实构建结果续记。
+- 待验证：恢复依赖后执行静态检查、iOS 发行归档、签名/设备族/版本回读及 iPhone 原位安装。1011 只有在 Apple TestFlight 出现后才可选作送审构建；正式英文条款、隐私政策、准确 App Privacy 问卷和可登录审核账号仍是独立提交门槛，不能由本构建替代。
+
+## 20:24—20:39 1011 构建、复测与设备启动
+
+- 依赖恢复：`flutter clean` 后首次在线 `flutter pub get` 在 Gitee `yc_product_plugin` 镜像阶段无进展；精确锁定提交 `5ca3050d7170509d386f548fcae7d5f8b457febf` 已完整下载至 Pub 临时镜像，复用该镜像恢复同一提交的本机缓存。离线解析先报缺 `sqflite_common_ffi`，仅补回锁定的 `2.4.2+1` 后再次离线解析报缺 `flutter_lints`；最终正常 `flutter pub get` 恢复既有锁定依赖，未升级依赖。`cd ios && pod install` 成功恢复 24 个 Pod，`Podfile.lock` 无 Git 改动。
+- 静态与回归：`flutter analyze --no-pub` 通过；`python3 scripts/release/test_release_gate.py` 23/23 通过，`git diff --check` 通过；`TMPDIR=/private/tmp flutter test --no-pub --reporter compact` 在 1 分 59 秒后 934/934 通过。测试末尾有关已审健康分析文档版本变更的 `FormatException` 是覆盖拒绝路径的预期输出，最终退出码为 0。
+- 发行归档：执行 `SAIDIAN_PRODUCTION_RELEASE=true SAIDIAN_ALLOW_QA_RELEASE=false SAYDIAN_API_BASE_URL=https://app.saydian.cn flutter build ipa --release --no-pub --export-options-plist=ios/ExportOptions-AppStore.plist --dart-define=SAYDIAN_API_BASE_URL=https://app.saydian.cn` 成功。App Store IPA 为 `build/ios/ipa/SAYDIAN Health.ipa`，SHA-256 `311015c76a8303f4fd8596ba3957a8e1430b899196ed6c45cde662b160bfb6bf`。归档和 IPA 回读为 `cn.saydian.app.global`、`1.0.0 (1011)`、`UIDeviceFamily=[1]`、`arm64`、`MinimumOSVersion=15.0`，以 `Apple Distribution: Xuewu Tang (W7SXQ4A226)` 签名，`codesign --verify --deep --strict` 通过。没有出现原先 Apple 上传状态日志中的 iOS 13 最低版本警告；SPM 兼容与 WeChat SDK 模拟器 arm64 提示仍为上游依赖的未来兼容提示。
+- 真机：同一归档导出 `build/ios/adhoc-iphone15pm-1011/SAYDIAN Health.ipa` 成功，SHA-256 `9eb00127c8b51cc6702944b4020586f43d09371bd4fe672f9d43de8e0434be50`。连接的 iPhone 15 Pro Max（`A3DC94EA-18E8-52EB-B953-60133E11D071`）原位安装后列出 `SAYDIAN Health 1.0.0 (1011)`；`devicectl device process launch` 成功，运行进程存在。此为安装和启动验证，不等同完整 BLE、推送、服务端或 Apple 审核验收。
+- 审核资料草案：新增 `GLOBAL-TERMS-20261001.md` 与 `GLOBAL-PRIVACY-NOTICE-20261001.md`。内容按实际实现限定在账号、穿戴设备与健康同步、可选定位天气、明确选择的头像/反馈上传、可选推送与本地蓝牙/相机/照片/联系人功能；不作医疗诊断、零数据收集、零第三方或无条件数据删除承诺。草案尚未标为服务端已审或已发布，也没有改动线上 `global-qa-2026-09-10` 文档。
