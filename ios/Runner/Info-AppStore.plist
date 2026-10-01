@@ -30,6 +30,8 @@
 	<string>Connect to your watch and sync health data you choose to share.</string>
 	<key>NSBluetoothPeripheralUsageDescription</key>
 	<string>Connect to your watch and sync health data you choose to share.</string>
+	<key>NSAppleMusicUsageDescription</key>
+	<string>Access your music library only when you choose music controls on a compatible watch.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>Take photos and set photo watch faces.</string>
 	<key>NSContactsUsageDescription</key>
@@ -40,6 +42,8 @@
 	<string>Choose photos for your watch face.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>Save photos taken with the camera remote.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Recognize spoken commands only when you choose a voice feature on a compatible watch.</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>bluetooth-central</string>

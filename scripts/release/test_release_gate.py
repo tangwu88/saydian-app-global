@@ -687,6 +687,12 @@ class XcodeReleaseBuildGateTest(unittest.TestCase):
         with (root / "ios/Runner/Info-AppStore.plist").open("rb") as source:
             info = plistlib.load(source)
         for key in (
+            "NSAppleMusicUsageDescription",
+            "NSSpeechRecognitionUsageDescription",
+        ):
+            self.assertGreater(len(info[key].strip()), 20)
+        self.assertNotIn("NSLocationAlwaysAndWhenInUseUsageDescription", info)
+        for key in (
             "CFBundleURLTypes",
             "LSApplicationQueriesSchemes",
             "SaidianWechatAppId",
