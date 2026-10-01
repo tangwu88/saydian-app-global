@@ -31,3 +31,10 @@
 
 - Xcode Organizer 关闭重开、重新选择 Runner 后仍只列出已上传带警告的 1008/1009，未列出手动保存在 Xcode Archives 目录的 1010；在访达可见 1010 归档，且其 `Info.plist` 回读为 1010。尝试通过 Xcode“打开”和访达打开该归档，尚未获得 Organizer 中可选的 1010 条目，因此**未执行 1010 上传**；不能把本地 IPA、归档或之前 1009 的上传回执写成新版本已到 Apple。App Store Connect TestFlight 刷新后仍为“无构建版本”。
 - 本轮末再次 `devicectl device info apps` 确认连接的 iPhone 15 Pro Max 上仍为 `1.0.0 (1010)`；独立分支已推送的代码及前述真实后台设备行不受 Organizer 问题影响。磁盘可用空间又降至约 2.2 GiB，停止进一步复制/重建。后续需查清 Apple 构建处理/归档识别及正式隐私披露，再推进商店审核。
+
+### 12:20 1010 上传与商店资料回读
+
+- Xcode Organizer 此时识别手动保存的 1010 归档，回读为 `cn.saydian.app.global`、`1.0.0 (1010)`、`arm64`。首次分发准备因临时符号文件写入失败而中止；当时系统剩余约 197 MiB。仅删除 8 个已停止使用、经 `lsof` 无打开句柄的旧 `XcodeDistPipeline` 临时目录（含本次失败目录），未删除源码、IPA 或归档；空间恢复约 3.5 GiB。
+- 再次选择 App Store Connect 分发成功。Xcode 显示 `Upload completed with warnings`，Organizer 状态日志记载 `Uploaded with warnings`、Build Number `1010`、时间 12:20。警告为 iOS 13 最低部署版本在 2027-04 后需升至 iOS 15，以及多个第三方手表框架缺 dSYM；本次上传未被警告阻止。这是 Xcode 上传回执，**不是** Apple 处理成功或审核提交。
+- App Store Connect 中 Bundle ID 与新国际 App 一致：`SAYDIAN Health Global - cn.saydian.app.global`，Apple ID `6817980969`。英语（美国）版本的技术支持网址填入并刷新确认已保存的公开品牌联系页 `https://www.saydian.com/pages/contact`。12:20 后 TestFlight 仍显示“无构建版本”，版本页仍无可选构建、截屏及审核资料；正式国际隐私政策/数据收集披露、审核账号与联系人、年龄评级、医疗与出口合规事实仍需依据真实资料完成。**未添加以供审核，未提交审核，未上线。**
+- 实际点击“添加以供审核”进行校验，Apple 返回“无法添加以供审核”：缺可选构建、审核联系人、年龄分级、内容版权、具有管理职能的用户填写 App 隐私、正式隐私政策 URL，以及价格等级。价格已按免费 App（美国基准 $0.00，其他地区对应免费）设定，页面回读 `AUTO_FREE`；未建立可销售地区，避免在医疗/隐私地区合规范围未核实前默认选择全部 175 个地区。根据 iPhone-only 归档与仅 iPhone 实测，取消默认的 Apple 芯片 Mac 分发及不兼容的 Vision Pro 分发，页面显示“已保存”；App 审核仍未提交。

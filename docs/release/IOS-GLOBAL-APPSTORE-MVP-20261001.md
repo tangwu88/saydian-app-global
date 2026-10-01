@@ -53,3 +53,8 @@
 - 11:02 联调读回 `https://app.saydian.cn/global/health/ready` 的 revision 为 `a1c1d3b90bf726a7d270b6e1fdc3a4c0bf018810`，未登录访问 `/global/api/saydian-app/v2/health/capabilities` 从原来的 404 变为 401。服务端任务确认能力修复已部署，正在使用合成账号验证上传和回读；401 只证明匿名访问被拒和路由存在，不是已登录真机同步成功。避免在无明确授权时主动重试上传真实会员健康记录。
 - 11:04 用户明确允许将该 iPhone 当前账号的待传健康记录发往 `https://app.saydian.cn/global` 作端到端复测。通过 `devicectl` 启动已装 1009，WDA 打开 Watch 页；页面先短暂显示 `Waiting for confirmation`，随后稳定为 `Connected`，原 `Some records have not been uploaded` 和 `Try again` 提示不再出现。未触发低电量手表的手动 `Sync watch`；无原始健康数值进入日志。已请服务端任务仅按脱敏路由/状态/计数核对是否有 batch POST 和确认，因此目前只证明实机 UI 待传提示消失，尚不能证明服务端最终入库。
 - 运行 `TMPDIR=/private/tmp flutter build apk --debug --no-pub --dart-define=SAYDIAN_API_BASE_URL=https://app.saydian.cn` 尝试 Android 回归。Gradle `assembleDebug` 约 7 分钟无最终结果；同时另一项目 Android 构建和服务端 Argon2 全量测试占用 CPU，磁盘仅余约 5.5 GiB。为避免影响共享机器和服务端验证，主动中断；未生成本轮 `app-debug.apk`，**Android Debug 未通过/未完成**，Release 未执行。此修正只涉及 iOS 本地化字符串和构建号；已完成 iOS 归档、真机、全量 Flutter 测试，但不能把 Android 标为验证通过。
+
+## 12:20 新候选 1010 上传回读
+
+- 含国际设备后台真实连接上报的 1010 已在 iPhone 15 Pro Max 原位安装、启动，并有服务端和后台设备行回读；详细构建、测试、归档哈希及隐私边界见 [设备后台联调记录](../IMPLEMENTATION-LOG-20261001-DEVICE-ADMIN-INTEGRATION.md)。Xcode Organizer 12:20 对 1010 返回 `Upload completed with warnings`，归档状态 `Uploaded with warnings`；Apple 端 TestFlight/版本页仍显示无构建，尚未证实处理成功。
+- 新国际 App 的品牌支持网址已保存；价格设为免费，并关闭未实测的 Mac 与 Vision Pro 分发。Apple“添加以供审核”校验仍明确拒绝：无可选构建、审核联系人、年龄分级、内容版权、App 隐私及正式隐私政策 URL。未提交审核，未上线；不得把 Xcode 上传回执视为 App Store 审核通过。
