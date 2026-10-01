@@ -12,6 +12,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:saydian_app/domain/models.dart';
 import 'package:saydian_app/domain/feature_models.dart';
+import 'package:saydian_app/l10n/generated/app_localizations.dart';
+import 'package:saydian_app/l10n/global_locale_controller.dart';
 import 'package:saydian_app/services/api_client.dart';
 import 'package:saydian_app/services/app_controller.dart';
 import 'package:saydian_app/services/local_health_store.dart';
@@ -123,7 +125,28 @@ void main() {
               displayName: '赛电用户',
             );
       addTearDown(controller.dispose);
+      final globalController =
+          AppController(
+              MemorySessionVault(),
+              _OfflineGlobalApi(),
+              MemoryHealthStore(),
+              _OfflineWatch(),
+            )
+            ..isBooting = false
+            ..session = Session(
+              accessToken: 'visual-fixture',
+              refreshToken: '',
+              expiresAt: DateTime(2030),
+              memberId: 'visual-fixture',
+              displayName: 'SAYDIAN User',
+            );
+      addTearDown(globalController.dispose);
+      final localeController = GlobalLocaleController(
+        initialLocale: const Locale('en'),
+      );
+      addTearDown(localeController.dispose);
       final pages = <String, Widget>{
+        'global-dashboard': AppShell(controller: globalController),
         'account': AccountSettingsPage(controller: controller),
         'profile': ProfileEditPage(controller: controller),
         'units': UnitSettingsPage(controller: controller),
@@ -238,33 +261,48 @@ void main() {
         await tester.pumpWidget(
           RepaintBoundary(
             key: key,
-            child: MaterialApp(
-              debugShowCheckedModeBanner: false,
-              builder: (context, child) => MediaQuery(
-                data: MediaQuery.of(context).copyWith(
-                  textScaler: TextScaler.linear(double.parse(fontScale)),
+            child: GlobalLocaleScope(
+              controller: localeController,
+              child: MaterialApp(
+                debugShowCheckedModeBanner: false,
+                locale: const Locale('en', 'US'),
+                localizationsDelegates: AppLocalizations.localizationsDelegates,
+                supportedLocales: AppLocalizations.supportedLocales,
+                builder: (context, child) => MediaQuery(
+                  data: MediaQuery.of(context).copyWith(
+                    textScaler: TextScaler.linear(double.parse(fontScale)),
+                  ),
+                  child: child!,
                 ),
-                child: child!,
-              ),
-              theme: theme.copyWith(
-                textTheme: theme.textTheme.apply(
-                  fontFamily: 'Reference Chinese',
+                theme: theme.copyWith(
+                  textTheme: theme.textTheme.apply(
+                    fontFamily: 'Reference Chinese',
+                  ),
                 ),
+                initialRoute: '/reference',
+                routes: {
+                  '/': (_) => const SizedBox.shrink(),
+                  '/reference': (_) => page.key == 'care'
+                      ? Scaffold(
+                          appBar: AppBar(title: const Text('远程关爱')),
+                          body: page.value,
+                        )
+                      : page.value,
+                },
               ),
-              initialRoute: '/reference',
-              routes: {
-                '/': (_) => const SizedBox.shrink(),
-                '/reference': (_) => page.key == 'care'
-                    ? Scaffold(
-                        appBar: AppBar(title: const Text('远程关爱')),
-                        body: page.value,
-                      )
-                    : page.value,
-              },
             ),
           ),
         );
         await tester.pump();
+        if (page.key == 'global-dashboard') {
+          await tester.runAsync(
+            () => precacheImage(
+              const AssetImage('assets/branding/saidian-brand-mark.png'),
+              tester.element(find.byType(AppShell)),
+            ),
+          );
+          await tester.pump();
+        }
         if (page.key == 'address-edit' ||
             (page.key == 'shop-product' && publicImages)) {
           await tester.runAsync(
@@ -494,3 +532,5 @@ class _OfflineApi extends Fake
   @override
   Future<List<Map<String, Object?>>> getAddresses() async => [];
 }
+
+class _OfflineGlobalApi extends _OfflineApi implements GlobalAccountApi {}

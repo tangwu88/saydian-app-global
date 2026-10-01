@@ -58,3 +58,10 @@
 
 - 含国际设备后台真实连接上报的 1010 已在 iPhone 15 Pro Max 原位安装、启动，并有服务端和后台设备行回读；详细构建、测试、归档哈希及隐私边界见 [设备后台联调记录](../IMPLEMENTATION-LOG-20261001-DEVICE-ADMIN-INTEGRATION.md)。Xcode Organizer 12:20 对 1010 返回 `Upload completed with warnings`，归档状态 `Uploaded with warnings`；Apple 端 TestFlight/版本页仍显示无构建，尚未证实处理成功。
 - 新国际 App 的品牌支持网址已保存；价格设为免费，并关闭未实测的 Mac 与 Vision Pro 分发。Apple“添加以供审核”校验仍明确拒绝：无可选构建、审核联系人、年龄分级、内容版权、App 隐私及正式隐私政策 URL。未提交审核，未上线；不得把 Xcode 上传回执视为 App Store 审核通过。
+
+## 13:15 App Store 截图与构建状态
+
+- 12:53 对已签名的 1.0.0 (1010) 归档再次使用 Xcode Organizer 上传，返回 `Upload completed with warnings`。13:05 刷新新 App 的 TestFlight 和版本页，均仍无可选构建；本轮没有再重编或重复上传相同包。签名导出团队 `W7SXQ4A226` 与新 App ID 团队一致。Apple 端处理结果仍未证实。
+- 在独立工作树扩展现有离线 Flutter 页面截图工具，以英语（美国）、1284 × 2778 像素渲染未改动的国际版 Health 首页；使用合成 `SAYDIAN User` 与无手表/无健康读数状态，不访问生产账号或接口。先发现图片异步加载导致品牌图标空白，增加预缓存后目标测试通过并重新渲染。最终无 alpha 的 JPEG 为 [ios-global-health-home-en-65.jpg](assets/ios-global-health-home-en-65.jpg)，SHA-256 `9dbcf13dbe3e5fc67f19f47e0d67c9643fea59279c5f25c2cb2b137e214deddd`。首次空白图标版已从 App Store Connect 移除；刷新后确认只有修正版，6.5 英寸 iPhone 截图为 1/10。未上传实机个人健康数据。
+- Apple“添加以供审核”最新校验不再报告缺截图，只列三项：必须选择构建、具有“管理”职能的用户填写 App 隐私信息、填写正式隐私政策 URL。现网 `/global/api/saydian-app/v2/auth/capabilities?locale=en` 仍返回 `consentVersion=global-qa-2026-09-10`；对应英文政策标题仍为 `Saydian Global Pre-release Privacy Notice` 且正文称 test service，不可冒充正式上架政策。客户端不填写或发布未经核实的法律与隐私声明。
+- 已把现网能力和政策版本回读交给现有“导入-app服务端”任务复核；其中 `login.email=false` 不能单独推断邮箱密码登录失败，须按前述服务端实现与端到端复测判断。App Store 审核账号当前字段未被本轮验证为可登录账号。
