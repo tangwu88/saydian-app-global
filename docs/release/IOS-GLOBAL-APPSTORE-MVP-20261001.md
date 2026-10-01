@@ -101,3 +101,9 @@
 - 服务端任务随后按线上 revision `6ea9dd9` 的源码和公开 `/global/health/ready` 只读核对：请求确实进入国际版登录控制器，不是路由鉴权或过期 token；同一 401 被有意用于账户不存在、未设密码、非 ACTIVE、密码不符，以及可能的邮箱未验证等条件，防止账户枚举。公开响应无法安全区分，当前没有经核实可直接提供 Apple 的演示会话；需要经授权的私有后台只读状态核查或由账号持有人在 App 中实际登录。此结论不把 401 擅自归因于某一个条件。
 - 1012 真机复核：同一归档以 `xcodebuild -exportArchive -archivePath build/ios/archive/Runner.xcarchive -exportPath build/ios/adhoc-iphone15pm-1012 -exportOptionsPlist ios/ExportOptions-AdHoc-iPhone15pm.plist` 导出成功。Ad Hoc IPA SHA-256 `4352f2dd6999cd11c0d9a86edce96e8a89bce51d3ae33e608405ce4404b70347`；解包回读 Bundle ID 和构建号，`devicectl device install app` 对连接的 iPhone 15 Pro Max 原位覆盖成功，安装清单显示 `SAYDIAN Health 1.0.0 (1012)`，`devicectl device process launch` 成功。仅证明 1012 在目标设备安装与启动，不代表账号登录、手表 BLE 或 Apple 审核通过。
 - 21:27 Apple `buildUploads` 状态仍为 `PROCESSING`，已出现 `90683` 缺 `NSLocationAlwaysAndWhenInUseUsageDescription` 的**警告**，无错误。客户端自身仅请求使用期间定位，暂未为消除警告伪称后台定位；待最终处理结果判断是否阻断。
+
+## 2026-10-02 审核账号与提交门槛复核
+
+- Apple 已将 `1.0.0 (1012)` 构建上传状态处理为 `COMPLETE`，仅保留 `NSLocationAlwaysAndWhenInUseUsageDescription` 的 90683 警告；TestFlight 已列出 1012，但标记“缺少出口合规证明”。静态依赖回读显示本包包含 SQLCipher 以及穿戴 SDK 的 AES 接口，因此出口合规应如实选为“标准加密算法”，不能报为不使用加密或仅使用 Apple 系统加密。是否需附加文稿仍取决于 Apple 后续问题与实际分发地区，不能伪造声明。
+- 用户再次提供审核演示账号后，对生产登录接口进行一次无令牌密码登录复测仍为 401。随后经用户已打开的生产服务器终端进行只读数据库查询：该邮箱在国际版 `saydian_global` 的 `User` 表中不存在。此项只输出布尔结果；不记录邮箱、密码、令牌或健康数据。因此问题已收敛为“账号尚未创建”，不是路由、登录守卫或已存在账号的密码校验失败。
+- App Store 版本页当前仍缺：可选审核构建（1012 先要完成出口合规）、准确 App Privacy 问卷及正式 App 专用隐私政策 URL、有效审核登录账号、版权字段。公开的商城隐私政策只覆盖订单/物流/支付等电商数据，不覆盖本 App 的账户、穿戴设备和健康同步，不能挪作审核隐私政策。未经授权未创建演示账号、未修改后台账号状态、未把无效凭据填写给 Apple、未提交审核。
