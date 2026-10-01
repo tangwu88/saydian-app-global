@@ -205,6 +205,20 @@ abstract interface class SaydianNotificationApi {
   Future<bool> markNotificationEventRead({required String eventId});
 }
 
+/// Receives device metadata after a client-side connection is ready. Device ID
+/// and optional verified hardware MAC are private member data, never analytics.
+abstract interface class SaydianDeviceBindingApi {
+  Future<void> reportDeviceConnection({
+    required String deviceId,
+    required String vendor,
+    required String model,
+    required String displayName,
+    String? firmware,
+    String? macAddress,
+    List<String> capabilities = const [],
+  });
+}
+
 abstract interface class SaydianProfileUploadApi {
   Future<String> uploadProfileImage(String filePath);
 }

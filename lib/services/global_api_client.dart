@@ -145,7 +145,8 @@ class GlobalSaydianApiClient extends SaydianApiClient
         GlobalAccountApi,
         GlobalCareApi,
         GlobalContentApi,
-        GlobalCommerceApi {
+        GlobalCommerceApi,
+        SaydianDeviceBindingApi {
   GlobalSaydianApiClient(
     super.vault, {
     http.Client? client,
@@ -581,6 +582,54 @@ class GlobalSaydianApiClient extends SaydianApiClient
       throw const ApiException('Unable to upload the photo. Please try again.');
     }
     return url;
+  }
+
+  @override
+  Future<void> reportDeviceConnection({
+    required String deviceId,
+    required String vendor,
+    required String model,
+    required String displayName,
+    String? firmware,
+    String? macAddress,
+    List<String> capabilities = const [],
+  }) async {
+    final normalizedDeviceId = deviceId.trim();
+    final normalizedVendor = vendor.trim();
+    final normalizedModel = model.trim();
+    final normalizedDisplayName = displayName.trim();
+    if (normalizedDeviceId.isEmpty ||
+        normalizedVendor.isEmpty ||
+        normalizedModel.isEmpty ||
+        normalizedDisplayName.isEmpty) {
+      throw const ApiException('Device information is incomplete.');
+    }
+    final normalizedCapabilities = capabilities
+        .map((capability) => capability.trim())
+        .where((capability) => capability.isNotEmpty)
+        .toSet()
+        .toList(growable: false);
+    if (normalizedCapabilities.length > 200) {
+      throw const ApiException('Too many device capabilities.');
+    }
+    final normalizedFirmware = firmware?.trim();
+    final normalizedMac = macAddress?.trim().toUpperCase();
+    if (normalizedMac?.isNotEmpty == true &&
+        !RegExp(r'^(?:[0-9A-F]{2}:){5}[0-9A-F]{2}$').hasMatch(normalizedMac!)) {
+      throw const ApiException('Invalid hardware MAC address.');
+    }
+    _decode(
+      await _authorizedPostJson('/api/saydian-app/v2/devices', {
+        'deviceId': normalizedDeviceId,
+        'vendor': normalizedVendor,
+        'model': normalizedModel,
+        'displayName': normalizedDisplayName,
+        if (normalizedFirmware?.isNotEmpty ?? false)
+          'firmware': normalizedFirmware,
+        if (normalizedMac?.isNotEmpty ?? false) 'macAddress': normalizedMac,
+        'capabilities': normalizedCapabilities,
+      }),
+    );
   }
 
   @override

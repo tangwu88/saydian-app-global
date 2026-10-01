@@ -489,6 +489,77 @@ void main() {
   });
   group('global V2 compatibility', () {
     test(
+      'reports a connected device through the authenticated global V2 route',
+      () async {
+        final vault = MemorySessionVault()..session = session();
+        late http.Request request;
+        final api = GlobalSaydianApiClient(
+          vault,
+          client: MockClient((value) async {
+            request = value;
+            return ok({'id': 'device-binding-id'});
+          }),
+        );
+
+        await api.reportDeviceConnection(
+          deviceId: 'veepoo:WATCH',
+          vendor: 'Veepoo',
+          model: 'W9S',
+          displayName: 'SD-Watch-W9S',
+          firmware: '1.2.3',
+          macAddress: '67:97:35:81:2f:44',
+          capabilities: const ['metric:heart_rate', 'feature:watch_faces'],
+        );
+
+        expect(request.method, 'POST');
+        expect(request.url.path, '${GlobalEnvironment.apiPrefix}/devices');
+        expect(request.headers['authorization'], 'Bearer global-test-access');
+        expect(jsonDecode(request.body), {
+          'deviceId': 'veepoo:WATCH',
+          'vendor': 'Veepoo',
+          'model': 'W9S',
+          'displayName': 'SD-Watch-W9S',
+          'firmware': '1.2.3',
+          'macAddress': '67:97:35:81:2F:44',
+          'capabilities': ['metric:heart_rate', 'feature:watch_faces'],
+        });
+      },
+    );
+
+    test(
+      'omits unavailable MAC and rejects malformed MAC before sending',
+      () async {
+        final vault = MemorySessionVault()..session = session();
+        final requests = <http.Request>[];
+        final api = GlobalSaydianApiClient(
+          vault,
+          client: MockClient((request) async {
+            requests.add(request);
+            return ok({'id': 'device-binding-id'});
+          }),
+        );
+        await api.reportDeviceConnection(
+          deviceId: 'veepoo:WATCH',
+          vendor: 'Veepoo',
+          model: 'W9S',
+          displayName: 'W9S',
+        );
+        expect(jsonDecode(requests.single.body), isNot(contains('macAddress')));
+        await expectLater(
+          api.reportDeviceConnection(
+            deviceId: 'veepoo:WATCH',
+            vendor: 'Veepoo',
+            model: 'W9S',
+            displayName: 'W9S',
+            macAddress: 'not-a-mac',
+          ),
+          throwsA(isA<ApiException>()),
+        );
+        expect(requests, hasLength(1));
+      },
+    );
+
+    test(
       'notification list and read use V2 without legacy ID guessing',
       () async {
         final vault = MemorySessionVault()..session = session();

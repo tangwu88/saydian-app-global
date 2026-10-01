@@ -46,10 +46,24 @@ void main() {
       'iOS 连接标识 · 36CE3B81…B1EB2C7D',
     );
     expect(iOSDeviceWithAddress.macAddress, '67:97:35:81:2F:44');
+    expect(
+      iOSDeviceWithAddress.verifiedHardwareMacAddress,
+      '67:97:35:81:2F:44',
+    );
+    expect(iOSDeviceWithoutAddress.verifiedHardwareMacAddress, isNull);
     expect(iOSDeviceWithAddress.identifierLabel, 'MAC · 67:97:35:81:2F:44');
     expect(yucDevice.macAddress, '07:43:00:00:4D:E9');
     expect(yucDevice.identifierLabel, 'MAC · 07:43:00:00:4D:E9');
     expect(compactAddress.macAddress, '5C:8B:BC:6F:26:FC');
+    expect(compactAddress.verifiedHardwareMacAddress, isNull);
+    expect(
+      const DeviceInfo(
+        id: 'veepoo:WATCH',
+        name: 'W9S',
+        hardwareAddress: 'extra 67:97:35:81:2F:44',
+      ).verifiedHardwareMacAddress,
+      isNull,
+    );
   });
 
   test('normalizes corrupted W9-family scan names', () {

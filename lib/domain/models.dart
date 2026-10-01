@@ -419,19 +419,29 @@ class DeviceInfo {
 
   String? get macAddress {
     for (final candidate in [hardwareAddress, nativeId]) {
-      final value = candidate?.trim() ?? '';
-      if (value.isEmpty) continue;
-      final separated = value.replaceAll('-', ':').toUpperCase();
-      if (RegExp(r'^(?:[0-9A-F]{2}:){5}[0-9A-F]{2}$').hasMatch(separated)) {
-        return separated;
-      }
-      final compact = value.replaceAll(RegExp(r'[^0-9A-Fa-f]'), '');
-      if (compact.length == 12) {
-        return List.generate(
-          6,
-          (index) => compact.substring(index * 2, index * 2 + 2),
-        ).join(':').toUpperCase();
-      }
+      final normalized = _normalizedMacAddress(candidate);
+      if (normalized != null) return normalized;
+    }
+    return null;
+  }
+
+  /// Only an address returned as hardware metadata is safe to transmit as MAC.
+  /// The display-only [macAddress] may also use a native connection ID.
+  String? get verifiedHardwareMacAddress =>
+      _normalizedMacAddress(hardwareAddress);
+
+  static String? _normalizedMacAddress(String? candidate) {
+    final value = candidate?.trim() ?? '';
+    if (value.isEmpty) return null;
+    final separated = value.replaceAll('-', ':').toUpperCase();
+    if (RegExp(r'^(?:[0-9A-F]{2}:){5}[0-9A-F]{2}$').hasMatch(separated)) {
+      return separated;
+    }
+    if (RegExp(r'^[0-9A-Fa-f]{12}$').hasMatch(value)) {
+      return List.generate(
+        6,
+        (index) => value.substring(index * 2, index * 2 + 2),
+      ).join(':').toUpperCase();
     }
     return null;
   }

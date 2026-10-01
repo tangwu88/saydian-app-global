@@ -12,6 +12,7 @@
 
 ## 最近记录
 
+- [2026-10-01 国际 App 设备后台联调](IMPLEMENTATION-LOG-20261001-DEVICE-ADMIN-INTEGRATION.md) — 在独立分支加入连接就绪与自动重连上报；仅已验证的真实硬件地址可作为可选 MAC，测试和真机边界见本轮记录。
 - [2026-10-01 国际版 SAYDIAN Health 首版 App Store 准备](release/IOS-GLOBAL-APPSTORE-MVP-20261001.md) — 独立 App Store Connect 记录、iPhone-only 正式签名归档与 IPA、测试及真实审核阻断；与国内 SayRing/赛电 App 分离。
 - [2026-09-30 iPhone 15 Pro Max 逐页检查与 Debug 恢复](QA-20260930-IOS-PAGE-DEBUG.md) — 修正过期国际版真机测试断言，离线 34 页渲染检查及双时区 929 项回归通过；真机逐页自动化因 VM 通道断开未完成，缓存重建后 Flutter Debug/DevTools 恢复并保持运行。
 - [2026-09-30 U19 最新交接说明](U19-HANDOFF-20260930.md) — 固定国际 App/服务端分支、当前 QA APK、真实验收边界及下一轮安全接手顺序；交接包清单与哈希另见打包校验记录。
@@ -28,6 +29,7 @@
 - [2026-09-28 U19 连接、同步、测量与查找功能检查](U19-FUNCTION-AUDIT-20260928.md) — 三次受控重连及当天汇总读取通过；测量与查找入口未接通、云端日汇总能力 404；850 项原测试通过，新增诊断 1 通过/4 失败，未改产品代码。
 - [2026-09-28 U19 每日汇总日期真机复核](U19-DAILY-DATE-QA-20260928.md) — U19S 当天回包通过日期校验；首次安装拒绝后按用户要求重装成功，冷启动再连成功；安装后首次 GATT 超时和线上日汇总能力 404 仍待解决。
 - [2026-09-28 U19 Android 真机重连](U19-ANDROID-RECONNECT-20260928.md) — 记录服务发现超时、失败的首轮修复和第二轮有界重试；U19S 两次手动断开重连通过，每日汇总仍因日期不符拒绝上传。
+- [2026-09-28 国际 App 设备连接后台上报](IMPLEMENTATION-LOG-20260928-DEVICE-ADMIN-REPORTING.md) — 连接就绪后以登录态上报最小设备快照，服务端按会员作用域保存；上报失败不影响连接，真机后台回读待联合验收。
 - [2026-09-27 国际版 Android 模拟器调试](INTERNATIONAL-ANDROID-EMULATOR-QA-20260927.md) — API 36 Debug 启动、匿名登录/注册与协议页面、21 项定向测试和静态检查通过；更新清单 404、手机号区号体验差异及登录后/手表流程未验收。
 - [2026-09-13 国际商城账号、推广与 App 支付隔离](INTERNATIONAL-COMMERCE-AUTH-REFERRAL-PAYMENT-20260913.md) — 原生支付只接受独立 App 配置，客户端结果不冒充到账；双时区各 841 项、域名 37 项、Android 原生 16 项及 Debug/QA Release 构建通过，真实交易和真机支付回跳仍明确未验收。
 - [2026-09-13 国际 App 商城与 H5 能力对齐](INTERNATIONAL-COMMERCE-PARITY-20260913.md) — 源码、双时区 837 项、服务端 755 项、域名 37 项及 Debug/QA Release 构建已完成；华为手机拒绝 USB 安装，待开启手机端安装权限后做冷启动验收；仍未推送或发布。
