@@ -112,3 +112,7 @@
 
 - 用户说明所给账号可在实际 App 登录。为排除字段名差异，按国际版生产源码的准确请求形态（邮箱置于 `username`、`POST /global/api/saydian-app/v2/auth/login`）再次只读认证探测；结果仍为业务 `401`。响应内容、账号、密码、令牌均未落盘或输出。
 - 同一台 iPhone 15 Pro Max 当前列出三个独立包：`SAYDIAN Health` (`cn.saydian.app.global`, `1.0.0 (1012)`)、`Say Ring` (`cn.saydian.ring`, `1.0 (1016)`) 与 `Saydian赛电`（国内包）。国际版 `AppController.production` 明确创建 `GlobalSaydianApiClient`，且网络边界禁止任何国内 `/api/v1` 回退。因此，所述“实际 App”若为后两者，不可将其账号直接作为国际版的 Apple 审核凭据；在确认具体 App 前不新建或改写生产账号。
+
+### 2026-10-02 替代审核账号验证
+
+- 用户提供另一组审核账号后，按国际版客户端的同一生产登录路径、邮箱字段和密码认证方式作一次无令牌验证，返回业务成功。未读取、打印或持久化会话、账号、密码、令牌或健康数据。该结果仅证明国际版生产登录可用；将凭据填写至 App Store Connect 前仍须取得用户对向 Apple 传输该敏感信息的明确同意。
