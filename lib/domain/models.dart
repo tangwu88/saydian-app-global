@@ -661,6 +661,7 @@ class HealthRecord {
     MeasurementOrigin? origin,
     this.samples = const [],
     this.aggregation,
+    this.sourceModel = '',
   }) : origin = origin ?? MeasurementOrigin.fromWire(null, source: source);
 
   final String id;
@@ -677,6 +678,10 @@ class HealthRecord {
   final int rawVersion;
   final List<num> samples;
   final HealthAggregation? aggregation;
+
+  /// Manufacturer-reported model captured with the record, when available.
+  /// Bluetooth display names are not verified models and must not be copied.
+  final String sourceModel;
 
   factory HealthRecord.fromJson(Map<String, Object?> json) {
     final rawValues = json['values'];
@@ -711,6 +716,7 @@ class HealthRecord {
       aggregation: json['aggregation'] is Map
           ? HealthAggregation.fromMap(json['aggregation'] as Map)
           : null,
+      sourceModel: '${json['sourceModel'] ?? ''}'.trim(),
     );
   }
 
@@ -729,6 +735,7 @@ class HealthRecord {
     'rawVersion': rawVersion,
     if (samples.isNotEmpty) 'samples': samples,
     if (aggregation != null) 'aggregation': aggregation!.toJson(),
+    if (sourceModel.trim().isNotEmpty) 'sourceModel': sourceModel.trim(),
   };
 
   HealthRecord copyWith({
@@ -741,6 +748,7 @@ class HealthRecord {
     int? rawVersion,
     List<num>? samples,
     HealthAggregation? aggregation,
+    String? sourceModel,
   }) => HealthRecord(
     id: id ?? this.id,
     metric: metric,
@@ -756,6 +764,7 @@ class HealthRecord {
     rawVersion: rawVersion ?? this.rawVersion,
     samples: samples ?? this.samples,
     aggregation: aggregation ?? this.aggregation,
+    sourceModel: sourceModel ?? this.sourceModel,
   );
 
   String get displayValue {

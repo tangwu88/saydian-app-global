@@ -15,6 +15,7 @@ void main() {
       quality: 'good',
       source: MeasurementSource.wearable,
       rawVersion: 1,
+      sourceModel: 'SDK-verified-model',
     );
 
     final decoded = HealthRecord.fromJson(record.toJson());
@@ -25,6 +26,12 @@ void main() {
     expect(decoded.values, record.values);
     expect(decoded.measuredAt, record.measuredAt);
     expect(decoded.origin, MeasurementOrigin.watchHistory);
+    expect(decoded.sourceModel, 'SDK-verified-model');
+    expect(decoded.toJson()['sourceModel'], 'SDK-verified-model');
+    expect(
+      record.copyWith(sourceModel: '').toJson(),
+      isNot(contains('sourceModel')),
+    );
   });
 
   test('CarePermission is private by default', () {

@@ -27,6 +27,7 @@ HealthRecord _record(
   MeasurementSource source = MeasurementSource.wearable,
   List<num> samples = const [],
   String quality = 'unknown',
+  String sourceModel = '',
 }) => HealthRecord(
   id: id,
   metric: metric,
@@ -40,6 +41,7 @@ HealthRecord _record(
   source: source,
   origin: origin,
   rawVersion: 2,
+  sourceModel: sourceModel,
   samples: samples,
 );
 Map<String, Object?> _rule(
@@ -143,6 +145,97 @@ void main() {
         'rawVersion': 2,
       });
       expect(rows[1]['metric'], 'temperature');
+    },
+  );
+
+  test(
+    'watch history and app-started measurements retain SDK model provenance',
+    () async {
+      final rows = <Map<String, Object?>>[];
+      final api = GlobalSaydianApiClient(
+        MemorySessionVault()..session = _session(),
+        client: MockClient((request) async {
+          rows.addAll(
+            ((jsonDecode(request.body) as Map)['records'] as List)
+                .cast<Map<String, Object?>>(),
+          );
+          return _ok({
+            'acceptedIds': ['history', 'manual'],
+            'rejected': [],
+            'nextCursor': null,
+          });
+        }),
+      );
+
+      final result = await api.uploadHealthBatch(
+        SyncBatch(
+          cursor: null,
+          records: [
+            _record('history', sourceModel: 'SDK-CONFIRMED-MODEL'),
+            _record(
+              'manual',
+              origin: MeasurementOrigin.appMeasurement,
+              sourceModel: 'SDK-CONFIRMED-MODEL',
+            ),
+          ],
+        ),
+      );
+
+      expect(result.acceptedIds, {'history', 'manual'});
+      expect(rows.map((row) => row['source']).toList(), [
+        {
+          'platform': 'android',
+          'deviceId': 'synthetic-device',
+          'model': 'SDK-CONFIRMED-MODEL',
+          'firmware': 'qa-firmware',
+          'origin': 'watch_history',
+          'measurementSource': 'wearable',
+          'rawVersion': 2,
+        },
+        {
+          'platform': 'android',
+          'deviceId': 'synthetic-device',
+          'model': 'SDK-CONFIRMED-MODEL',
+          'firmware': 'qa-firmware',
+          'origin': 'app_measurement',
+          'measurementSource': 'wearable',
+          'rawVersion': 2,
+        },
+      ]);
+    },
+  );
+
+  test(
+    'unknown model is omitted and platform comes from iOS runtime',
+    () async {
+      debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+      final api = GlobalSaydianApiClient(
+        MemorySessionVault()..session = _session(),
+        client: MockClient((request) async {
+          final row =
+              ((jsonDecode(request.body) as Map)['records'] as List).single
+                  as Map;
+          expect(row['source'], {
+            'platform': 'ios',
+            'deviceId': 'synthetic-device',
+            'firmware': 'qa-firmware',
+            'origin': 'watch_history',
+            'measurementSource': 'wearable',
+            'rawVersion': 2,
+          });
+          return _ok({
+            'acceptedIds': ['unknown-model'],
+            'rejected': [],
+            'nextCursor': null,
+          });
+        }),
+      );
+
+      final result = await api.uploadHealthBatch(
+        SyncBatch(cursor: null, records: [_record('unknown-model')]),
+      );
+
+      expect(result.acceptedIds, {'unknown-model'});
     },
   );
 

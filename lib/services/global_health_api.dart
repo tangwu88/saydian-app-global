@@ -133,6 +133,8 @@ mixin GlobalHealthApi on SaydianApiClient implements DailySummarySupportApi {
         'source': {
           'platform': platform,
           if (record.deviceId.isNotEmpty) 'deviceId': record.deviceId,
+          if (record.sourceModel.trim().isNotEmpty)
+            'model': record.sourceModel.trim(),
           if (record.firmwareVersion.isNotEmpty)
             'firmware': record.firmwareVersion,
           'origin': record.origin.wireName,

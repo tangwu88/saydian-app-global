@@ -80,6 +80,7 @@ void main() {
       expect(parsed.values['systolic'], 123);
       expect(parsed.measuredAt.toUtc(), watch.now);
       expect(parsed.deviceId, 'urion:watch-a');
+      expect(parsed.sourceModel, isEmpty);
       expect(
         watch.events
             .where((event) => event.type == 'healthDataReady')
@@ -238,6 +239,7 @@ void main() {
     expect(record.metric, HealthMetric.heartRate);
     expect(record.values['value'], 74);
     expect(record.origin, MeasurementOrigin.appMeasurement);
+    expect(record.sourceModel, isEmpty);
     await watch.emit(Eb1Frame.request(0x73, [1]));
     await _flush();
     expect(watch.records, hasLength(1));
