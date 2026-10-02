@@ -67,6 +67,38 @@ void main() {
       }
     },
   );
+
+  test(
+    'an out-of-range disconnect retries and restores the bound watch',
+    () async {
+      final wearable = _AutoReconnectWearable();
+      final controller = AppController(
+        MemorySessionVault()..privacyConsentGranted = true,
+        _NoopApi(),
+        MemoryHealthStore(),
+        wearable,
+      );
+      addTearDown(controller.dispose);
+      addTearDown(wearable._events.close);
+
+      await controller.initialize();
+      await Future<void>.delayed(Duration.zero);
+      expect(wearable.restoreCalls, 1);
+
+      await controller.connectDevice(_AutoReconnectWearable.watch);
+      wearable._events.add(
+        WearableEvent(
+          type: 'disconnected',
+          payload: {'deviceId': _AutoReconnectWearable.watch.id},
+        ),
+      );
+      await Future<void>.delayed(const Duration(milliseconds: 1200));
+
+      expect(wearable.restoreCalls, 2);
+      expect(controller.connectedDevice?.id, _AutoReconnectWearable.watch.id);
+      expect(controller.deviceState, DeviceConnectionState.ready);
+    },
+  );
 }
 
 class _NoopApi extends Fake implements SaydianApi {
@@ -130,4 +162,18 @@ class _DelayedRecoveryWearable extends Fake
 
   @override
   Future<List<SportRecord>> readSportRecords() async => const [];
+}
+
+class _AutoReconnectWearable extends _DelayedRecoveryWearable {
+  static const watch = DeviceInfo(id: 'BOUND-W9S', name: 'W9S');
+  int restoreCalls = 0;
+
+  @override
+  Future<DeviceInfo?> restoreConnection({
+    required WearableUserProfile profile,
+  }) async {
+    restoreCalls++;
+    if (!restoreStarted.isCompleted) restoreStarted.complete();
+    return restoreCalls == 1 ? null : watch;
+  }
 }

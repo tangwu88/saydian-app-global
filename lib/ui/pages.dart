@@ -37,9 +37,9 @@ String _localeCopy(BuildContext context, String english, String chinese) =>
 
 String _safeUiError(BuildContext context, String? error, String fallback) {
   final message = error?.trim() ?? '';
-  if (message.isEmpty ||
-      (Localizations.localeOf(context).languageCode != 'zh' &&
-          RegExp(r'[\u4e00-\u9fff]').hasMatch(message))) {
+  final isChinese = RegExp(r'[\u4e00-\u9fff]').hasMatch(message);
+  final isChineseLocale = Localizations.localeOf(context).languageCode == 'zh';
+  if (message.isEmpty || (isChineseLocale != isChinese)) {
     return fallback;
   }
   return message;
@@ -569,13 +569,17 @@ class DashboardPage extends StatelessWidget {
                     _InlineNotice(
                       key: const Key('dashboard-health-empty-notice'),
                       message: disconnected
-                          ? context.l10n.connectWatchForData
+                          ? controller.isRestoringWearableConnection
+                                ? context.l10n.connectingWatch
+                                : context.l10n.connectWatchForData
                           : context.l10n.noHealthData,
                       icon: Icons.watch_outlined,
                       color: SaydianColors.blue,
                       compact: true,
                       centered: true,
-                      onTap: disconnected
+                      onTap:
+                          disconnected &&
+                              !controller.isRestoringWearableConnection
                           ? () => Navigator.of(context).push(
                               MaterialPageRoute<void>(
                                 settings: const RouteSettings(
@@ -670,15 +674,29 @@ class _DashboardHeader extends StatelessWidget {
         .trim();
     return Row(
       children: [
-        Container(
-          width: 50,
-          height: 50,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            shape: BoxShape.circle,
+        KeyedSubtree(
+          key: const Key('dashboard-profile-avatar'),
+          child: Container(
+            width: 50,
+            height: 50,
+            alignment: Alignment.center,
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+            ),
+            child: avatarUrl.isEmpty
+                ? const SaydianBrandMark(size: 46)
+                : ClipOval(
+                    child: SafeNetworkImage(
+                      avatarUrl,
+                      width: 46,
+                      height: 46,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, _, _) =>
+                          const SaydianBrandMark(size: 46),
+                    ),
+                  ),
           ),
-          child: const SaydianBrandMark(size: 46),
         ),
         const SizedBox(width: 11),
         Expanded(
@@ -709,11 +727,6 @@ class _DashboardHeader extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 8),
-        KeyedSubtree(
-          key: const Key('dashboard-profile-avatar'),
-          child: _MemberAvatar(imageUrl: avatarUrl, size: 42),
-        ),
-        const SizedBox(width: 2),
         Badge(
           isLabelVisible: controller.notificationUnreadCount > 0,
           label: Text(
@@ -3328,12 +3341,12 @@ class AiPage extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 15),
-                    const Expanded(
+                    Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'AI 健康管家',
+                            context.l10n.aiAssistant,
                             style: TextStyle(
                               color: Color(0xFF27479C),
                               fontSize: 20,
@@ -3342,7 +3355,7 @@ class AiPage extends StatelessWidget {
                           ),
                           SizedBox(height: 6),
                           Text(
-                            '我是您的健康管家，有任何问题都可以跟我提问哦~',
+                            context.l10n.aiAssistantIntro,
                             style: TextStyle(
                               color: Color(0xFF516392),
                               fontSize: 13,
@@ -3368,8 +3381,8 @@ class AiPage extends StatelessWidget {
             child: InkWell(
               onTap: () => _openChat(context, app: 2),
               borderRadius: BorderRadius.circular(18),
-              child: const Padding(
-                padding: EdgeInsets.all(18),
+              child: Padding(
+                padding: const EdgeInsets.all(18),
                 child: Row(
                   children: [
                     Expanded(
@@ -3377,7 +3390,7 @@ class AiPage extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Hi，我是你的运动管家',
+                            context.l10n.aiAssistant,
                             style: TextStyle(
                               color: Color(0xFF27479C),
                               fontSize: 17,
@@ -3386,7 +3399,7 @@ class AiPage extends StatelessWidget {
                           ),
                           SizedBox(height: 7),
                           Text(
-                            '我可以帮助你提升健身和运动水平！',
+                            context.l10n.aiAssistantIntro,
                             style: TextStyle(
                               color: Color(0xFF6881C1),
                               fontSize: 12,
@@ -3495,6 +3508,7 @@ class _GlobalArticleLibraryPageState extends State<GlobalArticleLibraryPage> {
   int _generation = 0;
   bool _loading = true;
   bool _failed = false;
+  bool _languageUnavailable = false;
 
   @override
   void didChangeDependencies() {
@@ -3518,13 +3532,24 @@ class _GlobalArticleLibraryPageState extends State<GlobalArticleLibraryPage> {
         widget.controller.loadGlobalArticles(categoryId: _selectedCategory),
       ]);
       if (!mounted || generation != _generation) return;
+      final rawCategories = results[0]
+          .where((item) => '${item['id'] ?? ''}'.trim().isNotEmpty)
+          .toList();
+      final rawArticles = results[1]
+          .where((item) => '${item['id'] ?? ''}'.trim().isNotEmpty)
+          .toList();
+      final categories = rawCategories
+          .where((item) => _matchesCurrentArticleLocale(context, item))
+          .toList();
+      final articles = rawArticles
+          .where((item) => _matchesCurrentArticleLocale(context, item))
+          .toList();
       setState(() {
-        _categories = results[0]
-            .where((item) => '${item['id'] ?? ''}'.trim().isNotEmpty)
-            .toList();
-        _articles = results[1]
-            .where((item) => '${item['id'] ?? ''}'.trim().isNotEmpty)
-            .toList();
+        _categories = categories;
+        _articles = articles;
+        _languageUnavailable =
+            categories.length != rawCategories.length ||
+            articles.length != rawArticles.length;
         _loading = false;
       });
     } catch (error, stack) {
@@ -3586,7 +3611,13 @@ class _GlobalArticleLibraryPageState extends State<GlobalArticleLibraryPage> {
                 if (_articles.isEmpty)
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 64),
-                    child: Center(child: Text(context.l10n.articlesEmpty)),
+                    child: Center(
+                      child: Text(
+                        _languageUnavailable
+                            ? context.l10n.articleLanguageUnavailable
+                            : context.l10n.articlesEmpty,
+                      ),
+                    ),
                   )
                 else
                   for (final article in _articles) ...[
@@ -3609,6 +3640,27 @@ class _GlobalArticleLibraryPageState extends State<GlobalArticleLibraryPage> {
               ],
             ),
           ),
+  );
+}
+
+bool _matchesCurrentArticleLocale(
+  BuildContext context,
+  Map<String, Object?> content,
+) {
+  if (Localizations.localeOf(context).languageCode == 'zh') return true;
+  final declaredLocale =
+      '${content['locale'] ?? content['language'] ?? content['lang'] ?? ''}'
+          .trim()
+          .toLowerCase();
+  if (declaredLocale.startsWith('zh')) return false;
+  return !RegExp(r'[\u4e00-\u9fff]').hasMatch(
+    [
+      content['title'],
+      content['name'],
+      content['contentHtml'],
+      content['content'],
+      content['description'],
+    ].join(' '),
   );
 }
 
@@ -4003,7 +4055,12 @@ class _ArticleDetailPageState extends State<ArticleDetailPage> {
 
   @override
   Widget build(BuildContext context) {
-    final title = '${_article['title'] ?? context.l10n.healthLibrary}';
+    final localized =
+        !widget.controller.isGlobalEdition ||
+        _matchesCurrentArticleLocale(context, _article);
+    final title = localized
+        ? '${_article['title'] ?? context.l10n.healthLibrary}'
+        : context.l10n.healthLibrary;
     final raw =
         '${_article['contentHtml'] ?? _article['content'] ?? _article['description'] ?? ''}';
     final hasError = widget.controller.isGlobalEdition
@@ -4018,21 +4075,28 @@ class _ArticleDetailPageState extends State<ArticleDetailPage> {
           : ListView(
               padding: const EdgeInsets.all(20),
               children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                if (raw.trim().isEmpty)
+                if (!localized)
                   Text(
-                    context.l10n.articleContentUnavailable,
+                    context.l10n.articleLanguageUnavailable,
                     style: const TextStyle(fontSize: 15, height: 1.75),
                   )
-                else
-                  ..._articleContentWidgets(context, raw),
+                else ...[
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  if (raw.trim().isEmpty)
+                    Text(
+                      context.l10n.articleContentUnavailable,
+                      style: const TextStyle(fontSize: 15, height: 1.75),
+                    )
+                  else
+                    ..._articleContentWidgets(context, raw),
+                ],
               ],
             ),
     );
@@ -4182,7 +4246,7 @@ class _AiChatPageState extends State<AiChatPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(widget.app == 2 ? '运动管家' : 'AI 健康管家')),
+      appBar: AppBar(title: Text(context.l10n.aiAssistant)),
       backgroundColor: const Color(0xFFF7F4F1),
       body: ListenableBuilder(
         listenable: widget.controller,
@@ -4196,12 +4260,13 @@ class _AiChatPageState extends State<AiChatPage> {
                           constraints: BoxConstraints(
                             minHeight: constraints.maxHeight,
                           ),
-                          child: const Padding(
-                            padding: EdgeInsets.all(28),
+                          child: Padding(
+                            padding: const EdgeInsets.all(28),
                             child: Center(
                               child: FeatureStateCard(
-                                message: '您好，我是 AI 健康管家',
-                                detail: '可以向我咨询日常健康管理问题，回答仅供参考，不能替代医生诊断。',
+                                message: context.l10n.aiAssistant,
+                                detail:
+                                    '${context.l10n.aiAssistantIntro}\n\n${context.l10n.healthDisclaimer}',
                                 icon: Icons.health_and_safety_outlined,
                                 color: SaydianColors.brandRed,
                               ),
@@ -4945,7 +5010,7 @@ String _batteryChargeLabel(
     DeviceBatteryChargeState.lowPressureDeprecated => 'low battery',
     DeviceBatteryChargeState.normal => 'not charging',
     DeviceBatteryChargeState.fullUnreliable ||
-    DeviceBatteryChargeState.unknown => 'charge status unavailable',
+    DeviceBatteryChargeState.unknown => context.l10n.unavailable,
   };
 }
 
@@ -5914,7 +5979,10 @@ class _NotificationsPageState extends State<NotificationsPage> {
                 child: values.isEmpty
                     ? Center(
                         child: Text(
-                          widget.controller.notificationStatus,
+                          _localizedNotificationStatus(
+                            context,
+                            widget.controller.notificationStatus,
+                          ),
                           style: const TextStyle(color: SaydianColors.muted),
                         ),
                       )
@@ -5999,6 +6067,20 @@ class _NotificationsPageState extends State<NotificationsPage> {
       ),
     );
   }
+}
+
+String _localizedNotificationStatus(BuildContext context, String status) {
+  final l10n = context.l10n;
+  return switch (status) {
+    '暂无消息' || '已加载' => l10n.noMessages,
+    '正在加载' || '等待加载' => l10n.loading,
+    '请先登录' => l10n.signInCloudHint,
+    _
+        when Localizations.localeOf(context).languageCode != 'zh' &&
+            RegExp(r'[\u4e00-\u9fff]').hasMatch(status) =>
+      l10n.messagesUnavailable,
+    _ => status,
+  };
 }
 
 class NotificationDetailPage extends StatefulWidget {
@@ -8492,7 +8574,10 @@ class _MyServicesGrid extends StatelessWidget {
         label: context.l10n.customerService,
         icon: Icons.headset_mic_outlined,
         color: SaydianColors.sage,
-        page: CustomerServicePage(isGlobalEdition: controller.isGlobalEdition),
+        page: CustomerServicePage(
+          isGlobalEdition: controller.isGlobalEdition,
+          controller: controller,
+        ),
       ),
       (
         label: context.l10n.aboutApp,
@@ -10355,7 +10440,7 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
         _birthday.text.isEmpty ||
         height == null ||
         height < 50 ||
-        height > 300 ||
+        height > 250 ||
         weight == null ||
         weight < 10 ||
         weight > 500) {
@@ -10364,8 +10449,8 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
           content: Text(
             _localeCopy(
               context,
-              'Complete all fields. Height: 50–300 cm; weight: 10–500 kg.',
-              '请完整填写资料，身高 50~300 cm、体重 10~500 kg',
+              'Complete all fields. Height: 50–250 cm; weight: 10–500 kg.',
+              '请完整填写资料，身高 50~250 cm、体重 10~500 kg',
             ),
           ),
         ),
@@ -10691,7 +10776,11 @@ class _PermissionManagementPageState extends State<PermissionManagementPage>
   }
 
   Future<void> _request(Permission permission) async {
-    if (permission == Permission.notification) {
+    final status = _statuses[permission];
+    if (permission == Permission.notification ||
+        status?.isGranted == true ||
+        status?.isPermanentlyDenied == true ||
+        status?.isRestricted == true) {
       await openAppSettings();
     } else {
       await permission.request();
@@ -10699,21 +10788,42 @@ class _PermissionManagementPageState extends State<PermissionManagementPage>
     await _refresh();
   }
 
-  String _name(Permission permission) {
-    if (permission == Permission.bluetoothScan) return '附近设备扫描';
-    if (permission == Permission.bluetoothConnect) return '蓝牙设备连接';
-    if (permission == Permission.bluetooth) return '蓝牙';
-    if (permission == Permission.locationWhenInUse) return '位置';
-    if (permission == Permission.photos) return '照片';
-    if (permission == Permission.camera) return '相机';
-    if (permission == Permission.contacts) return '联系人';
-    return '通知';
+  String _actionLabel(BuildContext context, Permission permission) {
+    final status = _statuses[permission];
+    if (permission == Permission.notification ||
+        status?.isGranted == true ||
+        status?.isPermanentlyDenied == true ||
+        status?.isRestricted == true) {
+      return context.l10n.settings;
+    }
+    return context.l10n.allow;
+  }
+
+  String _name(BuildContext context, Permission permission) {
+    if (permission == Permission.bluetoothScan ||
+        permission == Permission.bluetoothConnect ||
+        permission == Permission.bluetooth) {
+      return context.l10n.bluetooth;
+    }
+    if (permission == Permission.locationWhenInUse) {
+      return context.l10n.location;
+    }
+    if (permission == Permission.photos) return context.l10n.photos;
+    if (permission == Permission.camera) return context.l10n.camera;
+    if (permission == Permission.contacts) return context.l10n.contacts;
+    return context.l10n.notifications;
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(widget.healthOnly ? '健康监测' : '权限管理')),
+      appBar: AppBar(
+        title: Text(
+          widget.healthOnly
+              ? context.l10n.healthMonitoring
+              : context.l10n.permissions,
+        ),
+      ),
       body: ListenableBuilder(
         listenable: widget.controller,
         builder: (context, _) => ListView(
@@ -10740,15 +10850,15 @@ class _PermissionManagementPageState extends State<PermissionManagementPage>
                               ? SaydianColors.green
                               : SaydianColors.orange,
                         ),
-                        title: Text(_name(permission)),
+                        title: Text(_name(context, permission)),
                         subtitle: Text(
                           _statuses[permission]?.isGranted == true
-                              ? '已允许'
-                              : '未允许',
+                              ? context.l10n.permissionAllowed
+                              : context.l10n.permissionNotAllowed,
                         ),
                         trailing: TextButton(
                           onPressed: () => _request(permission),
-                          child: Text(context.l10n.settings),
+                          child: Text(_actionLabel(context, permission)),
                         ),
                       ),
                       if (permission != _permissions.last)

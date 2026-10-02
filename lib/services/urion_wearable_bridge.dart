@@ -57,6 +57,9 @@ class UrionWearableBridge
   Eb1TimestampEncoding? _bloodPressureTimeEncoding;
   DateTime? _bloodPressureVerifiedSince;
   final Map<String, HealthRecord> _confirmedBloodPressureRecords = {};
+  final Set<String> _knownBloodPressureFingerprints = {};
+  DateTime? _bloodPressureHistoryCheckedAt;
+  DateTime? _watchBloodPressureNoticeAt;
   bool _findSupported = true;
 
   String _languageKey(String id) =>
@@ -124,7 +127,11 @@ class UrionWearableBridge
         final bloodPressureChanged = frame.command == 0x33 || frame[1] == 2;
         if (bloodPressureChanged) {
           if (kDebugMode) debugPrint('[U19Measurement] completion notice');
-          _scheduleMeasurementRead();
+          if (_measurement == null) {
+            _watchBloodPressureNoticeAt = _now().toUtc();
+          } else {
+            _scheduleMeasurementRead();
+          }
         }
         if (frame.command == 0x73 && (frame[1] == 1 || frame[1] == 3)) {
           _scheduleSpotRead(frame[1]);
@@ -180,6 +187,9 @@ class UrionWearableBridge
     _bloodPressureTimeEncoding = null;
     _bloodPressureVerifiedSince = null;
     _confirmedBloodPressureRecords.clear();
+    _knownBloodPressureFingerprints.clear();
+    _bloodPressureHistoryCheckedAt = null;
+    _watchBloodPressureNoticeAt = null;
     _findSupported = true;
     _buffer.reset();
   }
@@ -601,26 +611,70 @@ class UrionWearableBridge
         if (kDebugMode) debugPrint('[U19Sync] indexed data quarantined');
       }
     }
-    if (_bloodPressureTimeEncoding != null &&
-        _capabilities?.metrics.contains(HealthMetric.bloodPressure) == true) {
+    if (_capabilities?.metrics.contains(HealthMetric.bloodPressure) == true) {
       final samples = await _readBloodPressure();
       final now = _now().toUtc();
-      for (final sample in samples) {
-        final measuredAt = eb1DecodeTimestamp(
-          sample.rawTimestamp,
-          _bloodPressureTimeEncoding!,
-        );
-        // Earlier history may predate the user's clock correction. Keep it
-        // unverified instead of applying a newly proven encoding retroactively.
-        if (_bloodPressureVerifiedSince == null ||
-            measuredAt.isBefore(_bloodPressureVerifiedSince!) ||
-            measuredAt.isAfter(now)) {
+      final previousCheck = _bloodPressureHistoryCheckedAt;
+      final noticeAt = _watchBloodPressureNoticeAt;
+      final unseen = samples
+          .where(
+            (sample) =>
+                !_knownBloodPressureFingerprints.contains(sample.fingerprint),
+          )
+          .toList(growable: false);
+      final watchNoticeCandidates =
+          <String, (Eb1BloodPressureSample, Eb1TimestampMatch)>{};
+      if (noticeAt != null &&
+          now.difference(noticeAt) <= const Duration(minutes: 5)) {
+        for (final sample in unseen) {
+          final proof = eb1MatchMeasurementTimestamp(
+            sample.rawTimestamp,
+            startedAt: noticeAt.subtract(const Duration(minutes: 5)),
+            endedAt: noticeAt,
+          );
+          if (proof != null) {
+            watchNoticeCandidates[sample.fingerprint] = (sample, proof);
+          }
+        }
+      }
+      if (watchNoticeCandidates.length == 1) {
+        final (sample, proof) = watchNoticeCandidates.values.single;
+        _bloodPressureTimeEncoding ??= proof.encoding;
+        _bloodPressureVerifiedSince ??= DateTime.fromMillisecondsSinceEpoch(
+          (noticeAt!.millisecondsSinceEpoch ~/ 1000) * 1000,
+          isUtc: true,
+        ).subtract(const Duration(minutes: 5));
+        final record = _bloodPressureRecord(sample, proof.measuredAt);
+        result.add(record);
+        _confirmedBloodPressureRecords[sample.fingerprint] = record;
+      }
+      for (final sample in unseen) {
+        if (watchNoticeCandidates.length == 1 &&
+            sample.fingerprint == watchNoticeCandidates.keys.single) {
+          continue;
+        }
+        final encoding = _bloodPressureTimeEncoding;
+        if (encoding == null || previousCheck == null) continue;
+        final measuredAt = eb1DecodeTimestamp(sample.rawTimestamp, encoding);
+        final lowerBound = previousCheck.subtract(const Duration(minutes: 2));
+        if (measuredAt.isBefore(lowerBound) || measuredAt.isAfter(now)) {
           continue;
         }
         result.add(
           _confirmedBloodPressureRecords[sample.fingerprint] ??
               _bloodPressureRecord(sample, measuredAt),
         );
+      }
+      // A history snapshot is authoritative for stable sample IDs. Cache every
+      // visible fingerprint, including ambiguous/old samples, so later polls
+      // cannot reinterpret them as new measurements.
+      _knownBloodPressureFingerprints.addAll(
+        samples.map((sample) => sample.fingerprint),
+      );
+      _bloodPressureHistoryCheckedAt = now;
+      if (noticeAt != null &&
+          now.difference(noticeAt) > const Duration(minutes: 5)) {
+        _watchBloodPressureNoticeAt = null;
       }
     }
     return result;
@@ -1005,6 +1059,8 @@ class UrionWearableBridge
             origin: MeasurementOrigin.appMeasurement,
           );
           _confirmedBloodPressureRecords[sample.fingerprint] = record;
+          _knownBloodPressureFingerprints.add(sample.fingerprint);
+          _bloodPressureHistoryCheckedAt = endedAt;
           if (kDebugMode) {
             debugPrint(
               '[U19Measurement] unique new result verified '

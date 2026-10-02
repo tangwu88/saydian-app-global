@@ -95,6 +95,38 @@ void main() {
   );
 
   test(
+    'watch-started BP notice includes one uniquely timed history record in sync',
+    () async {
+      final old = _bp(watch.now.subtract(const Duration(minutes: 1)));
+      watch.history = [old];
+      await watch.connectAndReadCapabilities();
+      await watch.bridge.syncHealthData();
+
+      watch.now = watch.now.add(const Duration(seconds: 45));
+      final fresh = _bp(watch.now, systolic: 127);
+      watch.history = [fresh, old];
+      await watch.emit(Eb1Frame.request(0x73, [2]));
+      final received = await watch.bridge.syncHealthData();
+
+      final record = received.singleWhere(
+        (item) => item.metric == HealthMetric.bloodPressure,
+      );
+      expect(record.metric, HealthMetric.bloodPressure);
+      expect(record.values['systolic'], 127);
+      expect(record.measuredAt.toUtc(), watch.now);
+      expect(record.origin, MeasurementOrigin.watchHistory);
+      expect(record.id, isNotEmpty);
+
+      await watch.emit(Eb1Frame.request(0x73, [2]));
+      final duplicate = await watch.bridge.syncHealthData();
+      expect(
+        duplicate.where((item) => item.metric == HealthMetric.bloodPressure),
+        isEmpty,
+      );
+    },
+  );
+
+  test(
     'clock-mismatched and multiple new BP records cannot become a measurement',
     () async {
       await watch.connectAndReadCapabilities();

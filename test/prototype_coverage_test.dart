@@ -337,6 +337,7 @@ void main() {
         find.byKey(const Key('device-capabilities-unavailable')),
         findsNothing,
       );
+      controller.setAppForeground(false);
     },
   );
 
@@ -427,6 +428,7 @@ void main() {
         );
       }
     }
+    controller.setAppForeground(false);
   });
 
   for (final interval in [15, 180]) {
@@ -465,6 +467,7 @@ void main() {
         expect(tester.takeException(), isNull);
         await tester.tap(find.text('取消'));
         await tester.pumpAndSettle();
+        controller.setAppForeground(false);
       },
     );
   }
@@ -497,6 +500,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(tester.takeException(), isNull);
+    controller.setAppForeground(false);
   });
 
   testWidgets('US watch display settings use readable labels and local time', (
@@ -529,6 +533,7 @@ void main() {
     expect(find.textContaining('Raise-to-wake sensitivity'), findsOneWidget);
     expect(find.textContaining('8:00 AM'), findsOneWidget);
     expect(tester.takeException(), isNull);
+    controller.setAppForeground(false);
   });
 
   for (final source in ['yucheng', 'urion']) {
@@ -573,6 +578,7 @@ void main() {
         findsOneWidget,
       );
       expect(tester.takeException(), isNull);
+      controller.setAppForeground(false);
     });
   }
 
@@ -695,6 +701,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(wearable.writes, hasLength(3));
     expect(wearable.writes.last.$2, {'operation': 'watchEnded'});
+    controller.setAppForeground(false);
   });
 
   testWidgets('Veepoo find watch retains start and stop actions', (
@@ -729,6 +736,7 @@ void main() {
     expect(wearable.findActionStates, [true, false]);
     expect(find.widgetWithText(FilledButton, 'Find my watch'), findsOneWidget);
     expect(tester.takeException(), isNull);
+    controller.setAppForeground(false);
   });
 
   testWidgets('password recovery validates input without claiming success', (

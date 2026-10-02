@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:saydian_app/domain/health_report_models.dart';
 import 'package:saydian_app/domain/global_account.dart';
@@ -6,6 +7,7 @@ import 'package:saydian_app/domain/models.dart';
 import 'package:saydian_app/l10n/generated/app_localizations.dart';
 import 'package:saydian_app/l10n/global_locale_controller.dart';
 import 'package:saydian_app/services/app_controller.dart';
+import 'package:saydian_app/services/notification_models.dart';
 import 'package:saydian_app/ui/health_reports_page.dart';
 import 'package:saydian_app/ui/pages.dart';
 import 'package:saydian_app/ui/prototype_pages.dart';
@@ -18,6 +20,10 @@ class _GlobalPageController extends Fake implements AppController {
   bool reviewed = false;
   bool mismatch = false;
   bool granted = false;
+  @override
+  String aiStatus = 'Ready';
+  @override
+  final List<Map<String, Object?>> aiArticles = const [];
   String? selectedCategory;
   String? requestedArticle;
   String? grantedVersion;
@@ -27,6 +33,9 @@ class _GlobalPageController extends Fake implements AppController {
 
   @override
   bool get isGlobalEdition => true;
+
+  @override
+  Session? get session => null;
 
   @override
   DeviceInfo? get connectedDevice => null;
@@ -48,7 +57,19 @@ class _GlobalPageController extends Fake implements AppController {
   List<Map<String, Object?>> get notifications => const [];
 
   @override
-  String get notificationStatus => '已加载';
+  String get notificationStatus => '暂无消息';
+
+  @override
+  List<NotificationEvent> get notificationInboxEvents => const [];
+
+  @override
+  bool get notificationServiceConfigured => false;
+
+  @override
+  bool get notificationPermissionEnabled => false;
+
+  @override
+  Future<void> refreshNotifications() async {}
 
   @override
   List<HealthWarningAlert> get healthWarningAlerts => const [];
@@ -67,7 +88,7 @@ class _GlobalPageController extends Fake implements AppController {
 
   @override
   Future<List<Map<String, Object?>>> loadGlobalArticleCategories() async => [
-    {'id': _categoryId, 'title': 'Daily wellbeing'},
+    {'id': _categoryId, 'title': mismatch ? '健康知识' : 'Daily wellbeing'},
   ];
 
   @override
@@ -77,7 +98,11 @@ class _GlobalPageController extends Fake implements AppController {
   }) async {
     selectedCategory = categoryId;
     return [
-      {'id': _articleId, 'title': 'Sleep and daily routines'},
+      {
+        'id': _articleId,
+        'title': mismatch ? '心率的原理' : 'Sleep and daily routines',
+        if (mismatch) 'locale': 'zh-CN',
+      },
     ];
   }
 
@@ -86,8 +111,11 @@ class _GlobalPageController extends Fake implements AppController {
     requestedArticle = id;
     return {
       'id': id,
-      'title': 'Sleep and daily routines',
-      'contentHtml': '<p>Reviewed English article body.</p>',
+      'title': mismatch ? '心率的原理' : 'Sleep and daily routines',
+      'contentHtml': mismatch
+          ? '<p>心脏通过收缩和舒张推动血液循环。</p>'
+          : '<p>Reviewed English article body.</p>',
+      if (mismatch) 'locale': 'zh-CN',
     };
   }
 
@@ -188,23 +216,131 @@ Future<void> _pump(
 }
 
 void main() {
+  testWidgets('notification empty state is localized', (tester) async {
+    final controller = _GlobalPageController();
+    await _pump(tester, NotificationsPage(controller: controller));
+    expect(find.text('No messages yet.'), findsOneWidget);
+    expect(find.text('暂无消息'), findsNothing);
+    await _pump(
+      tester,
+      NotificationsPage(controller: controller),
+      locale: const Locale('zh'),
+    );
+    expect(find.text('暂无消息'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('English article pages do not present untranslated Chinese', (
+    tester,
+  ) async {
+    final controller = _GlobalPageController()..mismatch = true;
+    await _pump(tester, GlobalArticleLibraryPage(controller: controller));
+    await tester.pumpAndSettle();
+    expect(
+      find.text('Articles in your selected language are not available yet.'),
+      findsOneWidget,
+    );
+    expect(find.text('心率的原理'), findsNothing);
+
+    await _pump(
+      tester,
+      ArticleDetailPage(
+        controller: controller,
+        article: {
+          'id': _articleId,
+          'title': '心率的原理',
+          'contentHtml': '<p>心脏通过收缩和舒张推动血液循环。</p>',
+          'locale': 'zh-CN',
+        },
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Health library'), findsOneWidget);
+    expect(
+      find.text('Articles in your selected language are not available yet.'),
+      findsOneWidget,
+    );
+    expect(find.textContaining('心脏通过收缩和舒张推动血液循环'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('system permission page is localized in English', (tester) async {
+    const permissionChannel = MethodChannel(
+      'flutter.baseflow.com/permissions/methods',
+    );
+    addTearDown(() {
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        permissionChannel,
+        null,
+      );
+    });
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      permissionChannel,
+      (_) async => 0,
+    );
+    await _pump(
+      tester,
+      PermissionManagementPage(controller: _GlobalPageController()),
+    );
+    expect(find.text('Permissions'), findsOneWidget);
+    expect(find.text('App permissions'), findsOneWidget);
+    expect(find.text('Bluetooth'), findsWidgets);
+    expect(find.text('Location'), findsOneWidget);
+    expect(find.text('Photos'), findsOneWidget);
+    expect(find.text('Camera'), findsOneWidget);
+    expect(find.text('Contacts'), findsOneWidget);
+    expect(find.text('Not allowed'), findsWidgets);
+    expect(find.text('Allow'), findsWidgets);
+    expect(find.text('Settings'), findsOneWidget);
+    expect(find.text('权限管理'), findsNothing);
+    expect(find.text('未允许'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets(
     'international support does not advertise domestic phone or WeChat',
     (tester) async {
-      await _pump(tester, const CustomerServicePage(isGlobalEdition: true));
+      await _pump(
+        tester,
+        CustomerServicePage(
+          isGlobalEdition: true,
+          controller: _GlobalPageController(),
+        ),
+      );
       expect(find.byKey(const Key('global-customer-service')), findsOneWidget);
       expect(find.text('4006386738'), findsNothing);
       expect(find.text('赛电'), findsNothing);
       expect(find.byIcon(Icons.wechat_rounded), findsNothing);
+      expect(find.text('Help and feedback'), findsOneWidget);
       expect(
         find.text(
-          'This feature is temporarily unavailable. Please try again later.',
+          'Need help? Send us a message through Help and feedback above.',
         ),
         findsOneWidget,
       );
+      await tester.tap(find.text('Help and feedback'));
+      await tester.pumpAndSettle();
+      expect(find.byType(FeedbackPage), findsOneWidget);
       expect(tester.takeException(), isNull);
     },
   );
+
+  testWidgets('AI assistant content is localized in English', (tester) async {
+    await _pump(tester, AiPage(controller: _GlobalPageController()));
+    expect(find.text('AI wellness assistant'), findsWidgets);
+    expect(find.text('Ask me a question about your wellbeing.'), findsWidgets);
+    expect(find.text('AI 健康管家'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('international remote care does not repeat its outer title', (
+    tester,
+  ) async {
+    await _pump(tester, CarePage(controller: _GlobalPageController()));
+    expect(find.byKey(const Key('global-care-page')), findsOneWidget);
+    expect(find.byType(AppBar), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
 
   testWidgets(
     'international security reset opens the global email and phone flow',

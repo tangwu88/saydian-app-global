@@ -1362,6 +1362,10 @@ class AppLocalizationsEs extends AppLocalizations {
       'Esta función no está disponible temporalmente. Inténtalo más tarde.';
 
   @override
+  String get globalSupportFeedbackHint =>
+      '¿Necesitas ayuda? Envíanos un mensaje mediante Ayuda y comentarios arriba.';
+
+  @override
   String get accountCreated => 'Tu cuenta está lista';
 
   @override
@@ -1459,10 +1463,44 @@ class AppLocalizationsEs extends AppLocalizations {
       'Conecta tu reloj para ver los datos de salud compatibles';
 
   @override
+  String get connectingWatch => 'Conectando con tu reloj…';
+
+  @override
   String get noHealthData => 'Aún no hay datos de salud';
 
   @override
   String get noData => 'Aún no hay datos';
+
+  @override
+  String get noMessages => 'Aún no hay mensajes.';
+
+  @override
+  String get messagesUnavailable => 'No se pudieron cargar los mensajes.';
+
+  @override
+  String get articleLanguageUnavailable =>
+      'Los artículos en el idioma seleccionado aún no están disponibles.';
+
+  @override
+  String get bluetooth => 'Bluetooth';
+
+  @override
+  String get location => 'Ubicación';
+
+  @override
+  String get photos => 'Fotos';
+
+  @override
+  String get camera => 'Cámara';
+
+  @override
+  String get permissionAllowed => 'Permitido';
+
+  @override
+  String get permissionNotAllowed => 'No permitido';
+
+  @override
+  String get allow => 'Permitir';
 
   @override
   String get connected => 'Conectado';

@@ -1367,6 +1367,10 @@ class AppLocalizationsFr extends AppLocalizations {
       'Cette fonction est temporairement indisponible. Réessayez plus tard.';
 
   @override
+  String get globalSupportFeedbackHint =>
+      'Besoin d’aide ? Envoyez-nous un message via Aide et commentaires ci-dessus.';
+
+  @override
   String get accountCreated => 'Votre compte est prêt';
 
   @override
@@ -1464,10 +1468,44 @@ class AppLocalizationsFr extends AppLocalizations {
       'Connectez votre montre pour voir les données de santé prises en charge';
 
   @override
+  String get connectingWatch => 'Connexion à votre montre…';
+
+  @override
   String get noHealthData => 'Aucune donnée de santé à afficher';
 
   @override
   String get noData => 'Aucune donnée';
+
+  @override
+  String get noMessages => 'Aucun message pour le moment.';
+
+  @override
+  String get messagesUnavailable => 'Impossible de charger les messages.';
+
+  @override
+  String get articleLanguageUnavailable =>
+      'Les articles dans la langue choisie ne sont pas encore disponibles.';
+
+  @override
+  String get bluetooth => 'Bluetooth';
+
+  @override
+  String get location => 'Localisation';
+
+  @override
+  String get photos => 'Photos';
+
+  @override
+  String get camera => 'Appareil photo';
+
+  @override
+  String get permissionAllowed => 'Autorisé';
+
+  @override
+  String get permissionNotAllowed => 'Non autorisé';
+
+  @override
+  String get allow => 'Autoriser';
 
   @override
   String get connected => 'Connecté';

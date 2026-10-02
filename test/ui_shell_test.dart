@@ -14,6 +14,7 @@ import 'package:saydian_app/services/local_health_store.dart';
 import 'package:saydian_app/services/secure_vault.dart';
 import 'package:saydian_app/services/wearable_bridge.dart';
 import 'package:saydian_app/ui/app_theme.dart';
+import 'package:saydian_app/ui/brand_assets.dart';
 import 'package:saydian_app/ui/health_trend_page.dart';
 import 'package:saydian_app/ui/pages.dart';
 import 'package:saydian_app/ui/prototype_pages.dart';
@@ -123,6 +124,19 @@ void main() {
     expect(find.textContaining('Login Name'), findsNothing);
     final avatar = find.byKey(const Key('dashboard-profile-avatar'));
     expect(avatar, findsOneWidget);
+    expect(
+      tester.getRect(avatar).left,
+      lessThan(tester.getRect(find.text('Health').first).left),
+      reason: 'The profile avatar replaces the left brand mark in-place.',
+    );
+    expect(
+      tester.getRect(find.text('Health').first).left,
+      lessThan(
+        tester.getRect(find.byKey(const Key('dashboard-profile-name'))).left,
+      ),
+      reason:
+          'The profile nickname stays in the existing right-side text slot.',
+    );
     final avatarImage = find.descendant(
       of: avatar,
       matching: find.byType(SafeNetworkImage),
@@ -179,7 +193,12 @@ void main() {
     await tester.pump();
 
     expect(find.text('Guest'), findsOneWidget);
-    expect(find.byKey(const Key('dashboard-profile-avatar')), findsOneWidget);
+    final avatar = find.byKey(const Key('dashboard-profile-avatar'));
+    expect(avatar, findsOneWidget);
+    expect(
+      find.descendant(of: avatar, matching: find.byType(SaydianBrandMark)),
+      findsOneWidget,
+    );
     expect(find.byType(SafeNetworkImage), findsNothing);
   });
 

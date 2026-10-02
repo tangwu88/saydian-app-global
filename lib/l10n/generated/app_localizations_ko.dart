@@ -1290,6 +1290,10 @@ class AppLocalizationsKo extends AppLocalizations {
   String get serviceUnavailable => '현재 이 기능을 이용할 수 없습니다. 나중에 다시 시도해 주세요.';
 
   @override
+  String get globalSupportFeedbackHint =>
+      '도움이 필요하신가요? 위의 도움말 및 의견을 통해 메시지를 보내 주세요.';
+
+  @override
   String get accountCreated => '계정이 생성되었습니다';
 
   @override
@@ -1383,10 +1387,43 @@ class AppLocalizationsKo extends AppLocalizations {
   String get connectWatchForData => '워치를 연결하면 지원되는 건강 데이터를 확인할 수 있습니다';
 
   @override
+  String get connectingWatch => '워치에 연결하는 중…';
+
+  @override
   String get noHealthData => '아직 표시할 건강 데이터가 없습니다';
 
   @override
   String get noData => '아직 데이터가 없습니다';
+
+  @override
+  String get noMessages => '새 메시지가 없습니다.';
+
+  @override
+  String get messagesUnavailable => '메시지를 불러오지 못했습니다.';
+
+  @override
+  String get articleLanguageUnavailable => '선택한 언어로 된 글은 아직 제공되지 않습니다.';
+
+  @override
+  String get bluetooth => 'Bluetooth';
+
+  @override
+  String get location => '위치';
+
+  @override
+  String get photos => '사진';
+
+  @override
+  String get camera => '카메라';
+
+  @override
+  String get permissionAllowed => '허용됨';
+
+  @override
+  String get permissionNotAllowed => '허용되지 않음';
+
+  @override
+  String get allow => '허용';
 
   @override
   String get connected => '연결됨';

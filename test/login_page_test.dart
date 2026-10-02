@@ -396,6 +396,53 @@ void main() {
     expect(api.savedNickname, '保存后的昵称');
   });
 
+  testWidgets('profile save errors fall back to Chinese in Chinese UI', (
+    tester,
+  ) async {
+    final api = _ProfileApi(failSave: true);
+    final controller =
+        AppController(
+            MemorySessionVault(),
+            api,
+            MemoryHealthStore(),
+            _NoopWearable(),
+          )
+          ..session = Session(
+            accessToken: 'profile-token',
+            refreshToken: 'profile-refresh',
+            expiresAt: DateTime(2030),
+            memberId: '82',
+            displayName: '旧昵称',
+          )
+          ..memberProfile = const {};
+    addTearDown(controller.dispose);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        locale: const Locale('zh'),
+        supportedLocales: AppLocalizations.supportedLocales,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        theme: buildSaydianTheme(),
+        home: ProfileEditPage(controller: controller),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('profile-save')),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(find.byKey(const Key('profile-save')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('保存失败'), findsOneWidget);
+    expect(
+      find.text('This action could not be completed. Please try again.'),
+      findsNothing,
+    );
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('profile editor handles an unset gender from WeChat login', (
     tester,
   ) async {
@@ -613,20 +660,24 @@ class _WechatBridge implements WechatAuthBridge {
 }
 
 class _ProfileApi extends _NoopApi {
-  _ProfileApi({this.gender = '2'});
+  _ProfileApi({this.gender = '2', this.failSave = false});
 
   final String gender;
+  final bool failSave;
   String? savedNickname;
   int? savedGender;
+  String? savedBirthday;
+  double? savedHeight;
+  double? savedWeight;
 
   @override
   Future<Map<String, Object?>> getMemberProfile() async => {
-    'nickname': '服务端昵称',
+    'nickname': savedNickname ?? '服务端昵称',
     'mobile': '13800138000',
-    'birthday': '1990-01-02',
-    'height': '168',
-    'weight': '62',
-    'gender': gender,
+    'birthday': savedBirthday ?? '1990-01-02',
+    'height': savedHeight ?? '168',
+    'weight': savedWeight ?? '62',
+    'gender': savedGender ?? gender,
   };
 
   @override
@@ -638,8 +689,16 @@ class _ProfileApi extends _NoopApi {
     required double weight,
     String? headPortrait,
   }) async {
+    if (failSave) {
+      throw const ApiException(
+        'This action could not be completed. Please try again.',
+      );
+    }
     savedNickname = nickname;
     savedGender = gender;
+    savedBirthday = birthday;
+    savedHeight = height;
+    savedWeight = weight;
   }
 }
 

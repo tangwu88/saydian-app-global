@@ -24,6 +24,7 @@ void main() {
   Future<({AppController controller, _Wearable wearable})> setup({
     HealthStore? store,
     _Api? api,
+    Duration wearableAutoSyncInterval = const Duration(minutes: 30),
   }) async {
     final wearable = _Wearable();
     final controller = AppController(
@@ -31,6 +32,7 @@ void main() {
       api ?? _Api(),
       store ?? MemoryHealthStore(),
       wearable,
+      wearableAutoSyncInterval: wearableAutoSyncInterval,
     );
     addTearDown(() async {
       controller.dispose();
@@ -234,6 +236,66 @@ void main() {
   );
 
   test(
+    'connected watch retries pending records every 30 minutes without reuploading ACKed IDs',
+    () async {
+      final store = MemoryHealthStore();
+      final api = _Api();
+      final fixture = await setup(
+        store: store,
+        api: api,
+        wearableAutoSyncInterval: const Duration(milliseconds: 50),
+      );
+      final initialReads = fixture.wearable.syncCount;
+      await store.upsert([_record()]);
+      await _waitFor(() => fixture.wearable.syncCount >= initialReads + 1);
+      await _waitFor(() => api.uploadedIds.contains('synthetic-late-save'));
+      expect(fixture.wearable.syncCount, initialReads + 1);
+      expect(api.uploadedIds, ['synthetic-late-save']);
+      expect(await store.pending(), isEmpty);
+
+      await _waitFor(() => fixture.wearable.syncCount >= initialReads + 2);
+      expect(fixture.wearable.syncCount, initialReads + 2);
+      expect(api.uploadedIds, ['synthetic-late-save']);
+      expect(await store.pending(), isEmpty);
+
+      fixture.controller.setAppForeground(false);
+      final backgroundReads = fixture.wearable.syncCount;
+      await Future<void>.delayed(const Duration(milliseconds: 120));
+      expect(fixture.wearable.syncCount, backgroundReads);
+
+      fixture.controller.setAppForeground(true);
+      await _waitFor(() => fixture.wearable.syncCount >= backgroundReads + 1);
+
+      await fixture.controller.disconnectDevice();
+      final disconnectedReads = fixture.wearable.syncCount;
+      await Future<void>.delayed(const Duration(milliseconds: 120));
+      expect(fixture.wearable.syncCount, disconnectedReads);
+    },
+  );
+
+  test(
+    'connected watch retries pending cloud uploads even when history read fails',
+    () async {
+      final store = MemoryHealthStore();
+      final api = _Api();
+      final fixture = await setup(
+        store: store,
+        api: api,
+        wearableAutoSyncInterval: const Duration(milliseconds: 50),
+      );
+      fixture.wearable.syncError = StateError('Synthetic history failure');
+      final initialReads = fixture.wearable.syncCount;
+      await store.upsert([_record()]);
+
+      await _waitFor(() => api.uploadedIds.contains('synthetic-late-save'));
+
+      expect(fixture.wearable.syncCount, greaterThan(initialReads));
+      expect(api.uploadedIds, ['synthetic-late-save']);
+      expect(await store.pending(), isEmpty);
+    },
+  );
+
+  test(
     'unacknowledged records and upload failures retain pending state',
     () async {
       final store = MemoryHealthStore();
@@ -310,6 +372,13 @@ Future<void> _settle() async {
   }
 }
 
+Future<void> _waitFor(bool Function() condition) async {
+  for (var attempt = 0; attempt < 100 && !condition(); attempt++) {
+    await Future<void>.delayed(const Duration(milliseconds: 10));
+  }
+  expect(condition(), isTrue, reason: 'Expected asynchronous sync was not run');
+}
+
 class _DelayedStore extends MemoryHealthStore {
   final result = Completer<void>();
   int writes = 0;
@@ -321,6 +390,8 @@ class _DelayedStore extends MemoryHealthStore {
 }
 
 class _Api extends Fake implements SaydianApi {
+  final uploadedIds = <String>[];
+
   @override
   Future<Session> login(String username, String password) async => Session(
     accessToken: 'synthetic-only',
@@ -341,12 +412,14 @@ class _Api extends Fake implements SaydianApi {
   Future<List<Map<String, Object?>>> getNotifications({int page = 1}) async =>
       const [];
   @override
-  Future<BatchUploadResult> uploadHealthBatch(SyncBatch batch) async =>
-      BatchUploadResult(
-        nextCursor: null,
-        acceptedIds: batch.records.map((record) => record.id).toSet(),
-        rejected: const {},
-      );
+  Future<BatchUploadResult> uploadHealthBatch(SyncBatch batch) async {
+    uploadedIds.addAll(batch.records.map((record) => record.id));
+    return BatchUploadResult(
+      nextCursor: null,
+      acceptedIds: batch.records.map((record) => record.id).toSet(),
+      rejected: const {},
+    );
+  }
 }
 
 class _Wearable extends Fake
@@ -358,6 +431,8 @@ class _Wearable extends Fake
     name: 'Synthetic second',
   );
   final eventsController = StreamController<WearableEvent>.broadcast();
+  int syncCount = 0;
+  Object? syncError;
   Future<DeviceInfo?>? details;
   @override
   Stream<WearableEvent> get events => eventsController.stream;
@@ -384,7 +459,13 @@ class _Wearable extends Fake
         stoppableManualMetrics: {},
       );
   @override
-  Future<List<HealthRecord>> syncHealthData({String? cursor}) async => const [];
+  Future<List<HealthRecord>> syncHealthData({String? cursor}) async {
+    syncCount++;
+    final error = syncError;
+    if (error != null) throw error;
+    return const [];
+  }
+
   @override
   Future<void> startMeasurement(HealthMetric metric) async {}
   @override

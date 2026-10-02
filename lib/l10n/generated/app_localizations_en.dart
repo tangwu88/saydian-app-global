@@ -1345,6 +1345,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'This feature is temporarily unavailable. Please try again later.';
 
   @override
+  String get globalSupportFeedbackHint =>
+      'Need help? Send us a message through Help and feedback above.';
+
+  @override
   String get accountCreated => 'Your account is ready';
 
   @override
@@ -1442,10 +1446,44 @@ class AppLocalizationsEn extends AppLocalizations {
       'Connect your watch to view supported health data';
 
   @override
+  String get connectingWatch => 'Connecting to your watch…';
+
+  @override
   String get noHealthData => 'No health data to show yet';
 
   @override
   String get noData => 'No data yet';
+
+  @override
+  String get noMessages => 'No messages yet.';
+
+  @override
+  String get messagesUnavailable => 'Messages could not be loaded.';
+
+  @override
+  String get articleLanguageUnavailable =>
+      'Articles in your selected language are not available yet.';
+
+  @override
+  String get bluetooth => 'Bluetooth';
+
+  @override
+  String get location => 'Location';
+
+  @override
+  String get photos => 'Photos';
+
+  @override
+  String get camera => 'Camera';
+
+  @override
+  String get permissionAllowed => 'Allowed';
+
+  @override
+  String get permissionNotAllowed => 'Not allowed';
+
+  @override
+  String get allow => 'Allow';
 
   @override
   String get connected => 'Connected';

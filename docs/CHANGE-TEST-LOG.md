@@ -12,8 +12,10 @@
 
 ## 最近记录
 
+- [2026-10-02 手表血压同步、30 分钟补传与 Health 顶栏头像](IMPLEMENTATION-LOG-20261002-WATCH-SYNC-HEADER.md) — 修复 U19 手表端血压历史识别、前台周期补传/ACK 去重与顶栏头像位置；双时区全量各 951 项通过；修改后已在 iPhone 15 Pro Max 构建、安装并启动 Debug，镜像抽查 Health/我的两页，实机传感器至服务端闭环与全 App 逐页检查仍未验收。
 - [2026-10-02 Health 顶部个人资料同步](IMPLEMENTATION-LOG-20261002-HEALTH-HEADER-PROFILE.md) — Health 顶部头像/昵称改读当前资料并加空值回退；iPhone Debug 安装和 VM 附加通过，双时区全量各 1,026 项通过；Android 构建因依赖网络等待中止，见记录。
 - [2026-10-02 个人资料头像保存根因修复](IMPLEMENTATION-LOG-20261002-PROFILE-AVATAR.md) — 对照戒指 App 修正旧上传 503 和 canonical 头像地址；真实演示账号头像写入/回读后恢复，iPhone 客户端上传/图片读取通过，真实空资料的完整表单写入未执行；双时区各 944 项通过。
+- [2026-10-02 国际版连接、资料、客服与英文界面修复](IMPLEMENTATION-LOG-20261002-CLIENT-UX-FIXES.md) — 修复超距自动恢复、资料保存验证、英文混中文/连接状态/权限按钮及用户截图发现的错误提示/客服文案问题；基础轮 23 张、扩展轮 36 张实机截图复核，扩展真机驱动、940 项全量测试与后续 45 项定向回归及真机调试通道状态均如实记录。
 - [2026-10-01 国际 App 设备后台联调](IMPLEMENTATION-LOG-20261001-DEVICE-ADMIN-INTEGRATION.md) — 在独立分支加入连接就绪与自动重连上报；仅已验证的真实硬件地址可作为可选 MAC，测试和真机边界见本轮记录。
 - [2026-10-01 国际版 SAYDIAN Health 首版 App Store 准备](release/IOS-GLOBAL-APPSTORE-MVP-20261001.md) — 独立 App Store Connect 记录、iPhone-only 正式签名归档与 IPA、测试及真实审核阻断；与国内 SayRing/赛电 App 分离。
 - [2026-09-30 iPhone 15 Pro Max 逐页检查与 Debug 恢复](QA-20260930-IOS-PAGE-DEBUG.md) — 修正过期国际版真机测试断言，离线 34 页渲染检查及双时区 929 项回归通过；真机逐页自动化因 VM 通道断开未完成，缓存重建后 Flutter Debug/DevTools 恢复并保持运行。

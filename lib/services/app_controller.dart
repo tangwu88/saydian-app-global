@@ -71,8 +71,11 @@ class AppController extends ChangeNotifier {
     WechatAuthBridge? wechatAuthBridge,
     AppNotificationService? notificationService,
     List<Duration>? pushRegistrationRetryDelays,
+    Duration? wearableAutoSyncInterval,
     this._allowAutomaticWearableRestore = true,
-  }) : _paymentBridge = paymentBridge ?? const MethodChannelAppPaymentBridge(),
+  }) : _wearableAutoSyncInterval =
+           wearableAutoSyncInterval ?? const Duration(minutes: 30),
+       _paymentBridge = paymentBridge ?? const MethodChannelAppPaymentBridge(),
        _storeKitPurchaseBridge =
            storeKitPurchaseBridge ??
            const MethodChannelStoreKitPurchaseBridge(),
@@ -115,6 +118,7 @@ class AppController extends ChangeNotifier {
 
   final SessionVault _vault;
   final bool _allowAutomaticWearableRestore;
+  final Duration _wearableAutoSyncInterval;
   final SaydianApi _api;
   bool get isGlobalEdition => _api is GlobalAccountApi;
 
@@ -635,8 +639,12 @@ class AppController extends ChangeNotifier {
   bool _deviceSyncAcceptsFollowUp = true;
   int _wearableRestoreGeneration = 0;
   Future<void>? _wearableRestoreInFlight;
+  Timer? _wearableRestoreTimer;
+  Timer? _wearableAutoSyncTimer;
   Future<void>? _wearableConnectInFlight;
   bool _wearableAccountRecoveryAllowed = true;
+  bool _wearableRetryOnUnavailable = false;
+  int _wearableRestoreRetryAttempts = 0;
   bool _wearableNeedsDisconnect = false;
   String _activeHealthOwner = 'anonymous';
   ({DeviceInfo device, int generation})? _accountWearableResume;
@@ -737,6 +745,7 @@ class AppController extends ChangeNotifier {
 
   bool get isAuthenticated => session != null;
   DeviceConnectionState get deviceState => deviceMachine.state;
+  bool get isRestoringWearableConnection => _wearableRestoreInFlight != null;
   HealthMetric? get activeMeasurementMetric => _activeMeasurementMetric;
   int get measurementSessionId => _measurementSessionId;
   DateTime? get measurementStartedAt => _measurementStartedAt;
@@ -1657,6 +1666,10 @@ class AppController extends ChangeNotifier {
         _wearableConnectInFlight != null) {
       return;
     }
+    _wearableRetryOnUnavailable = false;
+    _wearableRestoreRetryAttempts = 0;
+    _wearableRestoreTimer?.cancel();
+    _wearableRestoreTimer = null;
     final connecting = _connectDevice(device);
     _wearableConnectInFlight = connecting;
     try {
@@ -1721,6 +1734,7 @@ class AppController extends ChangeNotifier {
       syncStatus = '正在同步设备数据';
       deviceMachine.transition(DeviceConnectionState.ready);
       unawaited(_reportConnectedDevice(connectedDevice!, sessionGeneration));
+      _startWearableAutoSync(device.id, sessionGeneration);
       // Authentication is the connection boundary. Historical data is a
       // background follow-up and must not keep the add-device page spinning.
       unawaited(_syncInitialDeviceData(device.id));
@@ -2046,6 +2060,8 @@ class AppController extends ChangeNotifier {
 
   void _invalidateDeviceSync() {
     _deviceSyncGeneration++;
+    _wearableAutoSyncTimer?.cancel();
+    _wearableAutoSyncTimer = null;
     _pendingHealthRefresh = null;
     isDeviceSyncing = false;
     deviceSyncProgress = 0;
@@ -2060,6 +2076,11 @@ class AppController extends ChangeNotifier {
   }
 
   Future<void> disconnectDevice() async {
+    _wearableAccountRecoveryAllowed = false;
+    _wearableRetryOnUnavailable = false;
+    _wearableRestoreRetryAttempts = 0;
+    _wearableRestoreTimer?.cancel();
+    _wearableRestoreTimer = null;
     _deviceConnectionGeneration++;
     _retireMeasurementForDisconnect();
     _invalidateDeviceSync();
@@ -2844,7 +2865,8 @@ class AppController extends ChangeNotifier {
         !_privacyConsentGranted ||
         !_wearableAccountRecoveryAllowed ||
         connectedDevice != null ||
-        deviceState != DeviceConnectionState.disconnected) {
+        (deviceState != DeviceConnectionState.disconnected &&
+            deviceState != DeviceConnectionState.error)) {
       return;
     }
     final active = _wearableRestoreInFlight;
@@ -2862,12 +2884,51 @@ class AppController extends ChangeNotifier {
       if (identical(_wearableRestoreInFlight, restore)) {
         _wearableRestoreInFlight = null;
       }
+      if (connectedDevice == null &&
+          _wearableRetryOnUnavailable &&
+          _wearableAccountRecoveryAllowed) {
+        _scheduleWearableRestore(_nextWearableRestoreDelay());
+      }
     }
+  }
+
+  Duration _nextWearableRestoreDelay() {
+    _wearableRestoreRetryAttempts++;
+    return Duration(
+      seconds: switch (_wearableRestoreRetryAttempts) {
+        1 => 5,
+        2 => 10,
+        3 => 20,
+        _ => 30,
+      },
+    );
+  }
+
+  void _scheduleWearableRestore(Duration delay) {
+    if (_disposed ||
+        !_appIsForeground ||
+        !_allowAutomaticWearableRestore ||
+        _wearable is! WearableConnectionRecoveryBridge ||
+        !_privacyConsentGranted ||
+        !_wearableAccountRecoveryAllowed ||
+        !_wearableRetryOnUnavailable ||
+        connectedDevice != null ||
+        _accountTransitioning) {
+      return;
+    }
+    _wearableRestoreTimer?.cancel();
+    _wearableRestoreTimer = Timer(delay, () {
+      _wearableRestoreTimer = null;
+      unawaited(restoreWearableConnection());
+    });
   }
 
   Future<void> _runWearableConnectionRestore(int generation) async {
     final bridge = _wearable;
     if (bridge is! WearableConnectionRecoveryBridge) return;
+    if (deviceState == DeviceConnectionState.error) {
+      deviceMachine.transition(DeviceConnectionState.disconnected);
+    }
     try {
       final device = await (bridge as WearableConnectionRecoveryBridge)
           .restoreConnection(
@@ -3387,7 +3448,18 @@ class AppController extends ChangeNotifier {
     required double weight,
     String? avatarFilePath,
   }) => _guard(() async {
-    if (session == null) throw const ApiException('请先登录后编辑个人资料');
+    final initialSession = session;
+    if (initialSession == null) {
+      throw const ApiException('请先登录后编辑个人资料');
+    }
+    final generation = _sessionGeneration;
+    void ensureOwner() {
+      if (!_isCurrentSessionGeneration(generation) ||
+          session?.accountKey != initialSession.accountKey) {
+        throw const ApiException('账号已切换，请重新登录后保存个人资料');
+      }
+    }
+
     var headPortrait = memberProfile['head_portrait']?.toString();
     final normalizedAvatarPath = avatarFilePath?.trim() ?? '';
     if (normalizedAvatarPath.isNotEmpty) {
@@ -3397,6 +3469,10 @@ class AppController extends ChangeNotifier {
       headPortrait = await (_api as SaydianFileApi).uploadImage(
         normalizedAvatarPath,
       );
+      ensureOwner();
+    }
+    if (height < 50 || height > 250 || weight < 10 || weight > 500) {
+      throw const ApiException('个人资料数值超出服务端允许范围');
     }
     await _api.saveMemberProfile(
       nickname: nickname,
@@ -3406,7 +3482,26 @@ class AppController extends ChangeNotifier {
       weight: weight,
       headPortrait: headPortrait,
     );
-    await refreshMemberProfile();
+    ensureOwner();
+    final profile = await _api.getMemberProfile();
+    ensureOwner();
+    bool sameNumber(Object? actual, double expected) {
+      final parsed = actual is num
+          ? actual.toDouble()
+          : double.tryParse('$actual');
+      return parsed != null && (parsed - expected).abs() < 0.01;
+    }
+
+    if ('${profile['nickname'] ?? ''}'.trim() != nickname.trim() ||
+        int.tryParse('${profile['gender'] ?? ''}') != gender ||
+        '${profile['birthday'] ?? ''}'.trim() != birthday.trim() ||
+        !sameNumber(profile['height'], height) ||
+        !sameNumber(profile['weight'], weight) ||
+        (headPortrait?.isNotEmpty == true &&
+            '${profile['head_portrait'] ?? ''}'.trim() != headPortrait)) {
+      throw const ApiException('个人资料已提交，但服务器回读内容不一致，请检查后重试');
+    }
+    memberProfile = profile;
   });
 
   Future<String?> uploadProfileImage(String filePath) async {
@@ -3594,9 +3689,17 @@ class AppController extends ChangeNotifier {
   void setAppForeground(bool foreground) {
     _appIsForeground = foreground;
     if (!foreground) {
+      _wearableAutoSyncTimer?.cancel();
+      _wearableAutoSyncTimer = null;
+      _wearableRestoreTimer?.cancel();
+      _wearableRestoreTimer = null;
       _careInvitationPollTimer?.cancel();
       dismissCareInvitationAlert();
       return;
+    }
+    final device = connectedDevice;
+    if (device != null && _connectedDeviceSessionGeneration != null) {
+      _startWearableAutoSync(device.id, _connectedDeviceSessionGeneration!);
     }
     _scheduleCareInvitationPoll(const Duration(seconds: 30));
   }
@@ -3624,6 +3727,12 @@ class AppController extends ChangeNotifier {
       unawaited(_registerPushDevice(resetBackoff: true));
     }
     await Future.wait(operations);
+    final device = connectedDevice;
+    final connectedSession = _connectedDeviceSessionGeneration;
+    if (device != null && connectedSession == _sessionGeneration) {
+      _startWearableAutoSync(device.id, connectedSession!);
+      unawaited(_syncConnectedDeviceAndCloud(device.id, connectedSession));
+    }
     _scheduleCareInvitationPoll(const Duration(seconds: 30));
     if (!_disposed) notifyListeners();
   }
@@ -5457,6 +5566,10 @@ class AppController extends ChangeNotifier {
           activeDeviceId.toLowerCase() != eventDeviceId.toLowerCase()) {
         return;
       }
+      final shouldReconnect =
+          connectedDevice != null &&
+          _wearableAccountRecoveryAllowed &&
+          _privacyConsentGranted;
       _deviceConnectionGeneration++;
       _invalidateDeviceSync();
       _retireMeasurementForDisconnect();
@@ -5474,6 +5587,11 @@ class AppController extends ChangeNotifier {
         } on StateError {
           // Native disconnects are authoritative; the next scan resets state.
         }
+      }
+      if (shouldReconnect) {
+        _wearableRetryOnUnavailable = true;
+        _wearableRestoreRetryAttempts = 0;
+        _scheduleWearableRestore(const Duration(seconds: 1));
       }
     } else if (event.type == 'error') {
       final errorCode = '${event.payload['code'] ?? 'WEARABLE_ERROR'}';
@@ -5558,6 +5676,10 @@ class AppController extends ChangeNotifier {
         deviceState != DeviceConnectionState.disconnected) {
       return;
     }
+    _wearableRestoreTimer?.cancel();
+    _wearableRestoreTimer = null;
+    _wearableRetryOnUnavailable = false;
+    _wearableRestoreRetryAttempts = 0;
     _deviceConnectionGeneration++;
     _latestDeviceDetails = device;
     errorMessage = null;
@@ -5581,6 +5703,7 @@ class AppController extends ChangeNotifier {
       deviceMachine.transition(DeviceConnectionState.ready);
       notifyListeners();
       unawaited(_reportConnectedDevice(connectedDevice!, sessionGeneration));
+      _startWearableAutoSync(device.id, sessionGeneration);
       unawaited(_syncInitialDeviceData(device.id));
     } on PlatformException catch (error) {
       connectedDevice = null;
@@ -5602,6 +5725,48 @@ class AppController extends ChangeNotifier {
         deviceMachine.transition(DeviceConnectionState.error);
       }
       notifyListeners();
+    }
+  }
+
+  void _startWearableAutoSync(String deviceId, int sessionGeneration) {
+    _wearableAutoSyncTimer?.cancel();
+    _wearableAutoSyncTimer = null;
+    if (_disposed ||
+        !_appIsForeground ||
+        _wearableAutoSyncInterval <= Duration.zero ||
+        connectedDevice?.id != deviceId ||
+        _connectedDeviceSessionGeneration != sessionGeneration ||
+        !_isCurrentSessionGeneration(sessionGeneration) ||
+        deviceState != DeviceConnectionState.ready) {
+      return;
+    }
+    _wearableAutoSyncTimer = Timer.periodic(_wearableAutoSyncInterval, (_) {
+      unawaited(_syncConnectedDeviceAndCloud(deviceId, sessionGeneration));
+    });
+  }
+
+  Future<void> _syncConnectedDeviceAndCloud(
+    String deviceId,
+    int sessionGeneration,
+  ) async {
+    if (_disposed ||
+        !_appIsForeground ||
+        connectedDevice?.id != deviceId ||
+        _connectedDeviceSessionGeneration != sessionGeneration ||
+        !_isCurrentSessionGeneration(sessionGeneration)) {
+      return;
+    }
+    if (deviceState == DeviceConnectionState.ready &&
+        !isDeviceSyncing &&
+        _activeMeasurementMetric == null) {
+      await syncDeviceData();
+    }
+    if (!_disposed &&
+        _appIsForeground &&
+        connectedDevice?.id == deviceId &&
+        _connectedDeviceSessionGeneration == sessionGeneration &&
+        _isCurrentSessionGeneration(sessionGeneration)) {
+      await synchronizeCloud();
     }
   }
 
@@ -5825,6 +5990,8 @@ class AppController extends ChangeNotifier {
     if (isWechatLoginInProgress) unawaited(_wechatAuthBridge.cancel());
     _disposed = true;
     _wearableRestoreGeneration++;
+    _wearableRestoreTimer?.cancel();
+    _wearableAutoSyncTimer?.cancel();
     _measurementTimeout?.cancel();
     _careInvitationPollTimer?.cancel();
     _pushRegistrationRetryTimer?.cancel();

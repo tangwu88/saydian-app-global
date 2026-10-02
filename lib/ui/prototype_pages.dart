@@ -5861,9 +5861,14 @@ class _FeedbackPageState extends State<FeedbackPage> {
 }
 
 class CustomerServicePage extends StatelessWidget {
-  const CustomerServicePage({this.isGlobalEdition = false, super.key});
+  const CustomerServicePage({
+    this.isGlobalEdition = false,
+    this.controller,
+    super.key,
+  });
 
   final bool isGlobalEdition;
+  final AppController? controller;
 
   static const _phone = '4006386738';
   static const _officialAccount = '赛电';
@@ -5888,18 +5893,7 @@ class CustomerServicePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (isGlobalEdition) {
-      return Scaffold(
-        key: const Key('global-customer-service'),
-        appBar: AppBar(title: Text(context.l10n.customerService)),
-        body: Padding(
-          padding: const EdgeInsets.all(16),
-          child: FeatureStateCard(
-            message: context.l10n.serviceUnavailable,
-            detail: context.l10n.supportPrivacyWarning,
-            icon: Icons.support_agent,
-          ),
-        ),
-      );
+      return _GlobalCustomerServicePage(controller: controller);
     }
     return Scaffold(
       appBar: AppBar(title: Text(context.l10n.customerService)),
@@ -5945,6 +5939,50 @@ class CustomerServicePage extends StatelessWidget {
       ),
     );
   }
+}
+
+class _GlobalCustomerServicePage extends StatelessWidget {
+  const _GlobalCustomerServicePage({required this.controller});
+
+  final AppController? controller;
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+    key: const Key('global-customer-service'),
+    appBar: AppBar(title: Text(context.l10n.customerService)),
+    body: ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        Card(
+          child: Column(
+            children: [
+              ListTile(
+                leading: const CircleAvatar(
+                  child: Icon(Icons.support_agent_outlined),
+                ),
+                title: Text(context.l10n.helpFeedback),
+                subtitle: Text(context.l10n.contactPreparationHint),
+                trailing: const Icon(Icons.chevron_right_rounded),
+                onTap: controller == null
+                    ? null
+                    : () => Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => FeedbackPage(controller: controller),
+                        ),
+                      ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+        FeatureStateCard(
+          message: context.l10n.globalSupportFeedbackHint,
+          detail: context.l10n.supportPrivacyWarning,
+          icon: Icons.privacy_tip_outlined,
+        ),
+      ],
+    ),
+  );
 }
 
 class AboutSaydianPage extends StatefulWidget {

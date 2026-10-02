@@ -225,7 +225,6 @@ class _GlobalCarePageState extends State<GlobalCarePage> {
     final l = context.l10n;
     return Scaffold(
       key: const Key('global-care-page'),
-      appBar: AppBar(title: Text(l.remoteCare)),
       body: !_sameOwner
           ? Center(child: Text(l.signInCloudHint))
           : RefreshIndicator(

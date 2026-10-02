@@ -2552,6 +2552,12 @@ abstract class AppLocalizations {
   /// **'This feature is temporarily unavailable. Please try again later.'**
   String get serviceUnavailable;
 
+  /// No description provided for @globalSupportFeedbackHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Need help? Send us a message through Help and feedback above.'**
+  String get globalSupportFeedbackHint;
+
   /// No description provided for @accountCreated.
   ///
   /// In en, this message translates to:
@@ -2738,6 +2744,12 @@ abstract class AppLocalizations {
   /// **'Connect your watch to view supported health data'**
   String get connectWatchForData;
 
+  /// No description provided for @connectingWatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Connecting to your watch…'**
+  String get connectingWatch;
+
   /// No description provided for @noHealthData.
   ///
   /// In en, this message translates to:
@@ -2749,6 +2761,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No data yet'**
   String get noData;
+
+  /// No description provided for @noMessages.
+  ///
+  /// In en, this message translates to:
+  /// **'No messages yet.'**
+  String get noMessages;
+
+  /// No description provided for @messagesUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Messages could not be loaded.'**
+  String get messagesUnavailable;
+
+  /// No description provided for @articleLanguageUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Articles in your selected language are not available yet.'**
+  String get articleLanguageUnavailable;
+
+  /// No description provided for @bluetooth.
+  ///
+  /// In en, this message translates to:
+  /// **'Bluetooth'**
+  String get bluetooth;
+
+  /// No description provided for @location.
+  ///
+  /// In en, this message translates to:
+  /// **'Location'**
+  String get location;
+
+  /// No description provided for @photos.
+  ///
+  /// In en, this message translates to:
+  /// **'Photos'**
+  String get photos;
+
+  /// No description provided for @camera.
+  ///
+  /// In en, this message translates to:
+  /// **'Camera'**
+  String get camera;
+
+  /// No description provided for @permissionAllowed.
+  ///
+  /// In en, this message translates to:
+  /// **'Allowed'**
+  String get permissionAllowed;
+
+  /// No description provided for @permissionNotAllowed.
+  ///
+  /// In en, this message translates to:
+  /// **'Not allowed'**
+  String get permissionNotAllowed;
+
+  /// No description provided for @allow.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow'**
+  String get allow;
 
   /// No description provided for @connected.
   ///

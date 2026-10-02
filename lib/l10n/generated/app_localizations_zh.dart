@@ -1261,6 +1261,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get serviceUnavailable => '此功能暂时无法使用，请稍后再试';
 
   @override
+  String get globalSupportFeedbackHint => '需要帮助？请通过上方“帮助与反馈”提交问题。';
+
+  @override
   String get accountCreated => '账号已创建';
 
   @override
@@ -1354,10 +1357,43 @@ class AppLocalizationsZh extends AppLocalizations {
   String get connectWatchForData => '连接手表后可查看支持的健康数据';
 
   @override
+  String get connectingWatch => '正在连接手表…';
+
+  @override
   String get noHealthData => '暂无可显示的健康数据';
 
   @override
   String get noData => '暂无数据';
+
+  @override
+  String get noMessages => '暂无消息';
+
+  @override
+  String get messagesUnavailable => '暂时无法加载消息';
+
+  @override
+  String get articleLanguageUnavailable => '所选语言的文章暂不可用';
+
+  @override
+  String get bluetooth => '蓝牙';
+
+  @override
+  String get location => '位置';
+
+  @override
+  String get photos => '照片';
+
+  @override
+  String get camera => '相机';
+
+  @override
+  String get permissionAllowed => '已允许';
+
+  @override
+  String get permissionNotAllowed => '未允许';
+
+  @override
+  String get allow => '允许';
 
   @override
   String get connected => '已连接';
@@ -3231,6 +3267,9 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
   String get serviceUnavailable => '此功能暂时无法使用，请稍后再试';
 
   @override
+  String get globalSupportFeedbackHint => '需要帮助？请通过上方“帮助与反馈”提交问题。';
+
+  @override
   String get accountCreated => '账号已创建';
 
   @override
@@ -3324,10 +3363,43 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
   String get connectWatchForData => '连接手表后可查看支持的健康数据';
 
   @override
+  String get connectingWatch => '正在连接手表…';
+
+  @override
   String get noHealthData => '暂无可显示的健康数据';
 
   @override
   String get noData => '暂无数据';
+
+  @override
+  String get noMessages => '暂无消息';
+
+  @override
+  String get messagesUnavailable => '暂时无法加载消息';
+
+  @override
+  String get articleLanguageUnavailable => '所选语言的文章暂不可用';
+
+  @override
+  String get bluetooth => '蓝牙';
+
+  @override
+  String get location => '位置';
+
+  @override
+  String get photos => '照片';
+
+  @override
+  String get camera => '相机';
+
+  @override
+  String get permissionAllowed => '已允许';
+
+  @override
+  String get permissionNotAllowed => '未允许';
+
+  @override
+  String get allow => '允许';
 
   @override
   String get connected => '已连接';
@@ -5201,6 +5273,9 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get serviceUnavailable => '此功能暫時無法使用，請稍後再試';
 
   @override
+  String get globalSupportFeedbackHint => '需要協助？請透過上方「說明與回饋」提交問題。';
+
+  @override
   String get accountCreated => '帳號已建立';
 
   @override
@@ -5294,10 +5369,43 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get connectWatchForData => '連接手錶後可查看支援的健康資料';
 
   @override
+  String get connectingWatch => '正在連接手錶…';
+
+  @override
   String get noHealthData => '暫無可顯示的健康資料';
 
   @override
   String get noData => '暫無資料';
+
+  @override
+  String get noMessages => '暫無訊息';
+
+  @override
+  String get messagesUnavailable => '暫時無法載入訊息';
+
+  @override
+  String get articleLanguageUnavailable => '所選語言的文章暫不可用';
+
+  @override
+  String get bluetooth => '藍牙';
+
+  @override
+  String get location => '位置';
+
+  @override
+  String get photos => '照片';
+
+  @override
+  String get camera => '相機';
+
+  @override
+  String get permissionAllowed => '已允許';
+
+  @override
+  String get permissionNotAllowed => '未允許';
+
+  @override
+  String get allow => '允許';
 
   @override
   String get connected => '已連接';

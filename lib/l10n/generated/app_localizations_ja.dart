@@ -1286,6 +1286,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get serviceUnavailable => '現在、この機能をご利用いただけません。後でもう一度お試しください。';
 
   @override
+  String get globalSupportFeedbackHint =>
+      'お困りですか？上のヘルプとフィードバックからメッセージをお送りください。';
+
+  @override
   String get accountCreated => 'アカウントを作成しました';
 
   @override
@@ -1379,10 +1383,43 @@ class AppLocalizationsJa extends AppLocalizations {
   String get connectWatchForData => 'ウォッチを接続すると対応する健康データを確認できます';
 
   @override
+  String get connectingWatch => 'ウォッチに接続しています…';
+
+  @override
   String get noHealthData => '表示できる健康データはまだありません';
 
   @override
   String get noData => 'データはまだありません';
+
+  @override
+  String get noMessages => 'メッセージはまだありません。';
+
+  @override
+  String get messagesUnavailable => 'メッセージを読み込めませんでした。';
+
+  @override
+  String get articleLanguageUnavailable => '選択した言語の記事はまだ利用できません。';
+
+  @override
+  String get bluetooth => 'Bluetooth';
+
+  @override
+  String get location => '位置情報';
+
+  @override
+  String get photos => '写真';
+
+  @override
+  String get camera => 'カメラ';
+
+  @override
+  String get permissionAllowed => '許可済み';
+
+  @override
+  String get permissionNotAllowed => '未許可';
+
+  @override
+  String get allow => '許可';
 
   @override
   String get connected => '接続済み';
