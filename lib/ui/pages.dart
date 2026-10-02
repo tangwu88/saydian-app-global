@@ -655,7 +655,19 @@ class _DashboardHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final name = controller.session?.displayName ?? context.l10n.defaultUser;
+    final profileName = '${controller.memberProfile['nickname'] ?? ''}'.trim();
+    final sessionName = controller.session?.displayName.trim() ?? '';
+    final name = profileName.isNotEmpty
+        ? profileName
+        : sessionName.isNotEmpty
+        ? sessionName
+        : controller.isPreviewMode
+        ? (Localizations.localeOf(context).languageCode == 'zh'
+              ? '体验用户'
+              : 'Guest')
+        : context.l10n.defaultUser;
+    final avatarUrl = '${controller.memberProfile['head_portrait'] ?? ''}'
+        .trim();
     return Row(
       children: [
         Container(
@@ -670,22 +682,38 @@ class _DashboardHeader extends StatelessWidget {
         ),
         const SizedBox(width: 11),
         Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                context.l10n.welcome(name),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 21,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-            ],
+          child: Text(
+            context.l10n.health,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontSize: 21, fontWeight: FontWeight.w900),
           ),
         ),
-        const SizedBox(width: 6),
+        const SizedBox(width: 8),
+        Flexible(
+          fit: FlexFit.loose,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 132),
+            child: Text(
+              name,
+              key: const Key('dashboard-profile-name'),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.end,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                color: SaydianColors.ink,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        KeyedSubtree(
+          key: const Key('dashboard-profile-avatar'),
+          child: _MemberAvatar(imageUrl: avatarUrl, size: 42),
+        ),
+        const SizedBox(width: 2),
         Badge(
           isLabelVisible: controller.notificationUnreadCount > 0,
           label: Text(

@@ -17,6 +17,7 @@ import 'package:saydian_app/ui/app_theme.dart';
 import 'package:saydian_app/ui/health_trend_page.dart';
 import 'package:saydian_app/ui/pages.dart';
 import 'package:saydian_app/ui/prototype_pages.dart';
+import 'package:saydian_app/ui/widgets/safe_network_image.dart';
 
 void main() {
   // Legacy page hosts deliberately retain Chinese copy. DateFormat now uses
@@ -77,6 +78,109 @@ void main() {
       findsOneWidget,
     );
     expect(find.textContaining('设备已连接'), findsNothing);
+  });
+
+  testWidgets('Health header uses the current personal profile identity', (
+    tester,
+  ) async {
+    final controller =
+        AppController(
+            MemorySessionVault(),
+            _NoopApi(),
+            MemoryHealthStore(),
+            _NoopWearable(),
+          )
+          ..session = Session(
+            accessToken: 'test-access',
+            refreshToken: 'test-refresh',
+            expiresAt: DateTime.now().add(const Duration(hours: 1)),
+            memberId: 'member-1',
+            displayName: 'Login Name',
+            accountKey: 'account-1',
+          )
+          ..memberProfile = const {
+            'nickname': 'Profile Name',
+            'head_portrait':
+                'https://app.saydian.cn/global/api/saydian-app/v2/files/11111111-1111-4111-8111-111111111111',
+          };
+    addTearDown(controller.dispose);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        locale: const Locale('en'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        theme: buildSaydianTheme(),
+        home: ListenableBuilder(
+          listenable: controller,
+          builder: (context, _) => AppShell(controller: controller),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.text('Profile Name'), findsOneWidget);
+    expect(find.textContaining('Login Name'), findsNothing);
+    final avatar = find.byKey(const Key('dashboard-profile-avatar'));
+    expect(avatar, findsOneWidget);
+    final avatarImage = find.descendant(
+      of: avatar,
+      matching: find.byType(SafeNetworkImage),
+    );
+    expect(avatarImage, findsOneWidget);
+    expect(
+      (tester.widget<SafeNetworkImage>(avatarImage).image
+              as SafeNetworkImageProvider)
+          .url,
+      'https://app.saydian.cn/global/api/saydian-app/v2/files/11111111-1111-4111-8111-111111111111',
+    );
+
+    controller.memberProfile = const {
+      'nickname': 'Updated Profile Name',
+      'head_portrait':
+          'https://app.saydian.cn/global/api/saydian-app/v2/files/22222222-2222-4222-8222-222222222222',
+    };
+    controller.notifyListeners();
+    await tester.pump();
+
+    expect(find.text('Updated Profile Name'), findsOneWidget);
+    expect(find.text('Profile Name'), findsNothing);
+    expect(
+      (tester.widget<SafeNetworkImage>(avatarImage).image
+              as SafeNetworkImageProvider)
+          .url,
+      'https://app.saydian.cn/global/api/saydian-app/v2/files/22222222-2222-4222-8222-222222222222',
+    );
+  });
+
+  testWidgets('Health header falls back when profile identity is empty', (
+    tester,
+  ) async {
+    final controller = AppController(
+      MemorySessionVault(),
+      _NoopApi(),
+      MemoryHealthStore(),
+      _NoopWearable(),
+    )..enterPreview();
+    addTearDown(controller.dispose);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        locale: const Locale('en'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        theme: buildSaydianTheme(),
+        home: ListenableBuilder(
+          listenable: controller,
+          builder: (context, _) => AppShell(controller: controller),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.text('Guest'), findsOneWidget);
+    expect(find.byKey(const Key('dashboard-profile-avatar')), findsOneWidget);
+    expect(find.byType(SafeNetworkImage), findsNothing);
   });
 
   testWidgets('mini chart hides readings from one short burst', (tester) async {

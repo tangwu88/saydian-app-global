@@ -1282,7 +1282,12 @@ void main() {
       await _popRoute(tester);
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('健康'));
+      await tester.tap(
+        find.descendant(
+          of: find.byType(NavigationBar),
+          matching: find.text('健康'),
+        ),
+      );
       await tester.pump();
       await tester.ensureVisible(find.text('全部数据'));
       await tester.tap(find.text('全部数据'));

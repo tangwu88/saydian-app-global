@@ -12,6 +12,7 @@
 
 ## 最近记录
 
+- [2026-10-02 Health 顶部个人资料同步](IMPLEMENTATION-LOG-20261002-HEALTH-HEADER-PROFILE.md) — Health 顶部头像/昵称改读当前资料并加空值回退；iPhone Debug 安装和 VM 附加通过，双时区全量各 1,026 项通过；Android 构建因依赖网络等待中止，见记录。
 - [2026-10-02 个人资料头像保存根因修复](IMPLEMENTATION-LOG-20261002-PROFILE-AVATAR.md) — 对照戒指 App 修正旧上传 503 和 canonical 头像地址；真实演示账号头像写入/回读后恢复，iPhone 客户端上传/图片读取通过，真实空资料的完整表单写入未执行；双时区各 944 项通过。
 - [2026-10-01 国际 App 设备后台联调](IMPLEMENTATION-LOG-20261001-DEVICE-ADMIN-INTEGRATION.md) — 在独立分支加入连接就绪与自动重连上报；仅已验证的真实硬件地址可作为可选 MAC，测试和真机边界见本轮记录。
 - [2026-10-01 国际版 SAYDIAN Health 首版 App Store 准备](release/IOS-GLOBAL-APPSTORE-MVP-20261001.md) — 独立 App Store Connect 记录、iPhone-only 正式签名归档与 IPA、测试及真实审核阻断；与国内 SayRing/赛电 App 分离。
