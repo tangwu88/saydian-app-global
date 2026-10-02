@@ -12,6 +12,7 @@
 
 ## 最近记录
 
+- [2026-10-02 全 App 真机逐页复测与手表同步闭环](IMPLEMENTATION-LOG-20261002-IOS-FULL-QA-HEALTH-SYNC.md) — iPhone 15 Pro Max 真机逐页驱动通过并生成 36 张截图（访客预览态）；旧会话待上传记录触发 401，退出后等待用户确认协议再恢复账号。真实测量、服务端 ACK 与连接演示视频尚未完成；最终 Debug 重连因 Mac 锁屏/Xcode 自动化授权及 VM 未发现而中止。
 - [2026-10-02 手表血压同步、30 分钟补传与 Health 顶栏头像](IMPLEMENTATION-LOG-20261002-WATCH-SYNC-HEADER.md) — 修复 U19 手表端血压历史识别、前台周期补传/ACK 去重与顶栏头像；昵称现占原“健康”标题槽并恢复大字粗体样式，通知铃铛贴右；双时区全量各 951 项通过，iPhone 镜像复核通过；实机传感器至服务端闭环与全 App 逐页检查仍未验收。
 - [2026-10-02 Health 顶部个人资料同步](IMPLEMENTATION-LOG-20261002-HEALTH-HEADER-PROFILE.md) — Health 顶部头像/昵称改读当前资料并加空值回退；iPhone Debug 安装和 VM 附加通过，双时区全量各 1,026 项通过；Android 构建因依赖网络等待中止，见记录。
 - [2026-10-02 个人资料头像保存根因修复](IMPLEMENTATION-LOG-20261002-PROFILE-AVATAR.md) — 对照戒指 App 修正旧上传 503 和 canonical 头像地址；真实演示账号头像写入/回读后恢复，iPhone 客户端上传/图片读取通过，真实空资料的完整表单写入未执行；双时区各 944 项通过。
