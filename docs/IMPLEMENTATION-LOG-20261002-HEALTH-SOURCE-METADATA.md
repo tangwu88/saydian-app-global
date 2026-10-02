@@ -30,3 +30,13 @@
 ## Follow-up gate
 
 - If a vendor SDK later exposes an actual product model as a distinct, documented field, map only that field into `sourceModel`, add a transport-specific source test, then repeat the upload/API contract checks. Do not promote a Bluetooth display name, hardware revision, or inferred suffix into `source.model`.
+
+## 2026-10-02 iPhone 15 Pro Max Debug launch
+
+- Device: iPhone 15 Pro Max, iOS 26.6, UDID `00008130-001C098C2290001C`; Flutter lists it as connected.
+- Command: `flutter run --debug --no-pub --device-connection attached --device-id 00008130-001C098C2290001C`. Xcode device build completed in 60.3 seconds; install/launch completed in 21.8 seconds.
+- Installed app readback: `cn.saydian.app.global`, SAYDIAN Health, version `1.0.0` / build `1012`, Developer App.
+- Flutter attached and printed VM Service `http://127.0.0.1:63588/GcDbL-S1ZFI=/` and DevTools URL. A local `/getVM` request returned an iOS VM (`architectureBits=64`, Dart `3.12.2`, active `main.dart` isolate). Flutter tooling process remained present after launch.
+- Startup first-party GET requests mostly returned HTTP 200. Update manifest returned HTTP 404 (request ID `108e8959-2235-44c5-bd13-f30d0867595f`). The App's own restore/startup path performed one daily-summary POST and received HTTP 201 (request ID `c764143b-8abe-4a35-b730-71d4676c7b7b`); no manual sync/retry was tapped.
+- Xcode printed existing Swift Package Manager migration and WeChat simulator-architecture warnings; they did not prevent the iPhone device build. No separate simulator build was attempted.
+- This confirms Debug build/install/launch and live VM attachment, not hot-reload input, wearable measurement, or full online health readback. The debug session is kept running. No manual health-record upload was initiated.
