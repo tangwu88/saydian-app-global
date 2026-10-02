@@ -10,8 +10,8 @@
 
 - `lib/services/urion_wearable_bridge.dart`：支持血压能力的同步会读取血压历史；按当前连接缓存样本指纹，首次同步建立基线。手表端通知后的新样本只有在时间戳可无歧义证明位于通知前 5 分钟且唯一时才进入历史，沿用按设备及样本内容派生的稳定记录 ID。重复通知不会再次返回同一样本；歧义或旧记录不猜时区、不生成上传记录。App 发起测量的既有校验路径保留。
 - `lib/services/app_controller.dart`：连接就绪后开始前台 30 分钟周期；回到前台立即尝试同步并重启周期。每轮先读设备（正在测量或设备读取失败时不并发抢占），随后仍调用云同步以重试本地待传队列；断连、换号/同步失效、后台和 dispose 停止计时器。服务端仅确认接受的稳定 ID 才标记完成，未确认记录继续待传。
-- `lib/ui/pages.dart`：Health 左侧 50 px 品牌标记槽显示资料头像；头像缺失或加载失败显示原品牌 Logo；“Health”标题、右侧昵称位置和通知入口维持原有布局。头像更新会随 `memberProfile` 更新重绘。
-- 回归测试：U19 通知样本唯一时间/重复同步；控制器周期、ACK 去重、历史读取失败仍上传、前后台和断连暂停；Health 顶栏头像相对标题和昵称的左右位置及空头像 Logo 回退。假手表 Widget 测试在检查计时器前显式暂停控制器。
+- `lib/ui/pages.dart`：Health 左侧 50 px 品牌标记槽显示资料头像；头像缺失或加载失败显示原品牌 Logo；个人昵称在头像右侧、替换原“健康”标题并沿用标题样式，通知入口贴最右。头像更新会随 `memberProfile` 更新重绘。
+- 回归测试：U19 通知样本唯一时间/重复同步；控制器周期、ACK 去重、历史读取失败仍上传、前后台和断连暂停；Health 顶栏头像及昵称位置、字样风格、最右通知入口和空头像 Logo 回退。假手表 Widget 测试在检查计时器前显式暂停控制器。
 
 ## 验证记录
 
@@ -34,3 +34,13 @@
 - 本轮镜像已可用并检查了 Health 与“我的”页：Health 左侧显示品牌 Logo、标题，右侧显示昵称 `lili3` 和通知入口；“我的”页头像仍是默认人像占位，没有已保存的自定义头像，因此当前品牌 Logo 回退符合“仅上传个人头像时替换”的预期。头像存在时的替换分支由 `test/ui_shell_test.dart` 覆盖。本轮只核对了这两页顶栏，不代表全 App 逐页验收。
 - 真机血压传感器产生的记录、写入本机待传队列、线上 ACK 回读、自动重连以及不重复上传，均尚未端到端复测；本轮没有手动触发测量。此前用户已允许真实记录上传，但仍需实际新测量记录才能完成硬件闭环。
 - 30 分钟任务是 App 前台且连接有效时的应用内周期；进入后台后不承诺精确每 30 分钟运行，依赖 iOS 蓝牙事件唤醒与回前台补同步。`BGTaskRequest.earliestBeginDate` 也不保证在所设时间执行。
+
+## 2026-10-02 Health 顶栏昵称位置调整
+
+- 基线提交 `b302c98431ecab83d65bc7b0d7306901a5342147`；用户明确要求将昵称移到原“健康”标题槽、保留标题初始字体样式，并让通知铃铛继续位于最右侧。
+- `lib/ui/pages.dart`：头像后直接展示个人昵称（21 px、w900），移除原中间“健康”标题及铃铛前的小号昵称；铃铛仍为 Row 最后一项并贴右。无昵称时保留既有 session/预览/默认用户名回退。
+- `test/ui_shell_test.dart`：断言昵称占据 Logo 后原标题起始位置、保持标题字号/字重，通知按钮右沿与顶栏右沿对齐；保留资料头像更新与空头像回退覆盖。
+- RED/GREEN：首次试跑选错 `--plain-name`，Flutter 报 `No tests ran`；改为准确用例名后，旧 UI 在缺少顶栏/通知键断言处失败。实现后定向用例通过。
+- 验证：`dart format lib/ui/pages.dart test/ui_shell_test.dart`；`flutter analyze --no-pub` 通过；UTC 与 Asia/Shanghai 全量 Flutter 测试各 951/951 通过；`git diff --check` 通过。
+- iPhone 15 Pro Max Debug：旧会话报告 `Lost connection to device`；重建后 `flutter run --debug --no-pub --device-connection attached --device-id 00008130-001C098C2290001C` 成功构建安装启动，Xcode build 21.4 秒、同步 177 ms、公布 VM Service `http://127.0.0.1:53720/zPyvQ2JLc_U=/`。镜像曾要求锁机；用户锁机后复连，实机截图确认左侧头像槽后为粗体大字 `lili3`，铃铛最右。
+- Android Debug 构建尝试停留在 Gradle included-build 配置超过 4 分钟，无新日志/产物；终止等待，Android 构建未验收。当前改动只涉及 Flutter 顶栏布局；不代表 Android 构建通过。

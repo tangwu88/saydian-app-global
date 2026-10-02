@@ -673,6 +673,7 @@ class _DashboardHeader extends StatelessWidget {
     final avatarUrl = '${controller.memberProfile['head_portrait'] ?? ''}'
         .trim();
     return Row(
+      key: const Key('dashboard-header'),
       children: [
         KeyedSubtree(
           key: const Key('dashboard-profile-avatar'),
@@ -701,28 +702,14 @@ class _DashboardHeader extends StatelessWidget {
         const SizedBox(width: 11),
         Expanded(
           child: Text(
-            context.l10n.health,
+            name,
+            key: const Key('dashboard-profile-name'),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontSize: 21, fontWeight: FontWeight.w900),
-          ),
-        ),
-        const SizedBox(width: 8),
-        Flexible(
-          fit: FlexFit.loose,
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 132),
-            child: Text(
-              name,
-              key: const Key('dashboard-profile-name'),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.end,
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-                color: SaydianColors.ink,
-              ),
+            style: const TextStyle(
+              fontSize: 21,
+              fontWeight: FontWeight.w900,
+              color: SaydianColors.ink,
             ),
           ),
         ),
@@ -737,6 +724,7 @@ class _DashboardHeader extends StatelessWidget {
           smallSize: 9,
           backgroundColor: Color(0xFFD70B25),
           child: IconButton(
+            key: const Key('dashboard-notifications-button'),
             tooltip: controller.notificationUnreadCount > 0
                 ? context.l10n.unreadMessages(
                     controller.notificationUnreadCount,

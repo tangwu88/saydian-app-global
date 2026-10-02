@@ -123,19 +123,32 @@ void main() {
     expect(find.text('Profile Name'), findsOneWidget);
     expect(find.textContaining('Login Name'), findsNothing);
     final avatar = find.byKey(const Key('dashboard-profile-avatar'));
+    final profileName = find.byKey(const Key('dashboard-profile-name'));
+    final header = find.byKey(const Key('dashboard-header'));
+    final notifications = find.byKey(
+      const Key('dashboard-notifications-button'),
+    );
     expect(avatar, findsOneWidget);
+    expect(profileName, findsOneWidget);
+    expect(header, findsOneWidget);
+    expect(notifications, findsOneWidget);
     expect(
       tester.getRect(avatar).left,
-      lessThan(tester.getRect(find.text('Health').first).left),
+      lessThan(tester.getRect(profileName).left),
       reason: 'The profile avatar replaces the left brand mark in-place.',
     );
     expect(
-      tester.getRect(find.text('Health').first).left,
-      lessThan(
-        tester.getRect(find.byKey(const Key('dashboard-profile-name'))).left,
-      ),
-      reason:
-          'The profile nickname stays in the existing right-side text slot.',
+      tester.getRect(profileName).left,
+      closeTo(tester.getRect(avatar).right + 11, 0.1),
+      reason: 'The nickname occupies the original Health title slot.',
+    );
+    final profileNameText = tester.widget<Text>(profileName);
+    expect(profileNameText.style?.fontSize, 21);
+    expect(profileNameText.style?.fontWeight, FontWeight.w900);
+    expect(
+      tester.getRect(notifications).right,
+      closeTo(tester.getRect(header).right, 0.1),
+      reason: 'Notifications remain aligned at the far right of the header.',
     );
     final avatarImage = find.descendant(
       of: avatar,
