@@ -87,6 +87,10 @@ void main() {
       await tester.pump();
 
       expect(find.text('正在为你准备…'), findsOneWidget);
+      expect(
+        find.image(const AssetImage('assets/branding/saidian-logo-en.png')),
+        findsOneWidget,
+      );
       expect(controller.pendingNotificationRoute, isNotNull);
 
       requiredRead.complete(_requiredInfo());
