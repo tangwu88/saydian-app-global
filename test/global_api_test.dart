@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
@@ -57,6 +58,91 @@ Map<String, Object?> capabilities({
 };
 
 void main() {
+  test('profile avatar upload bypasses unavailable object storage', () async {
+    final directory = await Directory.systemTemp.createTemp('global-avatar-');
+    addTearDown(() => directory.delete(recursive: true));
+    final image = File('${directory.path}/avatar.png');
+    await image.writeAsBytes(const [0x89, 0x50, 0x4e, 0x47]);
+    final vault = MemorySessionVault()..session = session();
+    final api = GlobalSaydianApiClient(
+      vault,
+      client: MockClient((request) async {
+        if (request.url.path == '/global/api/saydian-app/v2/files') {
+          return http.Response('{"errorKey":"SERVICE_UNAVAILABLE"}', 503);
+        }
+        expect(request.method, 'POST');
+        expect(
+          request.url.path,
+          '/global/api/saydian-app/v2/files/say-ring-avatar',
+        );
+        expect(request.url.query, isEmpty);
+        expect(request.headers['authorization'], 'Bearer global-test-access');
+        expect(
+          request.headers['content-type'],
+          startsWith('multipart/form-data;'),
+        );
+        expect(latin1.decode(request.bodyBytes), contains('name="file"'));
+        expect(
+          latin1.decode(request.bodyBytes),
+          isNot(contains('name="purpose"')),
+        );
+        return ok({
+          'id': '11111111-1111-4111-8111-111111111111',
+          'url':
+              'https://app.saydian.cn/api/saydian-app/v2/files/11111111-1111-4111-8111-111111111111',
+        });
+      }),
+    );
+    expect(
+      await api.uploadProfileImage(image.path),
+      'https://app.saydian.cn/global/api/saydian-app/v2/files/11111111-1111-4111-8111-111111111111',
+    );
+  });
+
+  test(
+    'profile reads canonical avatar addresses only through global media',
+    () async {
+      final api = GlobalSaydianApiClient(
+        MemorySessionVault()..session = session(),
+        client: MockClient(
+          (request) async => ok({
+            'nickname': 'Synthetic',
+            'gender': 'male',
+            'avatarUrl':
+                'https://app.saydian.cn/api/saydian-app/v2/files/11111111-1111-4111-8111-111111111111',
+          }),
+        ),
+      );
+      expect(
+        (await api.getMemberProfile())['head_portrait'],
+        'https://app.saydian.cn/global/api/saydian-app/v2/files/11111111-1111-4111-8111-111111111111',
+      );
+    },
+  );
+
+  test(
+    'profile avatar normalization rejects foreign and malformed resources',
+    () async {
+      for (final avatar in const [
+        'https://app.saydian.cn/api/saydian-app/v2/files/not-an-id',
+        'https://foreign.invalid/api/saydian-app/v2/files/11111111-1111-4111-8111-111111111111',
+        'http://app.saydian.cn/api/saydian-app/v2/files/11111111-1111-4111-8111-111111111111',
+        'https://app.saydian.cn/api/saydian-app/v2/files/11111111-1111-4111-8111-111111111111?token=private',
+        'https://app.saydian.cn/api/saydian-app/v2/files/../files/11111111-1111-4111-8111-111111111111',
+      ]) {
+        final api = GlobalSaydianApiClient(
+          MemorySessionVault()..session = session(),
+          client: MockClient((request) async => ok({'avatarUrl': avatar})),
+        );
+        expect(
+          (await api.getMemberProfile())['head_portrait'],
+          isEmpty,
+          reason: avatar,
+        );
+      }
+    },
+  );
+
   test('daily summaries require the authenticated global capability', () async {
     final vault = MemorySessionVault()..session = session();
     final requests = <http.Request>[];

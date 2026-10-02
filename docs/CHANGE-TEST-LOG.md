@@ -12,6 +12,7 @@
 
 ## 最近记录
 
+- [2026-10-02 个人资料头像保存根因修复](IMPLEMENTATION-LOG-20261002-PROFILE-AVATAR.md) — 对照戒指 App 修正旧上传 503 和 canonical 头像地址；真实演示账号头像写入/回读后恢复，iPhone 客户端上传/图片读取通过，真实空资料的完整表单写入未执行；双时区各 944 项通过。
 - [2026-10-01 国际 App 设备后台联调](IMPLEMENTATION-LOG-20261001-DEVICE-ADMIN-INTEGRATION.md) — 在独立分支加入连接就绪与自动重连上报；仅已验证的真实硬件地址可作为可选 MAC，测试和真机边界见本轮记录。
 - [2026-10-01 国际版 SAYDIAN Health 首版 App Store 准备](release/IOS-GLOBAL-APPSTORE-MVP-20261001.md) — 独立 App Store Connect 记录、iPhone-only 正式签名归档与 IPA、测试及真实审核阻断；与国内 SayRing/赛电 App 分离。
 - [2026-09-30 iPhone 15 Pro Max 逐页检查与 Debug 恢复](QA-20260930-IOS-PAGE-DEBUG.md) — 修正过期国际版真机测试断言，离线 34 页渲染检查及双时区 929 项回归通过；真机逐页自动化因 VM 通道断开未完成，缓存重建后 Flutter Debug/DevTools 恢复并保持运行。

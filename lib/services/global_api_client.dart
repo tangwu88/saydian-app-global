@@ -442,6 +442,26 @@ class GlobalSaydianApiClient extends SaydianApiClient
   @override
   String _absoluteMediaUrl(String value) => GlobalEnvironment.media(value);
 
+  String _avatarMediaUrl(String value) {
+    // The shared avatar store returns canonical controller URLs. Resolve only
+    // an exact same-origin file UUID through the international gateway.
+    final raw = value.trim();
+    final canonical =
+        '${GlobalEnvironment.configuredOrigin.origin}'
+        '${GlobalEnvironment.canonicalApiPrefix}/files/';
+    if (raw.startsWith(canonical)) {
+      final id = raw.substring(canonical.length);
+      if (RegExp(
+        r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$',
+      ).hasMatch(id)) {
+        return GlobalEnvironment.media(
+          '${GlobalEnvironment.apiPrefix}/files/$id',
+        );
+      }
+    }
+    return _absoluteMediaUrl(raw);
+  }
+
   @override
   Map<String, Object?> _normalizeArticle(Map<String, Object?> article) => {
     ...article,
@@ -478,7 +498,7 @@ class GlobalSaydianApiClient extends SaydianApiClient
     );
     return {
       ...data,
-      'head_portrait': _absoluteMediaUrl('${data['avatarUrl'] ?? ''}'),
+      'head_portrait': _avatarMediaUrl('${data['avatarUrl'] ?? ''}'),
       'gender': switch (data['gender']) {
         'male' => 1,
         'female' => 2,
@@ -550,13 +570,10 @@ class GlobalSaydianApiClient extends SaydianApiClient
   @override
   Future<String> uploadImage(String filePath) async {
     final response = await _withAuthorizationRetry((session) async {
-      final request =
-          http.MultipartRequest(
-              'POST',
-              _uri('/api/saydian-app/v2/files', {'purpose': 'avatar'}),
-            )
-            ..headers.addAll(_authorizationHeaders(session))
-            ..fields['purpose'] = 'avatar';
+      final request = http.MultipartRequest(
+        'POST',
+        _uri('/api/saydian-app/v2/files/say-ring-avatar'),
+      )..headers.addAll(_authorizationHeaders(session));
       final extension = filePath.toLowerCase().split('.').last;
       final mime = switch (extension) {
         'jpg' || 'jpeg' => 'jpeg',
@@ -577,7 +594,7 @@ class GlobalSaydianApiClient extends SaydianApiClient
       return _sendMultipart(request);
     });
     final data = _data(_decode(response));
-    final url = _absoluteMediaUrl('${data['url'] ?? ''}');
+    final url = _avatarMediaUrl('${data['url'] ?? ''}');
     if (url.isEmpty) {
       throw const ApiException('Unable to upload the photo. Please try again.');
     }
