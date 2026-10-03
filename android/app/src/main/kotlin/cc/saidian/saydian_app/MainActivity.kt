@@ -227,6 +227,7 @@ internal object WearableRecordTimezone {
 
 class MainActivity : FlutterActivity() {
     private val mainHandler = Handler(Looper.getMainLooper())
+    private val weatherLocation by lazy { WeatherLocationProvider(applicationContext) }
     private lateinit var adapter: VeepooWearableAdapter
     private lateinit var urion: UrionGattTransport
     private var eventSink: EventChannel.EventSink? = null
@@ -248,6 +249,12 @@ class MainActivity : FlutterActivity() {
         if (!::adapter.isInitialized) adapter = VeepooWearableAdapter(applicationContext)
         if (!::urion.isInitialized) urion = UrionGattTransport(applicationContext)
         super.configureFlutterEngine(flutterEngine)
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "saydian/weather_location")
+            .setMethodCallHandler { call, result ->
+                if (call.method == "currentNetworkLocation") weatherLocation.current(result)
+                else if (call.method == "cityLocation") weatherLocation.city(call.argument<String>("city").orEmpty(), result)
+                else result.notImplemented()
+            }
         MethodChannel(
             flutterEngine.dartExecutor.binaryMessenger,
             URION_METHODS_CHANNEL,
@@ -772,6 +779,7 @@ class MainActivity : FlutterActivity() {
     }
 
     override fun onDestroy() {
+        weatherLocation.close()
         if (::adapter.isInitialized) adapter.close(preserveConnection = true)
         if (::urion.isInitialized) urion.close()
         super.onDestroy()

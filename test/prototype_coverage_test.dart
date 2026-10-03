@@ -106,6 +106,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(controller.deviceCapabilityState, DeviceCapabilityState.ready);
+      expect(find.byKey(const Key('phone-weather-entry')), findsOneWidget);
       expect(
         controller.visibleDeviceFeatures,
         contains(DeviceFeature.findWatch),

@@ -31,6 +31,7 @@ import 'prototype_pages.dart';
 import 'shop_pages.dart';
 import 'feature_visibility.dart';
 import 'watch_face_market_page.dart';
+import 'phone_weather_page.dart';
 
 String _localeCopy(BuildContext context, String english, String chinese) =>
     Localizations.localeOf(context).languageCode == 'zh' ? chinese : english;
@@ -4648,6 +4649,24 @@ class DevicePage extends StatelessWidget {
           ),
         ],
         const SizedBox(height: 14),
+        Card(
+          child: ListTile(
+            key: const Key('phone-weather-entry'),
+            leading: const Icon(Icons.wb_sunny_outlined),
+            title: Text(_localeCopy(context, 'Phone weather', '手机天气')),
+            subtitle: Text(
+              _localeCopy(
+                context,
+                'View local forecast on your phone',
+                '查看手机当前位置天气预报',
+              ),
+            ),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(builder: (_) => const PhoneWeatherPage()),
+            ),
+          ),
+        ),
         if (connected != null &&
             controller.deviceCapabilityState ==
                 DeviceCapabilityState.loading) ...[

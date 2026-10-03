@@ -1,9 +1,11 @@
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 import 'safe_resource_client.dart';
+import 'global_environment.dart';
 
 class DeviceWeatherException implements Exception {
   const DeviceWeatherException(
@@ -26,25 +28,38 @@ class DeviceWeatherForecast {
     required this.updatedAt,
     required this.hourly,
     required this.daily,
+    this.source = 'QWeather',
+    this.sourceUrl = 'https://www.qweather.com/',
+    this.licenseUrl,
+    this.supportsWatchSync = true,
   });
 
   final String city;
   final DateTime updatedAt;
   final List<Map<String, Object?>> hourly;
   final List<Map<String, Object?>> daily;
+  final String source;
+  final String sourceUrl;
+  final String? licenseUrl;
+  final bool supportsWatchSync;
 
-  Map<String, Object?> toFeatureValues({required bool useCelsius}) => {
-    'operation': 'sync',
-    'enabled': true,
-    'useCelsius': useCelsius,
-    'city': city,
-    'updatedAt': updatedAt.millisecondsSinceEpoch,
-    'hourly': hourly,
-    'daily': daily,
-  };
+  Map<String, Object?> toFeatureValues({required bool useCelsius}) {
+    if (!supportsWatchSync) {
+      throw const DeviceWeatherException('当前预报可在手机天气页查看，手表同步尚未支持');
+    }
+    return {
+      'operation': 'sync',
+      'enabled': true,
+      'useCelsius': useCelsius,
+      'city': city,
+      'updatedAt': updatedAt.millisecondsSinceEpoch,
+      'hourly': hourly,
+      'daily': daily,
+    };
+  }
 }
 
-/// Loads the same QWeather forecast used by the supplied mini-program.
+/// Loads public phone forecasts or the configured QWeather watch forecast.
 ///
 /// The client key stays outside source control and is supplied at build time:
 /// `--dart-define=QWEATHER_API_KEY=...`.
@@ -58,15 +73,13 @@ class DeviceWeatherService {
   final http.Client _client;
 
   static const _apiKey = String.fromEnvironment('QWEATHER_API_KEY');
+  static const _locationChannel = MethodChannel('saydian/weather_location');
   static const _apiHost = String.fromEnvironment(
     'QWEATHER_API_HOST',
     defaultValue: 'https://ny2tuqge5v.re.qweatherapi.com',
   );
 
   Future<DeviceWeatherForecast> loadCurrentLocation() async {
-    if (_apiKey.isEmpty) {
-      throw const DeviceWeatherException('天气服务暂时无法使用，请稍后再试');
-    }
     if (!await Geolocator.isLocationServiceEnabled()) {
       throw const DeviceWeatherException(
         '请先开启手机定位，再更新天气',
@@ -87,6 +100,12 @@ class DeviceWeatherService {
     }
 
     Position? position;
+    if (_apiKey.isEmpty && defaultTargetPlatform == TargetPlatform.android) {
+      final network = await readNetworkLocation();
+      if (network != null) {
+        return loadCoordinates(network.latitude, network.longitude);
+      }
+    }
     try {
       position = await Geolocator.getCurrentPosition(
         locationSettings: defaultTargetPlatform == TargetPlatform.android
@@ -106,8 +125,15 @@ class DeviceWeatherService {
     if (position == null) {
       throw const DeviceWeatherException('暂时无法获取当前位置，请稍后重试');
     }
+    if (_apiKey.isEmpty &&
+        DateTime.now().difference(position.timestamp).abs() >
+            const Duration(minutes: 30)) {
+      throw const DeviceWeatherException('定位信息已过期，请重新获取当前位置');
+    }
 
-    return _loadForecast('${position.longitude},${position.latitude}');
+    return _apiKey.isEmpty
+        ? loadCoordinates(position.latitude, position.longitude)
+        : _loadForecast('${position.longitude},${position.latitude}');
   }
 
   Future<DeviceWeatherForecast> loadCity(String city) async {
@@ -116,9 +142,165 @@ class DeviceWeatherService {
       throw const DeviceWeatherException('请输入城市名称');
     }
     if (_apiKey.isEmpty) {
-      throw const DeviceWeatherException('天气服务暂时无法使用，请稍后再试');
+      // The user explicitly selected this city; this is not a GPS position.
+      if (const {'深圳', '深圳市', 'shenzhen'}.contains(value.toLowerCase())) {
+        return loadCoordinates(22.53, 114.08, city: '深圳');
+      }
+      try {
+        final location = await _locationChannel
+            .invokeMapMethod<String, Object?>('cityLocation', {'city': value})
+            .timeout(const Duration(seconds: 9));
+        final lat = location?['latitude'];
+        final lon = location?['longitude'];
+        if (lat is num &&
+            lon is num &&
+            lat.isFinite &&
+            lon.isFinite &&
+            lat.abs() <= 90 &&
+            lon.abs() <= 180) {
+          return loadCoordinates(
+            lat.toDouble(),
+            lon.toDouble(),
+            city: '${location?['city'] ?? value}',
+          );
+        }
+      } catch (_) {
+        // No geocoder or no result stays unavailable, not a guessed city.
+      }
+      throw const DeviceWeatherException('未找到该城市，请检查名称或使用当前位置');
     }
     return _loadForecast(value);
+  }
+
+  void close() => _client.close();
+
+  Future<({double latitude, double longitude})?> readNetworkLocation() async {
+    try {
+      final value = await _locationChannel
+          .invokeMapMethod<String, Object?>('currentNetworkLocation')
+          .timeout(const Duration(seconds: 9));
+      final lat = value?['latitude'];
+      final lon = value?['longitude'];
+      final time = value?['timestamp'];
+      if (lat is! num ||
+          lon is! num ||
+          time is! int ||
+          !lat.isFinite ||
+          !lon.isFinite ||
+          lat.abs() > 90 ||
+          lon.abs() > 180 ||
+          DateTime.now()
+                  .difference(DateTime.fromMillisecondsSinceEpoch(time))
+                  .abs() >
+              const Duration(minutes: 10)) {
+        return null;
+      }
+      return (latitude: lat.toDouble(), longitude: lon.toDouble());
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<DeviceWeatherForecast> loadCoordinates(
+    double latitude,
+    double longitude, {
+    String city = '当前位置',
+  }) async {
+    if (!latitude.isFinite ||
+        !longitude.isFinite ||
+        latitude.abs() > 90 ||
+        longitude.abs() > 180) {
+      throw const DeviceWeatherException('天气位置无效');
+    }
+    final uri = GlobalEnvironment.resolve(
+      GlobalEnvironment.configuredOrigin,
+      '${GlobalEnvironment.apiPrefix}/support/weather',
+      {'lat': latitude.toStringAsFixed(2), 'lon': longitude.toStringAsFixed(2)},
+    );
+    try {
+      final response = await _client
+          .get(uri)
+          .timeout(const Duration(seconds: 20));
+      if (response.statusCode != 200) throw const FormatException();
+      final root = jsonDecode(response.body);
+      if (root is! Map || root['code'] != 200 || root['data'] is! Map) {
+        throw const FormatException();
+      }
+      return fromPublicForecast(
+        Map<String, Object?>.from(root['data'] as Map),
+        city: city,
+      );
+    } catch (_) {
+      throw const DeviceWeatherException('天气数据暂时不可用，请检查网络后重试');
+    }
+  }
+
+  /// Daily ranges are calculated from forecast points, not observations.
+  static DeviceWeatherForecast fromPublicForecast(
+    Map<String, Object?> data, {
+    DateTime? now,
+    String city = '当前位置',
+  }) {
+    final updatedAt = DateTime.tryParse('${data['updatedAt'] ?? ''}');
+    final current = (now ?? DateTime.now()).toLocal();
+    final cutoff = DateTime(
+      current.year,
+      current.month,
+      current.day,
+      current.hour,
+    );
+    final points = <Map<String, Object?>>[];
+    for (final item in _list(data['timeseries'])) {
+      final time = DateTime.tryParse('${item['time'] ?? ''}');
+      final values = item['data'];
+      if (time == null || time.isBefore(cutoff) || values is! Map) continue;
+      final instant = values['instant'];
+      final details = instant is Map ? instant['details'] : null;
+      final temperature = details is Map ? details['air_temperature'] : null;
+      if (temperature is! num || !temperature.isFinite) continue;
+      final period =
+          values['next_1_hours'] ??
+          values['next_6_hours'] ??
+          values['next_12_hours'];
+      final summary = period is Map ? period['summary'] : null;
+      final symbol = summary is Map ? summary['symbol_code'] : null;
+      final wind = details is Map ? details['wind_speed'] : null;
+      points.add({
+        'time': time.millisecondsSinceEpoch,
+        'temperatureC': temperature.toDouble(),
+        if (symbol is String) 'symbol': symbol,
+        if (wind is num && wind.isFinite) 'windSpeedMs': wind.toDouble(),
+      });
+    }
+    points.sort((a, b) => (a['time'] as int).compareTo(b['time'] as int));
+    if (updatedAt == null || points.isEmpty || data['source'] != 'MET Norway') {
+      throw const DeviceWeatherException('天气数据暂时不可用，请稍后重试');
+    }
+    final grouped = <DateTime, List<double>>{};
+    for (final point in points) {
+      final time = DateTime.fromMillisecondsSinceEpoch(point['time'] as int);
+      final day = DateTime(time.year, time.month, time.day);
+      grouped.putIfAbsent(day, () => []).add(point['temperatureC'] as double);
+    }
+    return DeviceWeatherForecast(
+      city: city,
+      updatedAt: updatedAt,
+      hourly: points.take(24).toList(),
+      daily: grouped.entries
+          .take(7)
+          .map(
+            (entry) => <String, Object?>{
+              'time': entry.key.millisecondsSinceEpoch,
+              'maximumC': entry.value.reduce((a, b) => a > b ? a : b),
+              'minimumC': entry.value.reduce((a, b) => a < b ? a : b),
+            },
+          )
+          .toList(),
+      source: 'MET Norway',
+      sourceUrl: 'https://api.met.no/',
+      licenseUrl: 'https://creativecommons.org/licenses/by/4.0/',
+      supportsWatchSync: false,
+    );
   }
 
   Future<DeviceWeatherForecast> _loadForecast(String location) async {

@@ -29,7 +29,10 @@ class SafeResourceClient extends http.BaseClient {
     ResourcePurpose.image =>
       GlobalEnvironment.allowsFirstPartyResource(uri) || isWatchVendor(uri),
     ResourcePurpose.watchFace => isWatchVendor(uri),
-    ResourcePurpose.weather => isWeatherVendor(uri),
+    ResourcePurpose.weather =>
+      isWeatherVendor(uri) ||
+          (GlobalEnvironment.allowsFirstPartyResource(uri) &&
+              uri.path == '${GlobalEnvironment.apiPrefix}/support/weather'),
   };
 
   @override
