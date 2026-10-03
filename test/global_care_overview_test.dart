@@ -57,7 +57,13 @@ class _Controller extends AppController {
             {
               'id': 'synthetic-$id',
               'metric': 'heart_rate',
-              'values': {'heartRate': id == 'one' ? 73 : 81},
+              'values': {
+                'heartRate': session?.memberId == 'b'
+                    ? 91
+                    : id == 'one'
+                    ? 73
+                    : 81,
+              },
               'unit': 'bpm',
               'observedAt': '2026-10-03T12:00:00Z',
             },
@@ -74,6 +80,7 @@ class _Controller extends AppController {
 
   void switchAccount() {
     session = _session('b');
+    pending = null;
     notifyListeners();
   }
 }
@@ -122,8 +129,9 @@ void main() {
       expect(controller.calls, ['one', 'two']);
       expect(controller.healthRecords, isEmpty);
       controller.switchAccount();
-      await tester.pump();
+      await tester.pumpAndSettle();
       expect(find.textContaining('81'), findsNothing);
+      expect(find.textContaining('91'), findsOneWidget);
     },
   );
   testWidgets(

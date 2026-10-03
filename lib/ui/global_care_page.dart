@@ -22,7 +22,7 @@ class _GlobalCareOverviewState extends State<GlobalCarePage> {
   List<HealthRecord> _latest = const [];
   Set<String> _metrics = const {};
   String? _selected;
-  late final String? _owner;
+  String? _owner;
   int _generation = 0;
   bool _loading = true;
   bool _failed = false;
@@ -40,6 +40,7 @@ class _GlobalCareOverviewState extends State<GlobalCarePage> {
   void _accountChanged() {
     if (!mounted || _sameOwner) return;
     _generation++;
+    _owner = widget.controller.session?.accountKey;
     setState(() {
       _members = const [];
       _latest = const [];
@@ -48,6 +49,7 @@ class _GlobalCareOverviewState extends State<GlobalCarePage> {
       _loading = false;
       _failed = false;
     });
+    if (_owner != null) unawaited(_load());
   }
 
   @override
