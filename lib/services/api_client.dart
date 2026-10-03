@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io' show gzip;
 
 import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
@@ -95,6 +96,11 @@ abstract interface class SaydianApi {
 /// snapshots because its statistics could count every revision separately.
 abstract interface class DailySummarySupportApi {
   Future<bool> supportsDailySummaries();
+}
+
+/// File receipts must be persisted before the associated record is submitted.
+abstract interface class HealthRecordPreparationApi {
+  Future<HealthRecord> prepareHealthRecord(HealthRecord record);
 }
 
 abstract interface class SaydianFileApi {

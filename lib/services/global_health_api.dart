@@ -2,8 +2,137 @@ part of 'api_client.dart';
 
 /// Canonical global health transport. Legacy minute/day aggregation must never
 /// decide which individual global records can be removed from the pending queue.
-mixin GlobalHealthApi on SaydianApiClient implements DailySummarySupportApi {
+mixin GlobalHealthApi on SaydianApiClient
+    implements DailySummarySupportApi, HealthRecordPreparationApi {
   static const _healthRoot = '/api/saydian-app/v2/health';
+
+  String? _globalRecordReason(HealthRecord record) {
+    final quality = switch (record.quality) {
+      'device_reported' || 'sdk' => 'unknown',
+      final value => value,
+    };
+    if (record.origin == MeasurementOrigin.remoteMember) {
+      return 'Shared records cannot be uploaded to your own health history.';
+    }
+    if (kIsWeb ||
+        !const {
+          TargetPlatform.android,
+          TargetPlatform.iOS,
+        }.contains(defaultTargetPlatform) ||
+        _globalTimezoneOffset(record.timezone) == null ||
+        record.id.isEmpty ||
+        record.id.length > 160 ||
+        record.values.isEmpty ||
+        record.values.values.any((value) => !value.isFinite) ||
+        !const {'unknown', 'valid', 'suspect', 'invalid'}.contains(quality)) {
+      return 'This record needs complete source, time and quality information before syncing.';
+    }
+    return null;
+  }
+
+  ({int rate, List<int> bytes, String hash})? _globalEcgPayload(
+    HealthRecord record,
+  ) {
+    final rate = record.values['sampleFrequency'];
+    if (record.metric != HealthMetric.ecg ||
+        record.rawVersion < 2 ||
+        record.samples.isEmpty ||
+        record.samples.length > 1000000 ||
+        record.samples.any((value) => !value.isFinite) ||
+        rate == null ||
+        !rate.isFinite ||
+        rate != rate.toInt() ||
+        rate < 50 ||
+        rate > 1000) {
+      return null;
+    }
+    // Preserve every calibrated native sample, with no resampling or rounding.
+    final bytes = gzip.encode(utf8.encode(jsonEncode(record.samples)));
+    if (bytes.length > 25 * 1024 * 1024) return null;
+    return (
+      rate: rate.toInt(),
+      bytes: bytes,
+      hash: sha256.convert(bytes).toString(),
+    );
+  }
+
+  bool _matchesEcgArtifact(
+    HealthRecord record,
+    ({int rate, List<int> bytes, String hash}) payload,
+  ) {
+    final artifact = record.ecgArtifact;
+    return artifact != null &&
+        artifact.sampleRateHz == payload.rate &&
+        artifact.sampleCount == record.samples.length &&
+        artifact.sha256 == payload.hash &&
+        artifact.uploadObjectKey.startsWith('ecg/') &&
+        !artifact.uploadObjectKey.contains('..');
+  }
+
+  @override
+  Future<HealthRecord> prepareHealthRecord(HealthRecord record) async {
+    if (record.samples.isEmpty || _globalRecordReason(record) != null) {
+      return record;
+    }
+    final payload = _globalEcgPayload(record);
+    if (payload == null || _matchesEcgArtifact(record, payload)) return record;
+    final owner = _stableSessionAccountKey(await _requiredSession());
+    final response = await _withAuthorizationRetry((session) async {
+      if (_stableSessionAccountKey(session) != owner) {
+        throw const ApiException(
+          'Your account has changed. Please try again.',
+          code: 'STALE_HEALTH_SESSION',
+        );
+      }
+      final request =
+          http.MultipartRequest('POST', _uri('/api/saydian-app/v2/files/ecg'))
+            ..headers['Authorization'] = 'Bearer ${session.accessToken}'
+            ..fields['sha256'] = payload.hash
+            ..files.add(
+              http.MultipartFile.fromBytes(
+                'file',
+                payload.bytes,
+                filename: 'ecg-samples.json.gz',
+                contentType: http_parser.MediaType('application', 'gzip'),
+              ),
+            );
+      return _sendMultipart(request);
+    });
+    final current = await _vault.readSession();
+    if (current == null || _stableSessionAccountKey(current) != owner) {
+      throw const ApiException(
+        'Your account has changed. Please try again.',
+        code: 'STALE_HEALTH_SESSION',
+      );
+    }
+    if (response.statusCode == 503) {
+      throw const ApiException(
+        'Waveform file storage is temporarily unavailable. Your complete record remains saved on this device.',
+        statusCode: 503,
+        code: 'ECG_STORAGE_UNAVAILABLE',
+      );
+    }
+    final data = _data(_decode(response));
+    final key = data['uploadObjectKey'];
+    if (data['sha256'] != payload.hash ||
+        data['byteSize'] != payload.bytes.length ||
+        key is! String ||
+        !key.startsWith('ecg/') ||
+        key.contains('..')) {
+      throw const ApiException(
+        'The waveform upload could not be confirmed. Your record remains on this device.',
+        code: 'INVALID_ECG_ACK',
+      );
+    }
+    return record.copyWith(
+      ecgArtifact: HealthEcgArtifact(
+        sampleRateHz: payload.rate,
+        sampleCount: record.samples.length,
+        sha256: payload.hash,
+        uploadObjectKey: key,
+      ),
+    );
+  }
 
   @override
   Future<bool> supportsDailySummaries() async {
@@ -95,24 +224,13 @@ mixin GlobalHealthApi on SaydianApiClient implements DailySummarySupportApi {
         'device_reported' || 'sdk' => 'unknown',
         final value => value,
       };
-      String? reason;
-      if (record.origin == MeasurementOrigin.remoteMember) {
-        reason =
-            'Shared records cannot be uploaded to your own health history.';
-      } else if (record.samples.isNotEmpty) {
-        // HealthRecord does not retain the manufacturer's sample rate or a
-        // verified uploaded ECG artifact. Never discard its waveform and then
-        // mark the summary as fully synchronized; leave the whole record queued.
-        reason = 'This waveform is saved on this device and is not yet synced.';
-      } else if (platform == null ||
-          offset == null ||
-          record.id.isEmpty ||
-          record.id.length > 160 ||
-          record.values.isEmpty ||
-          record.values.values.any((value) => !value.isFinite) ||
-          !const {'unknown', 'valid', 'suspect', 'invalid'}.contains(quality)) {
-        reason =
-            'This record needs complete source, time and quality information before syncing.';
+      String? reason = _globalRecordReason(record);
+      if (reason == null && record.samples.isNotEmpty) {
+        final payload = _globalEcgPayload(record);
+        if (payload == null || !_matchesEcgArtifact(record, payload)) {
+          reason =
+              'This waveform needs its original sample rate and a confirmed upload before syncing.';
+        }
       }
       if (reason != null) {
         rejected[record.id] = reason;
@@ -130,6 +248,8 @@ mixin GlobalHealthApi on SaydianApiClient implements DailySummarySupportApi {
         'quality': quality,
         if (record.aggregation != null)
           'aggregation': record.aggregation!.toJson(),
+        if (record.samples.isNotEmpty)
+          'ecgArtifact': record.ecgArtifact!.toJson(),
         'source': {
           'platform': platform,
           if (record.deviceId.isNotEmpty) 'deviceId': record.deviceId,

@@ -33,6 +33,7 @@ class HealthSyncService {
     var uploaded = 0;
     var rejected = 0;
     var quarantined = 0;
+    final preparationFailures = <String, String>{};
     while (true) {
       if (!canContinue()) {
         return SyncOutcome(uploaded: uploaded, rejected: rejected);
@@ -83,8 +84,37 @@ class HealthSyncService {
         return SyncOutcome(uploaded: uploaded, rejected: rejected);
       }
       try {
+        final preparedRecords = <HealthRecord>[];
+        for (final record in records) {
+          var prepared = record;
+          if (_api is HealthRecordPreparationApi &&
+              !preparationFailures.containsKey(record.id)) {
+            try {
+              prepared = await (_api as HealthRecordPreparationApi)
+                  .prepareHealthRecord(record);
+            } on ApiException catch (error) {
+              if (error.code == 'STALE_HEALTH_SESSION' ||
+                  error.statusCode == 401) {
+                rethrow;
+              }
+              // Let unrelated ordinary rows continue. The global batch rejects
+              // this unprepared waveform, retaining the complete pending row.
+              preparationFailures[record.id] = error.message;
+            }
+          }
+          if (!canContinue()) {
+            return SyncOutcome(uploaded: uploaded, rejected: rejected);
+          }
+          if (!identical(prepared, record)) {
+            await _store.savePreparedRecord(prepared);
+            if (!canContinue()) {
+              return SyncOutcome(uploaded: uploaded, rejected: rejected);
+            }
+          }
+          preparedRecords.add(prepared);
+        }
         final result = await _api.uploadHealthBatch(
-          SyncBatch(cursor: cursor, records: records),
+          SyncBatch(cursor: cursor, records: preparedRecords),
         );
         if (!canContinue()) {
           return SyncOutcome(uploaded: uploaded, rejected: rejected);
@@ -106,7 +136,10 @@ class HealthSyncService {
             uploaded: uploaded,
             rejected: rejected,
             hasPending: true,
-            message: '服务器未接收任何记录，已保留本地队列',
+            message: result.rejected.isNotEmpty
+                ? preparationFailures[result.rejected.keys.first] ??
+                      result.rejected.values.first
+                : '服务器未确认本批记录，已保留本地队列',
           );
         }
       } on FeatureNotConfiguredException catch (error) {

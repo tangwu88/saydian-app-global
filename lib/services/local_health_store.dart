@@ -25,6 +25,7 @@ abstract interface class HealthStore implements NotificationInboxStorage {
   });
   Future<void> upsert(List<HealthRecord> records);
   Future<void> upsertImmediate(HealthRecord record);
+  Future<void> savePreparedRecord(HealthRecord record);
   Future<List<HealthRecord>> recent({int limit = 200});
   Future<List<HealthRecord>> range({
     required HealthMetric metric,
@@ -834,6 +835,20 @@ class EncryptedHealthStore implements HealthStore, HealthStoreRecoveryStatus {
   }
 
   @override
+  Future<void> savePreparedRecord(HealthRecord record) async {
+    final ownerId = _ownerId;
+    final updated = await _enqueue(
+      () => _db.update(
+        'health_records',
+        {'payload': record.encode()},
+        where: 'owner_id = ? AND id = ? AND synced = 0',
+        whereArgs: [ownerId, record.id],
+      ),
+    );
+    if (updated != 1) throw StateError('Pending record could not be saved');
+  }
+
+  @override
   Future<List<HealthRecord>> recent({int limit = 200}) async {
     final ownerId = _ownerId;
     final rows = await _enqueue(
@@ -1254,6 +1269,16 @@ class MemoryHealthStore implements HealthStore {
 
   @override
   Future<void> upsertImmediate(HealthRecord record) => upsert([record]);
+
+  @override
+  Future<void> savePreparedRecord(HealthRecord record) async {
+    if (!_records.containsKey(record.id) ||
+        _synced.contains(record.id) ||
+        _invalid.contains(record.id)) {
+      throw StateError('Pending record could not be saved');
+    }
+    _records[record.id] = record;
+  }
 
   @override
   Future<List<HealthRecord>> recent({int limit = 200}) async {

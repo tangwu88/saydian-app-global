@@ -645,6 +645,43 @@ class DeviceCapabilities {
   };
 }
 
+class HealthEcgArtifact {
+  const HealthEcgArtifact({
+    required this.sampleRateHz,
+    required this.sampleCount,
+    required this.sha256,
+    required this.uploadObjectKey,
+  });
+
+  final int sampleRateHz;
+  final int sampleCount;
+  final String sha256;
+  final String uploadObjectKey;
+
+  static HealthEcgArtifact? fromJson(Object? value) {
+    if (value is! Map ||
+        value['sampleRateHz'] is! int ||
+        value['sampleCount'] is! int ||
+        value['sha256'] is! String ||
+        value['uploadObjectKey'] is! String) {
+      return null;
+    }
+    return HealthEcgArtifact(
+      sampleRateHz: value['sampleRateHz'] as int,
+      sampleCount: value['sampleCount'] as int,
+      sha256: value['sha256'] as String,
+      uploadObjectKey: value['uploadObjectKey'] as String,
+    );
+  }
+
+  Map<String, Object?> toJson() => {
+    'sampleRateHz': sampleRateHz,
+    'sampleCount': sampleCount,
+    'sha256': sha256,
+    'uploadObjectKey': uploadObjectKey,
+  };
+}
+
 class HealthRecord {
   HealthRecord({
     required this.id,
@@ -662,6 +699,7 @@ class HealthRecord {
     this.samples = const [],
     this.aggregation,
     this.sourceModel = '',
+    this.ecgArtifact,
   }) : origin = origin ?? MeasurementOrigin.fromWire(null, source: source);
 
   final String id;
@@ -678,6 +716,7 @@ class HealthRecord {
   final int rawVersion;
   final List<num> samples;
   final HealthAggregation? aggregation;
+  final HealthEcgArtifact? ecgArtifact;
 
   /// Manufacturer-reported model captured with the record, when available.
   /// Bluetooth display names are not verified models and must not be copied.
@@ -717,6 +756,7 @@ class HealthRecord {
           ? HealthAggregation.fromMap(json['aggregation'] as Map)
           : null,
       sourceModel: '${json['sourceModel'] ?? ''}'.trim(),
+      ecgArtifact: HealthEcgArtifact.fromJson(json['ecgArtifact']),
     );
   }
 
@@ -736,6 +776,7 @@ class HealthRecord {
     if (samples.isNotEmpty) 'samples': samples,
     if (aggregation != null) 'aggregation': aggregation!.toJson(),
     if (sourceModel.trim().isNotEmpty) 'sourceModel': sourceModel.trim(),
+    if (ecgArtifact != null) 'ecgArtifact': ecgArtifact!.toJson(),
   };
 
   HealthRecord copyWith({
@@ -749,6 +790,7 @@ class HealthRecord {
     List<num>? samples,
     HealthAggregation? aggregation,
     String? sourceModel,
+    HealthEcgArtifact? ecgArtifact,
   }) => HealthRecord(
     id: id ?? this.id,
     metric: metric,
@@ -765,6 +807,7 @@ class HealthRecord {
     samples: samples ?? this.samples,
     aggregation: aggregation ?? this.aggregation,
     sourceModel: sourceModel ?? this.sourceModel,
+    ecgArtifact: ecgArtifact ?? this.ecgArtifact,
   );
 
   String get displayValue {
