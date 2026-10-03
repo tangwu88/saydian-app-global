@@ -1700,7 +1700,7 @@ class HealthRecordDetailPage extends StatelessWidget {
             const SizedBox(height: 12),
             _EcgWaveformCard(
               samples: record.samples,
-              sampleFrequency: record.values['sampleFrequency']?.toInt() ?? 250,
+              sampleFrequency: record.values['sampleFrequency']?.toInt(),
               calibrated: record.rawVersion >= 2,
             ),
           ],
@@ -1826,7 +1826,7 @@ class _EcgRecordDetailPageState extends State<_EcgRecordDetailPage> {
           const SizedBox(height: 12),
           _EcgWaveformCard(
             samples: record.samples,
-            sampleFrequency: record.values['sampleFrequency']?.toInt() ?? 250,
+            sampleFrequency: record.values['sampleFrequency']?.toInt(),
             calibrated: record.rawVersion >= 2,
           ),
           const SizedBox(height: 14),
@@ -2388,7 +2388,7 @@ class _EcgFullReportPageState extends State<_EcgFullReportPage> {
                   _EcgWaveformCard(
                     samples: widget.record.samples,
                     sampleFrequency:
-                        widget.record.values['sampleFrequency']?.toInt() ?? 250,
+                        widget.record.values['sampleFrequency']?.toInt(),
                     calibrated: widget.record.rawVersion >= 2,
                   ),
                   const SizedBox(height: 12),
@@ -5348,7 +5348,7 @@ class _EcgWaveformCard extends StatelessWidget {
   });
 
   final List<num> samples;
-  final int sampleFrequency;
+  final int? sampleFrequency;
   final bool calibrated;
 
   @override
@@ -5371,38 +5371,22 @@ class _EcgWaveformCard extends StatelessWidget {
         ),
       );
     }
-    if (!calibrated) {
-      return const Card(
-        child: Padding(
-          padding: EdgeInsets.fromLTRB(12, 16, 12, 12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('心电波形', style: TextStyle(fontWeight: FontWeight.w800)),
-              SizedBox(height: 10),
-              FeatureStateCard(
-                message: '本次波形无法显示',
-                detail: '请重新测量心电。',
-                icon: Icons.monitor_heart_outlined,
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-    final frequency = sampleFrequency.clamp(50, 1000);
-    final usableSamples = selectUsableEcgTail(
-      samples,
-      sampleFrequency: frequency,
-    );
+    final frequency = sampleFrequency;
+    final confirmedScale = calibrated &&
+        frequency != null && frequency >= 50 && frequency <= 1000;
+    final usableSamples = confirmedScale
+        ? selectUsableEcgTail(samples, sampleFrequency: frequency)
+        : samples;
     final displaySamples = usableSamples.isEmpty ? samples : usableSamples;
-    final durationSeconds = displaySamples.length / frequency;
-    final chartWidth = math.max(640.0, durationSeconds * 72.0);
+    final durationSeconds = confirmedScale ? displaySamples.length / frequency : null;
+    final chartWidth = durationSeconds == null
+        ? math.max(640.0, math.min(12000.0, displaySamples.length * 0.3))
+        : math.max(640.0, durationSeconds * 72.0);
     final waveform = prepareEcgDisplayWaveform(
       displaySamples,
       maximumPoints: math.max(2, (chartWidth * 2).round()),
-      sampleFrequency: frequency,
-      removeContactArtifacts: true,
+      sampleFrequency: confirmedScale ? frequency : null,
+      removeContactArtifacts: confirmedScale,
     );
     final spots = waveform.samples
         .asMap()
@@ -5421,7 +5405,9 @@ class _EcgWaveformCard extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              '共 ${durationSeconds.toStringAsFixed(1)} 秒 · 左右滑动查看完整记录',
+              durationSeconds == null
+                  ? context.l10n.ecgWaveformPreviewHint
+                  : '共 ${durationSeconds.toStringAsFixed(1)} 秒 · 左右滑动查看完整记录',
               style: const TextStyle(color: SaydianColors.muted, fontSize: 13),
             ),
             const SizedBox(height: 10),

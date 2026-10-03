@@ -664,5 +664,6 @@
   "batteryNotCharging": "Pas en charge",
   "batteryFull": "Charge complète",
   "batteryUnknown": "État inconnu",
-  "batteryLow": "Batterie faible"
+  "batteryLow": "Batterie faible",
+  "ecgWaveformPreviewHint": "Aperçu du tracé · échelle non confirmée"
 }

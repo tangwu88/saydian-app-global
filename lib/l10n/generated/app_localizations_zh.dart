@@ -2026,6 +2026,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get batteryLow => '电量低';
+
+  @override
+  String get ecgWaveformPreviewHint => '波形预览 · 刻度待确认';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hans`).
@@ -4050,6 +4053,9 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
 
   @override
   String get batteryLow => '电量低';
+
+  @override
+  String get ecgWaveformPreviewHint => '波形预览 · 刻度待确认';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hant`).
@@ -6074,4 +6080,7 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get batteryLow => '電量低';
+
+  @override
+  String get ecgWaveformPreviewHint => '波形預覽 · 刻度待確認';
 }

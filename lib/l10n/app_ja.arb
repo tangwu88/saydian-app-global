@@ -664,5 +664,6 @@
   "batteryNotCharging": "充電していません",
   "batteryFull": "充電完了",
   "batteryUnknown": "状態不明",
-  "batteryLow": "電池残量が少ない"
+  "batteryLow": "電池残量が少ない",
+  "ecgWaveformPreviewHint": "波形プレビュー · スケール未確認"
 }

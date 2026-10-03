@@ -664,5 +664,6 @@
   "batteryNotCharging": "Lädt nicht",
   "batteryFull": "Voll geladen",
   "batteryUnknown": "Status unbekannt",
-  "batteryLow": "Akku schwach"
+  "batteryLow": "Akku schwach",
+  "ecgWaveformPreviewHint": "Kurvenvorschau · Skalierung unbestätigt"
 }

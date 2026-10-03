@@ -2064,4 +2064,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get batteryLow => '배터리 부족';
+
+  @override
+  String get ecgWaveformPreviewHint => '파형 미리보기 · 눈금 미확인';
 }

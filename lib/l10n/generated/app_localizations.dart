@@ -4039,6 +4039,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Low battery'**
   String get batteryLow;
+
+  /// No description provided for @ecgWaveformPreviewHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Waveform preview · scale unconfirmed'**
+  String get ecgWaveformPreviewHint;
 }
 
 class _AppLocalizationsDelegate

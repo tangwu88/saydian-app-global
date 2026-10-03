@@ -664,5 +664,6 @@
   "batteryNotCharging": "未充電",
   "batteryFull": "已充滿",
   "batteryUnknown": "狀態未知",
-  "batteryLow": "電量低"
+  "batteryLow": "電量低",
+  "ecgWaveformPreviewHint": "波形預覽 · 刻度待確認"
 }

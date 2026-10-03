@@ -2171,4 +2171,8 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get batteryLow => 'Batterie faible';
+
+  @override
+  String get ecgWaveformPreviewHint =>
+      'Aperçu du tracé · échelle non confirmée';
 }

@@ -5829,7 +5829,16 @@ class AppController extends ChangeNotifier {
       final key = item.macAddress ?? item.id;
       return !seen.add(key);
     });
-    scannedDevices = List.unmodifiable(updated);
+    final ranked = updated.indexed.toList()
+      ..sort((left, right) {
+        final leftSignal = left.$2.rssi;
+        final rightSignal = right.$2.rssi;
+        if (leftSignal == null && rightSignal != null) return 1;
+        if (rightSignal == null && leftSignal != null) return -1;
+        final signalOrder = (rightSignal ?? 0).compareTo(leftSignal ?? 0);
+        return signalOrder != 0 ? signalOrder : left.$1.compareTo(right.$1);
+      });
+    scannedDevices = List.unmodifiable(ranked.map((entry) => entry.$2));
   }
 
   DeviceInfo _mergeDeviceDetails(DeviceInfo device) {

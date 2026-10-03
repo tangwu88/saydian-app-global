@@ -2055,4 +2055,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get batteryLow => '電池残量が少ない';
+
+  @override
+  String get ecgWaveformPreviewHint => '波形プレビュー · スケール未確認';
 }

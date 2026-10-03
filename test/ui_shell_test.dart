@@ -1716,6 +1716,50 @@ void main() {
     expect(find.byType(LineChart), findsNothing);
   });
 
+  testWidgets('ECG without confirmed sample rate still displays a preview', (
+    tester,
+  ) async {
+    final controller = AppController(
+      MemorySessionVault(),
+      _NoopApi(),
+      MemoryHealthStore(),
+      _NoopWearable(),
+    );
+    await controller.initialize();
+    addTearDown(controller.dispose);
+    final record = HealthRecord(
+      id: 'pending-w8-ecg',
+      metric: HealthMetric.ecg,
+      values: const {'meanHeartRate': 75},
+      unit: '',
+      measuredAt: DateTime.utc(2026, 10, 4),
+      timezone: '+08:00',
+      deviceId: 'yc:synthetic',
+      firmwareVersion: 'qa',
+      quality: 'device_reported',
+      source: MeasurementSource.wearable,
+      rawVersion: 1,
+      samples: List<num>.generate(3000, (i) => i.isEven ? -.3 : .3),
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        locale: const Locale('en'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        theme: buildSaydianTheme(),
+        home: HealthRecordDetailPage(controller: controller, record: record),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byType(LineChart), findsOneWidget);
+    expect(find.text('Waveform preview · scale unconfirmed'), findsOneWidget);
+    expect(find.textContaining('秒 ·'), findsNothing);
+    expect(record.values.containsKey('sampleFrequency'), isFalse);
+    expect(record.rawVersion, 1);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('health record detail honors the stored measurement timezone', (
     tester,
   ) async {

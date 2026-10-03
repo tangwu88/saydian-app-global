@@ -2162,4 +2162,8 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get batteryLow => 'Batería baja';
+
+  @override
+  String get ecgWaveformPreviewHint =>
+      'Vista previa de onda · escala sin confirmar';
 }

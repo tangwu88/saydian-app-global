@@ -115,7 +115,7 @@ void main() {
   });
 
   test(
-    'scan keeps first-seen order while refreshing signal strength',
+    'scan ranks stronger signals first and retains the latest signal',
     () async {
       environment.sdk = 31;
       const first = DeviceInfo(id: 'veepoo:FIRST', name: 'First', rssi: -80);
@@ -123,7 +123,7 @@ void main() {
       const refreshedFirst = DeviceInfo(
         id: 'veepoo:FIRST',
         name: 'First',
-        rssi: -30,
+        rssi: -90,
       );
       final wearable = _ScanWearable(
         results: const [first, second, refreshedFirst],
@@ -134,10 +134,40 @@ void main() {
       await controller.scanDevices();
 
       expect(controller.scannedDevices.map((device) => device.id), [
+        'veepoo:SECOND',
+        'veepoo:FIRST',
+      ]);
+      expect(controller.scannedDevices.last.rssi, -90);
+    },
+  );
+
+  test(
+    'scan places unknown signals last and keeps equal signals stable',
+    () async {
+      environment.sdk = 31;
+      const unknown = DeviceInfo(id: 'veepoo:UNKNOWN', name: 'Unknown');
+      const first = DeviceInfo(id: 'veepoo:FIRST', name: 'First', rssi: -50);
+      const second = DeviceInfo(id: 'veepoo:SECOND', name: 'Second', rssi: -50);
+      const strongest = DeviceInfo(
+        id: 'veepoo:STRONGEST',
+        name: 'Strongest',
+        rssi: -20,
+      );
+      final controller = _controller(
+        _ScanWearable(
+          results: const [unknown, first, second, strongest, first],
+        ),
+      );
+      addTearDown(controller.dispose);
+
+      await controller.scanDevices();
+
+      expect(controller.scannedDevices.map((device) => device.id), [
+        'veepoo:STRONGEST',
         'veepoo:FIRST',
         'veepoo:SECOND',
+        'veepoo:UNKNOWN',
       ]);
-      expect(controller.scannedDevices.first.rssi, -30);
     },
   );
 

@@ -2141,4 +2141,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get batteryLow => 'Low battery';
+
+  @override
+  String get ecgWaveformPreviewHint => 'Waveform preview · scale unconfirmed';
 }

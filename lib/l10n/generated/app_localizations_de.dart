@@ -2168,4 +2168,8 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get batteryLow => 'Akku schwach';
+
+  @override
+  String get ecgWaveformPreviewHint =>
+      'Kurvenvorschau · Skalierung unbestätigt';
 }
