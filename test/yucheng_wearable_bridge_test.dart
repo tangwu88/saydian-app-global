@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -8,6 +9,164 @@ import 'package:saydian_app/services/yucheng_product_client.dart';
 import 'package:saydian_app/services/yucheng_wearable_bridge.dart';
 
 void main() {
+  Future<YuchengWearableBridge> ecgBridge(_FakeYuchengClient client) async {
+    final bridge = YuchengWearableBridge(
+      client: client,
+      deviceInfoSettleDelay: Duration.zero,
+      initialHealthSettleDelay: Duration.zero,
+    );
+    await bridge.scanDevices();
+    await bridge.connect('YC-01', profile: _profile);
+    return bridge;
+  }
+
+  test(
+    'W8 ECG keeps full vendor-filtered waveform and actual frequency',
+    () async {
+      final client = _FakeYuchengClient(modelName: 'W8-ultra 34BC');
+      final bridge = await ecgBridge(client);
+      final events = <WearableEvent>[];
+      final subscription = bridge.events.listen(events.add);
+      await bridge.startMeasurement(HealthMetric.ecg);
+      final samples = List<num>.generate(3000, (i) => .6 * math.sin(i * .1));
+      client.emit({
+        'deviceRealECGData': [9999],
+        'deviceRealECGFilteredData': samples,
+      });
+      await Future<void>.delayed(Duration.zero);
+      client.emit({'deviceEndECG': 0});
+      await Future<void>.delayed(const Duration(milliseconds: 30));
+      final record = HealthRecord.fromJson(
+        events.singleWhere((e) => e.type == 'healthRecord').payload,
+      );
+      expect(record.samples, samples);
+      expect(record.values['sampleFrequency'], 250);
+      expect(record.origin, MeasurementOrigin.appMeasurement);
+      expect(record.rawVersion, 2);
+      expect(client.ecgStarts, 1);
+      expect(client.ecgStops, 1);
+      expect(events.where((e) => e.type == 'measurementProgress'), isNotEmpty);
+      await bridge.disconnect();
+      await subscription.cancel();
+    },
+  );
+
+  test(
+    'missing ECG rate keeps complete local samples without inventing timing',
+    () async {
+      final client = _FakeYuchengClient(modelName: 'W8-ultra 34BC')
+        ..ecgRate = null;
+      final bridge = await ecgBridge(client);
+      final events = <WearableEvent>[];
+      final subscription = bridge.events.listen(events.add);
+      await bridge.startMeasurement(HealthMetric.ecg);
+      final samples = List<num>.generate(3000, (i) => .6 * math.sin(i * .1));
+      client.emit({'deviceRealECGFilteredData': samples});
+      await Future<void>.delayed(Duration.zero);
+      client.emit({'deviceEndECG': 0});
+      await Future<void>.delayed(const Duration(milliseconds: 30));
+      final record = HealthRecord.fromJson(
+        events.singleWhere((e) => e.type == 'healthRecord').payload,
+      );
+      expect(record.samples, samples);
+      expect(record.values.containsKey('sampleFrequency'), isFalse);
+      expect(record.rawVersion, 1);
+      await bridge.disconnect();
+      await subscription.cancel();
+    },
+  );
+
+  test(
+    'cancelled ECG cannot save a late result or finish a newer measurement',
+    () async {
+      final client = _FakeYuchengClient(modelName: 'W8-ultra 34BC');
+      final completer = Completer<YuchengOperationResult<Map<String, num>>>();
+      client.pendingEcgResult = completer.future;
+      final bridge = await ecgBridge(client);
+      final events = <WearableEvent>[];
+      final subscription = bridge.events.listen(events.add);
+      await bridge.startMeasurement(HealthMetric.ecg);
+      client.emit({
+        'deviceRealECGFilteredData': List<num>.generate(
+          3000,
+          (i) => .6 * math.sin(i * .1),
+        ),
+      });
+      await Future<void>.delayed(Duration.zero);
+      client.emit({'deviceEndECG': 0});
+      await Future<void>.delayed(Duration.zero);
+      await bridge.stopMeasurement(HealthMetric.ecg);
+      await bridge.startMeasurement(HealthMetric.ecg);
+      completer.complete(
+        const YuchengOperationResult(0, {'meanHeartRate': 75}),
+      );
+      await Future<void>.delayed(const Duration(milliseconds: 30));
+      expect(events.where((e) => e.type == 'healthRecord'), isEmpty);
+      await bridge.stopMeasurement(HealthMetric.ecg);
+      await bridge.disconnect();
+      await subscription.cancel();
+    },
+  );
+
+  test(
+    'forced battery reads bypass freshness and retain full and unknown states',
+    () async {
+      final client = _FakeYuchengClient(
+        modelName: 'W8-ultra 34BC',
+        basicInfoResults: [
+          Future.value(
+            const YuchengOperationResult(
+              0,
+              YuchengDeviceBasicInfo(
+                batteryPercent: 90,
+                batteryStatus: 0,
+                firmwareVersion: 'qa',
+              ),
+            ),
+          ),
+          Future.value(
+            const YuchengOperationResult(
+              0,
+              YuchengDeviceBasicInfo(
+                batteryPercent: 100,
+                batteryStatus: 3,
+                firmwareVersion: 'qa',
+              ),
+            ),
+          ),
+          Future.value(
+            const YuchengOperationResult(
+              0,
+              YuchengDeviceBasicInfo(
+                batteryPercent: 100,
+                batteryStatus: 99,
+                firmwareVersion: 'qa',
+              ),
+            ),
+          ),
+        ],
+      );
+      final bridge = await ecgBridge(client);
+      await Future<void>.delayed(Duration.zero);
+      final before = client.basicInfoCalls;
+      await bridge.getConnectedDeviceDetails();
+      expect(client.basicInfoCalls, before);
+      final full = await bridge.getConnectedDeviceDetails(forceRefresh: true);
+      expect(
+        full?.effectiveBattery?.chargeState,
+        DeviceBatteryChargeState.full,
+      );
+      final unknown = await bridge.getConnectedDeviceDetails(
+        forceRefresh: true,
+      );
+      expect(
+        unknown?.effectiveBattery?.chargeState,
+        DeviceBatteryChargeState.unknown,
+      );
+      await bridge.disconnect();
+    },
+  );
+
   test('keeps vendor auto reconnect from hiding a bound W8', () async {
     final client = _FakeYuchengClient(modelName: 'W8 Ultra');
     final bridge = YuchengWearableBridge(
@@ -642,7 +801,7 @@ const _profile = WearableUserProfile(
   targetSteps: 10000,
 );
 
-class _FakeYuchengClient implements YuchengProductClient {
+class _FakeYuchengClient implements YuchengProductClient, YuchengEcgClient {
   _FakeYuchengClient({
     required this.modelName,
     this.scannedName = 'W8 Ultra',
@@ -669,6 +828,29 @@ class _FakeYuchengClient implements YuchengProductClient {
       'isSupportStartBloodOxygenMeasurement': true,
     },
   });
+  int? ecgRate = 250;
+  Future<YuchengOperationResult<Map<String, num>>>? pendingEcgResult;
+  int ecgStarts = 0;
+  int ecgStops = 0;
+  @override
+  Future<YuchengOperationResult<int>> ecgSampleRate() async =>
+      YuchengOperationResult(0, ecgRate);
+  @override
+  Future<YuchengOperationResult<void>> startEcg() async {
+    ecgStarts++;
+    return const YuchengOperationResult(0, null);
+  }
+
+  @override
+  Future<YuchengOperationResult<void>> stopEcg() async {
+    ecgStops++;
+    return const YuchengOperationResult(0, null);
+  }
+
+  @override
+  Future<YuchengOperationResult<Map<String, num>>> ecgResult() =>
+      pendingEcgResult ??
+      Future.value(const YuchengOperationResult(0, {'meanHeartRate': 75}));
   final String modelName;
   final String scannedName;
   final String scannedHardwareAddress;

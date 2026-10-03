@@ -27,6 +27,7 @@ import '../domain/ecg_waveform.dart';
 import '../domain/health_interpretation.dart';
 import '../domain/models.dart';
 import '../services/app_controller.dart';
+import '../services/api_client.dart';
 import '../services/camera_remote_shutter_gate.dart';
 import '../services/device_weather_service.dart';
 import '../services/device_watch_face_market_service.dart';
@@ -1595,16 +1596,28 @@ class HealthRecordDetailPage extends StatelessWidget {
   const HealthRecordDetailPage({
     required this.controller,
     required this.record,
+    this.relationshipId,
+    this.ownerAccountKey,
     super.key,
   });
 
   final AppController controller;
   final HealthRecord record;
+  final String? relationshipId;
+  final String? ownerAccountKey;
 
   @override
   Widget build(BuildContext context) {
+    if (ownerAccountKey == null) return _buildRecord(context);
+    return ListenableBuilder(listenable: controller, builder: (context, _) =>
+      ownerAccountKey == controller.session?.accountKey ? _buildRecord(context) :
+      Scaffold(appBar: AppBar(), body: Center(child: Text(context.l10n.signInCloudHint))));
+  }
+
+  Widget _buildRecord(BuildContext context) {
     if (record.metric == HealthMetric.ecg) {
-      return _EcgRecordDetailPage(record: record);
+      return _EcgRecordDetailPage(record: record, controller: controller,
+        relationshipId: relationshipId);
     }
     final time = HealthAnalysisService.displayTime(record);
     final date = Localizations.localeOf(context).languageCode == 'zh'
@@ -1730,9 +1743,11 @@ class HealthRecordDetailPage extends StatelessWidget {
 }
 
 class _EcgRecordDetailPage extends StatefulWidget {
-  const _EcgRecordDetailPage({required this.record});
+  const _EcgRecordDetailPage({required this.record, required this.controller, this.relationshipId});
 
   final HealthRecord record;
+  final AppController controller;
+  final String? relationshipId;
 
   @override
   State<_EcgRecordDetailPage> createState() => _EcgRecordDetailPageState();
@@ -1740,15 +1755,73 @@ class _EcgRecordDetailPage extends StatefulWidget {
 
 class _EcgRecordDetailPageState extends State<_EcgRecordDetailPage> {
   int _section = 0;
+  late HealthRecord _record;
+  late final String? _owner;
+  bool _loading = false;
+  bool _failed = false;
+  bool _allowed = true;
+  int _generation = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _record = widget.record;
+    _owner = widget.controller.session?.accountKey;
+    widget.controller.addListener(_accountChanged);
+    if (_record.samples.isEmpty && widget.controller.isGlobalEdition && _owner != null) {
+      unawaited(_loadWaveform());
+    }
+  }
+
+  void _accountChanged() {
+    if (mounted && _owner != widget.controller.session?.accountKey) {
+      _generation++;
+      setState(() { _allowed = false; _loading = false; });
+    }
+  }
+
+  @override
+  void dispose() {
+    _generation++;
+    widget.controller.removeListener(_accountChanged);
+    super.dispose();
+  }
+
+  Future<void> _loadWaveform() async {
+    if (!_allowed || _owner != widget.controller.session?.accountKey) return;
+    final generation = ++_generation;
+    setState(() { _loading = true; _failed = false; });
+    try {
+      final record = await widget.controller.loadEcgWaveform(widget.record,
+        relationshipId: widget.relationshipId);
+      if (!mounted || generation != _generation || _owner != widget.controller.session?.accountKey) return;
+      setState(() => _record = record);
+    } on ApiException catch (error) {
+      if (!mounted || generation != _generation) return;
+      setState(() { _failed = error.statusCode != 404;
+        if (widget.relationshipId != null && (error.statusCode == 401 || error.statusCode == 403)) _allowed = false; });
+    } catch (_) {
+      if (mounted && generation == _generation) setState(() => _failed = true);
+    } finally {
+      if (mounted && generation == _generation) setState(() => _loading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final record = widget.record;
+    if (!_allowed) {
+      return Scaffold(appBar: AppBar(title: Text(context.l10n.ecgDetailTitle)),
+        body: Center(child: Text(context.l10n.carePermissionDenied)));
+    }
+    final record = _record;
     return Scaffold(
       appBar: AppBar(title: Text(context.l10n.ecgDetailTitle)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          if (_loading) const LinearProgressIndicator(),
+          if (_failed) Card(child: ListTile(title: Text(context.l10n.serviceUnavailable),
+            trailing: TextButton(onPressed: _loadWaveform, child: Text(context.l10n.retry)))),
           _EcgSummaryCard(record: record),
           const SizedBox(height: 12),
           _EcgWaveformCard(
@@ -1780,7 +1853,7 @@ class _EcgRecordDetailPageState extends State<_EcgRecordDetailPage> {
           else
             _EcgRiskSection(record: record),
           const SizedBox(height: 16),
-          FilledButton.icon(
+          if (widget.relationshipId == null) FilledButton.icon(
             onPressed: () => Navigator.of(context).push(
               MaterialPageRoute<void>(
                 settings: const RouteSettings(name: 'ecg-full-report'),

@@ -12,8 +12,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get scanLocationTitle => 'Activer la localisation';
 
   @override
-  String get scanLocationHint =>
-      'Activez la localisation de votre téléphone, puis revenez ici pour rechercher les montres à proximité.';
+  String get scanLocationHint => 'Activez la localisation, puis réessayez.';
 
   @override
   String get scanPermissionTitle => 'Autoriser l’accès aux appareils';
@@ -63,7 +62,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get notificationInAppHint =>
-      'Les messages et les indicateurs de non-lecture restent disponibles dans l’application. Activez les notifications pour recevoir rapidement les invitations de partage et les alertes de santé.';
+      'Les invitations et alertes restent dans Messages.';
 
   @override
   String get healthAlertSafetyHint =>
@@ -74,7 +73,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get afterSalesApplyHint =>
-      'Choisissez l’article et indiquez le motif et le montant demandé. Après l’envoi, consultez le statut dans vos commandes.';
+      'Choisissez un article et indiquez le motif.';
 
   @override
   String get afterSalesAlreadySubmitted =>
@@ -111,7 +110,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get unitChangesHint =>
-      'Le changement d’unités prend effet immédiatement. Vous devrez peut-être les régler à nouveau après réinstallation.';
+      'Les unités sont enregistrées sur cet appareil.';
 
   @override
   String get goalSettingsTitle => 'Réglage des objectifs';
@@ -202,7 +201,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get paymentReturnRefreshHint =>
-      'Après le paiement, revenez sur cette page et actualisez-la. Vos crédits disponibles seront mis à jour une fois le paiement vérifié.';
+      'Après paiement, revenez et actualisez le résultat.';
 
   @override
   String get reportPurchaseDataMissing =>
@@ -454,7 +453,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get watchFaceDownloadHint =>
-      'Après le téléchargement, le cadran sera envoyé à la montre. Gardez-la près du téléphone et restez sur cette page pendant le transfert.';
+      'Gardez la montre proche jusqu’à la fin du transfert.';
 
   @override
   String get refreshWatchFaces => 'Actualiser les cadrans';
@@ -471,8 +470,7 @@ class AppLocalizationsFr extends AppLocalizations {
       'Impossible de charger la bibliothèque de santé.';
 
   @override
-  String get articleContentUnavailable =>
-      'Le contenu de l’article n’est pas encore disponible.';
+  String get articleContentUnavailable => 'Aucun contenu.';
 
   @override
   String get imageUnavailable => 'Impossible de charger l’image.';
@@ -881,12 +879,11 @@ class AppLocalizationsFr extends AppLocalizations {
   String get statusHigh => 'Élevé';
 
   @override
-  String get careInviteHint =>
-      'Invitez un compte Saydian international par e-mail ou numéro de téléphone international.';
+  String get careInviteHint => 'Saisissez son e-mail ou numéro.';
 
   @override
   String get careSharingHint =>
-      'Seules les mesures sélectionnées sont partagées. Vous pouvez arrêter le partage à tout moment.';
+      'Choisissez les données. Arrêtez à tout moment.';
 
   @override
   String get carePending => 'En attente';
@@ -1180,7 +1177,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get syncNearbyHint =>
-      'Gardez la montre chargée et près du téléphone pendant la connexion ou la synchronisation.';
+      'Gardez la montre près de vous pendant la synchronisation.';
 
   @override
   String get invalidCode => 'Vérifiez le code et réessayez';
@@ -1217,8 +1214,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get readingCapabilities => 'Vérification des fonctions de la montre…';
 
   @override
-  String get capabilitiesHint =>
-      'Seules les fonctions disponibles sur cette montre s’afficheront';
+  String get capabilitiesHint => 'Gardez la montre à proximité.';
 
   @override
   String get capabilitiesFailed =>
@@ -1231,8 +1227,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get personalizeWatch => 'Cadrans et style';
 
   @override
-  String get signInCloudHint =>
-      'Connectez-vous pour les services de santé en ligne';
+  String get signInCloudHint => 'Connectez-vous pour voir vos données.';
 
   @override
   String get aiQuestion => 'Demander à l’IA';
@@ -1368,7 +1363,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get globalSupportFeedbackHint =>
-      'Besoin d’aide ? Envoyez-nous un message via Aide et commentaires ci-dessus.';
+      'Contactez-nous via Aide et commentaires.';
 
   @override
   String get accountCreated => 'Votre compte est prêt';
@@ -2158,4 +2153,22 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get u19WristMeasurementHint =>
       'Reposez-vous au calme pendant 5 minutes. Posez les pieds à plat et soutenez le poignet à hauteur du cœur. Suivez les instructions de la montre. Les mesures au poignet sont indicatives ; pour toute décision médicale, consultez un professionnel et utilisez un tensiomètre brachial validé.';
+
+  @override
+  String get manageCare => 'Gérer';
+
+  @override
+  String get batteryCharging => 'En charge';
+
+  @override
+  String get batteryNotCharging => 'Pas en charge';
+
+  @override
+  String get batteryFull => 'Charge complète';
+
+  @override
+  String get batteryUnknown => 'État inconnu';
+
+  @override
+  String get batteryLow => 'Batterie faible';
 }

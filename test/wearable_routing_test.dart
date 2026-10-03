@@ -454,7 +454,7 @@ class _FakeWearableBridge extends Fake
   }
 
   @override
-  Future<DeviceInfo?> getConnectedDeviceDetails() async => connectedDetails;
+  Future<DeviceInfo?> getConnectedDeviceDetails({bool forceRefresh = false}) async => connectedDetails;
 
   @override
   Future<DeviceInfo?> restoreConnection({

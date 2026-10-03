@@ -37,7 +37,7 @@ abstract interface class WearableBridge {
 /// return the latest device metadata. Keeping it separate preserves test and
 /// third-party bridge implementations that only implement [WearableBridge].
 abstract interface class WearableDeviceDetailsBridge {
-  Future<DeviceInfo?> getConnectedDeviceDetails();
+  Future<DeviceInfo?> getConnectedDeviceDetails({bool forceRefresh = false});
 }
 
 /// Optional controls for watches that explicitly report sport pause support.
@@ -274,7 +274,7 @@ class MethodChannelWearableBridge
   }
 
   @override
-  Future<DeviceInfo?> getConnectedDeviceDetails() async {
+  Future<DeviceInfo?> getConnectedDeviceDetails({bool forceRefresh = false}) async {
     final result = await _invokeOperation<Map<Object?, Object?>>(
       'getDeviceDetails',
     );

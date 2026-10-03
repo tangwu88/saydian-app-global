@@ -29,6 +29,10 @@ class YuchengPayloadMapper {
       metrics.add(HealthMetric.bloodGlucose);
     }
     if (f['isSupportHRV'] == true) metrics.add(HealthMetric.hrv);
+    if (f['isSupportRealTimeECG'] == true ||
+        f['isSupportHistoricalECG'] == true) {
+      metrics.add(HealthMetric.ecg);
+    }
     final manualMetrics = <HealthMetric>{};
     void addManual(String key, HealthMetric metric) {
       if (f[key] == true) manualMetrics.add(metric);
@@ -48,6 +52,7 @@ class YuchengPayloadMapper {
       'isSupportStartBloodGlucoseMeasurement',
       HealthMetric.bloodGlucose,
     );
+    addManual('isSupportRealTimeECG', HealthMetric.ecg);
     final features = <DeviceFeature>{};
     void add(String key, DeviceFeature feature) {
       if (f[key] == true) features.add(feature);

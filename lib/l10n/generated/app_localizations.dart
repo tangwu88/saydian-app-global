@@ -119,7 +119,7 @@ abstract class AppLocalizations {
   /// No description provided for @scanLocationHint.
   ///
   /// In en, this message translates to:
-  /// **'Turn on your phone’s location services to find nearby watches, then return to this page.'**
+  /// **'Enable phone location, then retry.'**
   String get scanLocationHint;
 
   /// No description provided for @scanPermissionTitle.
@@ -203,7 +203,7 @@ abstract class AppLocalizations {
   /// No description provided for @notificationInAppHint.
   ///
   /// In en, this message translates to:
-  /// **'In-app messages and unread indicators remain available. Enable notifications to receive care invitations and health alerts promptly.'**
+  /// **'Care invitations and alerts remain in Messages.'**
   String get notificationInAppHint;
 
   /// No description provided for @healthAlertSafetyHint.
@@ -221,7 +221,7 @@ abstract class AppLocalizations {
   /// No description provided for @afterSalesApplyHint.
   ///
   /// In en, this message translates to:
-  /// **'Select the item and enter the reason and requested amount. After submitting, check the status in your orders.'**
+  /// **'Select an item and explain your request.'**
   String get afterSalesApplyHint;
 
   /// No description provided for @afterSalesAlreadySubmitted.
@@ -287,7 +287,7 @@ abstract class AppLocalizations {
   /// No description provided for @unitChangesHint.
   ///
   /// In en, this message translates to:
-  /// **'Unit changes take effect immediately. You may need to set them again after reinstalling the app.'**
+  /// **'Units are saved on this device.'**
   String get unitChangesHint;
 
   /// No description provided for @goalSettingsTitle.
@@ -449,7 +449,7 @@ abstract class AppLocalizations {
   /// No description provided for @paymentReturnRefreshHint.
   ///
   /// In en, this message translates to:
-  /// **'After paying, return to this page and refresh. Your available credits will update once the payment is verified.'**
+  /// **'Return after payment and refresh the result.'**
   String get paymentReturnRefreshHint;
 
   /// No description provided for @reportPurchaseDataMissing.
@@ -869,7 +869,7 @@ abstract class AppLocalizations {
   /// No description provided for @watchFaceDownloadHint.
   ///
   /// In en, this message translates to:
-  /// **'After downloading, the watch face will be sent to your watch. Keep the watch near your phone and stay on this page during transfer.'**
+  /// **'Keep your watch nearby until transfer finishes.'**
   String get watchFaceDownloadHint;
 
   /// No description provided for @refreshWatchFaces.
@@ -899,7 +899,7 @@ abstract class AppLocalizations {
   /// No description provided for @articleContentUnavailable.
   ///
   /// In en, this message translates to:
-  /// **'The article content is not available yet.'**
+  /// **'No content yet.'**
   String get articleContentUnavailable;
 
   /// No description provided for @imageUnavailable.
@@ -1631,13 +1631,13 @@ abstract class AppLocalizations {
   /// No description provided for @careInviteHint.
   ///
   /// In en, this message translates to:
-  /// **'Invite an international Saydian account by email or international phone number.'**
+  /// **'Enter their email or phone number.'**
   String get careInviteHint;
 
   /// No description provided for @careSharingHint.
   ///
   /// In en, this message translates to:
-  /// **'Only the measurements you select are shared. You can stop sharing at any time.'**
+  /// **'Choose what to share. Stop anytime.'**
   String get careSharingHint;
 
   /// No description provided for @carePending.
@@ -2207,7 +2207,7 @@ abstract class AppLocalizations {
   /// No description provided for @syncNearbyHint.
   ///
   /// In en, this message translates to:
-  /// **'Keep your watch charged and near your phone while connecting or syncing.'**
+  /// **'Keep your watch nearby while syncing.'**
   String get syncNearbyHint;
 
   /// No description provided for @invalidCode.
@@ -2273,7 +2273,7 @@ abstract class AppLocalizations {
   /// No description provided for @capabilitiesHint.
   ///
   /// In en, this message translates to:
-  /// **'Only features available on this watch will be shown'**
+  /// **'Keep your watch nearby.'**
   String get capabilitiesHint;
 
   /// No description provided for @capabilitiesFailed.
@@ -2297,7 +2297,7 @@ abstract class AppLocalizations {
   /// No description provided for @signInCloudHint.
   ///
   /// In en, this message translates to:
-  /// **'Sign in to use cloud health services'**
+  /// **'Sign in to view cloud data.'**
   String get signInCloudHint;
 
   /// No description provided for @aiQuestion.
@@ -2555,7 +2555,7 @@ abstract class AppLocalizations {
   /// No description provided for @globalSupportFeedbackHint.
   ///
   /// In en, this message translates to:
-  /// **'Need help? Send us a message through Help and feedback above.'**
+  /// **'Contact us via Help & feedback.'**
   String get globalSupportFeedbackHint;
 
   /// No description provided for @accountCreated.
@@ -4003,6 +4003,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Rest quietly for 5 minutes. Sit with feet flat and keep your wrist supported at heart level. Follow the watch instructions. Wrist readings are for reference; ask a clinician about a validated upper-arm monitor for medical decisions.'**
   String get u19WristMeasurementHint;
+
+  /// No description provided for @manageCare.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage'**
+  String get manageCare;
+
+  /// No description provided for @batteryCharging.
+  ///
+  /// In en, this message translates to:
+  /// **'Charging'**
+  String get batteryCharging;
+
+  /// No description provided for @batteryNotCharging.
+  ///
+  /// In en, this message translates to:
+  /// **'Not charging'**
+  String get batteryNotCharging;
+
+  /// No description provided for @batteryFull.
+  ///
+  /// In en, this message translates to:
+  /// **'Fully charged'**
+  String get batteryFull;
+
+  /// No description provided for @batteryUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Status unknown'**
+  String get batteryUnknown;
+
+  /// No description provided for @batteryLow.
+  ///
+  /// In en, this message translates to:
+  /// **'Low battery'**
+  String get batteryLow;
 }
 
 class _AppLocalizationsDelegate

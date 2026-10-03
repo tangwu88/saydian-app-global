@@ -12,7 +12,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get scanLocationTitle => '请开启手机定位';
 
   @override
-  String get scanLocationHint => '请在设置中开启手机定位，再返回此页面查找附近的手表。';
+  String get scanLocationHint => '开启手机定位后重试。';
 
   @override
   String get scanPermissionTitle => '请允许相关权限';
@@ -54,7 +54,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get noWatchShopHint => '没有设备？去赛电商城看看';
 
   @override
-  String get notificationInAppHint => '应用内红点和消息仍可使用，开启后可及时收到关爱邀请与健康预警。';
+  String get notificationInAppHint => '关爱邀请和预警可在消息中查看。';
 
   @override
   String get healthAlertSafetyHint => '健康预警用于及时提醒，不作为医疗诊断；如有明显不适，请及时就医。';
@@ -63,7 +63,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get afterSalesService => '售后服务';
 
   @override
-  String get afterSalesApplyHint => '请选择需要售后的商品，并填写原因和申请金额。提交后可在订单列表查看处理状态。';
+  String get afterSalesApplyHint => '选择商品，填写原因后提交。';
 
   @override
   String get afterSalesAlreadySubmitted => '该商品已经提交售后申请，请等待商城工作人员处理。';
@@ -96,7 +96,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get notConfirmYet => '暂不确认';
 
   @override
-  String get unitChangesHint => '单位选择会立即生效。重新安装应用后可能需要再次设置。';
+  String get unitChangesHint => '单位设置保存在此设备。';
 
   @override
   String get goalSettingsTitle => '目标设置';
@@ -177,7 +177,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get waitingPaymentConfirmation => '等待支付结果确认';
 
   @override
-  String get paymentReturnRefreshHint => '支付完成后返回本页刷新，我们核实结果后会更新可用权益。';
+  String get paymentReturnRefreshHint => '支付后返回刷新结果。';
 
   @override
   String get reportPurchaseDataMissing => '当前数据还不足，暂不提供购买入口。';
@@ -387,7 +387,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get trendVariationSafety => '单次和阶段变化可能受佩戴、运动及环境影响，不替代医疗诊断。';
 
   @override
-  String get watchFaceDownloadHint => '下载后会传送到手表。传送期间请保持手表靠近手机，不要离开当前页面。';
+  String get watchFaceDownloadHint => '传输完成前请保持手表靠近。';
 
   @override
   String get refreshWatchFaces => '刷新手表表盘';
@@ -402,7 +402,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get articlesUnavailable => '健康百科加载失败';
 
   @override
-  String get articleContentUnavailable => '文章详情暂未返回正文内容。';
+  String get articleContentUnavailable => '暂无正文。';
 
   @override
   String get imageUnavailable => '图片暂时无法加载';
@@ -796,10 +796,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get statusHigh => '偏高';
 
   @override
-  String get careInviteHint => '通过邮箱或国际手机号邀请国际版Saydian账号。';
+  String get careInviteHint => '输入对方邮箱或手机号。';
 
   @override
-  String get careSharingHint => '仅共享您选择的测量项目，可随时停止共享。';
+  String get careSharingHint => '选择共享项目，可随时停止。';
 
   @override
   String get carePending => '待处理';
@@ -1085,7 +1085,7 @@ class AppLocalizationsZh extends AppLocalizations {
       '1. 打开手机蓝牙并允许查找附近设备。\n2. 将手表充电激活，并放在手机旁边。\n3. 点击“开始查找”，选择自己的手表。\n4. 如果手表弹出确认，请及时确认。';
 
   @override
-  String get syncNearbyHint => '连接或同步时，请让手表保持电量充足并靠近手机。';
+  String get syncNearbyHint => '同步时请保持手表靠近。';
 
   @override
   String get invalidCode => '请检查验证码后重试';
@@ -1120,7 +1120,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get readingCapabilities => '正在识别手表功能…';
 
   @override
-  String get capabilitiesHint => '识别完成后只显示当前手表可用的功能';
+  String get capabilitiesHint => '请保持手表靠近。';
 
   @override
   String get capabilitiesFailed => '暂时无法读取此手表的功能';
@@ -1132,7 +1132,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get personalizeWatch => '表盘与个性化';
 
   @override
-  String get signInCloudHint => '登录后开启云端健康服务';
+  String get signInCloudHint => '登录后查看云端数据。';
 
   @override
   String get aiQuestion => 'AI提问';
@@ -1261,7 +1261,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get serviceUnavailable => '此功能暂时无法使用，请稍后再试';
 
   @override
-  String get globalSupportFeedbackHint => '需要帮助？请通过上方“帮助与反馈”提交问题。';
+  String get globalSupportFeedbackHint => '通过帮助与反馈联系我们。';
 
   @override
   String get accountCreated => '账号已创建';
@@ -2008,6 +2008,24 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get u19WristMeasurementHint =>
       '先安静休息 5 分钟，双脚平放，托住手腕并保持与心脏同高，按手表说明测量。腕部读数仅供参考；医疗判断请咨询医生并使用经过验证的上臂式血压计。';
+
+  @override
+  String get manageCare => '管理';
+
+  @override
+  String get batteryCharging => '充电中';
+
+  @override
+  String get batteryNotCharging => '未充电';
+
+  @override
+  String get batteryFull => '已充满';
+
+  @override
+  String get batteryUnknown => '状态未知';
+
+  @override
+  String get batteryLow => '电量低';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hans`).
@@ -2018,7 +2036,7 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
   String get scanLocationTitle => '请开启手机定位';
 
   @override
-  String get scanLocationHint => '请在设置中开启手机定位，再返回此页面查找附近的手表。';
+  String get scanLocationHint => '开启手机定位后重试。';
 
   @override
   String get scanPermissionTitle => '请允许相关权限';
@@ -2060,7 +2078,7 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
   String get noWatchShopHint => '没有设备？去赛电商城看看';
 
   @override
-  String get notificationInAppHint => '应用内红点和消息仍可使用，开启后可及时收到关爱邀请与健康预警。';
+  String get notificationInAppHint => '关爱邀请和预警可在消息中查看。';
 
   @override
   String get healthAlertSafetyHint => '健康预警用于及时提醒，不作为医疗诊断；如有明显不适，请及时就医。';
@@ -2069,7 +2087,7 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
   String get afterSalesService => '售后服务';
 
   @override
-  String get afterSalesApplyHint => '请选择需要售后的商品，并填写原因和申请金额。提交后可在订单列表查看处理状态。';
+  String get afterSalesApplyHint => '选择商品，填写原因后提交。';
 
   @override
   String get afterSalesAlreadySubmitted => '该商品已经提交售后申请，请等待商城工作人员处理。';
@@ -2102,7 +2120,7 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
   String get notConfirmYet => '暂不确认';
 
   @override
-  String get unitChangesHint => '单位选择会立即生效。重新安装应用后可能需要再次设置。';
+  String get unitChangesHint => '单位设置保存在此设备。';
 
   @override
   String get goalSettingsTitle => '目标设置';
@@ -2183,7 +2201,7 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
   String get waitingPaymentConfirmation => '等待支付结果确认';
 
   @override
-  String get paymentReturnRefreshHint => '支付完成后返回本页刷新，我们核实结果后会更新可用权益。';
+  String get paymentReturnRefreshHint => '支付后返回刷新结果。';
 
   @override
   String get reportPurchaseDataMissing => '当前数据还不足，暂不提供购买入口。';
@@ -2393,7 +2411,7 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
   String get trendVariationSafety => '单次和阶段变化可能受佩戴、运动及环境影响，不替代医疗诊断。';
 
   @override
-  String get watchFaceDownloadHint => '下载后会传送到手表。传送期间请保持手表靠近手机，不要离开当前页面。';
+  String get watchFaceDownloadHint => '传输完成前请保持手表靠近。';
 
   @override
   String get refreshWatchFaces => '刷新手表表盘';
@@ -2408,7 +2426,7 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
   String get articlesUnavailable => '健康百科加载失败';
 
   @override
-  String get articleContentUnavailable => '文章详情暂未返回正文内容。';
+  String get articleContentUnavailable => '暂无正文。';
 
   @override
   String get imageUnavailable => '图片暂时无法加载';
@@ -2802,10 +2820,10 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
   String get statusHigh => '偏高';
 
   @override
-  String get careInviteHint => '通过邮箱或国际手机号邀请国际版Saydian账号。';
+  String get careInviteHint => '输入对方邮箱或手机号。';
 
   @override
-  String get careSharingHint => '仅共享您选择的测量项目，可随时停止共享。';
+  String get careSharingHint => '选择共享项目，可随时停止。';
 
   @override
   String get carePending => '待处理';
@@ -3091,7 +3109,7 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
       '1. 打开手机蓝牙并允许查找附近设备。\n2. 将手表充电激活，并放在手机旁边。\n3. 点击“开始查找”，选择自己的手表。\n4. 如果手表弹出确认，请及时确认。';
 
   @override
-  String get syncNearbyHint => '连接或同步时，请让手表保持电量充足并靠近手机。';
+  String get syncNearbyHint => '同步时请保持手表靠近。';
 
   @override
   String get invalidCode => '请检查验证码后重试';
@@ -3126,7 +3144,7 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
   String get readingCapabilities => '正在识别手表功能…';
 
   @override
-  String get capabilitiesHint => '识别完成后只显示当前手表可用的功能';
+  String get capabilitiesHint => '请保持手表靠近。';
 
   @override
   String get capabilitiesFailed => '暂时无法读取此手表的功能';
@@ -3138,7 +3156,7 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
   String get personalizeWatch => '表盘与个性化';
 
   @override
-  String get signInCloudHint => '登录后开启云端健康服务';
+  String get signInCloudHint => '登录后查看云端数据。';
 
   @override
   String get aiQuestion => 'AI提问';
@@ -3267,7 +3285,7 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
   String get serviceUnavailable => '此功能暂时无法使用，请稍后再试';
 
   @override
-  String get globalSupportFeedbackHint => '需要帮助？请通过上方“帮助与反馈”提交问题。';
+  String get globalSupportFeedbackHint => '通过帮助与反馈联系我们。';
 
   @override
   String get accountCreated => '账号已创建';
@@ -4014,6 +4032,24 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
   @override
   String get u19WristMeasurementHint =>
       '先安静休息 5 分钟，双脚平放，托住手腕并保持与心脏同高，按手表说明测量。腕部读数仅供参考；医疗判断请咨询医生并使用经过验证的上臂式血压计。';
+
+  @override
+  String get manageCare => '管理';
+
+  @override
+  String get batteryCharging => '充电中';
+
+  @override
+  String get batteryNotCharging => '未充电';
+
+  @override
+  String get batteryFull => '已充满';
+
+  @override
+  String get batteryUnknown => '状态未知';
+
+  @override
+  String get batteryLow => '电量低';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hant`).
@@ -4024,7 +4060,7 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get scanLocationTitle => '請開啟手機定位';
 
   @override
-  String get scanLocationHint => '請在設定中開啟手機定位，再返回此頁面尋找附近的手錶。';
+  String get scanLocationHint => '開啟手機定位後重試。';
 
   @override
   String get scanPermissionTitle => '請允許相關權限';
@@ -4066,7 +4102,7 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get noWatchShopHint => '沒有裝置？前往 Saydian 商城看看';
 
   @override
-  String get notificationInAppHint => 'App 內未讀標示和訊息仍可使用，開啟通知後可及時收到關愛邀請與健康預警。';
+  String get notificationInAppHint => '關愛邀請和預警可在訊息中查看。';
 
   @override
   String get healthAlertSafetyHint => '健康預警用於及時提醒，不作為醫療診斷；如有明顯不適，請及時就醫。';
@@ -4075,7 +4111,7 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get afterSalesService => '售後服務';
 
   @override
-  String get afterSalesApplyHint => '請選擇需要售後的商品，並填寫原因和申請金額。提交後可在訂單列表查看處理狀態。';
+  String get afterSalesApplyHint => '選擇商品，填寫原因後提交。';
 
   @override
   String get afterSalesAlreadySubmitted => '此商品已提交售後申請，請等待商城工作人員處理。';
@@ -4108,7 +4144,7 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get notConfirmYet => '暫不確認';
 
   @override
-  String get unitChangesHint => '單位選擇會立即生效。重新安裝 App 後可能需要再次設定。';
+  String get unitChangesHint => '單位設定儲存在此裝置。';
 
   @override
   String get goalSettingsTitle => '目標設定';
@@ -4189,7 +4225,7 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get waitingPaymentConfirmation => '等待付款結果確認';
 
   @override
-  String get paymentReturnRefreshHint => '付款完成後返回此頁重新整理，確認結果後將更新可用權益。';
+  String get paymentReturnRefreshHint => '付款後返回重新整理結果。';
 
   @override
   String get reportPurchaseDataMissing => '目前資料仍不足，暫不提供購買入口。';
@@ -4399,7 +4435,7 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get trendVariationSafety => '單次和階段變化可能受佩戴、運動及環境影響，不替代醫療診斷。';
 
   @override
-  String get watchFaceDownloadHint => '下載後會傳送至手錶。傳送期間請讓手錶靠近手機，不要離開目前頁面。';
+  String get watchFaceDownloadHint => '傳輸完成前請保持手錶靠近。';
 
   @override
   String get refreshWatchFaces => '重新整理手錶錶面';
@@ -4414,7 +4450,7 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get articlesUnavailable => '健康百科載入失敗';
 
   @override
-  String get articleContentUnavailable => '文章詳情暫未傳回正文內容。';
+  String get articleContentUnavailable => '暫無內文。';
 
   @override
   String get imageUnavailable => '圖片暫時無法載入';
@@ -4808,10 +4844,10 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get statusHigh => '偏高';
 
   @override
-  String get careInviteHint => '透過電子郵件或國際手機號碼邀請國際版Saydian帳號。';
+  String get careInviteHint => '輸入對方電郵或手機號碼。';
 
   @override
-  String get careSharingHint => '僅分享您選擇的測量項目，可隨時停止分享。';
+  String get careSharingHint => '選擇共享項目，可隨時停止。';
 
   @override
   String get carePending => '待處理';
@@ -5097,7 +5133,7 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
       '1. 開啟手機藍牙並允許尋找附近裝置。\n2. 為手錶充電並放在手機旁。\n3. 點選「開始搜尋」，選擇自己的手錶。\n4. 若手錶顯示確認提示，請確認。';
 
   @override
-  String get syncNearbyHint => '連接或同步時，請讓手錶保持電量充足並靠近手機。';
+  String get syncNearbyHint => '同步時請保持手錶靠近。';
 
   @override
   String get invalidCode => '請檢查驗證碼後重試';
@@ -5132,7 +5168,7 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get readingCapabilities => '正在辨識手錶功能…';
 
   @override
-  String get capabilitiesHint => '辨識完成後僅顯示目前手錶可用的功能';
+  String get capabilitiesHint => '請保持手錶靠近。';
 
   @override
   String get capabilitiesFailed => '暫時無法讀取此手錶的功能';
@@ -5144,7 +5180,7 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get personalizeWatch => '錶盤與個人化';
 
   @override
-  String get signInCloudHint => '登入後開啟雲端健康服務';
+  String get signInCloudHint => '登入後查看雲端資料。';
 
   @override
   String get aiQuestion => 'AI提問';
@@ -5273,7 +5309,7 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get serviceUnavailable => '此功能暫時無法使用，請稍後再試';
 
   @override
-  String get globalSupportFeedbackHint => '需要協助？請透過上方「說明與回饋」提交問題。';
+  String get globalSupportFeedbackHint => '透過幫助與回饋聯絡我們。';
 
   @override
   String get accountCreated => '帳號已建立';
@@ -6020,4 +6056,22 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   @override
   String get u19WristMeasurementHint =>
       '先安靜休息 5 分鐘，雙腳平放，托住手腕並保持與心臟同高，依手錶說明測量。腕部讀數僅供參考；醫療判斷請諮詢醫師並使用經驗證的上臂式血壓計。';
+
+  @override
+  String get manageCare => '管理';
+
+  @override
+  String get batteryCharging => '充電中';
+
+  @override
+  String get batteryNotCharging => '未充電';
+
+  @override
+  String get batteryFull => '已充滿';
+
+  @override
+  String get batteryUnknown => '狀態未知';
+
+  @override
+  String get batteryLow => '電量低';
 }

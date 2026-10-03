@@ -3,18 +3,326 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../domain/global_account.dart';
 import '../domain/global_care.dart';
+import '../domain/models.dart';
+import '../l10n/ui_labels.dart';
+import 'health_trend_page.dart';
+import 'app_theme.dart';
 import '../l10n/global_locale_controller.dart';
-import '../services/api_client.dart';
 import '../services/app_controller.dart';
 
 class GlobalCarePage extends StatefulWidget {
-  const GlobalCarePage({super.key, required this.controller});
+  const GlobalCarePage({required this.controller, super.key});
   final AppController controller;
   @override
-  State<GlobalCarePage> createState() => _GlobalCarePageState();
+  State<GlobalCarePage> createState() => _GlobalCareOverviewState();
 }
 
-class _GlobalCarePageState extends State<GlobalCarePage> {
+class _GlobalCareOverviewState extends State<GlobalCarePage> {
+  List<GlobalCareRelationship> _members = const [];
+  List<HealthRecord> _latest = const [];
+  Set<String> _metrics = const {};
+  String? _selected;
+  late final String? _owner;
+  int _generation = 0;
+  bool _loading = true;
+  bool _failed = false;
+  bool get _sameOwner =>
+      _owner != null && _owner == widget.controller.session?.accountKey;
+
+  @override
+  void initState() {
+    super.initState();
+    _owner = widget.controller.session?.accountKey;
+    widget.controller.addListener(_accountChanged);
+    unawaited(_load());
+  }
+
+  void _accountChanged() {
+    if (!mounted || _sameOwner) return;
+    _generation++;
+    setState(() {
+      _members = const [];
+      _latest = const [];
+      _metrics = const {};
+      _selected = null;
+      _loading = false;
+      _failed = false;
+    });
+  }
+
+  @override
+  void dispose() {
+    _generation++;
+    widget.controller.removeListener(_accountChanged);
+    super.dispose();
+  }
+
+  Future<void> _load() async {
+    final generation = ++_generation;
+    if (!_sameOwner) {
+      if (mounted) setState(() => _loading = false);
+      return;
+    }
+    setState(() {
+      _loading = true;
+      _failed = false;
+      _latest = const [];
+      _metrics = const {};
+    });
+    try {
+      final relationships = await widget.controller.globalCareRelationships();
+      if (!mounted || generation != _generation || !_sameOwner) return;
+      final members = relationships
+          .where((r) => r.active && !r.received)
+          .toList();
+      final selected =
+          members.where((r) => r.id == _selected).firstOrNull ??
+          members.firstOrNull;
+      setState(() {
+        _members = members;
+        _selected = selected?.id;
+      });
+      if (selected != null) {
+        final summary = await widget.controller.globalCareSummary(selected.id);
+        if (!mounted || generation != _generation || !_sameOwner) return;
+        final metrics = (summary['metrics'] as List? ?? const [])
+            .whereType<String>()
+            .toSet();
+        final records = (summary['records'] as List? ?? const [])
+            .whereType<Map>()
+            .map(
+              (r) => globalCareHealthRecord(r.map((k, v) => MapEntry('$k', v))),
+            )
+            .where((r) => metrics.contains(r.metric.wireName))
+            .toList();
+        setState(() {
+          _metrics = metrics;
+          _latest = records;
+        });
+      }
+    } catch (_) {
+      if (mounted && generation == _generation && _sameOwner) {
+        setState(() {
+          _failed = true;
+          _latest = const [];
+          _metrics = const {};
+        });
+      }
+    } finally {
+      if (mounted && generation == _generation) {
+        setState(() => _loading = false);
+      }
+    }
+  }
+
+  Future<void> _manage() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => GlobalCareManagementPage(controller: widget.controller),
+      ),
+    );
+    if (mounted && _sameOwner) await _load();
+  }
+
+  Future<void> _open(GlobalCareRelationship member, HealthMetric metric) async {
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => _GlobalCareRecordsPage(
+          controller: widget.controller,
+          relationship: member,
+          metric: metric.wireName,
+          owner: _owner!,
+        ),
+      ),
+    );
+    if (mounted && _sameOwner) await _load();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.l10n;
+    final member = _members.where((r) => r.id == _selected).firstOrNull;
+    return Scaffold(
+      key: const Key('global-care-page'),
+      body: !_sameOwner
+          ? Center(child: Text(l.signInCloudHint))
+          : RefreshIndicator(
+              onRefresh: _load,
+              child: ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.all(16),
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          l.remoteCare,
+                          style: const TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                      TextButton.icon(
+                        onPressed: _manage,
+                        icon: const Icon(Icons.manage_accounts_outlined),
+                        label: Text(l.manageCare),
+                      ),
+                    ],
+                  ),
+                  if (_members.isNotEmpty) ...[
+                    const SizedBox(height: 12),
+                    DropdownButtonFormField<String>(
+                      key: ValueKey(_selected),
+                      initialValue: _selected,
+                      decoration: InputDecoration(
+                        prefixIcon: const Icon(Icons.person_outline),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                      items: [
+                        for (final row in _members)
+                          DropdownMenuItem(
+                            value: row.id,
+                            child: Text(
+                              row.name.isEmpty ? l.defaultUser : row.name,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                      ],
+                      onChanged: _loading
+                          ? null
+                          : (value) {
+                              _selected = value;
+                              unawaited(_load());
+                            },
+                    ),
+                  ],
+                  const SizedBox(height: 16),
+                  if (_loading) const LinearProgressIndicator(),
+                  if (_failed)
+                    Card(
+                      child: ListTile(
+                        title: Text(l.serviceUnavailable),
+                        trailing: TextButton(
+                          onPressed: _load,
+                          child: Text(l.retry),
+                        ),
+                      ),
+                    ),
+                  if (!_loading && !_failed && member == null)
+                    Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Column(
+                          children: [
+                            const Icon(
+                              Icons.people_outline,
+                              size: 48,
+                              color: SaydianColors.muted,
+                            ),
+                            const SizedBox(height: 12),
+                            Text(l.noData),
+                            const SizedBox(height: 16),
+                            FilledButton.icon(
+                              onPressed: _manage,
+                              icon: const Icon(Icons.person_add_outlined),
+                              label: Text(l.addCare),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  if (!_loading &&
+                      !_failed &&
+                      member != null &&
+                      _metrics.isEmpty)
+                    Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Text(l.carePermissionDenied),
+                      ),
+                    ),
+                  if (!_loading && !_failed && member != null)
+                    for (final metric in HealthMetric.values.where(
+                      (m) => _metrics.contains(m.wireName),
+                    ))
+                      _card(member, metric),
+                ],
+              ),
+            ),
+    );
+  }
+
+  Widget _card(GlobalCareRelationship member, HealthMetric metric) {
+    final record = _latest.where((r) => r.metric == metric).firstOrNull;
+    return Card(
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 18,
+          vertical: 10,
+        ),
+        leading: CircleAvatar(
+          backgroundColor: SaydianColors.skySoft,
+          child: Icon(
+            metric == HealthMetric.ecg
+                ? Icons.monitor_heart_outlined
+                : metric == HealthMetric.sleep
+                ? Icons.bedtime_outlined
+                : Icons.favorite_outline,
+          ),
+        ),
+        title: Text(
+          context.l10n.metricName(metric),
+          style: const TextStyle(fontWeight: FontWeight.w700),
+        ),
+        subtitle: Padding(
+          padding: const EdgeInsets.only(top: 6),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                record == null
+                    ? context.l10n.noData
+                    : metric == HealthMetric.ecg
+                    ? context.l10n.ecgDetailTitle
+                    : '${record.displayValue} ${record.unit}',
+                style: const TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w800,
+                  color: SaydianColors.ink,
+                ),
+              ),
+              if (record != null)
+                Text(
+                  DateFormat.yMMMd(
+                    context.l10n.localeName,
+                  ).add_jm().format(record.measuredAt.toLocal()),
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: SaydianColors.muted,
+                  ),
+                ),
+            ],
+          ),
+        ),
+        trailing: const Icon(Icons.chevron_right),
+        onTap: () => _open(member, metric),
+      ),
+    );
+  }
+}
+
+class GlobalCareManagementPage extends StatefulWidget {
+  const GlobalCareManagementPage({super.key, required this.controller});
+  final AppController controller;
+  @override
+  State<GlobalCareManagementPage> createState() =>
+      _GlobalCareManagementPageState();
+}
+
+class _GlobalCareManagementPageState extends State<GlobalCareManagementPage> {
   List<GlobalCareRelationship> _relationships = const [];
   bool _loading = true;
   bool _working = false;
@@ -224,7 +532,8 @@ class _GlobalCarePageState extends State<GlobalCarePage> {
   Widget build(BuildContext context) {
     final l = context.l10n;
     return Scaffold(
-      key: const Key('global-care-page'),
+      key: const Key('global-care-management-page'),
+      appBar: AppBar(title: Text(context.l10n.manageCare)),
       body: !_sameOwner
           ? Center(child: Text(l.signInCloudHint))
           : RefreshIndicator(
@@ -232,8 +541,6 @@ class _GlobalCarePageState extends State<GlobalCarePage> {
               child: ListView(
                 padding: const EdgeInsets.all(16),
                 children: [
-                  Text(l.careSharingHint),
-                  const SizedBox(height: 12),
                   FilledButton.icon(
                     onPressed: _working ? null : _invite,
                     icon: const Icon(Icons.person_add_outlined),
@@ -364,7 +671,7 @@ Map<String, String> _metricLabels(BuildContext context) {
   };
 }
 
-class _GlobalCareRecordsPage extends StatefulWidget {
+class _GlobalCareRecordsPage extends StatelessWidget {
   const _GlobalCareRecordsPage({
     required this.controller,
     required this.relationship,
@@ -376,143 +683,25 @@ class _GlobalCareRecordsPage extends StatefulWidget {
   final String metric;
   final String owner;
   @override
-  State<_GlobalCareRecordsPage> createState() => _GlobalCareRecordsPageState();
-}
-
-class _GlobalCareRecordsPageState extends State<_GlobalCareRecordsPage> {
-  DateTime _day = DateTime.now();
-  List<Map<String, Object?>> _records = const [];
-  bool _loading = true;
-  String? _error;
-  int _generation = 0;
-  bool get _sameOwner => widget.owner == widget.controller.session?.accountKey;
-  @override
-  void initState() {
-    super.initState();
-    widget.controller.addListener(_accountChanged);
-    unawaited(_load());
-  }
-
-  void _accountChanged() {
-    if (!_sameOwner && mounted) {
-      _generation++;
-      setState(() {
-        _records = const [];
-        _loading = false;
-      });
-    }
-  }
-
-  @override
-  void dispose() {
-    widget.controller.removeListener(_accountChanged);
-    _generation++;
-    super.dispose();
-  }
-
-  Future<void> _load() async {
-    if (!_sameOwner) return;
-    final generation = ++_generation;
-    setState(() {
-      _loading = true;
-      _error = null;
-      _records = const [];
-    });
-    try {
-      final rows = await widget.controller.globalCareRecords(
-        widget.relationship.id,
-        widget.metric,
-        _day,
+  Widget build(BuildContext context) => HealthTrendPage(
+    controller: controller,
+    metric: HealthMetric.fromWire(metric),
+    memberName: relationship.name.isEmpty
+        ? context.l10n.defaultUser
+        : relationship.name,
+    relationshipId: relationship.id,
+    ownerAccountKey: owner,
+    recordLoader: (start, end) async {
+      final rows = await controller.globalCareRecordsRange(
+        relationship.id,
+        metric,
+        start,
+        end,
       );
-      if (mounted && _sameOwner && generation == _generation) {
-        setState(() => _records = rows);
+      if (controller.session?.accountKey != owner) {
+        throw const FormatException('Session changed');
       }
-    } catch (error) {
-      if (mounted && _sameOwner && generation == _generation) {
-        setState(
-          () => _error = error is ApiException && error.statusCode == 403
-              ? 'permission'
-              : 'service',
-        );
-      }
-    } finally {
-      if (mounted && generation == _generation) {
-        setState(() => _loading = false);
-      }
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final l = context.l10n;
-    final locale = Localizations.localeOf(context).toString();
-    return Scaffold(
-      appBar: AppBar(title: Text(_metricLabels(context)[widget.metric]!)),
-      body: !_sameOwner
-          ? Center(child: Text(l.signInCloudHint))
-          : ListView(
-              padding: const EdgeInsets.all(16),
-              children: [
-                Text(widget.relationship.name),
-                TextButton.icon(
-                  icon: const Icon(Icons.calendar_month),
-                  label: Text(DateFormat.yMMMd(locale).format(_day)),
-                  onPressed: () async {
-                    final selected = await showDatePicker(
-                      context: context,
-                      initialDate: _day,
-                      firstDate: DateTime(2000),
-                      lastDate: DateTime.now(),
-                    );
-                    if (selected != null && mounted && _sameOwner) {
-                      setState(() => _day = selected);
-                      await _load();
-                    }
-                  },
-                ),
-                if (_loading) const LinearProgressIndicator(),
-                if (_error != null) ...[
-                  Text(
-                    _error == 'permission'
-                        ? l.carePermissionDenied
-                        : l.serviceUnavailable,
-                  ),
-                  TextButton(onPressed: _load, child: Text(l.retry)),
-                ],
-                if (!_loading && _error == null && _records.isEmpty)
-                  Text(l.noData),
-                for (final row in _records)
-                  ListTile(
-                    title: Text(_recordValue(row, locale)),
-                    subtitle: Text(switch (DateTime.tryParse(
-                      '${row['observedAt'] ?? ''}',
-                    )) {
-                      final DateTime date => DateFormat.jm(
-                        locale,
-                      ).format(date.toLocal()),
-                      _ => '—',
-                    }),
-                  ),
-                const SizedBox(height: 12),
-                Text(
-                  l.healthDisclaimer,
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-              ],
-            ),
-    );
-  }
-
-  String _recordValue(Map<String, Object?> row, String locale) {
-    final values = row['values'];
-    if (values is! Map) return '—';
-    final number = NumberFormat.decimalPattern(locale);
-    String format(Object? value) =>
-        value is num && value.isFinite ? number.format(value) : '—';
-    final text = widget.metric == 'blood_pressure'
-        ? '${format(values['systolic'])}/${format(values['diastolic'])}'
-        : format(values['value']);
-    // Missing summary values remain unknown; no synthetic interpretation of ECG or composition.
-    return '$text ${row['unit'] ?? ''}'.trim();
-  }
+      return rows.map(globalCareHealthRecord).toList();
+    },
+  );
 }

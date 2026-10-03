@@ -12,8 +12,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get scanLocationTitle => '位置情報をオンにしてください';
 
   @override
-  String get scanLocationHint =>
-      '設定でスマートフォンの位置情報をオンにしてから、この画面に戻って近くのウォッチを検索してください。';
+  String get scanLocationHint => 'スマートフォンの位置情報をオンにして再試行。';
 
   @override
   String get scanPermissionTitle => '必要な権限を許可してください';
@@ -56,8 +55,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get noWatchShopHint => 'デバイスをお探しですか？Saydianストアをご覧ください。';
 
   @override
-  String get notificationInAppHint =>
-      'アプリ内のメッセージと未読表示は引き続き利用できます。通知を有効にすると、見守りの招待や健康アラートを速やかに受け取れます。';
+  String get notificationInAppHint => '見守りの招待と通知はメッセージで確認できます。';
 
   @override
   String get healthAlertSafetyHint =>
@@ -67,8 +65,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get afterSalesService => 'アフターサービス';
 
   @override
-  String get afterSalesApplyHint =>
-      '対象の商品を選び、理由と申請金額を入力してください。送信後は注文一覧で対応状況を確認できます。';
+  String get afterSalesApplyHint => '商品を選び、理由を入力して送信。';
 
   @override
   String get afterSalesAlreadySubmitted =>
@@ -102,7 +99,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get notConfirmYet => 'まだ受け取っていない';
 
   @override
-  String get unitChangesHint => '単位の変更はすぐに反映されます。アプリの再インストール後は再設定が必要な場合があります。';
+  String get unitChangesHint => '単位設定はこの端末に保存されます。';
 
   @override
   String get goalSettingsTitle => '目標設定';
@@ -187,8 +184,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get waitingPaymentConfirmation => '支払いの確認待ち';
 
   @override
-  String get paymentReturnRefreshHint =>
-      '支払い後にこの画面へ戻って更新してください。支払いを確認できると、利用可能な回数が更新されます。';
+  String get paymentReturnRefreshHint => '支払い後に戻り、結果を更新してください。';
 
   @override
   String get reportPurchaseDataMissing => 'まだデータが不足しているため、購入できません。';
@@ -407,8 +403,7 @@ class AppLocalizationsJa extends AppLocalizations {
       '単発または期間ごとの変化は、装着状態、運動、環境の影響を受ける場合があり、医療診断の代わりにはなりません。';
 
   @override
-  String get watchFaceDownloadHint =>
-      'ダウンロード後、文字盤を腕時計に転送します。転送中は腕時計をスマートフォンの近くに置き、この画面を開いたままにしてください。';
+  String get watchFaceDownloadHint => '転送が終わるまで時計を近くに置いてください。';
 
   @override
   String get refreshWatchFaces => '文字盤を更新';
@@ -423,7 +418,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get articlesUnavailable => '健康ライブラリを読み込めませんでした。';
 
   @override
-  String get articleContentUnavailable => '記事の本文はまだ表示できません。';
+  String get articleContentUnavailable => '本文はまだありません。';
 
   @override
   String get imageUnavailable => '画像を読み込めませんでした。';
@@ -820,10 +815,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get statusHigh => '高め';
 
   @override
-  String get careInviteHint => 'メールアドレスまたは国番号付き電話番号でSaydian国際版アカウントを招待できます。';
+  String get careInviteHint => '相手のメールか電話番号を入力。';
 
   @override
-  String get careSharingHint => '選択した測定項目のみ共有します。共有はいつでも停止できます。';
+  String get careSharingHint => '共有する項目を選択。いつでも停止できます。';
 
   @override
   String get carePending => '保留中';
@@ -1110,7 +1105,7 @@ class AppLocalizationsJa extends AppLocalizations {
       '1. Bluetoothと付近のデバイスへのアクセスを有効にします。\n2. ウォッチを充電し、スマートフォンの近くに置きます。\n3. デバイスを検索し、自分のウォッチを選びます。\n4. ウォッチに確認が表示されたら承認します。';
 
   @override
-  String get syncNearbyHint => '接続・同期中はウォッチを十分に充電し、スマートフォンの近くに置いてください。';
+  String get syncNearbyHint => '同期中は時計を近くに置いてください。';
 
   @override
   String get invalidCode => 'コードを確認して再試行してください';
@@ -1145,7 +1140,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get readingCapabilities => 'ウォッチの機能を確認中…';
 
   @override
-  String get capabilitiesHint => 'このウォッチで利用できる機能のみ表示します';
+  String get capabilitiesHint => '時計を近くに置いてください。';
 
   @override
   String get capabilitiesFailed => 'ウォッチの機能を読み取れませんでした';
@@ -1157,7 +1152,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get personalizeWatch => '文字盤とカスタマイズ';
 
   @override
-  String get signInCloudHint => 'ログインしてクラウド健康サービスを利用';
+  String get signInCloudHint => 'ログインしてクラウドデータを表示。';
 
   @override
   String get aiQuestion => 'AIに質問';
@@ -1286,8 +1281,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get serviceUnavailable => '現在、この機能をご利用いただけません。後でもう一度お試しください。';
 
   @override
-  String get globalSupportFeedbackHint =>
-      'お困りですか？上のヘルプとフィードバックからメッセージをお送りください。';
+  String get globalSupportFeedbackHint => 'ヘルプとフィードバックからお問い合わせ。';
 
   @override
   String get accountCreated => 'アカウントを作成しました';
@@ -2043,4 +2037,22 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String get u19WristMeasurementHint =>
       '測定前に5分間静かに休み、両足を床につけ、手首を支えて心臓の高さに保ってください。時計の説明に従ってください。手首での測定値は参考用です。医療上の判断は医療者に相談し、検証済みの上腕式血圧計を使用してください。';
+
+  @override
+  String get manageCare => '管理';
+
+  @override
+  String get batteryCharging => '充電中';
+
+  @override
+  String get batteryNotCharging => '充電していません';
+
+  @override
+  String get batteryFull => '充電完了';
+
+  @override
+  String get batteryUnknown => '状態不明';
+
+  @override
+  String get batteryLow => '電池残量が少ない';
 }

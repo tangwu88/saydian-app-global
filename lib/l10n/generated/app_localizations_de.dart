@@ -12,8 +12,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get scanLocationTitle => 'Standort einschalten';
 
   @override
-  String get scanLocationHint =>
-      'Aktiviere die Standortdienste deines Telefons und kehre zurück, um Uhren in der Nähe zu finden.';
+  String get scanLocationHint => 'Standort aktivieren und erneut versuchen.';
 
   @override
   String get scanPermissionTitle => 'Gerätezugriff erlauben';
@@ -63,7 +62,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get notificationInAppHint =>
-      'Nachrichten und Ungelesen-Markierungen bleiben in der App verfügbar. Aktivieren Sie Mitteilungen für zeitnahe Betreuungseinladungen und Gesundheitswarnungen.';
+      'Einladungen und Hinweise stehen unter Nachrichten.';
 
   @override
   String get healthAlertSafetyHint =>
@@ -73,8 +72,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get afterSalesService => 'Kundendienst nach dem Kauf';
 
   @override
-  String get afterSalesApplyHint =>
-      'Wählen Sie den Artikel aus und geben Sie Grund und beantragten Betrag an. Nach dem Absenden finden Sie den Status unter Ihren Bestellungen.';
+  String get afterSalesApplyHint => 'Artikel wählen und Anliegen beschreiben.';
 
   @override
   String get afterSalesAlreadySubmitted =>
@@ -111,7 +109,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get unitChangesHint =>
-      'Änderungen der Einheiten gelten sofort. Nach einer Neuinstallation müssen Sie sie möglicherweise erneut einstellen.';
+      'Einheiten werden auf diesem Gerät gespeichert.';
 
   @override
   String get goalSettingsTitle => 'Zieleinstellungen';
@@ -200,7 +198,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get paymentReturnRefreshHint =>
-      'Kehren Sie nach der Zahlung auf diese Seite zurück und aktualisieren Sie sie. Nach Prüfung der Zahlung wird Ihr verfügbares Kontingent aktualisiert.';
+      'Nach Zahlung zurückkehren und aktualisieren.';
 
   @override
   String get reportPurchaseDataMissing =>
@@ -450,7 +448,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get watchFaceDownloadHint =>
-      'Nach dem Download wird das Zifferblatt auf Ihre Uhr übertragen. Halten Sie die Uhr dabei nahe am Telefon und bleiben Sie auf dieser Seite.';
+      'Uhr bis zum Übertragungsende in der Nähe halten.';
 
   @override
   String get refreshWatchFaces => 'Zifferblätter aktualisieren';
@@ -467,8 +465,7 @@ class AppLocalizationsDe extends AppLocalizations {
       'Die Gesundheitsbibliothek konnte nicht geladen werden.';
 
   @override
-  String get articleContentUnavailable =>
-      'Der Artikelinhalt ist noch nicht verfügbar.';
+  String get articleContentUnavailable => 'Noch kein Inhalt.';
 
   @override
   String get imageUnavailable => 'Das Bild konnte nicht geladen werden.';
@@ -876,12 +873,10 @@ class AppLocalizationsDe extends AppLocalizations {
   String get statusHigh => 'Hoch';
 
   @override
-  String get careInviteHint =>
-      'Laden Sie ein internationales Saydian-Konto per E-Mail oder internationaler Telefonnummer ein.';
+  String get careInviteHint => 'E-Mail oder Telefonnummer eingeben.';
 
   @override
-  String get careSharingHint =>
-      'Nur ausgewählte Messwerte werden geteilt. Sie können die Freigabe jederzeit beenden.';
+  String get careSharingHint => 'Daten wählen. Jederzeit beenden.';
 
   @override
   String get carePending => 'Ausstehend';
@@ -1172,8 +1167,7 @@ class AppLocalizationsDe extends AppLocalizations {
       '1. Bluetooth aktivieren und Gerätezugriff erlauben.\n2. Uhr laden und neben das Telefon legen.\n3. Geräte suchen antippen und Ihre Uhr wählen.\n4. Eine Anfrage auf der Uhr bestätigen.';
 
   @override
-  String get syncNearbyHint =>
-      'Uhr beim Verbinden oder Synchronisieren ausreichend laden und nahe am Telefon halten.';
+  String get syncNearbyHint => 'Uhr beim Synchronisieren in der Nähe halten.';
 
   @override
   String get invalidCode => 'Code prüfen und erneut versuchen';
@@ -1212,8 +1206,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get readingCapabilities => 'Uhrenfunktionen werden geprüft…';
 
   @override
-  String get capabilitiesHint =>
-      'Es werden nur verfügbare Funktionen dieser Uhr angezeigt';
+  String get capabilitiesHint => 'Uhr in der Nähe halten.';
 
   @override
   String get capabilitiesFailed =>
@@ -1226,7 +1219,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get personalizeWatch => 'Zifferblätter & Design';
 
   @override
-  String get signInCloudHint => 'Für Cloud-Gesundheitsdienste anmelden';
+  String get signInCloudHint => 'Anmelden, um Cloud-Daten zu sehen.';
 
   @override
   String get aiQuestion => 'KI fragen';
@@ -1363,8 +1356,7 @@ class AppLocalizationsDe extends AppLocalizations {
       'Diese Funktion ist vorübergehend nicht verfügbar. Bitte später erneut versuchen.';
 
   @override
-  String get globalSupportFeedbackHint =>
-      'Benötigen Sie Hilfe? Schreiben Sie uns über Hilfe und Feedback oben.';
+  String get globalSupportFeedbackHint => 'Kontakt über Hilfe & Feedback.';
 
   @override
   String get accountCreated => 'Ihr Konto ist bereit';
@@ -2158,4 +2150,22 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get u19WristMeasurementHint =>
       'Ruhen Sie sich 5 Minuten aus. Stellen Sie beide Füße flach auf den Boden und stützen Sie das Handgelenk auf Herzhöhe ab. Befolgen Sie die Anweisungen der Uhr. Messwerte am Handgelenk dienen nur zur Orientierung. Besprechen Sie medizinische Entscheidungen mit einer Fachperson und verwenden Sie dafür ein validiertes Oberarmmessgerät.';
+
+  @override
+  String get manageCare => 'Verwalten';
+
+  @override
+  String get batteryCharging => 'Wird geladen';
+
+  @override
+  String get batteryNotCharging => 'Lädt nicht';
+
+  @override
+  String get batteryFull => 'Voll geladen';
+
+  @override
+  String get batteryUnknown => 'Status unbekannt';
+
+  @override
+  String get batteryLow => 'Akku schwach';
 }

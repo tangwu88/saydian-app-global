@@ -6,6 +6,68 @@ mixin GlobalHealthApi on SaydianApiClient
     implements DailySummarySupportApi, HealthRecordPreparationApi {
   static const _healthRoot = '/api/saydian-app/v2/health';
 
+  Future<HealthRecord> loadEcgWaveform(
+    HealthRecord record, {
+    String? relationshipId,
+  }) async {
+    if (record.metric != HealthMetric.ecg) return record;
+    final owner = _stableSessionAccountKey(await _requiredSession());
+    final path = relationshipId == null
+        ? '$_healthRoot/records/${Uri.encodeComponent(record.id)}/ecg'
+        : '/api/saydian-app/v2/care/relationships/${Uri.encodeComponent(relationshipId)}/health/${Uri.encodeComponent(record.id)}/ecg';
+    final response = await _withAuthorizationRetry((session) {
+      if (_stableSessionAccountKey(session) != owner) {
+        throw const ApiException(
+          'Session changed',
+          code: 'SESSION_CHANGED',
+          statusCode: 401,
+        );
+      }
+      return _client.get(_uri(path), headers: _authorizationHeaders(session));
+    });
+    if (_stableSessionAccountKey(await _requiredSession()) != owner) {
+      throw const ApiException(
+        'Session changed',
+        code: 'SESSION_CHANGED',
+        statusCode: 401,
+      );
+    }
+    if (response.statusCode != 200) {
+      _decode(response);
+      throw const ApiException('Waveform unavailable');
+    }
+    final rate = int.tryParse(response.headers['x-ecg-sample-rate'] ?? '');
+    final count = int.tryParse(response.headers['x-ecg-sample-count'] ?? '');
+    final hash = response.headers['x-content-sha256'];
+    final bytes = response.bodyBytes;
+    if (rate == null ||
+        rate < 50 ||
+        rate > 1000 ||
+        count == null ||
+        count < 1 ||
+        count > 1000000 ||
+        bytes.length > 25 * 1024 * 1024 ||
+        hash == null ||
+        sha256.convert(bytes).toString() != hash.toLowerCase()) {
+      throw const ApiException('Invalid ECG waveform', code: 'INVALID_ECG_ACK');
+    }
+    final uncompressed = gzip.decode(bytes);
+    if (uncompressed.length > 32 * 1024 * 1024) {
+      throw const ApiException('Invalid ECG waveform', code: 'INVALID_ECG_ACK');
+    }
+    final samples = jsonDecode(utf8.decode(uncompressed));
+    if (samples is! List ||
+        samples.length != count ||
+        samples.any((v) => v is! num || !v.isFinite)) {
+      throw const ApiException('Invalid ECG waveform', code: 'INVALID_ECG_ACK');
+    }
+    return record.copyWith(
+      samples: samples.cast<num>(),
+      rawVersion: 2,
+      values: {...record.values, 'sampleFrequency': rate},
+    );
+  }
+
   String? _globalRecordReason(HealthRecord record) {
     final quality = switch (record.quality) {
       'device_reported' || 'sdk' => 'unknown',

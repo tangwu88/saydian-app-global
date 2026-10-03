@@ -196,6 +196,7 @@ class SportRoutePoint {
 enum DeviceBatteryChargeState {
   normal,
   charging,
+  full,
   lowPressureDeprecated,
   fullUnreliable,
   unknown;
@@ -204,6 +205,7 @@ enum DeviceBatteryChargeState {
       switch ('${value ?? ''}'.trim().toLowerCase()) {
         'normal' => normal,
         'charging' => charging,
+        'full' => full,
         'low_pressure_deprecated' => lowPressureDeprecated,
         'full_unreliable' => fullUnreliable,
         _ => unknown,
@@ -212,6 +214,7 @@ enum DeviceBatteryChargeState {
   String get wireName => switch (this) {
     normal => 'normal',
     charging => 'charging',
+    full => 'full',
     lowPressureDeprecated => 'low_pressure_deprecated',
     fullUnreliable => 'full_unreliable',
     unknown => 'unknown',
@@ -219,6 +222,7 @@ enum DeviceBatteryChargeState {
 
   String get label => switch (this) {
     charging => '充电中',
+    full => '已充满',
     lowPressureDeprecated => '低电状态',
     normal => '未充电',
     fullUnreliable || unknown => '充电状态未知',

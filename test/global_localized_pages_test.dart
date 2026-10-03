@@ -314,7 +314,7 @@ void main() {
       expect(find.text('Help and feedback'), findsOneWidget);
       expect(
         find.text(
-          'Need help? Send us a message through Help and feedback above.',
+          'Contact us via Help & feedback.',
         ),
         findsOneWidget,
       );

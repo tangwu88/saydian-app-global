@@ -1,3 +1,4 @@
+import 'device_details_refresh.dart';
 import 'widgets/safe_network_image.dart';
 import 'dart:async';
 import 'dart:convert';
@@ -486,7 +487,6 @@ class DashboardPage extends StatelessWidget {
               disconnected &&
               const {
                 HealthMetric.bodyTemperature,
-                HealthMetric.ecg,
                 HealthMetric.hrv,
                 HealthMetric.bodyComposition,
                 HealthMetric.bloodComposition,
@@ -4427,7 +4427,11 @@ class DevicePage extends StatelessWidget {
     final primaryFeatures = _primaryFeatures
         .where(visibleFeatures.contains)
         .toList(growable: false);
-    return ListView(
+    return DeviceDetailsRefresh(
+      controller: controller,
+      deviceTab: true,
+      child: ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
       children: [
         if (connected != null)
@@ -4804,6 +4808,7 @@ class DevicePage extends StatelessWidget {
           ),
         ),
       ],
+      ),
     );
   }
 
@@ -5005,21 +5010,13 @@ class _BatteryBadge extends StatelessWidget {
   }
 }
 
-String _batteryChargeLabel(
-  BuildContext context,
-  DeviceBatteryChargeState state,
-) {
-  if (Localizations.localeOf(context).languageCode == 'zh') {
-    return state.label;
-  }
-  return switch (state) {
-    DeviceBatteryChargeState.charging => 'charging',
-    DeviceBatteryChargeState.lowPressureDeprecated => 'low battery',
-    DeviceBatteryChargeState.normal => 'not charging',
-    DeviceBatteryChargeState.fullUnreliable ||
-    DeviceBatteryChargeState.unknown => context.l10n.unavailable,
-  };
-}
+String _batteryChargeLabel(BuildContext context, DeviceBatteryChargeState state) => switch (state) {
+  DeviceBatteryChargeState.charging => context.l10n.batteryCharging,
+  DeviceBatteryChargeState.full => context.l10n.batteryFull,
+  DeviceBatteryChargeState.lowPressureDeprecated => context.l10n.batteryLow,
+  DeviceBatteryChargeState.normal => context.l10n.batteryNotCharging,
+  DeviceBatteryChargeState.fullUnreliable || DeviceBatteryChargeState.unknown => context.l10n.batteryUnknown,
+};
 
 class _DeviceWatchFaceMarketStrip extends StatefulWidget {
   const _DeviceWatchFaceMarketStrip({required this.controller});
@@ -5700,12 +5697,13 @@ class _DeviceInfoPageState extends State<DeviceInfoPage> {
   @override
   void initState() {
     super.initState();
-    unawaited(widget.controller.refreshConnectedDeviceDetails());
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return DeviceDetailsRefresh(
+      controller: widget.controller,
+      child: Scaffold(
       appBar: AppBar(title: Text(context.l10n.aboutDevice)),
       body: ListenableBuilder(
         listenable: widget.controller,
@@ -5713,6 +5711,7 @@ class _DeviceInfoPageState extends State<DeviceInfoPage> {
           final device = widget.controller.connectedDevice;
           final battery = device?.effectiveBattery;
           return ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.all(16),
             children: [
               Card(
@@ -5788,6 +5787,7 @@ class _DeviceInfoPageState extends State<DeviceInfoPage> {
             ],
           );
         },
+      ),
       ),
     );
   }

@@ -20,6 +20,7 @@ class YuchengWearableBridge
   YuchengWearableBridge({
     YuchengProductClient? client,
     this.healthReadTimeout = const Duration(seconds: 8),
+    this.ecgMeasurementDuration = const Duration(seconds: 60),
     this.initialHealthSettleDelay = const Duration(seconds: 3),
     this.capabilityRetryDelay = const Duration(milliseconds: 500),
     this.deviceInfoSettleDelay = const Duration(seconds: 2),
@@ -32,6 +33,7 @@ class YuchengWearableBridge
   final YuchengProductClient _client;
   final YuchengSavedDeviceStore _savedDeviceStore;
   final Duration healthReadTimeout;
+  final Duration ecgMeasurementDuration;
   final Duration initialHealthSettleDelay;
   final Duration capabilityRetryDelay;
   final Duration deviceInfoSettleDelay;
@@ -54,6 +56,12 @@ class YuchengWearableBridge
   HealthMetric? _activeMeasurementMetric;
   DateTime? _measurementStartedAt;
   int? _activeSportType;
+  Timer? _ecgTimer;
+  int _ecgGeneration = 0;
+  int? _ecgRate;
+  bool _ecgFinishing = false;
+  final List<num> _ecgSamples = [];
+  final Map<String, num> _ecgValues = {};
 
   @override
   Stream<WearableEvent> get events => _events.stream;
@@ -223,7 +231,9 @@ class YuchengWearableBridge
   }
 
   @override
-  Future<DeviceInfo?> getConnectedDeviceDetails() async {
+  Future<DeviceInfo?> getConnectedDeviceDetails({
+    bool forceRefresh = false,
+  }) async {
     final deviceId = _deviceId;
     if (deviceId == null) return null;
     final generation = _connectionGeneration;
@@ -232,7 +242,7 @@ class YuchengWearableBridge
         updatedAt != null &&
         DateTime.now().toUtc().difference(updatedAt) <
             const Duration(minutes: 5);
-    if (!isFresh) {
+    if (forceRefresh || !isFresh) {
       await _loadDeviceInfo(generation, deviceId, publish: false);
     }
     if (!_isCurrentDeviceSession(generation, deviceId)) return null;
@@ -293,9 +303,12 @@ class YuchengWearableBridge
               scale: 100,
               isPercent: true,
               low: info.batteryStatus == 1,
-              chargeState: info.batteryStatus == 2
-                  ? DeviceBatteryChargeState.charging
-                  : DeviceBatteryChargeState.normal,
+              chargeState: switch (info.batteryStatus) {
+                0 || 1 => DeviceBatteryChargeState.normal,
+                2 => DeviceBatteryChargeState.charging,
+                3 => DeviceBatteryChargeState.full,
+                _ => DeviceBatteryChargeState.unknown,
+              },
               updatedAt: DateTime.now().toUtc(),
             );
           }
@@ -373,6 +386,7 @@ class YuchengWearableBridge
       _connectionGeneration == generation && _deviceId == deviceId;
 
   void _invalidateDeviceSession() {
+    _retireEcg();
     _connectionGeneration += 1;
     _deviceId = null;
     _firmware = '';
@@ -496,6 +510,10 @@ class YuchengWearableBridge
   @override
   Future<void> startMeasurement(HealthMetric metric) async {
     _connectedId;
+    if (metric == HealthMetric.ecg) {
+      await _startEcg();
+      return;
+    }
     final type = _measurements[metric];
     if (type == null) throw _unsupported();
     _activeMeasurementMetric = metric;
@@ -512,6 +530,15 @@ class YuchengWearableBridge
   @override
   Future<void> stopMeasurement(HealthMetric metric) async {
     _connectedId;
+    if (metric == HealthMetric.ecg) {
+      final client = _client;
+      if (client is! YuchengEcgClient) throw _unsupported();
+      _retireEcg();
+      _activeMeasurementMetric = null;
+      _measurementStartedAt = null;
+      _require(await (client as YuchengEcgClient).stopEcg());
+      return;
+    }
     final type = _measurements[metric];
     if (type == null) throw _unsupported();
     if (_activeMeasurementMetric == metric) {
@@ -519,6 +546,233 @@ class YuchengWearableBridge
       _measurementStartedAt = null;
     }
     _require(await _client.measure(enabled: false, type: type));
+  }
+
+  void _retireEcg() {
+    _ecgGeneration++;
+    _ecgTimer?.cancel();
+    _ecgTimer = null;
+    _ecgFinishing = false;
+    _ecgRate = null;
+    _ecgSamples.clear();
+    _ecgValues.clear();
+  }
+
+  Future<void> _startEcg() async {
+    final client = _client;
+    if (client is! YuchengEcgClient) throw _unsupported();
+    if (_activeMeasurementMetric != null) throw _unsupported('请先结束当前测量');
+    _retireEcg();
+    final generation = _ecgGeneration;
+    final connection = _connectionGeneration;
+    final deviceId = _connectedId;
+    final ecg = client as YuchengEcgClient;
+    bool current() =>
+        generation == _ecgGeneration &&
+        _isCurrentDeviceSession(connection, deviceId);
+    try {
+      final rate = await ecg.ecgSampleRate().timeout(deviceInfoReadTimeout);
+      if (!current()) return;
+      if (rate.status == 0) _ecgRate = rate.data;
+    } catch (_) {
+      // Keep a real recording locally if firmware omits timing metadata.
+    }
+    if (!current()) return;
+    _activeMeasurementMetric = HealthMetric.ecg;
+    _measurementStartedAt = DateTime.now().toUtc();
+    try {
+      _require(await ecg.startEcg().timeout(healthReadTimeout));
+      if (!current()) return;
+      _ecgTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+        if (!current() || _activeMeasurementMetric != HealthMetric.ecg) return;
+        final elapsed = DateTime.now().toUtc().difference(
+          _measurementStartedAt!,
+        );
+        if (elapsed >= ecgMeasurementDuration) {
+          unawaited(_completeEcg(generation));
+        } else {
+          _publishEcgProgress();
+        }
+      });
+    } catch (_) {
+      if (current()) {
+        _retireEcg();
+        _activeMeasurementMetric = null;
+        _measurementStartedAt = null;
+      }
+      rethrow;
+    }
+  }
+
+  void _publishEcgProgress({List<num> samples = const [], bool? contact}) {
+    final start = _measurementStartedAt;
+    if (start == null) return;
+    _events.add(
+      WearableEvent(
+        type: 'measurementProgress',
+        payload: {
+          'metric': 'ecg',
+          'progress':
+              (DateTime.now().toUtc().difference(start).inMilliseconds *
+                      100 /
+                      ecgMeasurementDuration.inMilliseconds)
+                  .round()
+                  .clamp(0, 99),
+          if (_ecgRate != null) 'frequency': _ecgRate,
+          if (samples.isNotEmpty) 'samples': samples,
+          if (contact != null) 'wear': contact ? 0 : 1,
+        },
+      ),
+    );
+  }
+
+  bool _handleEcgEvent(Map<String, Object?> event) {
+    if (_activeMeasurementMetric != HealthMetric.ecg) return false;
+    if (_ecgFinishing) {
+      return event.keys.any(
+        (k) =>
+            k.startsWith('deviceRealECG') ||
+            k == 'deviceRealBloodPressure' ||
+            k == 'deviceEndECG' ||
+            k == 'appECGPPGStatus',
+      );
+    }
+    final type = '${event['type'] ?? event['eventType'] ?? ''}';
+    final filtered =
+        event['deviceRealECGFilteredData'] ??
+        (type == 'deviceRealECGFilteredData' ? event['data'] : null);
+    if (filtered is List) {
+      // Vendor-filtered voltage samples; raw ADC packets are never substituted.
+      if (filtered.isNotEmpty &&
+          filtered.every((v) => v is num && v.isFinite)) {
+        final samples = filtered.cast<num>();
+        if (_ecgSamples.length + samples.length <= 1000000) {
+          _ecgSamples.addAll(samples);
+          _publishEcgProgress(samples: samples);
+        }
+      }
+      return true;
+    }
+    final blood =
+        event['deviceRealBloodPressure'] ??
+        (type == 'deviceRealBloodPressure' ? event['data'] : null);
+    if (blood is Map) {
+      final hr = _number(blood['heartRate']);
+      final hrv = _number(blood['hrv']);
+      if (hr != null && hr >= 30 && hr <= 210) {
+        _ecgValues['meanHeartRate'] = hr;
+      }
+      if (hrv != null && hrv > 0 && hrv <= 250) {
+        _ecgValues['hrv'] = hrv;
+      }
+      return true;
+    }
+    final hrv = _number(event['deviceRealECGAlgorithmHRV']);
+    if (hrv != null && hrv > 0 && hrv <= 250) {
+      _ecgValues['hrv'] = hrv;
+      return true;
+    }
+    final contact = event['appECGPPGStatus'];
+    if (contact is Map) {
+      _publishEcgProgress();
+      return true;
+    }
+    if (event.containsKey('deviceEndECG') || type == 'deviceEndECG') {
+      unawaited(_completeEcg(_ecgGeneration));
+      return true;
+    }
+    return event.containsKey('deviceRealECGData') ||
+        type == 'deviceRealECGData';
+  }
+
+  Future<void> _completeEcg(int generation) async {
+    final start = _measurementStartedAt;
+    final deviceId = _deviceId;
+    final connection = _connectionGeneration;
+    if (_ecgFinishing ||
+        generation != _ecgGeneration ||
+        start == null ||
+        deviceId == null ||
+        _activeMeasurementMetric != HealthMetric.ecg) {
+      return;
+    }
+    _ecgFinishing = true;
+    _ecgTimer?.cancel();
+    final client = _client as YuchengEcgClient;
+    bool current() =>
+        generation == _ecgGeneration &&
+        _isCurrentDeviceSession(connection, deviceId) &&
+        _activeMeasurementMetric == HealthMetric.ecg;
+    try {
+      _require(await client.stopEcg().timeout(healthReadTimeout));
+      if (!current()) return;
+      try {
+        final result = await client.ecgResult().timeout(healthReadTimeout);
+        if (!current()) return;
+        if (result.status == 0) {
+          for (final e in (result.data ?? const <String, num>{}).entries) {
+            if (e.value.isFinite) _ecgValues[e.key] = e.value;
+          }
+        }
+      } catch (_) {
+        // Live SDK objective values remain usable if analysis is unavailable.
+      }
+      if (!current()) return;
+      if (_ecgRate == null) {
+        try {
+          final rate = await client.ecgSampleRate().timeout(
+            deviceInfoReadTimeout,
+          );
+          if (!current()) return;
+          if (rate.status == 0) _ecgRate = rate.data;
+        } catch (_) {}
+      }
+      if (!current()) return;
+      final now = DateTime.now();
+      final record = HealthRecord(
+        id: 'yc-ecg-${start.microsecondsSinceEpoch}',
+        metric: HealthMetric.ecg,
+        values: {
+          ..._ecgValues,
+          'sampleFrequency': ?_ecgRate,
+          'durationSeconds':
+              now.toUtc().difference(start).inMilliseconds / 1000,
+        },
+        unit: '',
+        measuredAt: now.toUtc(),
+        timezone: _timezoneOffset(now.timeZoneOffset),
+        deviceId: deviceId,
+        firmwareVersion: _firmware,
+        quality: 'device_reported',
+        source: MeasurementSource.wearable,
+        origin: MeasurementOrigin.appMeasurement,
+        rawVersion: _ecgRate == null ? 1 : 2,
+        samples: List<num>.of(_ecgSamples),
+      );
+      _activeMeasurementMetric = null;
+      _measurementStartedAt = null;
+      _retireEcg();
+      _events.add(
+        WearableEvent(
+          type: 'healthRecord',
+          payload: {
+            ...record.toJson(),
+            'measurementStartedAt': start.toIso8601String(),
+          },
+        ),
+      );
+    } catch (_) {
+      if (!current()) return;
+      _retireEcg();
+      _activeMeasurementMetric = null;
+      _measurementStartedAt = null;
+      _events.add(
+        const WearableEvent(
+          type: 'error',
+          payload: {'code': 'ECG_MEASUREMENT_FAILED', 'message': '心电测量未完成，请重试'},
+        ),
+      );
+    }
   }
 
   static const _sports = {
@@ -665,6 +919,7 @@ class YuchengWearableBridge
       PlatformException(code: 'FEATURE_UNSUPPORTED', message: message);
 
   void _handleEvent(Map<String, Object?> event) {
+    if (_handleEcgEvent(event)) return;
     const nativeEventTypes = <String>{
       'bluetoothStateChange',
       'deviceRealHeartRate',

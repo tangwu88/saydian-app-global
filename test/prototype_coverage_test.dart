@@ -182,7 +182,7 @@ void main() {
 
     expect(find.text('Connected'), findsOneWidget);
     expect(find.text('3/4'), findsOneWidget);
-    expect(find.text('not charging'), findsOneWidget);
+    expect(find.text('Not charging'), findsOneWidget);
     expect(find.textContaining('Updated '), findsOneWidget);
     expect(find.text('Device ID'), findsOneWidget);
     expect(
@@ -190,7 +190,7 @@ void main() {
         (widget) =>
             widget is Semantics &&
             widget.properties.label ==
-                'Watch battery 3 of 4 bars, not charging',
+                'Watch battery 3 of 4 bars, Not charging',
       ),
       findsOneWidget,
     );

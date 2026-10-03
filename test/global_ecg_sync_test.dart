@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math' as math;
@@ -69,6 +70,103 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   setUp(() => debugDefaultTargetPlatformOverride = TargetPlatform.android);
   tearDown(() => debugDefaultTargetPlatformOverride = null);
+
+  test(
+    'private care waveform read preserves every sample and global route',
+    () async {
+      final original = _record();
+      final bytes = gzip.encode(utf8.encode(jsonEncode(original.samples)));
+      final api = GlobalSaydianApiClient(
+        MemorySessionVault()..session = _session('a'),
+        client: MockClient((request) async {
+          expect(
+            request.url.path,
+            '/global/api/saydian-app/v2/care/relationships/synthetic-relation/health/synthetic-ecg/ecg',
+          );
+          expect(request.headers['authorization'], 'Bearer synthetic-a');
+          return http.Response.bytes(
+            bytes,
+            200,
+            headers: {
+              'x-content-sha256': sha256.convert(bytes).toString(),
+              'x-ecg-sample-rate': '250',
+              'x-ecg-sample-count': '${original.samples.length}',
+            },
+          );
+        }),
+      );
+      final result = await api.loadEcgWaveform(
+        original.copyWith(
+          samples: const [],
+          origin: MeasurementOrigin.remoteMember,
+        ),
+        relationshipId: 'synthetic-relation',
+      );
+      expect(result.samples, original.samples);
+      expect(result.origin, MeasurementOrigin.remoteMember);
+      expect(result.ecgArtifact, isNull);
+    },
+  );
+
+  test(
+    'waveform metadata mismatch and permission denial never produce display samples',
+    () async {
+      final original = _record().copyWith(samples: const []);
+      final bytes = gzip.encode(utf8.encode(jsonEncode([.1, .2])));
+      final api = GlobalSaydianApiClient(
+        MemorySessionVault()..session = _session('a'),
+        client: MockClient(
+          (_) async => http.Response.bytes(
+            bytes,
+            200,
+            headers: {
+              'x-content-sha256': sha256.convert(bytes).toString(),
+              'x-ecg-sample-rate': '250',
+              'x-ecg-sample-count': '3000',
+            },
+          ),
+        ),
+      );
+      await expectLater(
+        api.loadEcgWaveform(original),
+        throwsA(isA<ApiException>()),
+      );
+      final denied = GlobalSaydianApiClient(
+        MemorySessionVault()..session = _session('a'),
+        client: MockClient(
+          (_) async => http.Response(jsonEncode({'code': 403}), 403),
+        ),
+      );
+      await expectLater(
+        denied.loadEcgWaveform(original, relationshipId: 'synthetic-relation'),
+        throwsA(isA<ApiException>().having((e) => e.statusCode, 'status', 403)),
+      );
+    },
+  );
+
+  test(
+    'account change during waveform download discards the old member response',
+    () async {
+      final vault = MemorySessionVault()..session = _session('a');
+      final response = Completer<http.Response>();
+      final api = GlobalSaydianApiClient(
+        vault,
+        client: MockClient((_) => response.future),
+      );
+      final pending = api.loadEcgWaveform(
+        _record().copyWith(samples: const []),
+      );
+      await Future<void>.delayed(Duration.zero);
+      vault.session = _session('b');
+      response.complete(http.Response.bytes([], 200));
+      await expectLater(
+        pending,
+        throwsA(
+          isA<ApiException>().having((e) => e.code, 'code', 'SESSION_CHANGED'),
+        ),
+      );
+    },
+  );
 
   test(
     'receipt persistence failure prevents submitting the health record',

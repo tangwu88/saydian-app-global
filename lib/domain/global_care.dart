@@ -1,3 +1,5 @@
+import 'models.dart';
+
 class GlobalCareRelationship {
   const GlobalCareRelationship({
     required this.id,
@@ -41,3 +43,28 @@ class GlobalCareRelationship {
   from: DateTime(date.year, date.month, date.day).toUtc(),
   to: DateTime(date.year, date.month, date.day + 1).toUtc(),
 );
+
+/// Shared records are view-only and never belong to the current user's store.
+HealthRecord globalCareHealthRecord(Map<String, Object?> row) {
+  final offset = (row['timezoneOffsetMinutes'] as num?)?.toInt() ?? 0;
+  final timezone =
+      '${offset < 0 ? '-' : '+'}${(offset.abs() ~/ 60).toString().padLeft(2, '0')}:${(offset.abs() % 60).toString().padLeft(2, '0')}';
+  final artifact = row['ecgArtifact'];
+  return HealthRecord.fromJson({
+    'id': row['id'],
+    'type': row['metric'],
+    'values': row['values'],
+    'unit': row['unit'],
+    'measuredAt': row['observedAt'],
+    'timezone': timezone,
+    'source': 'wearable',
+    'origin': 'remote_member',
+    'quality': row['quality'],
+    'aggregation': row['aggregation'],
+    if (artifact is Map && artifact['sampleRateHz'] is num)
+      'values': {
+        ...?row['values'] as Map?,
+        'sampleFrequency': artifact['sampleRateHz'],
+      },
+  });
+}

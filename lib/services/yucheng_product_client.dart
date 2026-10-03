@@ -92,7 +92,15 @@ abstract interface class YuchengProductClient {
   Future<YuchengOperationResult<void>> changeWatchFace(int dialId);
 }
 
-class PluginYuchengProductClient implements YuchengProductClient {
+abstract interface class YuchengEcgClient {
+  Future<YuchengOperationResult<int>> ecgSampleRate();
+  Future<YuchengOperationResult<void>> startEcg();
+  Future<YuchengOperationResult<void>> stopEcg();
+  Future<YuchengOperationResult<Map<String, num>>> ecgResult();
+}
+
+class PluginYuchengProductClient
+    implements YuchengProductClient, YuchengEcgClient {
   PluginYuchengProductClient({yc.YcProductPlugin? plugin})
     : _plugin = plugin ?? yc.YcProductPlugin();
   final yc.YcProductPlugin _plugin;
@@ -274,6 +282,9 @@ class PluginYuchengProductClient implements YuchengProductClient {
       'isSupportTemperature': f.isSupportTemperature,
       'isSupportBloodGlucose': f.isSupportBloodGlucose,
       'isSupportHRV': f.isSupportHRV,
+      'isSupportRealTimeECG': f.isSupportRealTimeECG,
+      'isSupportHistoricalECG': f.isSupportHistoricalECG,
+      'isSupportECGDiagnosis': f.isSupportECGDiagnosis,
       'isSupportStartHeartRateMeasurement':
           f.isSupportStartHeartRateMeasurement,
       'isSupportStartBloodPressureMeasurement':
@@ -303,6 +314,64 @@ class PluginYuchengProductClient implements YuchengProductClient {
       'isSupportWatchFace': f.isSupportWatchFace,
       'isSupportOta': f.isSupportOta,
     };
+  }
+
+  static const _nativeMethods = MethodChannel(
+    'ycaviation.com/yc_product_plugin_method_channel',
+  );
+
+  @override
+  Future<YuchengOperationResult<int>> ecgSampleRate() async {
+    try {
+      // The pinned Android plugin already exposes the vendor query, but its
+      // Dart facade omits it. Type 1 is ECG; never change device sampling.
+      final response = await _nativeMethods.invokeMapMethod<String, Object?>(
+        'appQuerySampleRate',
+        1,
+      );
+      final data = response?['data'];
+      final raw = data is Map
+          ? data['sampleRate'] ?? data['samplingRate']
+          : null;
+      final rate = raw is num ? raw : num.tryParse('$raw');
+      return YuchengOperationResult(
+        (response?['code'] as num?)?.toInt() ?? 1,
+        rate != null &&
+                rate.isFinite &&
+                rate == rate.toInt() &&
+                rate >= 50 &&
+                rate <= 1000
+            ? rate.toInt()
+            : null,
+      );
+    } on MissingPluginException {
+      return const YuchengOperationResult(2, null);
+    }
+  }
+
+  @override
+  Future<YuchengOperationResult<void>> startEcg() async =>
+      _r(await _plugin.startECGMeasurement());
+  @override
+  Future<YuchengOperationResult<void>> stopEcg() async =>
+      _r(await _plugin.stopECGMeasurement());
+  @override
+  Future<YuchengOperationResult<Map<String, num>>> ecgResult() async {
+    final response = await _plugin.getECGResult();
+    final result = response?.data;
+    return YuchengOperationResult(
+      response?.statusCode ?? 1,
+      result == null
+          ? null
+          : {
+              if (result.hearRate > 0) 'meanHeartRate': result.hearRate,
+              'qrsType': result.qrsType,
+              'afFlag': result.afFlag ? 1 : 0,
+              if (result.hrvNorm != null) 'hrv': result.hrvNorm!,
+              if (result.respiratoryRate != null)
+                'respiratoryRate': result.respiratoryRate!,
+            },
+    );
   }
 
   YuchengOperationResult<T> _r<T>(yc.PluginResponse<T>? r) =>

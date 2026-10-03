@@ -139,11 +139,22 @@ abstract interface class GlobalCommerceApi {
 
 /// International transport. Only the deployed App V2 route family is accepted;
 /// no legacy endpoint or credential fallback exists.
+abstract interface class GlobalCareHealthApi {
+  Future<Map<String, Object?>> globalCareSummary(String id);
+  Future<List<Map<String, Object?>>> globalCareRecordsRange(
+    String id,
+    String metric,
+    DateTime start,
+    DateTime end,
+  );
+}
+
 class GlobalSaydianApiClient extends SaydianApiClient
     with GlobalHealthApi
     implements
         GlobalAccountApi,
         GlobalCareApi,
+        GlobalCareHealthApi,
         GlobalContentApi,
         GlobalCommerceApi,
         SaydianDeviceBindingApi {
@@ -419,6 +430,54 @@ class GlobalSaydianApiClient extends SaydianApiClient
   }
 
   @override
+  Future<Map<String, Object?>> globalCareSummary(String id) async =>
+      _data(_decode(await _careRead(_carePath(id, '/summary'))));
+
+  @override
+  Future<List<Map<String, Object?>>> globalCareRecordsRange(
+    String id,
+    String metric,
+    DateTime start,
+    DateTime end,
+  ) async => _list(
+    _decode(
+      await _careRead(_carePath(id, '/health'), {
+        'metric': metric,
+        'from': start.toUtc().toIso8601String(),
+        'to': end.toUtc().toIso8601String(),
+      }),
+    ),
+  );
+
+  Future<http.Response> _careRead(
+    String path, [
+    Map<String, String>? query,
+  ]) async {
+    final owner = _stableSessionAccountKey(await _requiredSession());
+    void checkOwner(Session? session) {
+      if (session == null || _stableSessionAccountKey(session) != owner) {
+        throw const ApiException(
+          'Session changed',
+          code: 'SESSION_CHANGED',
+          statusCode: 401,
+        );
+      }
+    }
+
+    final response = await _withAuthorizationRetry((session) {
+      checkOwner(session);
+      return _performRequest(
+        () => _client.get(
+          _uri(path, query),
+          headers: _authorizationHeaders(session),
+        ),
+      );
+    });
+    checkOwner(await _vault.readSession());
+    return response;
+  }
+
+  @override
   Uri _uri(String path, [Map<String, String>? query]) {
     try {
       return GlobalEnvironment.resolve(
@@ -672,6 +731,7 @@ class GlobalSaydianApiClient extends SaydianApiClient
         ),
       ),
     );
+
     return data['registered'] == true;
   }
 

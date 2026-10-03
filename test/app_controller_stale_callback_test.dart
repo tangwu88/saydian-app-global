@@ -146,15 +146,36 @@ void main() {
 
   test('current null details still clears the current measurement', () async {
     final fixture = await setup();
+    final details = Completer<DeviceInfo?>();
+    fixture.wearable.details = details.future;
+    final refresh = fixture.controller.refreshConnectedDeviceDetails();
+    await _settle();
+    expect(
+      await fixture.controller.startMeasurement(HealthMetric.heartRate),
+      isTrue,
+    );
+    details.complete(null);
+    expect(await refresh, isFalse);
+    expect(fixture.controller.connectedDevice, isNull);
+    expect(fixture.controller.activeMeasurementMetric, isNull);
+    expect(fixture.controller.errorMessage, contains('断开'));
+  });
+
+  test('device status polling pauses during measurement', () async {
+    final fixture = await setup();
     expect(
       await fixture.controller.startMeasurement(HealthMetric.heartRate),
       isTrue,
     );
     fixture.wearable.details = Future<DeviceInfo?>.value();
-    expect(await fixture.controller.refreshConnectedDeviceDetails(), isFalse);
-    expect(fixture.controller.connectedDevice, isNull);
-    expect(fixture.controller.activeMeasurementMetric, isNull);
-    expect(fixture.controller.errorMessage, contains('断开'));
+    expect(
+      await fixture.controller.refreshConnectedDeviceDetails(
+        forceRefresh: true,
+      ),
+      isFalse,
+    );
+    expect(fixture.controller.connectedDevice, isNotNull);
+    expect(fixture.controller.activeMeasurementMetric, HealthMetric.heartRate);
   });
 
   test(
@@ -464,7 +485,9 @@ class _Wearable extends Fake
   @override
   Stream<WearableEvent> get events => eventsController.stream;
   @override
-  Future<DeviceInfo?> getConnectedDeviceDetails() async {
+  Future<DeviceInfo?> getConnectedDeviceDetails({
+    bool forceRefresh = false,
+  }) async {
     final pending = details;
     return pending != null ? await pending : first;
   }

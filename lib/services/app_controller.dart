@@ -477,6 +477,27 @@ class AppController extends ChangeNotifier {
     ),
   );
 
+  Future<Map<String, Object?>> globalCareSummary(String id) =>
+      (_api as GlobalCareHealthApi).globalCareSummary(id);
+  Future<List<Map<String, Object?>>> globalCareRecordsRange(
+    String id,
+    String metric,
+    DateTime start,
+    DateTime end,
+  ) => (_api as GlobalCareHealthApi).globalCareRecordsRange(
+    id,
+    metric,
+    start,
+    end,
+  );
+  Future<HealthRecord> loadEcgWaveform(
+    HealthRecord record, {
+    String? relationshipId,
+  }) => (_api as GlobalSaydianApiClient).loadEcgWaveform(
+    record,
+    relationshipId: relationshipId,
+  );
+
   Future<List<GlobalCareRelationship>> globalCareRelationships() =>
       (_api as GlobalCareApi).globalCareRelationships();
   Future<void> globalInviteCare(String identifier) =>
@@ -2104,7 +2125,14 @@ class AppController extends ChangeNotifier {
     }
   }
 
-  Future<bool> refreshConnectedDeviceDetails() async {
+  Future<bool> refreshConnectedDeviceDetails({
+    bool forceRefresh = false,
+  }) async {
+    if (deviceState != DeviceConnectionState.ready ||
+        isDeviceSyncing ||
+        deviceFeatureBusy.isNotEmpty) {
+      return false;
+    }
     final current = connectedDevice;
     final bridge = _wearable;
     if (current == null) return false;
@@ -2118,7 +2146,7 @@ class AppController extends ChangeNotifier {
         connectedDevice?.id == current.id;
     try {
       final details = await (bridge as WearableDeviceDetailsBridge)
-          .getConnectedDeviceDetails();
+          .getConnectedDeviceDetails(forceRefresh: forceRefresh);
       if (!isCurrent()) return false;
       if (details == null) {
         _deviceConnectionGeneration++;

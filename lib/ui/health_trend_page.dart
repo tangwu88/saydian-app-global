@@ -144,12 +144,21 @@ class HealthTrendPage extends StatefulWidget {
     required this.controller,
     required this.metric,
     this.onMeasure,
+    this.recordLoader,
+    this.memberName,
+    this.relationshipId,
+    this.ownerAccountKey,
     super.key,
   });
 
   final AppController controller;
   final HealthMetric metric;
   final Future<void> Function()? onMeasure;
+  final Future<List<HealthRecord>> Function(DateTime start, DateTime end)?
+  recordLoader;
+  final String? memberName;
+  final String? relationshipId;
+  final String? ownerAccountKey;
 
   @override
   State<HealthTrendPage> createState() => _HealthTrendPageState();
@@ -166,6 +175,18 @@ class _HealthTrendPageState extends State<HealthTrendPage> {
   bool _measuring = false;
   List<HealthRecord> _records = const [];
   List<HealthRecord> _previousRecords = const [];
+
+  int _loadGeneration = 0;
+  bool get _sameOwner =>
+      widget.ownerAccountKey == null ||
+      widget.ownerAccountKey == widget.controller.session?.accountKey;
+  Future<List<HealthRecord>> _read(DateTime start, DateTime end) =>
+      widget.recordLoader?.call(start, end) ??
+      widget.controller.loadHealthRecords(
+        metric: widget.metric,
+        start: start,
+        end: end,
+      );
 
   HealthTrendData get _data => _analysis.analyze(
     metric: widget.metric,
@@ -190,10 +211,23 @@ class _HealthTrendPageState extends State<HealthTrendPage> {
   }
 
   void _onControllerChanged() {
-    if (mounted) setState(() {});
+    if (!mounted) return;
+    if (!_sameOwner) {
+      _loadGeneration++;
+      setState(() {
+        _records = const [];
+        _previousRecords = const [];
+        _loading = false;
+        _error = const FormatException('Session changed');
+      });
+    } else {
+      setState(() {});
+    }
   }
 
   Future<void> _load({bool showLoading = true}) async {
+    final generation = ++_loadGeneration;
+    if (!_sameOwner) return;
     if (showLoading) {
       setState(() {
         _loading = true;
@@ -203,18 +237,10 @@ class _HealthTrendPageState extends State<HealthTrendPage> {
     final range = HealthTrendRange.forPeriod(_period, _anchor);
     try {
       final values = await Future.wait([
-        widget.controller.loadHealthRecords(
-          metric: widget.metric,
-          start: range.start,
-          end: range.end,
-        ),
-        widget.controller.loadHealthRecords(
-          metric: widget.metric,
-          start: range.previousStart,
-          end: range.previousEnd,
-        ),
+        _read(range.start, range.end),
+        _read(range.previousStart, range.previousEnd),
       ]);
-      if (!mounted) return;
+      if (!mounted || generation != _loadGeneration || !_sameOwner) return;
       setState(() {
         _records = values[0];
         _previousRecords = values[1];
@@ -228,9 +254,11 @@ class _HealthTrendPageState extends State<HealthTrendPage> {
         _loading = false;
       });
     } catch (error) {
-      if (!mounted || !showLoading) return;
+      if (!mounted || generation != _loadGeneration || !_sameOwner) return;
       setState(() {
         _error = error;
+        _records = const [];
+        _previousRecords = const [];
         _loading = false;
       });
     }
@@ -328,7 +356,11 @@ class _HealthTrendPageState extends State<HealthTrendPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          context.l10n.metricAnalysis(context.l10n.metricName(widget.metric)),
+          widget.memberName == null
+              ? context.l10n.metricAnalysis(
+                  context.l10n.metricName(widget.metric),
+                )
+              : '${widget.memberName} · ${context.l10n.metricName(widget.metric)}',
         ),
       ),
       body: RefreshIndicator(
@@ -493,6 +525,8 @@ class _HealthTrendPageState extends State<HealthTrendPage> {
               controller: widget.controller,
               record: record,
               valueKey: data.valueKey,
+              relationshipId: widget.relationshipId,
+              ownerAccountKey: widget.ownerAccountKey,
             ),
           ),
         if (data.records.length > 6)
@@ -574,6 +608,8 @@ class _HealthTrendPageState extends State<HealthTrendPage> {
                       controller: widget.controller,
                       record: data.records[index],
                       valueKey: data.valueKey,
+                      relationshipId: widget.relationshipId,
+                      ownerAccountKey: widget.ownerAccountKey,
                     ),
                   ),
                 ),
@@ -953,11 +989,15 @@ class _RecordTile extends StatelessWidget {
     required this.controller,
     required this.record,
     required this.valueKey,
+    this.relationshipId,
+    this.ownerAccountKey,
   });
 
   final AppController controller;
   final HealthRecord record;
   final String valueKey;
+  final String? relationshipId;
+  final String? ownerAccountKey;
 
   @override
   Widget build(BuildContext context) {
@@ -969,8 +1009,12 @@ class _RecordTile extends StatelessWidget {
         onTap: () => Navigator.of(context).push(
           MaterialPageRoute<void>(
             settings: const RouteSettings(name: 'health-record-detail'),
-            builder: (_) =>
-                HealthRecordDetailPage(controller: controller, record: record),
+            builder: (_) => HealthRecordDetailPage(
+              controller: controller,
+              record: record,
+              relationshipId: relationshipId,
+              ownerAccountKey: ownerAccountKey,
+            ),
           ),
         ),
         leading: CircleAvatar(

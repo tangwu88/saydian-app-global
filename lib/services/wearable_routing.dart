@@ -470,13 +470,13 @@ class RoutedWearableBridge
   }
 
   @override
-  Future<DeviceInfo?> getConnectedDeviceDetails() async {
+  Future<DeviceInfo?> getConnectedDeviceDetails({bool forceRefresh = false}) async {
     final transport = _activeTransport;
     if (transport == null) return null;
     final bridge = _sources[transport];
     if (bridge is! WearableDeviceDetailsBridge) return null;
     final details = await (bridge as WearableDeviceDetailsBridge)
-        .getConnectedDeviceDetails();
+        .getConnectedDeviceDetails(forceRefresh: forceRefresh);
     if (details == null) {
       _activeTransport = null;
       return null;
