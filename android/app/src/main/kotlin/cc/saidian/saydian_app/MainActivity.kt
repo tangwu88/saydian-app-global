@@ -778,6 +778,10 @@ class MainActivity : FlutterActivity() {
     }
 
     private fun handleUpdateMethod(call: MethodCall, result: MethodChannel.Result) {
+        if (BuildConfig.FLAVOR == "play") {
+            result.error("PLAY_STORE_ONLY", "Please update through Google Play", null)
+            return
+        }
         when (call.method) {
             "installApk" -> {
                 val filePath = call.argument<String>("filePath")?.trim().orEmpty()

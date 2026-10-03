@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart' show kDebugMode;
+import 'package:flutter/foundation.dart' show defaultTargetPlatform, kDebugMode;
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -197,7 +197,10 @@ class _SaydianAppState extends State<SaydianApp> with WidgetsBindingObserver {
     _updateService =
         widget.updateService ??
         (controller.isGlobalEdition
-            ? GlobalAppUpdateService()
+            ? (defaultTargetPlatform == TargetPlatform.android &&
+                      const bool.fromEnvironment('SAIDIAN_PLAY_STORE')
+                  ? PlayStoreAppUpdateService()
+                  : GlobalAppUpdateService())
             : AppUpdateService());
     _updateCoordinator = AppUpdateCoordinator(
       _updateService,
@@ -360,6 +363,11 @@ class _SaydianAppState extends State<SaydianApp> with WidgetsBindingObserver {
     if (_updateCheckRunning || !mounted || !_requiredUpdateGateResolved) return;
     _updateCheckRunning = true;
     try {
+      if (_updateService is PlayStoreAppUpdateService) {
+        final info = await _updateService.check();
+        await _updateService.openDestination(info);
+        return;
+      }
       final info = await _updateCoordinator.checkNow();
       if (!mounted) return;
       if (info.forceUpdate) {

@@ -1,3 +1,4 @@
+import java.util.Base64
 import java.util.Properties
 
 plugins {
@@ -19,6 +20,12 @@ val signingPropertiesFile = rootProject.file("key.properties")
 val signingProperties = Properties().apply {
     if (signingPropertiesFile.isFile) {
         signingPropertiesFile.inputStream().use(::load)
+    }
+}
+val playSigningPropertiesFile = rootProject.file("play-upload.properties")
+val playSigningProperties = Properties().apply {
+    if (playSigningPropertiesFile.isFile) {
+        playSigningPropertiesFile.inputStream().use(::load)
     }
 }
 val jpushAppKey =
@@ -50,6 +57,15 @@ fun releaseModeFlag(name: String): Boolean {
 
 val productionReleaseRequested = releaseModeFlag("SAIDIAN_PRODUCTION_RELEASE")
 val qaReleaseAllowed = releaseModeFlag("SAIDIAN_ALLOW_QA_RELEASE")
+val playStoreDartDefine =
+    providers.gradleProperty("dart-defines").orNull.orEmpty()
+        .split(',')
+        .any { encoded ->
+            runCatching {
+                String(Base64.getDecoder().decode(encoded), Charsets.UTF_8) ==
+                    "SAIDIAN_PLAY_STORE=true"
+            }.getOrDefault(false)
+        }
 // The production App supports physical ARM devices only.  Local Android
 // emulators are x86_64, so permit that ABI only when the explicit Debug-only
 // switch is supplied.  Release tasks below reject this switch.
@@ -102,6 +118,17 @@ val hasCompleteProductionSigning =
     signingPropertiesFile.isFile &&
         productionSigningValues.values.all(String::isNotEmpty) &&
         productionStoreFile?.isFile == true
+val playSigningValues =
+    listOf("storeFile", "storePassword", "keyAlias", "keyPassword")
+        .associateWith { playSigningProperties.getProperty(it)?.trim().orEmpty() }
+val playStoreFile =
+    playSigningValues.getValue("storeFile")
+        .takeIf(String::isNotEmpty)
+        ?.let(::file)
+val hasCompletePlaySigning =
+    playSigningPropertiesFile.isFile &&
+        playSigningValues.values.all(String::isNotEmpty) &&
+        playStoreFile?.isFile == true
 
 if (hasAnyVeepooArtifact && !hasCompleteVeepooSdk) {
     val missing = veepooSdkFiles.filterNot { it.isFile }.joinToString { it.name }
@@ -167,22 +194,42 @@ android {
                 storePassword = productionSigningValues.getValue("storePassword")
             }
         }
+        if (hasCompletePlaySigning) {
+            create("playUploadRelease") {
+                keyAlias = playSigningValues.getValue("keyAlias")
+                keyPassword = playSigningValues.getValue("keyPassword")
+                storeFile = playStoreFile
+                storePassword = playSigningValues.getValue("storePassword")
+            }
+        }
     }
 
-    buildTypes {
-        release {
-            // Local QA keeps the existing debug-signing fallback.  Tagged
-            // online releases provide key.properties from GitHub Secrets and
-            // therefore use the stable production key.
+    flavorDimensions += "distribution"
+    productFlavors {
+        create("sideload") {
+            dimension = "distribution"
             signingConfig =
-                if (productionReleaseRequested &&
-                    !qaReleaseAllowed &&
-                    hasCompleteProductionSigning
-                ) {
+                if (productionReleaseRequested && !qaReleaseAllowed && hasCompleteProductionSigning) {
                     signingConfigs.getByName("productionRelease")
                 } else {
                     signingConfigs.getByName("debug")
                 }
+        }
+        create("play") {
+            dimension = "distribution"
+            signingConfig =
+                if (productionReleaseRequested && !qaReleaseAllowed && hasCompletePlaySigning) {
+                    signingConfigs.getByName("playUploadRelease")
+                } else {
+                    signingConfigs.getByName("debug")
+                }
+        }
+    }
+
+    buildTypes {
+        release {
+            // Signing is selected by distribution flavor. QA falls back to
+            // debug signing; production Play uses an independent upload key.
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
@@ -216,13 +263,20 @@ val verifySaidianReleaseMode by tasks.registering {
         if (!apiBaseUrl.startsWith("https://")) {
             throw GradleException("Production release requires an HTTPS SAYDIAN_API_BASE_URL")
         }
-        if (!updateManifestUrl.startsWith("https://") || updateAllowedHosts.isEmpty()) {
+        if (!playStoreDartDefine &&
+            (!updateManifestUrl.startsWith("https://") || updateAllowedHosts.isEmpty())
+        ) {
             throw GradleException(
                 "Production release requires an HTTPS SAYDIAN_UPDATE_MANIFEST_URL and " +
                     "SAYDIAN_UPDATE_ALLOWED_HOSTS",
             )
         }
-        if (!hasCompleteProductionSigning) {
+        if (playStoreDartDefine && !hasCompletePlaySigning) {
+            throw GradleException(
+                "Production Play release requires complete android/play-upload.properties and its keystore file",
+            )
+        }
+        if (!playStoreDartDefine && !hasCompleteProductionSigning) {
             throw GradleException(
                 "Production release requires complete android/key.properties and its keystore file",
             )
@@ -234,14 +288,38 @@ tasks.matching {
     it.name.startsWith("pre") && it.name.endsWith("ReleaseBuild")
 }.configureEach {
     dependsOn(verifySaidianReleaseMode)
-    doFirst {
+}
+
+val verifyPlayReleaseChannel by tasks.registering {
+    group = "verification"
+    doLast {
+        if (!playStoreDartDefine) {
+            throw GradleException("Play release requires --dart-define=SAIDIAN_PLAY_STORE=true")
+        }
         if (emulatorDebugRequested) {
-            throw GradleException(
-                "SAIDIAN_EMULATOR_DEBUG=true is Debug-only and cannot be used for Release builds.",
-            )
+            throw GradleException("SAIDIAN_EMULATOR_DEBUG=true is Debug-only and cannot be used for Release builds.")
         }
     }
 }
+
+val verifySideloadReleaseChannel by tasks.registering {
+    group = "verification"
+    doLast {
+        if (playStoreDartDefine) {
+            throw GradleException("Sideload release must not enable the Play update channel")
+        }
+        if (emulatorDebugRequested) {
+            throw GradleException("SAIDIAN_EMULATOR_DEBUG=true is Debug-only and cannot be used for Release builds.")
+        }
+    }
+}
+
+// AGP puts both flavors' preReleaseBuild tasks in either flavor's task graph.
+// Attach channel-specific checks only to the actual package/bundle tasks.
+tasks.matching { it.name == "packagePlayRelease" || it.name == "bundlePlayRelease" }
+    .configureEach { dependsOn(verifyPlayReleaseChannel) }
+tasks.matching { it.name == "packageSideloadRelease" || it.name == "bundleSideloadRelease" }
+    .configureEach { dependsOn(verifySideloadReleaseChannel) }
 
 kotlin {
     compilerOptions {

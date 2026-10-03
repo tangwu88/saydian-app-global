@@ -67,20 +67,28 @@ jobs:
           channel: stable
           cache: true
       - run: flutter pub get
-      - run: flutter build apk --debug --target-platform=android-arm,android-arm64
-      - run: flutter build apk --release --target-platform=android-arm,android-arm64
+      - run: flutter build apk --debug --flavor sideload --target-platform=android-arm,android-arm64
+      - run: flutter build apk --release --flavor sideload --target-platform=android-arm,android-arm64
+        env:
+          SAIDIAN_ALLOW_QA_RELEASE: "true"
+      - run: flutter build apk --release --flavor play --target-platform=android-arm,android-arm64 --dart-define=SAIDIAN_PLAY_STORE=true
         env:
           SAIDIAN_ALLOW_QA_RELEASE: "true"
       - name: Verify release APK ABIs and resolved push dependencies
         run: |
           cd android
-          ./gradlew :app:dependencies --configuration releaseRuntimeClasspath --console=plain > ../build/releaseRuntimeClasspath.txt
+          ./gradlew :app:dependencies --configuration sideloadReleaseRuntimeClasspath --console=plain > ../build/releaseRuntimeClasspath.txt
+          ./gradlew :app:dependencies --configuration playReleaseRuntimeClasspath --console=plain > ../build/playReleaseRuntimeClasspath.txt
           cd ..
           python3 scripts/release/release_gate.py apk-abis \
-            --apk build/app/outputs/flutter-apk/app-release.apk \
+            --apk build/app/outputs/flutter-apk/app-sideload-release.apk \
             --dependency-report build/releaseRuntimeClasspath.txt \
             --pubspec-lock pubspec.lock
-      - run: cd android && ./gradlew :app:testDebugUnitTest
+          python3 scripts/release/release_gate.py apk-abis \
+            --apk build/app/outputs/flutter-apk/app-play-release.apk \
+            --dependency-report build/playReleaseRuntimeClasspath.txt \
+            --pubspec-lock pubspec.lock
+      - run: cd android && ./gradlew :app:testSideloadDebugUnitTest
 
   ios:
     runs-on: macos-26

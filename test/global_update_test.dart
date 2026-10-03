@@ -55,6 +55,44 @@ GlobalAppUpdateService service(
 
 void main() {
   test(
+    'Play channel opens only the package-bound Google Play listing',
+    () async {
+      final play = PlayStoreAppUpdateService(
+        packageInfoLoader: () async => PackageInfo(
+          appName: 'SAYDIAN Health',
+          packageName: 'cn.saydian.app.global',
+          version: '1.0.0',
+          buildNumber: '1012',
+        ),
+      );
+      final info = await play.check();
+      expect(info.hasUpdate, isFalse);
+      expect(info.destinationType, AppUpdateDestinationType.androidStore);
+      expect(
+        info.destinationUri.toString(),
+        'https://play.google.com/store/apps/details?id=cn.saydian.app.global',
+      );
+      expect(play.validatePersisted(info), isTrue);
+      expect(
+        play.validatePersisted(await service(manifest()).check()),
+        isFalse,
+      );
+    },
+  );
+
+  test('Play channel rejects a different installed package', () async {
+    final play = PlayStoreAppUpdateService(
+      packageInfoLoader: () async => PackageInfo(
+        appName: 'Other',
+        packageName: 'com.example.other',
+        version: '1.0.0',
+        buildNumber: '1',
+      ),
+    );
+    await expectLater(play.check(), throwsA(isA<AppUpdateException>()));
+  });
+
+  test(
     'iOS accepts only an explicit global TestFlight or App Store destination',
     () async {
       for (final kind in ['testflight', 'app_store']) {

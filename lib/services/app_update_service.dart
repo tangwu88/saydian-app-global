@@ -531,6 +531,50 @@ class AppUpdateService {
   }
 }
 
+/// The Play build never reads the internal APK manifest or opens an installer.
+/// Google Play owns version discovery and the update action for this channel.
+class PlayStoreAppUpdateService extends AppUpdateService {
+  PlayStoreAppUpdateService({super.packageInfoLoader})
+    : super(endpointUri: _listingUri, targetPlatform: TargetPlatform.android);
+
+  static final Uri _listingUri = Uri.parse(
+    'https://play.google.com/store/apps/details?id=${GlobalEnvironment.packageId}',
+  );
+
+  @override
+  Future<AppUpdateInfo> check() async {
+    final package = await loadCurrentPackage();
+    if (package.packageName != GlobalEnvironment.packageId) {
+      throw const AppUpdateException('This update is not for this app.');
+    }
+    final build = int.tryParse(package.buildNumber) ?? 0;
+    return AppUpdateInfo(
+      currentVersion: package.version,
+      currentBuild: build,
+      latestVersion: package.version,
+      latestBuild: build,
+      minimumSupportedBuild: 0,
+      destinationType: AppUpdateDestinationType.androidStore,
+      destinationUri: _listingUri,
+      releaseNotes: '',
+      publishedAt: DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),
+    );
+  }
+
+  @override
+  bool validatePersisted(AppUpdateInfo info) =>
+      info.destinationType == AppUpdateDestinationType.androidStore &&
+      info.destinationUri == _listingUri;
+
+  @override
+  Future<void> openDestination(AppUpdateInfo info) {
+    if (!validatePersisted(info)) {
+      throw const AppUpdateException('This update is not for this app.');
+    }
+    return super.openDestination(info);
+  }
+}
+
 class AndroidApkUpdateInstaller {
   AndroidApkUpdateInstaller({
     http.Client? client,
