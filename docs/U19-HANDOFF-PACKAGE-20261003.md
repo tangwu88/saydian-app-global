@@ -26,6 +26,12 @@
 - APK 为 `SAYDIAN Health 0.1.23+1007`、`cn.saydian.app.global` 内部 QA 包，SHA-256 `4DCD31B3CA86C703943A2D908E4C22530B57465DE502EC3686704316EA436E38`；不是生产签名包，不可直接上架或替换线上下载页。
 - 源码 ZIP 不含 `.git` 历史；继续开发必须克隆私有仓库，先检查分支、工作树及远端，按 `START-HERE.md` 和记录逐项复验，不把快照覆盖现有工作区。
 
+## Git 上传、回下载验与 CI
+
+- 交接说明先提交为 `6a3c2a3` 和 `0abd1ce455319b4a94cfe1075571cc224d98ddf9`，推送到私有仓库 `feature/u19-eb1` 后以 `git ls-remote` 核对远端提交号。ZIP/APK 没有进入源码 Git 历史。
+- 再次确认仓库 `private=true` 后，以 `0abd1ce` 为目标创建 **Private、Pre-release** 标签 [`handoff-u19-20261003`](https://github.com/tangwu88/saydian-app-global/releases/tag/handoff-u19-20261003)，上传上述外层 ZIP。GitHub 将附件的中文名称规范化为 `SAYDIAN-Health-U19-.-20261003.zip`，资产状态 `uploaded`，大小 94,239,881 字节。通过 GitHub CLI 从发布页重新下载到独立目录，SHA-256 仍为 `E7AC9101ECD464092C2ED7DC65B9BE2E58133717890327C25D63A22C8E7D4DA5`；再次核查仓库仍为 Private。仅授权协作者可访问，**不要**把此私有附件链接改成公开下载。
+- 提交 `0abd1ce` 触发的 [GitHub Actions 运行 37100824841](https://github.com/tangwu88/saydian-app-global/actions/runs/37100824841) 显示 Failure，但三个首发作业都没有执行任何步骤；注释明确指出账号近期付款失败或支出额度不足。Android/iOS 因依赖作业失败而跳过。这是平台计费阻断，不能称 CI 测试失败，也不能称 CI 通过；恢复账单后必须重跑完整门禁。本机双时区通过不能替代远端 CI。
+
 ## 新纳入的未解决问题
 
 - **Bug 名称：** iOS U19 当天同步 `StateError`（暂列 P1，待堆栈确认）。**复现线索：** iPhone 15 Pro Max 的 `0.1.23 (1007)` 有线 Debug 会话，在 U19 日汇总读取日志 `[U19Sync] daily: index=0 dayOffset=0` 后两次出现 `[U19Sync] StateError`。**预期：** 完成当天读取并明确保存/待同步状态。**实际：** 读取失败，尚无堆栈、原始包及页面状态证据，不能断言根因或同步成功。**影响：** U19 每日数据闭环未验收。下一位同事先取脱敏堆栈、原始命令状态与设备时钟，再定向修复并真机回归；不得用旧历史值冒充新结果。
