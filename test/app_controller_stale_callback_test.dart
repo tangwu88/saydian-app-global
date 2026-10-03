@@ -236,6 +236,33 @@ void main() {
   );
 
   test(
+    'already ACKed records keep a confirmed state on repeated sync',
+    () async {
+      final api = _Api();
+      final fixture = await setup(api: api);
+      fixture.wearable.emitResult();
+      await _waitFor(() => api.uploadedIds.contains('synthetic-late-save'));
+      await _waitFor(
+        () =>
+            fixture.controller.cloudSyncState == CloudHealthSyncState.complete,
+      );
+      expect(fixture.controller.healthRecords, isNotEmpty);
+      final uploadCount = api.uploadedIds.length;
+
+      await fixture.controller.syncDeviceData();
+      await fixture.controller.synchronizeCloud();
+      await _waitFor(
+        () =>
+            fixture.controller.cloudSyncState != CloudHealthSyncState.uploading,
+      );
+      expect(api.uploadedIds.length, uploadCount);
+      expect(fixture.controller.cloudSyncUploadedCount, 0);
+      expect(fixture.controller.cloudSyncState, CloudHealthSyncState.complete);
+      expect(fixture.controller.cloudSyncStatus, '数据已同步，无待上传记录');
+    },
+  );
+
+  test(
     'connected watch retries pending records every 30 minutes without reuploading ACKed IDs',
     () async {
       final store = MemoryHealthStore();

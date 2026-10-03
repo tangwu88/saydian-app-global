@@ -843,8 +843,21 @@ class YuchengWearableBridge
 
   void _handleMeasurementState(Map<String, Object?> payload) {
     final metric = _activeMeasurementMetric;
-    if (metric == null) return;
     final state = _number(payload['state'])?.toInt();
+    if (metric == null) {
+      final deviceId = _deviceId;
+      // Measurements started on the watch have no App measurement session.
+      // Their completion must still enter the serial history/read/upload path.
+      if (state == 0 && deviceId != null) {
+        _events.add(
+          WearableEvent(
+            type: 'healthDataReady',
+            payload: {'deviceId': deviceId, 'source': 'watchNotification'},
+          ),
+        );
+      }
+      return;
+    }
     if (state == 0) {
       unawaited(_finishMeasurementFromHistory(metric));
       return;

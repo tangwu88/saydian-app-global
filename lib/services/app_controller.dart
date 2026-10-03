@@ -3161,12 +3161,18 @@ class AppController extends ChangeNotifier {
       );
       if (!_isCurrentSessionGeneration(generation)) return;
       cloudSyncStatus =
-          result.message ?? '已上传 ${result.uploaded} 条，拒绝 ${result.rejected} 条';
+          result.message ??
+          (result.uploaded == 0 &&
+                  result.rejected == 0 &&
+                  !result.hasPending &&
+                  healthRecords.isNotEmpty
+              ? '数据已同步，无待上传记录'
+              : '已上传 ${result.uploaded} 条，拒绝 ${result.rejected} 条');
       cloudSyncUploadedCount = result.uploaded;
       cloudSyncState =
           result.hasPending || result.rejected > 0 || result.message != null
           ? CloudHealthSyncState.pending
-          : result.uploaded > 0
+          : result.uploaded > 0 || healthRecords.isNotEmpty
           ? CloudHealthSyncState.complete
           : CloudHealthSyncState.idle;
     } on ApiException catch (error) {

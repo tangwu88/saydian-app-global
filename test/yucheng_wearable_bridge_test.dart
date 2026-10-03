@@ -375,6 +375,60 @@ void main() {
     },
   );
 
+  test(
+    'watch-origin completion requests history without App measurement',
+    () async {
+      final client = _FakeYuchengClient(modelName: 'W8S');
+      final bridge = YuchengWearableBridge(
+        client: client,
+        initialHealthSettleDelay: Duration.zero,
+      );
+      await bridge.scanDevices();
+      await bridge.connect('YC-01', profile: _profile);
+      final events = <WearableEvent>[];
+      final subscription = bridge.events.listen(events.add);
+      addTearDown(subscription.cancel);
+
+      client.emit({
+        'deviceHealthDataMeasureStateChange': {
+          'state': 1,
+          'healthDataType': YuchengMeasurementType.bloodPressure,
+        },
+      });
+      await Future<void>.delayed(Duration.zero);
+      expect(events.where((e) => e.type == 'healthDataReady'), isEmpty);
+
+      client.emit({
+        'deviceHealthDataMeasureStateChange': {
+          'state': 0,
+          'healthDataType': YuchengMeasurementType.bloodPressure,
+        },
+      });
+      await _waitUntil(() => events.any((e) => e.type == 'healthDataReady'));
+      expect(events.where((e) => e.type == 'healthDataReady').single.payload, {
+        'deviceId': 'YC-01',
+        'source': 'watchNotification',
+      });
+      expect(events.where((e) => e.type == 'healthRecord'), isEmpty);
+    },
+  );
+
+  test('disconnected W8 completion cannot request a history read', () async {
+    final client = _FakeYuchengClient(modelName: 'W8S');
+    final bridge = YuchengWearableBridge(client: client);
+    await bridge.scanDevices();
+    await bridge.connect('YC-01', profile: _profile);
+    await bridge.disconnect();
+    final events = <WearableEvent>[];
+    final subscription = bridge.events.listen(events.add);
+    addTearDown(subscription.cancel);
+    client.emit({
+      'deviceHealthDataMeasureStateChange': {'state': 0, 'healthDataType': 1},
+    });
+    await Future<void>.delayed(Duration.zero);
+    expect(events.where((e) => e.type == 'healthDataReady'), isEmpty);
+  });
+
   test('recovers the final W8 blood pressure record after SDK stops', () async {
     final now = DateTime.now().toUtc().millisecondsSinceEpoch ~/ 1000;
     final client = _FakeYuchengClient(
