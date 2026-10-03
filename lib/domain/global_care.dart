@@ -50,6 +50,7 @@ HealthRecord globalCareHealthRecord(Map<String, Object?> row) {
   final timezone =
       '${offset < 0 ? '-' : '+'}${(offset.abs() ~/ 60).toString().padLeft(2, '0')}:${(offset.abs() % 60).toString().padLeft(2, '0')}';
   final artifact = row['ecgArtifact'];
+  final source = row['source'];
   return HealthRecord.fromJson({
     'id': row['id'],
     'type': row['metric'],
@@ -60,6 +61,11 @@ HealthRecord globalCareHealthRecord(Map<String, Object?> row) {
     'source': 'wearable',
     'origin': 'remote_member',
     'quality': row['quality'],
+    'rawVersion': source is Map && source['rawVersion'] is num
+        ? source['rawVersion']
+        : artifact is Map && row['quality'] != 'suspect'
+        ? 2
+        : 1,
     'aggregation': row['aggregation'],
     if (artifact is Map && artifact['sampleRateHz'] is num)
       'values': {

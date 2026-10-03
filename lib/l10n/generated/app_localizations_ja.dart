@@ -2058,4 +2058,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get ecgWaveformPreviewHint => '波形プレビュー · スケール未確認';
+
+  @override
+  String get ecgWaveformLowSignalHint => '信号品質が低いため波形をプレビュー';
 }

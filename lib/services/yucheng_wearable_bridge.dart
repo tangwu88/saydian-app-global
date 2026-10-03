@@ -4,6 +4,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter/services.dart';
 
 import '../domain/feature_models.dart';
+import '../domain/ecg_waveform.dart';
 import '../domain/models.dart';
 import 'global_storage_scope.dart';
 import 'wearable_bridge.dart';
@@ -729,6 +730,9 @@ class YuchengWearableBridge
       }
       if (!current()) return;
       final now = DateTime.now();
+      final usableWaveform =
+          _ecgRate != null &&
+          hasUsableEcgSignal(_ecgSamples, sampleFrequency: _ecgRate!);
       final record = HealthRecord(
         id: 'yc-ecg-${start.microsecondsSinceEpoch}',
         metric: HealthMetric.ecg,
@@ -743,10 +747,12 @@ class YuchengWearableBridge
         timezone: _timezoneOffset(now.timeZoneOffset),
         deviceId: deviceId,
         firmwareVersion: _firmware,
-        quality: 'device_reported',
+        quality: _ecgRate != null && !usableWaveform
+            ? 'suspect'
+            : 'device_reported',
         source: MeasurementSource.wearable,
         origin: MeasurementOrigin.appMeasurement,
-        rawVersion: _ecgRate == null ? 1 : 2,
+        rawVersion: usableWaveform ? 2 : 1,
         samples: List<num>.of(_ecgSamples),
       );
       _activeMeasurementMetric = null;

@@ -72,6 +72,31 @@ void main() {
   tearDown(() => debugDefaultTargetPlatformOverride = null);
 
   test(
+    'suspect preview without verified timing stays pending and intact',
+    () async {
+      final original = _record(values: {'meanHeartRate': 75}).copyWith(
+        rawVersion: 1,
+        quality: 'suspect',
+        origin: MeasurementOrigin.appMeasurement,
+      );
+      final store = MemoryHealthStore();
+      await store.upsert([original]);
+      final api = GlobalSaydianApiClient(
+        MemorySessionVault()..session = _session('a'),
+        client: MockClient((request) async {
+          expect(request.url.path.endsWith('/capabilities'), isTrue);
+          return _ok({'dailySummaryVersions': false});
+        }),
+      );
+      final result = await HealthSyncService(store, api).synchronizeNow();
+      expect(result.uploaded, 0);
+      expect(result.hasPending, isTrue);
+      expect((await store.pending()).single.samples, original.samples);
+      expect((await store.pending()).single.ecgArtifact, isNull);
+    },
+  );
+
+  test(
     'private care waveform read preserves every sample and global route',
     () async {
       final original = _record();
@@ -105,6 +130,76 @@ void main() {
       expect(result.samples, original.samples);
       expect(result.origin, MeasurementOrigin.remoteMember);
       expect(result.ecgArtifact, isNull);
+    },
+  );
+
+  test(
+    'suspect SDK preview uploads without promoting signal validity',
+    () async {
+      final original = _record().copyWith(
+        rawVersion: 1,
+        quality: 'suspect',
+        origin: MeasurementOrigin.appMeasurement,
+        samples: List<num>.generate(3000, (i) => i.isEven ? -8 : 8),
+      );
+      final store = MemoryHealthStore();
+      await store.upsert([original]);
+      var files = 0;
+      final api = GlobalSaydianApiClient(
+        MemorySessionVault()..session = _session('a'),
+        client: MockClient((request) async {
+          if (request.url.path.endsWith('/capabilities')) {
+            return _ok({'dailySummaryVersions': false});
+          }
+          if (request.url.path.endsWith('/files/ecg')) {
+            files++;
+            return _ok(_receipt(request, original));
+          }
+          final row = (jsonDecode(request.body)['records'] as List).single;
+          expect(row['quality'], 'suspect');
+          expect(row['source']['rawVersion'], 1);
+          expect(row['values'], original.values);
+          return _ok({
+            'acceptedIds': [original.id],
+            'rejected': [],
+            'nextCursor': null,
+          });
+        }),
+      );
+      final result = await HealthSyncService(store, api).synchronizeNow();
+      expect(result.uploaded, 1);
+      expect(files, 1);
+      expect(await store.pending(), isEmpty);
+      expect((await store.recent()).single.samples, original.samples);
+      expect((await store.recent()).single.rawVersion, 1);
+    },
+  );
+
+  test(
+    'private read never promotes a suspect preview to calibrated data',
+    () async {
+      final original = _record().copyWith(rawVersion: 1, quality: 'suspect');
+      final bytes = gzip.encode(utf8.encode(jsonEncode(original.samples)));
+      final api = GlobalSaydianApiClient(
+        MemorySessionVault()..session = _session('a'),
+        client: MockClient(
+          (_) async => http.Response.bytes(
+            bytes,
+            200,
+            headers: {
+              'x-content-sha256': sha256.convert(bytes).toString(),
+              'x-ecg-sample-rate': '250',
+              'x-ecg-sample-count': '${original.samples.length}',
+            },
+          ),
+        ),
+      );
+      final loaded = await api.loadEcgWaveform(
+        original.copyWith(samples: const []),
+      );
+      expect(loaded.samples, original.samples);
+      expect(loaded.rawVersion, 1);
+      expect(loaded.quality, 'suspect');
     },
   );
 

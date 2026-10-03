@@ -665,5 +665,6 @@
   "batteryFull": "충전 완료",
   "batteryUnknown": "상태 알 수 없음",
   "batteryLow": "배터리 부족",
-  "ecgWaveformPreviewHint": "파형 미리보기 · 눈금 미확인"
+  "ecgWaveformPreviewHint": "파형 미리보기 · 눈금 미확인",
+  "ecgWaveformLowSignalHint": "신호 품질 낮음 · 파형 미리보기"
 }

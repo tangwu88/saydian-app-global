@@ -52,6 +52,31 @@ void main() {
   );
 
   test(
+    'completed low-quality SDK waveform remains a suspect preview',
+    () async {
+      final client = _FakeYuchengClient(modelName: 'W8-ultra 34BC');
+      final bridge = await ecgBridge(client);
+      final events = <WearableEvent>[];
+      final subscription = bridge.events.listen(events.add);
+      await bridge.startMeasurement(HealthMetric.ecg);
+      final samples = List<num>.generate(3000, (i) => i.isEven ? -8 : 8);
+      client.emit({'deviceRealECGFilteredData': samples});
+      await Future<void>.delayed(Duration.zero);
+      client.emit({'deviceEndECG': 0});
+      await Future<void>.delayed(const Duration(milliseconds: 30));
+      final record = HealthRecord.fromJson(
+        events.singleWhere((e) => e.type == 'healthRecord').payload,
+      );
+      expect(record.samples, samples);
+      expect(record.values['sampleFrequency'], 250);
+      expect(record.rawVersion, 1);
+      expect(record.quality, 'suspect');
+      await bridge.disconnect();
+      await subscription.cancel();
+    },
+  );
+
+  test(
     'missing ECG rate keeps complete local samples without inventing timing',
     () async {
       final client = _FakeYuchengClient(modelName: 'W8-ultra 34BC')

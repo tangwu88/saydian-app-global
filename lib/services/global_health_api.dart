@@ -63,7 +63,8 @@ mixin GlobalHealthApi on SaydianApiClient
     }
     return record.copyWith(
       samples: samples.cast<num>(),
-      rawVersion: 2,
+      // A private upload confirms bytes and timing, not signal quality.
+      rawVersion: record.quality == 'suspect' ? record.rawVersion : 2,
       values: {...record.values, 'sampleFrequency': rate},
     );
   }
@@ -96,8 +97,12 @@ mixin GlobalHealthApi on SaydianApiClient
     HealthRecord record,
   ) {
     final rate = record.values['sampleFrequency'];
+    final sdkPreview = record.rawVersion == 1 &&
+        record.quality == 'suspect' &&
+        record.source == MeasurementSource.wearable &&
+        record.origin == MeasurementOrigin.appMeasurement;
     if (record.metric != HealthMetric.ecg ||
-        record.rawVersion < 2 ||
+        (record.rawVersion < 2 && !sdkPreview) ||
         record.samples.isEmpty ||
         record.samples.length > 1000000 ||
         record.samples.any((value) => !value.isFinite) ||

@@ -2067,4 +2067,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get ecgWaveformPreviewHint => '파형 미리보기 · 눈금 미확인';
+
+  @override
+  String get ecgWaveformLowSignalHint => '신호 품질 낮음 · 파형 미리보기';
 }

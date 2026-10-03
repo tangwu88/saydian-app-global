@@ -665,5 +665,6 @@
   "batteryFull": "充電完了",
   "batteryUnknown": "状態不明",
   "batteryLow": "電池残量が少ない",
-  "ecgWaveformPreviewHint": "波形プレビュー · スケール未確認"
+  "ecgWaveformPreviewHint": "波形プレビュー · スケール未確認",
+  "ecgWaveformLowSignalHint": "信号品質が低いため波形をプレビュー"
 }

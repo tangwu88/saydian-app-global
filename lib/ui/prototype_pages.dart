@@ -1702,6 +1702,7 @@ class HealthRecordDetailPage extends StatelessWidget {
               samples: record.samples,
               sampleFrequency: record.values['sampleFrequency']?.toInt(),
               calibrated: record.rawVersion >= 2,
+              lowSignal: record.quality == 'suspect',
             ),
           ],
           const SizedBox(height: 12),
@@ -1828,6 +1829,7 @@ class _EcgRecordDetailPageState extends State<_EcgRecordDetailPage> {
             samples: record.samples,
             sampleFrequency: record.values['sampleFrequency']?.toInt(),
             calibrated: record.rawVersion >= 2,
+            lowSignal: record.quality == 'suspect',
           ),
           const SizedBox(height: 14),
           SegmentedButton<int>(
@@ -2390,6 +2392,7 @@ class _EcgFullReportPageState extends State<_EcgFullReportPage> {
                     sampleFrequency:
                         widget.record.values['sampleFrequency']?.toInt(),
                     calibrated: widget.record.rawVersion >= 2,
+                    lowSignal: widget.record.quality == 'suspect',
                   ),
                   const SizedBox(height: 12),
                   _EcgMedicalSection(record: widget.record),
@@ -5345,11 +5348,13 @@ class _EcgWaveformCard extends StatelessWidget {
     required this.samples,
     required this.sampleFrequency,
     required this.calibrated,
+    this.lowSignal = false,
   });
 
   final List<num> samples;
   final int? sampleFrequency;
   final bool calibrated;
+  final bool lowSignal;
 
   @override
   Widget build(BuildContext context) {
@@ -5405,7 +5410,9 @@ class _EcgWaveformCard extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              durationSeconds == null
+              lowSignal
+                  ? context.l10n.ecgWaveformLowSignalHint
+                  : durationSeconds == null
                   ? context.l10n.ecgWaveformPreviewHint
                   : '共 ${durationSeconds.toStringAsFixed(1)} 秒 · 左右滑动查看完整记录',
               style: const TextStyle(color: SaydianColors.muted, fontSize: 13),
@@ -5419,7 +5426,7 @@ class _EcgWaveformCard extends StatelessWidget {
               )
             else
               Semantics(
-                label: '设备记录的有效心电波形，共${displaySamples.length}个采样点',
+                label: '设备记录的心电波形，共${displaySamples.length}个采样点',
                 child: SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   child: SizedBox(

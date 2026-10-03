@@ -665,5 +665,6 @@
   "batteryFull": "Carga completa",
   "batteryUnknown": "Estado desconocido",
   "batteryLow": "Batería baja",
-  "ecgWaveformPreviewHint": "Vista previa de onda · escala sin confirmar"
+  "ecgWaveformPreviewHint": "Vista previa de onda · escala sin confirmar",
+  "ecgWaveformLowSignalHint": "Señal de baja calidad · vista previa"
 }

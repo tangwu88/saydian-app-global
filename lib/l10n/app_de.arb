@@ -665,5 +665,6 @@
   "batteryFull": "Voll geladen",
   "batteryUnknown": "Status unbekannt",
   "batteryLow": "Akku schwach",
-  "ecgWaveformPreviewHint": "Kurvenvorschau · Skalierung unbestätigt"
+  "ecgWaveformPreviewHint": "Kurvenvorschau · Skalierung unbestätigt",
+  "ecgWaveformLowSignalHint": "Geringe Signalqualität · Kurvenvorschau"
 }

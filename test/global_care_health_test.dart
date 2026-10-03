@@ -145,4 +145,19 @@ void main() {
       expect(record.ecgArtifact, isNull);
     },
   );
+  test('shared suspect preview keeps its recorded waveform version', () {
+    final record = globalCareHealthRecord({
+      'id': 'preview',
+      'metric': 'ecg',
+      'observedAt': '2026-10-03T12:00:00Z',
+      'values': {'meanHeartRate': 73},
+      'quality': 'suspect',
+      'source': {'rawVersion': 1},
+      'ecgArtifact': {'sampleRateHz': 250},
+    });
+    expect(record.rawVersion, 1);
+    expect(record.quality, 'suspect');
+    expect(record.values['sampleFrequency'], 250);
+    expect(record.origin, MeasurementOrigin.remoteMember);
+  });
 }

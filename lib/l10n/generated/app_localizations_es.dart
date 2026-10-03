@@ -2166,4 +2166,7 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get ecgWaveformPreviewHint =>
       'Vista previa de onda · escala sin confirmar';
+
+  @override
+  String get ecgWaveformLowSignalHint => 'Señal de baja calidad · vista previa';
 }

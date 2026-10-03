@@ -2144,4 +2144,8 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get ecgWaveformPreviewHint => 'Waveform preview · scale unconfirmed';
+
+  @override
+  String get ecgWaveformLowSignalHint =>
+      'Low signal quality · waveform preview';
 }

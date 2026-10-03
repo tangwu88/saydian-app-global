@@ -2175,4 +2175,7 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get ecgWaveformPreviewHint =>
       'Aperçu du tracé · échelle non confirmée';
+
+  @override
+  String get ecgWaveformLowSignalHint => 'Signal de faible qualité · aperçu';
 }

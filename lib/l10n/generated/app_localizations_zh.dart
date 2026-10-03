@@ -2029,6 +2029,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get ecgWaveformPreviewHint => '波形预览 · 刻度待确认';
+
+  @override
+  String get ecgWaveformLowSignalHint => '信号质量较低 · 波形预览';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hans`).
@@ -4056,6 +4059,9 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
 
   @override
   String get ecgWaveformPreviewHint => '波形预览 · 刻度待确认';
+
+  @override
+  String get ecgWaveformLowSignalHint => '信号质量较低 · 波形预览';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hant`).
@@ -6083,4 +6089,7 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get ecgWaveformPreviewHint => '波形預覽 · 刻度待確認';
+
+  @override
+  String get ecgWaveformLowSignalHint => '訊號品質較低 · 波形預覽';
 }

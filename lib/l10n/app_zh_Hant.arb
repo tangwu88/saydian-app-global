@@ -665,5 +665,6 @@
   "batteryFull": "已充滿",
   "batteryUnknown": "狀態未知",
   "batteryLow": "電量低",
-  "ecgWaveformPreviewHint": "波形預覽 · 刻度待確認"
+  "ecgWaveformPreviewHint": "波形預覽 · 刻度待確認",
+  "ecgWaveformLowSignalHint": "訊號品質較低 · 波形預覽"
 }

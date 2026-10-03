@@ -2172,4 +2172,8 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get ecgWaveformPreviewHint =>
       'Kurvenvorschau · Skalierung unbestätigt';
+
+  @override
+  String get ecgWaveformLowSignalHint =>
+      'Geringe Signalqualität · Kurvenvorschau';
 }

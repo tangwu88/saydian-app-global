@@ -725,5 +725,6 @@
   "batteryFull": "Fully charged",
   "batteryUnknown": "Status unknown",
   "batteryLow": "Low battery",
-  "ecgWaveformPreviewHint": "Waveform preview · scale unconfirmed"
+  "ecgWaveformPreviewHint": "Waveform preview · scale unconfirmed",
+  "ecgWaveformLowSignalHint": "Low signal quality · waveform preview"
 }

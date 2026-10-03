@@ -4045,6 +4045,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Waveform preview · scale unconfirmed'**
   String get ecgWaveformPreviewHint;
+
+  /// No description provided for @ecgWaveformLowSignalHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Low signal quality · waveform preview'**
+  String get ecgWaveformLowSignalHint;
 }
 
 class _AppLocalizationsDelegate
