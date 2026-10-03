@@ -330,13 +330,21 @@ class PluginYuchengProductClient
         1,
       );
       final data = response?['data'];
+      final type = data is Map ? data['type'] : null;
       final raw = data is Map
           ? data['sampleRate'] ?? data['samplingRate']
           : null;
-      final rate = raw is num ? raw : num.tryParse('$raw');
+      final reported = raw is num ? raw : num.tryParse('$raw');
+      // The pinned Android SDK's ECG pipeline initializes initHeart at 250 Hz.
+      // Real W8 firmware returns {type: 1, sampleRate: 25000} for that stream.
+      // Accept this verified encoding only; do not rescale arbitrary values.
+      final rate = type == 1 && reported == 25000 ? 250 : reported;
+      final status = (response?['code'] as num?)?.toInt() ?? 1;
       return YuchengOperationResult(
-        (response?['code'] as num?)?.toInt() ?? 1,
-        rate != null &&
+        status,
+        status == 0 &&
+                (type == null || type == 1) &&
+                rate != null &&
                 rate.isFinite &&
                 rate == rate.toInt() &&
                 rate >= 50 &&

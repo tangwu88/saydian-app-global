@@ -14,6 +14,50 @@ void main() {
         .setMockMethodCallHandler(channel, null);
   });
 
+  for (final example in <({Map<String, Object?> data, int? expected})>[
+    (data: {'type': 1, 'sampleRate': 25000}, expected: 250),
+    (data: {'type': 1, 'sampleRate': 250}, expected: 250),
+    (data: {'samplingRate': 500}, expected: 500),
+    (data: {'type': 0, 'sampleRate': 25000}, expected: null),
+    (data: {'sampleRate': 25000}, expected: null),
+    (data: {'type': 1, 'sampleRate': 25001}, expected: null),
+    (data: {'type': 1, 'sampleRate': 0}, expected: null),
+    (data: {'type': 1, 'sampleRate': 250.5}, expected: null),
+  ]) {
+    test(
+      'ECG sampling query validates vendor metadata ${example.data}',
+      () async {
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+            .setMockMethodCallHandler(channel, (call) async {
+              expect(call.method, 'appQuerySampleRate');
+              expect(call.arguments, 1);
+              return {'code': 0, 'data': example.data};
+            });
+
+        final response = await PluginYuchengProductClient().ecgSampleRate();
+
+        expect(response.status, 0);
+        expect(response.data, example.expected);
+      },
+    );
+  }
+
+  test('failed ECG sampling query never supplies usable metadata', () async {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(
+          channel,
+          (call) async => {
+            'code': 1,
+            'data': {'type': 1, 'sampleRate': 25000},
+          },
+        );
+
+    final response = await PluginYuchengProductClient().ecgSampleRate();
+
+    expect(response.status, 1);
+    expect(response.data, isNull);
+  });
+
   test(
     'saved W8 recovery scans before connecting the exact native device',
     () async {
