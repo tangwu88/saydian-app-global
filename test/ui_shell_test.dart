@@ -1730,7 +1730,7 @@ void main() {
     final record = HealthRecord(
       id: 'pending-w8-ecg',
       metric: HealthMetric.ecg,
-      values: const {'meanHeartRate': 75},
+      values: const {'meanHeartRate': 75, 'hrv': 48},
       unit: '',
       measuredAt: DateTime.utc(2026, 10, 4),
       timezone: '+08:00',
@@ -1753,6 +1753,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(LineChart), findsOneWidget);
+    expect(find.text('48'), findsOneWidget);
     expect(find.text('Waveform preview · scale unconfirmed'), findsOneWidget);
     expect(find.textContaining('秒 ·'), findsNothing);
     expect(record.values.containsKey('sampleFrequency'), isFalse);

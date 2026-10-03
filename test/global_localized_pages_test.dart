@@ -312,12 +312,7 @@ void main() {
       expect(find.text('赛电'), findsNothing);
       expect(find.byIcon(Icons.wechat_rounded), findsNothing);
       expect(find.text('Help and feedback'), findsOneWidget);
-      expect(
-        find.text(
-          'Contact us via Help & feedback.',
-        ),
-        findsOneWidget,
-      );
+      expect(find.text('Contact us via Help & feedback.'), findsOneWidget);
       await tester.tap(find.text('Help and feedback'));
       await tester.pumpAndSettle();
       expect(find.byType(FeedbackPage), findsOneWidget);

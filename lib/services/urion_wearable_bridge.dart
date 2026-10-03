@@ -374,7 +374,9 @@ class UrionWearableBridge
   }
 
   @override
-  Future<DeviceInfo?> getConnectedDeviceDetails({bool forceRefresh = false}) async {
+  Future<DeviceInfo?> getConnectedDeviceDetails({
+    bool forceRefresh = false,
+  }) async {
     final id = _deviceId;
     final session = _session;
     if (id == null) return null;

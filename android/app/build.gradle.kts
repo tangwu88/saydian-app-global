@@ -71,6 +71,7 @@ val playStoreDartDefine =
 // switch is supplied.  Release tasks below reject this switch.
 val emulatorDebugRequested = releaseModeFlag("SAIDIAN_EMULATOR_DEBUG")
 val debugEmulatorAbis = if (emulatorDebugRequested) setOf("x86_64") else emptySet()
+val splitPerAbiRequested = providers.gradleProperty("split-per-abi").orNull == "true"
 val updateManifestUrl =
     providers.environmentVariable("SAYDIAN_UPDATE_MANIFEST_URL")
         .orNull
@@ -155,7 +156,11 @@ android {
         // A local emulator Debug run may opt into x86_64 through the explicit
         // switch above; the release gate separately checks ARM symmetry.
         ndk {
-            abiFilters += setOf("armeabi-v7a", "arm64-v8a") + debugEmulatorAbis
+            // Flutter configures explicit ABI splits when requested; NDK
+            // filters conflict with splits. Universal builds keep both ARMs.
+            if (!splitPerAbiRequested) {
+                abiFilters += setOf("armeabi-v7a", "arm64-v8a") + debugEmulatorAbis
+            }
         }
         manifestPlaceholders["JPUSH_APPKEY"] =
             jpushAppKey.ifEmpty { "debug-disabled" }

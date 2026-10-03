@@ -274,7 +274,9 @@ class MethodChannelWearableBridge
   }
 
   @override
-  Future<DeviceInfo?> getConnectedDeviceDetails({bool forceRefresh = false}) async {
+  Future<DeviceInfo?> getConnectedDeviceDetails({
+    bool forceRefresh = false,
+  }) async {
     final result = await _invokeOperation<Map<Object?, Object?>>(
       'getDeviceDetails',
     );

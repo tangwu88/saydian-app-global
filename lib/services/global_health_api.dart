@@ -97,7 +97,8 @@ mixin GlobalHealthApi on SaydianApiClient
     HealthRecord record,
   ) {
     final rate = record.values['sampleFrequency'];
-    final sdkPreview = record.rawVersion == 1 &&
+    final sdkPreview =
+        record.rawVersion == 1 &&
         record.quality == 'suspect' &&
         record.source == MeasurementSource.wearable &&
         record.origin == MeasurementOrigin.appMeasurement;

@@ -470,7 +470,9 @@ class RoutedWearableBridge
   }
 
   @override
-  Future<DeviceInfo?> getConnectedDeviceDetails({bool forceRefresh = false}) async {
+  Future<DeviceInfo?> getConnectedDeviceDetails({
+    bool forceRefresh = false,
+  }) async {
     final transport = _activeTransport;
     if (transport == null) return null;
     final bridge = _sources[transport];

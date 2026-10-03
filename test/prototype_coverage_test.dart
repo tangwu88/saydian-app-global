@@ -932,12 +932,24 @@ void main() {
   });
 
   test('release UI source does not contain developer-facing copy', () {
+    String librarySource(String path) {
+      final file = File(path);
+      final source = file.readAsStringSync();
+      final parts = RegExp(r"^part '([^']+)';", multiLine: true)
+          .allMatches(source)
+          .map(
+            (match) =>
+                File.fromUri(file.uri.resolve(match[1]!)).readAsStringSync(),
+          );
+      return [source, ...parts].join('\n');
+    }
+
     final source = [
       'lib/app.dart',
       'lib/ui/pages.dart',
       'lib/ui/shop_pages.dart',
       'lib/ui/prototype_pages.dart',
-    ].map((path) => File(path).readAsStringSync()).join('\n');
+    ].map(librarySource).join('\n');
     for (final banned in [
       'BLE',
       '接口未配置',
