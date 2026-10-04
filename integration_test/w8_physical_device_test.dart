@@ -27,13 +27,13 @@ void main() {
                     YuchengDeviceClassifier.matches(device.name),
               )
               .toList()
-        ..sort((a, b) {
-          final aConnected = a.rssi == 0 ? 1 : 0;
-          final bConnected = b.rssi == 0 ? 1 : 0;
-          final connectedOrder = bConnected.compareTo(aConnected);
-          if (connectedOrder != 0) return connectedOrder;
-          return (b.rssi ?? -999).compareTo(a.rssi ?? -999);
-        });
+            ..sort((a, b) {
+              final aConnected = a.rssi == 0 ? 1 : 0;
+              final bConnected = b.rssi == 0 ? 1 : 0;
+              final connectedOrder = bConnected.compareTo(aConnected);
+              if (connectedOrder != 0) return connectedOrder;
+              return (b.rssi ?? -999).compareTo(a.rssi ?? -999);
+            });
       if (candidates.isEmpty && attempt < 2) {
         debugPrint('W8_SCAN_RETRY:${attempt + 1}');
         await Future<void>.delayed(const Duration(seconds: 3));

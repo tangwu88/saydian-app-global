@@ -12,6 +12,8 @@
 
 ## 最近记录
 
+- [2026-10-04 iOS 1.0.1 TestFlight](IMPLEMENTATION-LOG-20261004-IOS-TESTFLIGHT.md) — 最新国际代码的新签名构建、Beta Review 与现有公开邀请组；各阶段结果及真机未验收项分别记录，不撤回旧审核，不构建鸿蒙。
+
 - [2026-10-03 Health 易用性优化](IMPLEMENTATION-LOG-20261003-USABILITY.md) — W8 ECG、充电状态刷新、关爱概览与私有波形读取、八语言短文案；995 项测试与静态分析通过，Android Debug／内部 QA Release 构建通过；上线和新版真机验收单独记录。
 
 - [2026-10-03 手机天气开发记录](IMPLEMENTATION-LOG-20261003-WEATHER-CONFIGURATION.md) — 手机预报入口、第一方缓存接口、网络定位及显式城市查询已完成代码和 Android 构建验证；977 项回归通过，Debug 已覆盖安装。用户要求先忽略天气，真实预报页面验收和手表同步保持未验证。
