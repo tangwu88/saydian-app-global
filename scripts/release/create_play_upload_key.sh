@@ -11,7 +11,8 @@ if [[ -e "$store_path" || -e "$properties_path" ]]; then
 fi
 
 umask 077
-export SAYDIAN_UPLOAD_STOREPASS="$(openssl rand -hex 32)"
+SAYDIAN_UPLOAD_STOREPASS="$(openssl rand -hex 32)"
+export SAYDIAN_UPLOAD_STOREPASS
 keytool -genkeypair \
   -alias saydian_global_play_upload \
   -keyalg RSA -keysize 4096 -validity 10000 \
