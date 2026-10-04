@@ -10,6 +10,7 @@ import { EcgWaveformView } from './EcgWaveformView';
 @Component
 export struct GlobalCarePage {
   @Prop locale: string = 'en';
+  onLogin: () => void = (): void => {};
   private tr(text: string): string { return appText(text, this.locale); }
   @Prop @Watch('foregroundChanged') foreground: boolean = true;
   @Prop units: DisplayUnits = { distance: 'km', temperature: 'c' };
@@ -29,15 +30,25 @@ export struct GlobalCarePage {
   @State private sharingId: string = '';
   @State private sharing: string[] = [];
   @State private selectedRecord: HealthRecord | undefined = undefined;
+  @State private authenticated: boolean = false;
+  private sessionOwner: string = '';
+  private sessionEpoch: number = -1;
   private generation: number = 0;
   private release: (() => void) | undefined = undefined;
   private permissionTimer: number = -1;
   private permissionReading: boolean = false;
   aboutToAppear(): void {
-    this.release = saydianApi.observeSession(() => this.clear()); this.reload();
+    this.release = saydianApi.observeSession(() => this.sessionChanged());
     this.foregroundChanged();
   }
   aboutToDisappear(): void { this.stopPermissionTimer(); this.release?.(); this.clear(); }
+  private sessionChanged(): void {
+    const session = saydianApi.healthSession();
+    if (session.ownerId === this.sessionOwner && session.generation === this.sessionEpoch) return;
+    this.sessionOwner = session.ownerId; this.sessionEpoch = session.generation;
+    this.clear(); this.authenticated = !!session.ownerId;
+    if (this.authenticated && this.foreground) this.reload();
+  }
   private stopPermissionTimer(): void {
     if (this.permissionTimer >= 0) clearInterval(this.permissionTimer); this.permissionTimer = -1;
   }
@@ -75,6 +86,7 @@ export struct GlobalCarePage {
   private latest(metric: string): HealthRecord | undefined { return this.overview.find(record => record.serverMetric === metric); }
   private date(record?: HealthRecord): string { return record ? new Date(record.timestamp).toLocaleString() : ''; }
   private async reload(): Promise<void> {
+    if (!this.authenticated) return;
     const epoch = ++this.generation; this.loading = true; this.message = ''; this.overview = []; this.records = []; this.metrics = []; this.selectedRecord = undefined;
     try {
       const members = await saydianApi.globalCareRelationships(); if (epoch !== this.generation) return; this.members = members;
@@ -155,8 +167,9 @@ export struct GlobalCarePage {
         Text(this.text(record)).fontSize(16).width('100%')
         if (record.metric === 'sleep') {
           Row({ space: 2 }) {
-            ForEach(record.values.filter(value => ['深睡', '浅睡', '清醒'].includes(value.name)), (value: HealthValue) => {
-              Column().height(24).layoutWeight(Math.max(0.1, value.value)).backgroundColor(value.name === '深睡' ? '#6451A4' : value.name === '浅睡' ? '#AB9CD1' : '#E2C68A')
+            ForEach(record.values.filter(value => ['深睡', '浅睡', '快速眼动', '清醒'].includes(value.name)), (value: HealthValue) => {
+              Column().height(24).layoutWeight(Math.max(0.1, value.value * (value.unit === 'h' ? 60 : 1)))
+                .backgroundColor(value.name === '深睡' ? '#6451A4' : value.name === '浅睡' ? '#AB9CD1' : value.name === '快速眼动' ? '#759AB2' : '#E2C68A')
             })
           }.width('100%').borderRadius(6).clip(true)
         }
@@ -174,12 +187,16 @@ export struct GlobalCarePage {
             else { this.mode = 'overview'; this.sharingId = ''; this.reload(); }
           })
         }
-        Text(this.mode === 'detail' || this.mode === 'record' ? this.title(this.selectedMetric) : this.tr('远程关爱')).fontSize(21).fontWeight(FontWeight.Bold).layoutWeight(1)
-        if (this.mode === 'overview') { Button(this.tr('管理')).onClick(() => { ++this.generation; this.overview = []; this.mode = 'manage'; this.reload(); }) }
+        if (this.mode === 'detail' || this.mode === 'record') { Text(this.title(this.selectedMetric)).fontSize(21).fontWeight(FontWeight.Bold).layoutWeight(1) }
+        else { Blank().layoutWeight(1) }
+        if (this.authenticated && this.mode === 'overview') { Button(this.tr('管理')).onClick(() => { ++this.generation; this.overview = []; this.mode = 'manage'; this.reload(); }) }
       }.width('100%')
       if (this.loading) { LoadingProgress().width(36).height(36) }
       if (this.message) { Text(this.message).fontColor('#A04F28'); Button(this.tr('重试')).onClick(() => this.mode === 'detail' ? this.details(this.selectedMetric) : this.reload()) }
-      if (this.mode === 'overview') {
+      if (!this.authenticated) {
+        Text(this.tr('请先登录')).fontColor('#716860')
+        Button(this.tr('前往登录')).onClick(() => this.onLogin())
+      } else if (this.mode === 'overview') {
         Scroll() {
           Row({ space: 8 }) {
             ForEach(this.activeMembers(), (member: GlobalCareMember) => {

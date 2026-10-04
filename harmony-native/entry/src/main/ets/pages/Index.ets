@@ -6057,7 +6057,7 @@ struct Index {
         } else if (this.screen === 'health-record') {
           this.HealthRecordContent()
         } else if (this.screen === 'ecg-history') {
-          OwnEcgHistoryPage({ locale: this.appLocale })
+          OwnEcgHistoryPage({ locale: this.appLocale, onLogin: (): void => { this.error = ''; this.screen = 'login'; } })
         } else if (this.screen === 'health-reports') {
           this.GlobalReportsContent()
         } else if (this.screen === 'health-all') {
@@ -6091,7 +6091,8 @@ struct Index {
         } else if (this.screen === 'shop-payment') {
           this.PaymentContent()
         } else if (this.screen.startsWith('care')) {
-          if (saydianApi.globalHealthEnabled) { GlobalCarePage({ units: this.displayUnits, foreground: this.pageForeground, locale: this.appLocale }) }
+          if (saydianApi.globalHealthEnabled) { GlobalCarePage({ units: this.displayUnits, foreground: this.pageForeground, locale: this.appLocale,
+            onLogin: (): void => { this.error = ''; this.screen = 'login'; } }) }
           else { this.CareContent() }
         } else if (this.screen === 'about') {
           this.AboutContent()

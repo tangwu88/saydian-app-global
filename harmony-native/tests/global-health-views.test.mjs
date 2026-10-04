@@ -63,7 +63,16 @@ test('daily summary uses its data date and latest version, never adds re-reads',
   assert.deepEqual(trendSeries(selected,'步数','month',{distance:'km',temperature:'c'}).points.map(point=>point.value),[120]);
 });
 test('new health interaction prompts are present in all eight languages',()=>{
-  for(const locale of APP_LOCALES)for(const key of ['待同步','波形预览','暂无授权指标','波形加载失败，重试','管理'])assert.ok(appText(key,locale).trim());
+  for(const locale of APP_LOCALES)for(const key of ['待同步','波形预览','暂无授权指标','波形加载失败，重试','管理','请先登录','总睡眠','深睡','浅睡','快速眼动','清醒'])assert.ok(appText(key,locale).trim());
+});
+
+test('V2 generic values use metric titles and sleep stages retain explicit hours and minutes',()=>{
+  const steps=globalViewRecords([{...sample('steps'),values:{value:1425},unit:'步'}],'own')[0];
+  assert.deepEqual(steps.values,[{name:'步数',value:1425,unit:'步'}]);
+  const sleep=globalViewRecords([{...sample('sleep'),values:{value:5.8,deepHours:1.7,lightHours:3.7,remHours:0.3,awakeMinutes:20},unit:'h'}],'own')[0];
+  assert.deepEqual(sleep.values.map(v=>[v.name,v.value,v.unit]),[['睡眠',5.8,'h'],['深睡',1.7,'h'],['浅睡',3.7,'h'],['快速眼动',0.3,'h'],['清醒',20,'分钟']]);
+  assert.equal(sleep.values.slice(1).reduce((minutes,v)=>minutes+v.value*(v.unit==='h'?60:1),0),362);
+  for(const locale of ['en','de','fr','es','ko'])for(const key of ['总睡眠','深睡','浅睡','快速眼动','清醒','请先登录'])assert.doesNotMatch(appText(key,locale),/[\u4e00-\u9fff]/);
 });
 
 test('new component actions and prompts have translations outside Chinese locales',()=>{

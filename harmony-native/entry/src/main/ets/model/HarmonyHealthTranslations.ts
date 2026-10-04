@@ -1,5 +1,11 @@
 // Order matches APP_LOCALES: en, zh-Hans, zh-Hant, de, fr, es, ja, ko.
 export const HARMONY_HEALTH_TRANSLATIONS: Record<string, string[]> = {
+  '总睡眠': ['Total sleep','总睡眠','總睡眠','Gesamtschlaf','Sommeil total','Sueño total','総睡眠','총 수면'],
+  '深睡': ['Deep sleep','深睡','深睡','Tiefschlaf','Sommeil profond','Sueño profundo','深い睡眠','깊은 수면'],
+  '浅睡': ['Light sleep','浅睡','淺睡','Leichtschlaf','Sommeil léger','Sueño ligero','浅い睡眠','얕은 수면'],
+  '快速眼动': ['REM sleep','快速眼动','快速眼動','REM-Schlaf','Sommeil paradoxal','Sueño REM','レム睡眠','REM 수면'],
+  '清醒': ['Awake','清醒','清醒','Wach','Éveillé','Despierto','覚醒','깨어 있음'],
+  '请先登录': ['Please sign in','请先登录','請先登入','Bitte anmelden','Veuillez vous connecter','Inicia sesión','ログインしてください','로그인해 주세요'],
   '刷新': ['Refresh','刷新','重新整理','Aktualisieren','Actualiser','Actualizar','更新','새로고침'],
   '邀请': ['Invite','邀请','邀請','Einladen','Inviter','Invitar','招待','초대'],
   '更多': ['More','更多','更多','Mehr','Plus','Más','もっと見る','더 보기'],
