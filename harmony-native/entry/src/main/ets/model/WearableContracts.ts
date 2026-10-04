@@ -1,6 +1,6 @@
 // Pure wearable contracts shared by ArkTS and host-side tests.
 
-export type WearableProvider = 'Vep' | 'Yuc';
+export type WearableProvider = 'Vep' | 'Yuc' | 'Urion';
 export type WearableConnectionPhase = 'idle' | 'permission' | 'scanning' | 'connecting' |
   'authenticating' | 'connected' | 'syncing' | 'disconnecting' | 'error';
 export type WearableMetricKey = 'activity' | 'sleep' | 'heart' | 'pressure' | 'oxygen' |
@@ -124,6 +124,7 @@ export interface BatteryState {
   level: number;
   levelGrade: number;
   charging: boolean;
+  chargingState?: 'unknown' | 'not_charging' | 'charging' | 'full';
   lowBattery: boolean;
   updatedAt: number;
 }
@@ -143,7 +144,23 @@ export interface HealthRecord {
   values: HealthValue[];
   samples: number[];
   sampleFrequency: number;
+  model?: string;
+  firmware?: string;
+  quality?: string;
+  rawVersion?: number;
+  timezoneOffsetMinutes?: number;
+  aggregation?: HealthAggregation;
+  ecgArtifact?: EcgArtifact;
+  waveformReference?: { sampleRateHz: number; sampleCount: number; sha256: string; };
+  serverMetric?: string;
+  measurementState?: 'complete' | 'interrupted';
   sport?: SportRecordDetails;
+}
+
+export interface HealthAggregation { kind: 'daily_summary'; localDate: string; version: 1; }
+export interface EcgArtifact {
+  uploadObjectKey: string; sampleRateHz: number; sampleCount: number;
+  sha256: string; byteSize: number; encoding: 'gzip_json_v1';
 }
 
 export interface WearableDeviceSettings {
@@ -259,6 +276,11 @@ export function createWearableDevice(provider: WearableProvider, name: string, t
 }
 
 export function mergeWearableDevices(current: WearableDevice[], incoming: WearableDevice[]): WearableDevice[] {
+  const positions: Map<string, number> = new Map();
+  [...current, ...incoming].forEach((device: WearableDevice) => {
+    const identity = `${device.provider}|${device.transportId}`;
+    if (!positions.has(identity)) positions.set(identity, positions.size);
+  });
   const merged: Map<string, WearableDevice> = new Map();
   current.forEach((device: WearableDevice) => merged.set(device.key, device));
   incoming.forEach((device: WearableDevice) => {
@@ -274,9 +296,11 @@ export function mergeWearableDevices(current: WearableDevice[], incoming: Wearab
     merged.set(next.key, next);
   });
   return Array.from(merged.values()).sort((a: WearableDevice, b: WearableDevice) => {
-    if (a.provider !== b.provider) return a.provider === 'Vep' ? -1 : 1;
-    if (a.rssi !== b.rssi) return b.rssi - a.rssi;
-    return a.name.localeCompare(b.name);
+    const left = a.rssi !== 0 && Number.isFinite(a.rssi);
+    const right = b.rssi !== 0 && Number.isFinite(b.rssi);
+    if (left !== right) return left ? -1 : 1;
+    return left && a.rssi !== b.rssi ? b.rssi - a.rssi :
+      (positions.get(`${a.provider}|${a.transportId}`) ?? 0) - (positions.get(`${b.provider}|${b.transportId}`) ?? 0);
   });
 }
 
@@ -439,14 +463,16 @@ export function capabilitiesFromFeatureList(feature?: WearableFeatureWire): Wear
 
 export function emptyBattery(): BatteryState {
   return { available: false, hasPercentage: false, level: 0, levelGrade: 0,
-    charging: false, lowBattery: false, updatedAt: 0 };
+    charging: false, chargingState: 'unknown', lowBattery: false, updatedAt: 0 };
 }
 
-export function batteryText(battery: BatteryState): string {
-  if (!battery.available) return '未知';
+export function batteryText(battery: BatteryState, translate: (key: string) => string = (key: string) => key): string {
+  if (!battery.available) return translate('未知');
   const power = battery.hasPercentage ? `${Math.max(0, Math.min(100, Math.round(battery.level)))}%` :
-    battery.levelGrade > 0 ? `${Math.round(battery.levelGrade)} 格` : '未知';
-  return battery.charging ? `${power} · 充电中` : battery.lowBattery ? `${power} · 低电量` : power;
+    battery.levelGrade > 0 ? `${Math.round(battery.levelGrade)} ${translate('格')}` : translate('未知');
+  const labels: Record<string, string> = { unknown: '状态未知', not_charging: '未充电', charging: '充电中', full: '已充满' };
+  const status = battery.chargingState ? translate(labels[battery.chargingState]) : battery.charging ? translate('充电中') : '';
+  return [power, status, battery.lowBattery ? translate('低电量') : ''].filter((item: string) => !!item).join(' · ');
 }
 
 export function healthValue(name: string, value: number, unit: string): HealthValue | undefined {

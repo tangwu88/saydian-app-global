@@ -2,10 +2,17 @@ import { SHARED_TRANSLATIONS } from './GlobalSharedTranslations';
 import { NATIVE_TRANSLATIONS } from './GlobalNativeTranslations';
 import { CRITICAL_TRANSLATIONS } from './GlobalCriticalTranslations';
 import { ENGLISH_FALLBACKS } from './GlobalEnglishFallbacks';
+import { HARMONY_HEALTH_TRANSLATIONS } from './HarmonyHealthTranslations';
 
 export const APP_LOCALES: string[] = ['en', 'zh-Hans', 'zh-Hant', 'de', 'fr', 'es', 'ja', 'ko'];
 export const APP_LANGUAGE_NAMES: string[] = ['English', '简体中文', '繁體中文', 'Deutsch', 'Français', 'Español', '日本語', '한국어'];
 const translations: Record<string, string[]> = {
+  "状态未知": ["Status unknown","状态未知","狀態未知","Status unbekannt","État inconnu","Estado desconocido","状態不明","상태 알 수 없음"],
+  "未充电": ["Not charging","未充电","未充電","Lädt nicht","Ne charge pas","Sin cargar","充電していません","충전 안 함"],
+  "充电中": ["Charging","充电中","充電中","Lädt","En charge","Cargando","充電中","충전 중"],
+  "已充满": ["Fully charged","已充满","已充滿","Voll geladen","Charge complète","Carga completa","充電完了","충전 완료"],
+  "低电量": ["Low battery","低电量","低電量","Akku schwach","Batterie faible","Batería baja","電池残量低下","배터리 부족"],
+
   "language": ["Language","语言","語言","Sprache","Langue","Idioma","言語","언어"],
   "email": ["Email","邮箱","電子郵件","E-Mail","E-mail","Correo electrónico","メール","이메일"],
   "phone": ["Phone number","手机号","手機號碼","Telefonnummer","Téléphone","Teléfono","電話番号","전화번호"],
@@ -81,6 +88,7 @@ Object.keys(NATIVE_TRANSLATIONS).forEach((key: string) => { translations[key] = 
 Object.keys(SHARED_TRANSLATIONS).forEach((key: string) => {
   if (!translations[key]) translations[key] = SHARED_TRANSLATIONS[key];
 });
+Object.keys(HARMONY_HEALTH_TRANSLATIONS).forEach((key: string) => { translations[key] = HARMONY_HEALTH_TRANSLATIONS[key]; });
 export function normalizeAppLocale(locale: string): string { return APP_LOCALES.includes(locale) ? locale : 'en'; }
 export function currentAppLocale(): string { return activeLocale; }
 export function setAppLocale(locale: string): void { activeLocale = normalizeAppLocale(locale); }

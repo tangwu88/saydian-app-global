@@ -75,6 +75,27 @@ function connect(service, key) {
 }
 async function settle() { for (let i = 0; i < 8; i++) await Promise.resolve(); }
 
+test('device battery polling refreshes at 10 seconds only while visible, connected and idle',async()=>{
+  const {service}=setup();let callback,interval,calls=0,cleared=0;
+  const originalSet=globalThis.setInterval,originalClear=globalThis.clearInterval;
+  globalThis.setInterval=(fn,ms)=>{callback=fn;interval=ms;return 123};globalThis.clearInterval=id=>{assert.equal(id,123);cleared++};
+  service.refresh=async()=>{calls++;return true};
+  try {
+    service.setDevicePageVisible(true);assert.equal(interval,10000);assert.equal(calls,1);
+    service.measurement.running=true;callback();assert.equal(calls,1);
+    service.measurement.running=false;service.busyOperation='升级';callback();assert.equal(calls,1);
+    service.busyOperation='';callback();assert.equal(calls,2);
+    service.snapshot.connected=false;callback();assert.equal(calls,2);
+    service.setDevicePageVisible(false);callback();assert.equal(calls,2);assert.equal(cleared,1);
+  } finally {globalThis.setInterval=originalSet;globalThis.clearInterval=originalClear;}
+});
+test('concurrent device refreshes merge into one native read',async()=>{
+  const {service}=setup();const read=deferred();let calls=0;
+  service.refreshConnectedDeviceInternal=async()=>{calls++;await read.promise};
+  const first=service.refresh(),second=service.refresh();assert.equal(first,second);await settle();assert.equal(calls,1);
+  read.resolve();assert.equal(await first,true);
+});
+
 test('saved sport history remains readable after disconnect and same-owner cold restart without SDK access', async () => {
   const { service, native } = setup();
   const rows = [{ id: 'sport-old', deviceKey: 'watchOld', metric: 'sport', timestamp: 1,
@@ -176,12 +197,14 @@ test('old start rejection after stop and a new command cannot clear the new lock
   assert.equal(await operation, true);
 });
 
-test('cancelled ECG never persists a waveform and disconnect clears the running state', async () => {
+test('cancelled ECG retains quarantined waveform and disconnect clears the running state', async () => {
   const { service, native } = setup();
   await service.startMeasurement('ecg');
   native.ecgService.listener({ kind: 'waveform', data: { samples: [1, 2, 3] } });
   await service.stopMeasurement(); await settle();
-  assert.equal(saved.length, 0);
+  assert.equal(saved.length, 1);
+  assert.equal(saved[0].record.measurementState, 'interrupted');
+  assert.equal(saved[0].record.quality, 'invalid');
   assert.deepEqual(service.currentMeasurement().samples, []);
   await service.startMeasurement('heart');
   await service.disconnect();
@@ -496,7 +519,9 @@ test('failed ECG electrode wear cancels once, clears incomplete signals, and kee
   listener({ kind: 'result', data: { heartRate: 73, hrv: 45, qtc: 400 } });
   assert.equal(stopCalls, 1);
   assert.equal(service.busyOperation, '手动测量');
-  assert.equal(saved.length, 0);
+  assert.equal(saved.length, 1);
+  assert.equal(saved[0].record.measurementState, 'interrupted');
+  assert.equal(saved[0].record.quality, 'invalid');
   stopping.resolve({ success: true }); await settle();
   assert.equal(service.currentMeasurement().running, false);
   assert.deepEqual(service.currentMeasurement().values, []);
@@ -505,7 +530,9 @@ test('failed ECG electrode wear cancels once, clears incomplete signals, and kee
   assert.equal(service.busyOperation, '');
   assert.equal(service.currentSnapshot().connected, true);
   assert.equal(native.disconnects, 0);
-  assert.equal(saved.length, 0);
+  assert.equal(saved.length, 1);
+  assert.equal(saved[0].record.measurementState, 'interrupted');
+  assert.equal(saved[0].record.quality, 'invalid');
 });
 
 test('unknown electrode state is not treated as valid wear or a diagnosed failure', async () => {
@@ -524,7 +551,9 @@ test('unknown electrode state is not treated as valid wear or a diagnosed failur
   native.ecgService.listener({ kind: 'result', data: { heartRate: 73, hrv: 45, qtc: 400 } });
   await settle();
   assert.equal(stopCalls, 1);
-  assert.equal(saved.length, 0);
+  assert.equal(saved.length, 1);
+  assert.equal(saved[0].record.measurementState, 'interrupted');
+  assert.equal(saved[0].record.quality, 'invalid');
   assert.match(service.currentMeasurement().status, /未确认有效佩戴/);
   assert.equal(native.disconnects, 0);
 });

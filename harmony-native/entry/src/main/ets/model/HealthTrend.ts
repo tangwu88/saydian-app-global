@@ -38,15 +38,27 @@ export function shiftTrendDay(day: string, period: TrendPeriod, direction: numbe
   else date.setDate(date.getDate() + direction * (period === 'week' ? 7 : 1));
   return localDateKey(date.getTime());
 }
+export function healthPeriodTimestamp(record: HealthRecord): number {
+  if (!record.aggregation) return record.timestamp;
+  try { return localDate(record.aggregation.localDate).getTime(); } catch { return NaN; }
+}
 
 export function trendRecords(records: HealthRecord[], metric: WearableMetricKey, deviceKey: string,
   window: TrendWindow): HealthRecord[] {
   const ids: Map<string, HealthRecord> = new Map();
+  const daily: Map<string, HealthRecord> = new Map();
   records.forEach((record: HealthRecord) => {
-    if (record.metric === metric && record.deviceKey === deviceKey && Number.isFinite(record.timestamp) &&
-      record.timestamp >= window.start && record.timestamp < window.end) ids.set(record.id, record);
+    const timestamp = healthPeriodTimestamp(record);
+    if (record.metric === metric && record.deviceKey === deviceKey && Number.isFinite(timestamp) &&
+      timestamp >= window.start && timestamp < window.end) {
+      if (record.aggregation) {
+        const date = record.aggregation.localDate; const previous = daily.get(date);
+        if (!previous || previous.timestamp < record.timestamp) daily.set(date, record);
+      } else ids.set(record.id, record);
+    }
   });
-  return Array.from(ids.values()).sort((a: HealthRecord, b: HealthRecord) => a.timestamp - b.timestamp);
+  daily.forEach(record => ids.set(record.id, record));
+  return Array.from(ids.values()).sort((a: HealthRecord, b: HealthRecord) => healthPeriodTimestamp(a) - healthPeriodTimestamp(b));
 }
 
 export function trendFieldNames(records: HealthRecord[]): string[] {
@@ -66,7 +78,7 @@ export function trendSeries(records: HealthRecord[], name: string, period: Trend
     const value = displayHealthValue(raw, units);
     if (samples.length && unit !== value.unit) return; // Never mix differently scaled data.
     unit = value.unit;
-    samples.push({ time: record.timestamp, value: value.value, recordId: record.id });
+    samples.push({ time: healthPeriodTimestamp(record), value: value.value, recordId: record.id });
   });
   if (period === 'day') return { name, unit, points: samples };
   const groups: Map<string, TrendPoint[]> = new Map();

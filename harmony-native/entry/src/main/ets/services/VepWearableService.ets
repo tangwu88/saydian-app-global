@@ -33,6 +33,9 @@ import { HealthOwnerSession, HealthSyncResult, recordWithinOwnership, sameHealth
 import { HealthUploadService } from './HealthUploadService';
 import { saydianApi } from './SaydianApi';
 import { YucSportTelemetry, YucWearableAdapter } from './YucWearableAdapter';
+import { UrionWearableAdapter } from './UrionWearableAdapter';
+import { urionAdvertMac, Eb1DynamicPressureSettings, Eb1PulseSample } from '../model/UrionEb1Protocol';
+import { yucBattery, vepBatteryCharge } from '../model/WearableBattery';
 import { YucRealtimeHealth, yucCapabilitiesFromFlags, yucSportCapabilityFromFlags } from '../model/YucWearableContracts';
 
 interface ConnectionEvent {
@@ -123,6 +126,26 @@ export class VepWearableService {
   private ownershipSince: number = Number.MAX_SAFE_INTEGER;
   private healthUploader: HealthUploadService = new HealthUploadService(wearableHealthStore, saydianApi);
   private yucAdapter: YucWearableAdapter | null = null;
+  private urionAdapter: UrionWearableAdapter | null = null;
+  private urionOwner: HealthOwnerSession | undefined = undefined;
+  private deviceVisible: boolean = false;
+  private deviceBatteryTimer: number = -1;
+  private refreshingDevice: Promise<boolean> | undefined = undefined;
+  private ecgFinishTimer: number = -1;
+
+  setDevicePageVisible(visible: boolean): void {
+    if (visible === this.deviceVisible) return;
+    this.deviceVisible = visible;
+    if (this.deviceBatteryTimer !== -1) clearInterval(this.deviceBatteryTimer);
+    this.deviceBatteryTimer = -1;
+    if (!visible) return;
+    const refresh = (): void => {
+      if (this.deviceVisible && this.snapshot.connected && !this.measurement.running && !this.busyOperation && !this.deviceCommandInFlight) {
+        this.refresh().catch(() => {});
+      }
+    };
+    refresh(); this.deviceBatteryTimer = setInterval(refresh, 10000);
+  }
 
   attachContext(context: common.UIAbilityContext): void {
     this.context = context;
@@ -186,6 +209,10 @@ export class VepWearableService {
   }
 
   private async waitForNativeDisconnect(): Promise<void> {
+    if (this.activeProvider === 'Urion') {
+      if (this.urion().isReady()) throw new Error('Urion connection active');
+      return;
+    }
     if (this.activeProvider === 'Yuc') {
       for (let attempt = 0; attempt < 50; attempt++) {
         if (!this.yuc().isReady()) return;
@@ -203,6 +230,7 @@ export class VepWearableService {
   }
 
   private async disconnectNativeForAccount(): Promise<void> {
+    if (this.activeProvider === 'Urion') { this.urion().disconnect(); return; }
     if (this.activeProvider === 'Yuc') {
       await this.yuc().disconnect(false);
       return;
@@ -268,6 +296,7 @@ export class VepWearableService {
   }
 
   clearListener(): void {
+    this.setDevicePageVisible(false); this.clearEcgFinishTimer();
     this.listener = null;
   }
 
@@ -304,7 +333,8 @@ export class VepWearableService {
       this.cancelReconnect();
       this.userDisconnect = true;
       try {
-        if (this.activeProvider === 'Yuc') await this.yuc().disconnect(false);
+        if (this.activeProvider === 'Urion') this.urion().disconnect();
+        else if (this.activeProvider === 'Yuc') await this.yuc().disconnect(false);
         else this.sdk.disconnect();
       } catch {}
       this.busyOperation = '';
@@ -340,7 +370,7 @@ export class VepWearableService {
       } catch {
         // Some Harmony builds reject a generic filter. Vep discovery must still remain available.
         ble.startBLEScan([{ manufactureId: 0xF8F8 }, { name: 'ET488' },
-          { name: 'SD-Watch-W9' }, { name: 'SD-Watch-W9S' }, { name: 'SD-WATCH-W9S' }], options);
+          { name: 'SD-Watch-W9' }, { name: 'SD-Watch-W9S' }, { name: 'SD-WATCH-W9S' }, { manufactureId: 0x1234 }], options);
       }
       this.scanning = true;
       this.busyOperation = 'scan';
@@ -391,6 +421,7 @@ export class VepWearableService {
       this.emitPhase('error', '该设备已离开扫描范围，请重新扫描');
       return false;
     }
+    if (descriptor.provider === 'Urion') return this.connectUrion(descriptor, isRetry);
     if (descriptor.provider === 'Yuc') {
       return this.connectYuc(descriptor, isRetry);
     }
@@ -412,7 +443,8 @@ export class VepWearableService {
       this.cancelReconnect();
       this.userDisconnect = true;
       try {
-        if (this.activeProvider === 'Yuc') await this.yuc().disconnect(false);
+        if (this.activeProvider === 'Urion') this.urion().disconnect();
+        else if (this.activeProvider === 'Yuc') await this.yuc().disconnect(false);
         else this.sdk.disconnect();
       } catch {}
       this.busyOperation = '';
@@ -428,7 +460,8 @@ export class VepWearableService {
     if (this.snapshot.connected && this.connectedKey !== deviceKey) {
       this.userDisconnect = true;
       try {
-        if (this.activeProvider === 'Yuc') await this.yuc().disconnect(false);
+        if (this.activeProvider === 'Urion') this.urion().disconnect();
+        else if (this.activeProvider === 'Yuc') await this.yuc().disconnect(false);
         else this.sdk.disconnect();
       } catch {}
       await this.delay(300);
@@ -484,6 +517,85 @@ export class VepWearableService {
     }
   }
 
+  private urion(): UrionWearableAdapter {
+    if (!this.urionAdapter) {
+      this.urionAdapter = new UrionWearableAdapter((records: HealthRecord[]): void => {
+        const owner = this.urionOwner;
+        if (!owner || !sameHealthSession(owner, this.accountSession) || this.activeProvider !== 'Urion' ||
+          !this.snapshot.connected || !this.urionAdapter?.isReady()) return;
+        const generation = this.connectionGeneration;
+        records.forEach((record: HealthRecord) => this.addRecord(record));
+        if (this.measurement.running && this.activeProvider === 'Urion') {
+          const measured = records.find((record: HealthRecord) => record.metric === this.measurement.metric &&
+            record.timestamp >= this.urion().measurementStartedAt());
+          if (measured) {
+            this.measurement.values = measured.values; this.measurement.running = false;
+            this.measurement.status = '测量完成'; this.urion().finishMeasurement(); this.endOperation(); this.emitMeasurement();
+          }
+          else if (this.urion().measurementStartedAt() === Number.MAX_SAFE_INTEGER) {
+            this.measurement.running = false; this.measurement.status = '未收到有效测量结果'; this.endOperation(); this.emitMeasurement();
+          }
+        }
+        this.saveCurrentRecords(this.snapshot.records).then(() => {
+          if (generation !== this.connectionGeneration || !sameHealthSession(owner, this.accountSession)) return;
+          this.emitSnapshot(); this.synchronizeCloud();
+        }).catch(() => {});
+      }, (): void => {
+        if (this.activeProvider !== 'Urion' || this.userDisconnect) return;
+        const generation = ++this.connectionGeneration;
+        this.invalidateMeasurementSession();
+        this.measurement.running = false; this.measurement.status = '连接中断';
+        this.busyOperation = ''; this.snapshot.connected = false; this.snapshot.battery = emptyBattery();
+        this.emitSnapshot(); this.emitMeasurement(); this.emitPhase('idle', '连接中断');
+        if (this.reconnectAttempt >= WEARABLE_RECONNECT_DELAYS_MS.length) return;
+        const delay = WEARABLE_RECONNECT_DELAYS_MS[this.reconnectAttempt++];
+        this.reconnectTimer = setTimeout(() => {
+          this.reconnectTimer = -1;
+          if (generation === this.connectionGeneration && !this.userDisconnect) this.startScan();
+        }, delay);
+      });
+    }
+    return this.urionAdapter;
+  }
+  private async connectUrion(descriptor: WearableDevice, isRetry: boolean): Promise<boolean> {
+    if (this.busyOperation && this.busyOperation !== 'scan') return false;
+    this.stopScan(); this.cancelReconnect();
+    this.userDisconnect = true;
+    try {
+      if (this.activeProvider === 'Urion') this.urion().disconnect();
+      else if (this.activeProvider === 'Yuc') await this.yuc().disconnect(false);
+      else if (this.snapshot.connected) this.sdk.disconnect();
+    } catch {}
+    this.userDisconnect = false;
+    const generation = ++this.connectionGeneration; const owner = this.accountSession;
+    const current = (): boolean => generation === this.connectionGeneration && sameHealthSession(owner, this.accountSession);
+    this.activeProvider = 'Urion'; this.connectedKey = descriptor.key; this.lastDevice = null;
+    this.urionOwner = owner; this.busyOperation = '连接手表';
+    this.emitPhase('connecting', `正在连接 ${descriptor.name}`);
+    try {
+      const snapshot = await this.urion().connect(descriptor);
+      if (!current()) return false;
+      this.snapshot = snapshot;
+      this.ownershipSince = await wearableHealthStore.claimDevice(owner.ownerId, descriptor.key, Date.now(), isRetry, current);
+      if (!current()) return false;
+      await this.loadStoredRecords(descriptor.key);
+      if (!current()) return false;
+      this.urion().seedRecords(this.snapshot.records);
+      this.lastBinding = { provider: 'Urion', name: descriptor.name, mac: descriptor.mac, updatedAt: Date.now() };
+      await wearableHealthStore.saveBinding(owner.ownerId, this.lastBinding, current);
+      if (!current()) return false;
+      this.reconnectAttempt = 0;
+      this.emitSnapshot(); this.emitPhase('connected', `已连接 ${descriptor.name}`);
+      setTimeout(() => this.postConnectInitialize(generation), 1000);
+      return true;
+    } catch (error) {
+      if (current()) {
+        this.urion().disconnect(); this.snapshot = emptyWearableSnapshot();
+        this.emitSnapshot(); this.emitPhase('error', this.bluetoothError(error as Error, '连接失败，重试'));
+      }
+      return false;
+    } finally { if (current()) this.busyOperation = ''; }
+  }
   private async connectYuc(descriptor: WearableDevice, isRetry: boolean): Promise<boolean> {
     const target = this.yucDevices.get(descriptor.key);
     if (!target) {
@@ -501,7 +613,8 @@ export class VepWearableService {
       this.cancelReconnect();
       this.userDisconnect = true;
       try {
-        if (this.activeProvider === 'Yuc') await this.yuc().disconnect(false);
+        if (this.activeProvider === 'Urion') this.urion().disconnect();
+        else if (this.activeProvider === 'Yuc') await this.yuc().disconnect(false);
         else this.sdk.disconnect();
       } catch {}
       this.busyOperation = '';
@@ -517,7 +630,8 @@ export class VepWearableService {
     if (this.snapshot.connected && this.connectedKey !== descriptor.key) {
       this.userDisconnect = true;
       try {
-        if (this.activeProvider === 'Yuc') await this.yuc().disconnect(false);
+        if (this.activeProvider === 'Urion') this.urion().disconnect();
+        else if (this.activeProvider === 'Yuc') await this.yuc().disconnect(false);
         else this.sdk.disconnect();
       } catch {}
       await this.delay(300);
@@ -583,7 +697,8 @@ export class VepWearableService {
     this.measurement = emptyMeasurement(); this.measurementStopping = false;
     let disconnected = false;
     try {
-      if (this.activeProvider === 'Yuc') await this.yuc().disconnect(true);
+      if (this.activeProvider === 'Urion') this.urion().disconnect();
+      else if (this.activeProvider === 'Yuc') await this.yuc().disconnect(true);
       else { this.sdk.disconnect(); await this.waitForNativeDisconnect(); }
       disconnected = true;
     } catch {}
@@ -601,13 +716,17 @@ export class VepWearableService {
     this.emitPhase(disconnected ? 'idle' : 'error', disconnected ? '已断开手表' : this.snapshot.message);
   }
 
-  async refresh(): Promise<boolean> {
-    return this.runConnectedOperation('刷新设备', async (current: () => void): Promise<boolean> => {
+  refresh(): Promise<boolean> {
+    if (this.refreshingDevice) return this.refreshingDevice;
+    const running = this.runConnectedOperation('刷新设备', async (current: () => void): Promise<boolean> => {
       await this.refreshConnectedDeviceInternal(this.connectionGeneration);
       current();
       this.emitPhase('connected', '设备信息已刷新');
       return true;
     });
+    this.refreshingDevice = running;
+    running.finally(() => { if (this.refreshingDevice === running) this.refreshingDevice = undefined; }).catch(() => {});
+    return running;
   }
 
   async syncHistory(): Promise<boolean> {
@@ -629,8 +748,12 @@ export class VepWearableService {
   }
 
   async findDevice(): Promise<boolean> {
-    if (!this.snapshot.capabilities.findDevice) return false;
+    if (!this.snapshot.capabilities.findDevice && this.activeProvider !== 'Urion') return false;
     return this.runConnectedOperation('查找设备', async (current: () => void): Promise<boolean> => {
+      if (this.activeProvider === 'Urion') {
+        await this.urion().find(); current(); this.snapshot.capabilities.findDevice = true;
+        this.emitSnapshot(); this.emitPhase('connected', '已发送查找提示'); return true;
+      }
       if (this.activeProvider === 'Yuc') {
         await this.yuc().findDevice();
         current();
@@ -645,9 +768,30 @@ export class VepWearableService {
       return ok;
     });
   }
+  async readUrionPressureSettings(): Promise<Eb1DynamicPressureSettings> {
+    if (this.activeProvider !== 'Urion') throw new Error('设备不支持');
+    const result = await this.runDeviceCommand('读取设置', async (current: () => void): Promise<Eb1DynamicPressureSettings> => {
+      const settings = await this.urion().dynamicSettings(); current(); return settings;
+    });
+    if (!result) throw new Error('读取失败，重试'); return result;
+  }
+  async saveUrionPressureSettings(settings: Eb1DynamicPressureSettings): Promise<void> {
+    if (this.activeProvider !== 'Urion') throw new Error('设备不支持');
+    const result = await this.runConnectedOperation('保存设置', async (current: () => void): Promise<boolean> => {
+      await this.urion().saveDynamicSettings(settings); current(); return true;
+    });
+    if (!result) throw new Error('保存失败，重试');
+  }
+  async readUrionPulse(start: boolean = false, isCurrent: () => boolean = () => true): Promise<Eb1PulseSample | undefined> {
+    if (this.activeProvider !== 'Urion') throw new Error('设备不支持');
+    return this.runDeviceCommand('脉诊', async (current: () => void): Promise<Eb1PulseSample | undefined> => {
+      const result = start ? await this.urion().startPulse(isCurrent) : await this.urion().pulse(); current(); return result;
+    });
+  }
 
   async syncTime(): Promise<boolean> {
     return this.runConnectedOperation('同步时间', async (current: () => void): Promise<boolean> => {
+      if (this.activeProvider === 'Urion') { await this.urion().syncTime(); current(); this.emitPhase('connected', '时间已同步'); return true; }
       if (this.activeProvider === 'Yuc') {
         await this.yuc().syncTime();
         current();
@@ -845,8 +989,13 @@ export class VepWearableService {
     try {
       let success = false;
       let errorMessage = '';
-      if (this.activeProvider === 'Yuc') {
+      if (this.activeProvider === 'Urion') {
+        await this.urion().startMeasurement(metric);
+        if (!this.isCurrentMeasurement(session)) return false;
+        success = true; this.measurement.status = '请保持静止，在手表上结束测量';
+      } else if (this.activeProvider === 'Yuc') {
         await this.yuc().startMeasurement(metric);
+        if (metric === 'ecg' && this.isCurrentMeasurement(session)) this.armW8EcgFinish(session);
         if (!this.isCurrentMeasurement(session)) return false;
         success = true;
         this.measurement.status = metric === 'ecg' ? '请正确佩戴，并持续接触心电电极' :
@@ -1209,7 +1358,8 @@ export class VepWearableService {
     ++this.connectionGeneration;
     this.invalidateMeasurementSession();
     try {
-      if (this.activeProvider === 'Yuc') this.yuc().disconnect(false).catch(() => {});
+      if (this.activeProvider === 'Urion') this.urion().disconnect();
+      else if (this.activeProvider === 'Yuc') this.yuc().disconnect(false).catch(() => {});
       else this.sdk.disconnect();
     } catch {}
     this.detachEvents();
@@ -1244,6 +1394,8 @@ export class VepWearableService {
       });
     } catch {}
     vepResults.forEach((device: BleDevice) => {
+      const packet = normalized.find((result: ble.ScanResult) => result.deviceId === device.deviceId);
+      if (packet && urionAdvertMac(Array.from(new Uint8Array(packet.data)))) return;
       if (wearableProviderForName(device.deviceName) === 'Yuc') return;
       const descriptor = createWearableDevice('Vep', device.deviceName, device.deviceId,
         device.mac, device.rssi, device.connectable);
@@ -1253,6 +1405,12 @@ export class VepWearableService {
       }
     });
     normalized.forEach((result: ble.ScanResult) => {
+      const urionMac = urionAdvertMac(Array.from(new Uint8Array(result.data)));
+      if (urionMac) {
+        const descriptor = createWearableDevice('Urion', result.deviceName || 'U19', result.deviceId, urionMac, result.rssi, result.connectable);
+        if (descriptor) incoming.push(descriptor);
+        return;
+      }
       const provider = knownWearableName(result.deviceName);
       if (!provider || vepResults.some((device: BleDevice) =>
         device.deviceId === result.deviceId && provider === 'Vep')) return;
@@ -1402,6 +1560,8 @@ export class VepWearableService {
     const event = payload as ConnectionEvent;
     if (event.newState === ConnectionState.DISCONNECTED && !this.userDisconnect && this.lastDevice) {
       this.finishSportSession(true, '手表断开，已保留断开前的真实运动数据');
+      this.saveInterruptedEcg();
+      this.clearEcgFinishTimer();
       ++this.connectionGeneration;
       this.invalidateMeasurementSession();
       if (this.measurement.running) {
@@ -1410,7 +1570,7 @@ export class VepWearableService {
         this.measurement.values = [];
         this.measurement.samples = [];
         this.measurement.sampleFrequency = 0;
-        this.measurement.status = metric === 'ecg' ? '心电测量因蓝牙中断已取消，未保存未完成波形' :
+        this.measurement.status = metric === 'ecg' ? '心电测量中断，波形已保存' :
           '测量因蓝牙中断已取消，未保存不完整结果';
         this.emitMeasurement();
       }
@@ -1431,6 +1591,7 @@ export class VepWearableService {
       return;
     }
     if (this.activeProvider !== 'Yuc' || !this.snapshot.connected || this.userDisconnect) return;
+    this.saveInterruptedEcg(); this.clearEcgFinishTimer();
     this.finishSportSession(true, 'W8 手表断开，已保留断开前的真实运动数据');
     const generation = ++this.connectionGeneration;
     this.invalidateMeasurementSession();
@@ -1457,8 +1618,7 @@ export class VepWearableService {
 
   private onYucBattery(level: number, state: number): void {
     if (this.activeProvider !== 'Yuc' || !this.snapshot.connected || level < 0 || level > 100) return;
-    this.snapshot.battery = { available: true, hasPercentage: true, level: level, levelGrade: 0,
-      charging: state === 1, lowBattery: level <= 15, updatedAt: Date.now() };
+    this.snapshot.battery = yucBattery(level, state, Date.now());
     this.emitSnapshot();
   }
 
@@ -1473,7 +1633,7 @@ export class VepWearableService {
     });
     if (values.length > 0) this.measurement.values = values;
     if (metric === 'ecg' && data.samples.length > 0) {
-      this.measurement.samples = this.measurement.samples.concat(data.samples).slice(-60000);
+      this.measurement.samples = this.measurement.samples.concat(data.samples);
       if (data.sampleFrequency > 0) this.measurement.sampleFrequency = data.sampleFrequency;
     }
     this.measurement.progress = Math.min(95, Math.max(5, this.measurement.progress + 2));
@@ -1577,6 +1737,11 @@ export class VepWearableService {
 
   private async refreshConnectedDeviceInternal(generation: number, fallback?: WearableDevice,
     includeBattery: boolean = true): Promise<void> {
+    if (this.activeProvider === 'Urion') {
+      if (includeBattery) this.snapshot.battery = await this.urion().refreshBattery();
+      if (generation !== this.connectionGeneration) throw new Error('Connection changed');
+      this.emitSnapshot(); return;
+    }
     if (this.activeProvider === 'Yuc') {
       await this.refreshYucDeviceInternal(generation, fallback, includeBattery);
       return;
@@ -1648,9 +1813,7 @@ export class VepWearableService {
       model = metadata.model || model;
       firmware = metadata.firmware || firmware;
       if (includeBattery && metadata.batteryLevel >= 0 && metadata.batteryLevel <= 100) {
-        battery = { available: true, hasPercentage: true, level: metadata.batteryLevel,
-          levelGrade: 0, charging: metadata.batteryState === 1, lowBattery: metadata.batteryLevel <= 15,
-          updatedAt: Date.now() };
+        battery = yucBattery(metadata.batteryLevel, metadata.batteryState, Date.now());
       }
     } catch (error) {
       console.warn(`[SaydianWearable] W8 metadata read skipped: ${(error as Error).message}`);
@@ -1671,6 +1834,12 @@ export class VepWearableService {
   }
 
   private async syncHistoryInternal(generation: number, days: HealthQueryDay[], includeAdvanced: boolean = true): Promise<void> {
+    if (this.activeProvider === 'Urion') {
+      const records = await this.urion().synchronize();
+      if (generation !== this.connectionGeneration) return;
+      records.forEach((record: HealthRecord) => this.addRecord(record));
+      this.emitSnapshot(); return;
+    }
     if (this.activeProvider === 'Yuc') {
       const records = await this.yuc().readHistory(this.connectedKey, includeAdvanced);
       if (!isCurrentConnectionGeneration(generation, this.connectionGeneration)) return;
@@ -1955,7 +2124,7 @@ export class VepWearableService {
       this.measurement.status = '请保持佩戴并持续接触心电电极';
     } else if (event.kind === EcgPushEventKind.WAVEFORM) {
       const data = event.data as EcgWaveformData;
-      this.measurement.samples = this.measurement.samples.concat(data.samples).slice(-60000);
+      this.measurement.samples = this.measurement.samples.concat(data.samples);
       this.measurement.status = '正在采集心电信号，请保持佩戴';
     } else if (event.kind === EcgPushEventKind.PROGRESS) {
       const data = event.data as EcgSecondMeasurement;
@@ -2018,8 +2187,13 @@ export class VepWearableService {
       if (this.busyOperation === '手动测量') this.endOperation();
       return;
     }
+    if (this.activeProvider === 'Urion' && !shutdown) {
+      this.measurement.status = '请在手表上结束测量'; this.emitMeasurement(); return;
+    }
     if (this.measurementStopping) return;
     this.measurementStopping = true;
+    this.clearEcgFinishTimer();
+    this.saveInterruptedEcg();
     this.detachMeasurementEvents();
     const metric = this.measurement.metric;
     const values = retainedMeasurementValues(this.measurement.values, this.lastValidMeasurementValues);
@@ -2036,7 +2210,7 @@ export class VepWearableService {
       this.measurement.values = [];
       this.measurement.samples = [];
       this.measurement.sampleFrequency = 0;
-      this.measurement.status = shutdown ? '' : '已取消心电测量，未保存未完成波形';
+      this.measurement.status = shutdown ? '' : '测量中断，波形已保存';
     } else if (values.length > 0 && !shutdown) {
       this.measurement.values = values;
       this.measurement.status = '测量已结束，已保留手表实时读数';
@@ -2051,6 +2225,7 @@ export class VepWearableService {
   }
 
   private async requestMeasurementStop(metric: WearableMetricKey): Promise<void> {
+    if (this.activeProvider === 'Urion') { this.urion().finishMeasurement(); return; }
     if (this.activeProvider === 'Yuc') await this.yuc().stopMeasurement(metric);
     else if (metric === 'heart') await this.sdk.heartRateService.stopMeasurement();
     else if (metric === 'pressure') await this.sdk.bloodPressureService.stopMeasurement();
@@ -2062,7 +2237,38 @@ export class VepWearableService {
     else if (metric === 'ecg') await this.sdk.ecgService.stopMeasurement();
   }
 
+  private clearEcgFinishTimer(): void {
+    if (this.ecgFinishTimer !== -1) clearTimeout(this.ecgFinishTimer);
+    this.ecgFinishTimer = -1;
+  }
+  private armW8EcgFinish(session: MeasurementSession): void {
+    this.clearEcgFinishTimer();
+    this.ecgFinishTimer = setTimeout(() => {
+      this.ecgFinishTimer = -1;
+      if (!this.isCurrentMeasurement(session) || !this.measurement.running || this.measurementStopping) return;
+      this.yuc().stopMeasurement('ecg').then(() => {
+        if (this.isCurrentMeasurement(session) && this.measurement.running) this.onYucMeasurementEnd('ecg');
+      }).catch(() => {
+        if (!this.isCurrentMeasurement(session)) return;
+        this.saveInterruptedEcg(); this.measurement.running = false;
+        this.measurement.status = '结束失败，波形已保存'; this.endOperation(); this.emitMeasurement();
+      });
+    }, 60000);
+  }
+  private saveInterruptedEcg(): void {
+    if (!this.measurement.running || this.measurement.metric !== 'ecg' || !this.measurement.samples.length ||
+      !validHealthOwner(this.accountSession.ownerId) || !this.connectedKey) return;
+    const record = this.makeRecord('ecg', Date.now(), this.measurement.values.slice(), 'app_measurement');
+    record.samples = this.measurement.samples.slice(); record.sampleFrequency = this.measurement.sampleFrequency;
+    record.quality = 'invalid'; record.rawVersion = this.activeProvider === 'Yuc' ? 1 : 2;
+    record.measurementState = 'interrupted';
+    const owner = this.accountSession;
+    this.addRecord(record);
+    // A disconnected transport must not cancel saving the waveform captured under the same account.
+    wearableHealthStore.saveRecords(owner.ownerId, [record], () => sameHealthSession(owner, this.accountSession)).catch(() => {});
+  }
   private completeMeasurement(): void {
+    this.clearEcgFinishTimer();
     if (!this.measurement.running || !this.measurement.metric) return;
     this.detachMeasurementEvents();
     this.measurement.running = false;
@@ -2079,6 +2285,11 @@ export class VepWearableService {
     const record = this.makeRecord(this.measurement.metric, Date.now(), this.measurement.values, 'app_measurement');
     record.samples = this.measurement.samples.slice();
     record.sampleFrequency = this.measurement.sampleFrequency;
+    if (record.metric === 'ecg') {
+      record.measurementState = 'complete';
+      record.quality = this.activeProvider === 'Yuc' ? 'suspect' : 'unknown';
+      record.rawVersion = this.activeProvider === 'Yuc' ? 1 : 2;
+    }
     this.addRecord(record);
     this.persistRecords([record]);
     this.snapshot.syncedAt = Date.now();
@@ -2130,7 +2341,8 @@ export class VepWearableService {
       hasPercentage: data.hasPercentage,
       level: data.level,
       levelGrade: data.levelGrade,
-      charging: data.powerMode === 1 || data.powerMode === 3,
+      charging: vepBatteryCharge(data.powerMode) === 'charging',
+      chargingState: vepBatteryCharge(data.powerMode),
       lowBattery: data.lowBattery || data.powerMode === 2,
       updatedAt: Date.now()
     };
@@ -2153,7 +2365,9 @@ export class VepWearableService {
       source: source,
       values: values.slice(),
       samples: [],
-      sampleFrequency: 0
+      sampleFrequency: 0,
+      model: this.snapshot.model, firmware: this.snapshot.firmware, quality: 'unknown', rawVersion: 1,
+      timezoneOffsetMinutes: -new Date(time).getTimezoneOffset()
     };
   }
 
@@ -2174,6 +2388,13 @@ export class VepWearableService {
       const binding = await wearableHealthStore.loadBinding(session.ownerId);
       if (!sameHealthSession(session, this.accountSession)) return;
       this.lastBinding = binding;
+      if (!this.snapshot.connected) {
+        const saved = await wearableHealthStore.loadRecent(session.ownerId);
+        if (!sameHealthSession(session, this.accountSession) || this.snapshot.connected) return;
+        this.snapshot.records = saved;
+        this.snapshot.deviceKey = saved[0]?.deviceKey ?? '';
+        this.emitSnapshot();
+      }
       this.synchronizeCloud();
       this.tryAdoptYucConnection();
       if (this.lastBinding && !this.snapshot.connected && !this.scanning && !this.busyOperation) {
@@ -2412,7 +2633,7 @@ export class VepWearableService {
   }
 
   private ensureConnected(): boolean {
-    const nativeConnected = this.activeProvider === 'Yuc' ? this.yuc().isReady() :
+    const nativeConnected = this.activeProvider === 'Urion' ? this.urion().isReady() : this.activeProvider === 'Yuc' ? this.yuc().isReady() :
       this.sdk.getState() === ConnectionState.CONNECTED;
     if (!this.snapshot.connected || !nativeConnected) {
       this.emitPhase('error', '请先连接手表');

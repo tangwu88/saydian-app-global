@@ -294,7 +294,7 @@ test('device search and profile shortcuts match the iOS navigation hierarchy',()
   }
   assert.ok(search.includes('if (SHOW_MALL)'));
   assert.ok(search.includes('wearableIdentifierText(device)'));
-  assert.ok(search.includes("device.provider === 'Yuc' ? 'W8' : 'Vep'"));
+  assert.ok(search.includes("device.provider === 'Urion' ? 'U19' : device.provider === 'Yuc' ? 'W8' : 'W9'"));
   assert.ok(search.includes("Text('连接')"));
   assert.equal(search.includes("Text('暂不支持')"),false,'Both W8 and W9 discovery rows must be connectable');
   const mineStart=source.indexOf('MineHome()');

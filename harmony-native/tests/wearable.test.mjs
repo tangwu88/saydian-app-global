@@ -197,5 +197,5 @@ test('wearable production service excludes destructive watch operations', () => 
   assert.doesNotMatch(source, /\.clearData\s*\(/);
   assert.doesNotMatch(source, /\.deleteDial\s*\(/);
   assert.match(source, /WEARABLE_RECONNECT_DELAYS_MS/);
-  assert.match(source, /已取消心电测量，未保存未完成波形/);
+  assert.match(source, /测量中断，波形已保存/);
 });

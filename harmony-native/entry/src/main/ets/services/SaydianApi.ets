@@ -2,6 +2,10 @@ import { http } from '@kit.NetworkKit';
 import { fileIo } from '@kit.CoreFileKit';
 import { util } from '@kit.ArkTS';
 import { deviceInfo } from '@kit.BasicServicesKit';
+import { sha256Bytes, sha256Text } from './NativeDataIntegrity';
+import { gzip, Inflate } from 'pako';
+import { GlobalEcgWaveform, validateGlobalEcg } from '../model/GlobalEcg';
+import { HealthRecord } from '../model/WearableContracts';
 import { ApiError, Envelope, Session, FormField, UploadFile, decodeEnvelope, buildMultipart } from '../model/Contracts';
 import { AccountClient, ApiTransport } from './AccountClient';
 import { SessionVault } from './SessionVault';
@@ -10,8 +14,63 @@ import { internationalUrl } from '../model/GlobalConfiguration';
 import { currentAppLocale } from '../model/GlobalLocale';
 
 interface ImageKind { mime: string; extension: string; }
+interface WaveInflater { err: number; onData: (chunk: Uint8Array) => void; push(data: Uint8Array, final: boolean): boolean; }
 
 class NativeHttpTransport implements ApiTransport {
+  async waveform(path: string, session: Session): Promise<GlobalEcgWaveform> {
+    const safe = await import('./LegacySafeHttp');
+    const response = await safe.safeEcgHttp(internationalUrl(path), { 'Accept': 'application/gzip',
+      'Authorization': `Bearer ${session.accessToken}`, 'Accept-Language': currentAppLocale() });
+    if (await sha256Bytes(response.bytes) !== response.sha256) throw new ApiError('波形校验失败，重试');
+    const inflater: WaveInflater = new Inflate() as WaveInflater; const chunks: Uint8Array[] = []; let total = 0;
+    inflater.onData = (chunk: Uint8Array): void => {
+      total += chunk.length; if (total > 32 * 1024 * 1024) throw new ApiError('波形暂不可用');
+      chunks.push(chunk.slice());
+    };
+    inflater.push(response.bytes, true);
+    if (inflater.err) throw new ApiError('波形校验失败，重试');
+    const plain = new Uint8Array(total); let offset = 0;
+    chunks.forEach((chunk: Uint8Array) => { plain.set(chunk, offset); offset += chunk.length; });
+    let decoded: Object;
+    try { decoded = JSON.parse(new util.TextDecoder().decodeToString(plain)) as Object; }
+    catch { throw new ApiError('波形校验失败，重试'); }
+    return validateGlobalEcg(decoded, response.sampleRateHz, response.sampleCount, response.sha256);
+  }
+  async hash(text: string): Promise<string> { return sha256Text(text); }
+  async prepareEcg(record: HealthRecord, session: Session): Promise<HealthRecord> {
+    const rate = record.sampleFrequency;
+    const preview = record.rawVersion === 1 && record.quality === 'suspect' && record.source === 'app_measurement';
+    if (record.metric !== 'ecg' || (!preview && (record.rawVersion ?? 0) < 2) ||
+      !Number.isInteger(rate) || rate < 50 || rate > 1000 || !record.samples.length || record.samples.length > 1000000 ||
+      record.samples.some((sample: number) => !Number.isFinite(sample))) throw new ApiError('Waveform metadata incomplete');
+    const bytes: Uint8Array = gzip(new util.TextEncoder().encodeInto(JSON.stringify(record.samples)));
+    if (bytes.length > 25 * 1024 * 1024) throw new ApiError('Waveform too large');
+    const sha256 = await sha256Bytes(bytes);
+    const existing = record.ecgArtifact;
+    if (existing && existing.sha256 === sha256 && existing.sampleRateHz === rate && existing.sampleCount === record.samples.length &&
+      existing.byteSize === bytes.length && existing.encoding === 'gzip_json_v1' && existing.uploadObjectKey.startsWith('ecg/') &&
+      !existing.uploadObjectKey.includes('..')) return record;
+    const boundary = `----SaydianEcg${Date.now()}${Math.floor(Math.random() * 1000000)}`;
+    const prefix = new util.TextEncoder().encodeInto(`--${boundary}\r\nContent-Disposition: form-data; name="sha256"\r\n\r\n${sha256}\r\n` +
+      `--${boundary}\r\nContent-Disposition: form-data; name="file"; filename="ecg-samples.json.gz"\r\nContent-Type: application/gzip\r\n\r\n`);
+    const suffix = new util.TextEncoder().encodeInto(`\r\n--${boundary}--\r\n`);
+    const body = new Uint8Array(prefix.length + bytes.length + suffix.length);
+    body.set(prefix); body.set(bytes, prefix.length); body.set(suffix, prefix.length + bytes.length);
+    const safe = await import('./LegacySafeHttp');
+    const response = await safe.legacySafeHttp(internationalUrl('/api/saydian-app/v2/files/ecg'), 'POST', {
+      'Accept': 'application/json', 'Accept-Language': currentAppLocale(), 'Authorization': `Bearer ${session.accessToken}`,
+      'Content-Type': `multipart/form-data; boundary=${boundary}`
+    }, body.buffer, 60000);
+    const envelope = decodeEnvelope(response.result, response.responseCode);
+    const receipt = envelope.data as Record<string, Object> | undefined;
+    const key = receipt?.['uploadObjectKey'];
+    if (!receipt || receipt['sha256'] !== sha256 || receipt['byteSize'] !== bytes.length || typeof key !== 'string' ||
+      !key.startsWith('ecg/') || key.includes('..')) throw new ApiError('Invalid waveform receipt');
+    const prepared = JSON.parse(JSON.stringify(record)) as HealthRecord;
+    prepared.ecgArtifact = { uploadObjectKey: key, sampleRateHz: rate, sampleCount: record.samples.length,
+      sha256: sha256, byteSize: bytes.length, encoding: 'gzip_json_v1' };
+    return prepared;
+  }
   async download(path: string, session: Session): Promise<ArrayBuffer> {
     const legacy = await import('./LegacySafeHttp');
     return legacy.safeReportPdfHttp(internationalUrl(path), { 'Accept': 'application/pdf',
@@ -19,7 +78,7 @@ class NativeHttpTransport implements ApiTransport {
   }
 
   async request(path: string, fields?: FormField[], session?: Session, jsonBody?: string,
-    method?: 'GET' | 'POST' | 'PUT' | 'DELETE', readTimeoutMs?: number): Promise<Envelope> {
+    method?: 'GET' | 'POST' | 'PUT' | 'DELETE', readTimeoutMs?: number, idempotencyKey?: string): Promise<Envelope> {
     // Fixed HTTPS origin; credentials never reach configurable hosts or redirects.
     if (!path.startsWith('/api/') || path.includes('://')) throw new ApiError('请求地址不正确');
     if (fields && jsonBody !== undefined) throw new ApiError('请求格式不正确');
@@ -30,6 +89,10 @@ class NativeHttpTransport implements ApiTransport {
     }
     const client = http.createHttp();
     const headers: Record<string, string> = { 'Accept': 'application/json', 'Accept-Language': currentAppLocale() };
+    if (idempotencyKey !== undefined) {
+      if (!/^global-health-[a-f0-9]{64}$/.test(idempotencyKey)) throw new ApiError('Invalid idempotency key');
+      headers['Idempotency-Key'] = idempotencyKey;
+    }
     if (session) {
       headers['Authorization'] = `Bearer ${session.accessToken}`;
     }

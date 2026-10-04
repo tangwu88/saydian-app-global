@@ -41,7 +41,7 @@ test('report history reads preserve UUID identities and the original server conc
 
 test('global URL and identities fail closed outside the independent instance',()=>{
   assert.equal(GLOBAL_BUNDLE,'cn.saydian.app.global.hm');
-  assert.equal(internationalUrl('/api/saydian-app/v2/auth/login'),'https://app.saydian.cn/api/saydian-app/v2/auth/login');
+  assert.equal(internationalUrl('/api/saydian-app/v2/auth/login'),'https://app.saydian.cn/global/api/saydian-app/v2/auth/login');
   for(const path of ['https://evil.invalid/api/data','/../api/data','/api/../data','/api/v1/member','/down/files/app.hap'])assert.throws(()=>internationalUrl(path));
   assert.equal(GLOBAL_PAYMENTS_ENABLED,false);assert.equal(GLOBAL_PUSH_ENABLED,false);assert.equal(GLOBAL_WECHAT_ENABLED,false);
 });

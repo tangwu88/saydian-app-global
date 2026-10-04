@@ -1,10 +1,24 @@
-# 赛电原生鸿蒙开发版
+# SAYDIAN Health 原生鸿蒙测试版
 
 ArkTS + ArkUI，独立于已有 Flutter/Android/iOS 工程。当前范围包含账号、苹果版同构的主要页面、远程关爱、消息推送客户端、商城订单、鸿蒙三方支付客户端，以及 Veepoo W9 与 Yucheng W8 手表的扫描、连接、健康同步、测量和设备控制。
 
-最新验证版本为 0.1.4（9），已对齐 AGC 应用身份 `cc.saidian.app.hm`（APP ID `6917615560681044373`）。Yucheng W8 SDK 2.1.5 已与既有 Veepoo W9 SDK 共存接入；最新鸿蒙契约测试共 442 项通过。实际范围和边界见 [设备页功能对齐记录](docs/DEVICE-PARITY-QA-20260909.md)、[W8 SDK 接入与真机 QA](docs/W8-SDK-INTEGRATION-QA-20260907.md)、[鸿蒙运动完整闭环](../docs/IMPLEMENTATION-LOG-20260907-HARMONY-SPORT-PARITY.md)、[本轮 Vep 真机验收](../docs/IMPLEMENTATION-LOG-20260906-HARMONY-ET488-FULL-QA.md) 与 [正式发布阻断清单](docs/RELEASE-BLOCKERS-0.1.3.md)。
+当前国际测试版为 **0.1.5（10）**，包名 **`cn.saydian.app.global.hm`**，最低 API 17。新增独立 Urion EB1 原生 BLE 适配器，W8、W9、U19/U19S 的路由彼此隔离。健康、百科、关爱采用 `https://app.saydian.cn/global/api/saydian-app/v2`。天气暂缓。
 
-当前源码已生成正式 Release 证书和发布 Profile 签名的 APP/HAP，官方签名工具确认 `type=release`、包名一致且完整性通过。真机上保留的仍是开发签名测试版；开发签名与发布签名不可直接覆盖，不能为了验证发行包而删除用户数据。
+本轮交付 **ARM64 完整 Debug/Release HAP** 与 **x86_64 无硬件 UI Debug/Release HAP**，均未签名；旧国内包的证书与验收不能用于国际包。本机官方 API 17 模拟器能安装 UI 包，仍不能据此称 ARM64 包可安装到鸿蒙手机。调试签名、各型号/固件真机验收和授权成员数据页面验收仍待完成。详见 [本轮实施与验证记录](../docs/IMPLEMENTATION-LOG-20261004-HARMONY-WEARABLES.md)。
+
+Windows 使用官方 DevEco Studio **26.0.0.851**，在 D 盘英文路径构建：
+
+```powershell
+./harmony-native/scripts/build-windows.ps1 -Flavor arm64 -OutputDirectory D:\Dev\HarmonyDeliverables
+./harmony-native/scripts/build-windows.ps1 -Flavor simulator -SimulatorStage D:\Dev\SaydianHarmonySimulator\new-run -OutputDirectory D:\Dev\HarmonyDeliverables
+python harmony-native/scripts/inspect-test-haps.py D:\Dev\HarmonyDeliverables
+$env:TZ='Asia/Shanghai'; node --test harmony-native/tests/*.test.mjs
+$env:TZ='Europe/Berlin'; node --test harmony-native/tests/*.test.mjs
+```
+
+`build-windows.ps1` 可指定 `-StudioRoot`，拒绝覆盖既有 HAP。模拟器 staging 不含手表 SDK 或模拟健康记录，只在该独立副本支持 `aa start ... --ps preview home|login|care|health-all|ecg-history` 的游客页面预览，鉴权保持关闭。`inspect-test-haps.py` 校验包身份、版本、API、构建模式、ABI、ZIP 完整性和私钥排除，输出体积/SHA-256 清单；签名另用官方 `hap-sign-tool.jar verify-app` 检查。
+
+以下 Mac、国内身份、旧证书和旧产物段落保留为历史记录，旧 `package-review.mjs` 仅适用于当时的国内包，不能用于本轮国际交付。
 
 Git 保存范围和发布边界见 [2026-09-04 开发检查点](docs/GIT-CHECKPOINT-20260904.md)。此前记录中的“未提交”描述保留为当时状态，本次保存不代表正式上线验收完成。
 

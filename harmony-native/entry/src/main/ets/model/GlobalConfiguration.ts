@@ -14,5 +14,5 @@ export function internationalUrl(path: string): string {
     path.includes('..') || path.includes('\\')) {
     throw new Error('Invalid API destination');
   }
-  return `${GLOBAL_ORIGIN}${path}`;
+  return `${GLOBAL_ORIGIN}/global${path}`;
 }

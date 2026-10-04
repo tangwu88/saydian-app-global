@@ -2,6 +2,11 @@ import { ApiError, MemberProfile, Article, ArticleBlock, Session,
   canSubmitLogin, profileName, profileField, articleBlocks } from '../model/Contracts';
 import { saydianApi } from '../services/SaydianApi';
 import { ArticleImage } from '../components/ArticleImage';
+import { GlobalCarePage } from '../components/GlobalCarePage';
+import { EcgWaveformView } from '../components/EcgWaveformView';
+import { HealthTrendChart } from '../components/HealthTrendChart';
+import { UrionFeaturesPage } from '../components/UrionFeaturesPage';
+import { OwnEcgHistoryPage } from '../components/OwnEcgHistoryPage';
 import { CareMember, CareInvitation, CareShareSettings, CareMetric, CareRecord, CareField, CareOption,
   chinaDay, chinaDaySeconds, shiftChinaDay, careMetricLatest, careRecordText, careInvitationFallback, careInvitationNeedsConfirmation,
   careGroupOptions, toggleCareGroup } from '../model/CareContracts';
@@ -111,10 +116,10 @@ struct Index {
   @StorageLink(WECHAT_AUTH_RESULT_KEY)
   @Watch('wechatAuthChanged')
   private wechatAuthResult: string = '';
-  @State private screen: string = 'login';
+  @State @Watch('devicePageChanged') private screen: string = 'login';
   @State private pageWidth: number = 390;
   @State private systemFontScale: number = 1;
-  @State private tab: number = 0;
+  @State @Watch('devicePageChanged') private tab: number = 0;
   @State private account: string = '';
   @State private appLocale: string = 'en';
   @State private authChannel: AuthChannel = 'email';
@@ -194,7 +199,7 @@ struct Index {
   @State private articleError: string = '';
   @State private articles: Article[] = [];
   @State private articleCategories: ArticleCategory[] = [];
-  @State private articleCategoryId: number = 0;
+  @State private articleCategoryId: number | string = 0;
   @State private listLoading: boolean = false;
   @State private listError: string = '';
   @State private detailTitle: string = '';
@@ -392,7 +397,13 @@ struct Index {
     this.loadDisplayPreferences();
     this.loadAppLocale();
   }
+  @State private pageForeground: boolean = true;
+  private devicePageChanged(): void {
+    vepWearable.setDevicePageVisible(this.pageForeground && this.screen === 'home' && this.tab === 1 && !this.guest);
+  }
+  onPageHide(): void { this.pageForeground = false; this.devicePageChanged(); }
   onPageShow(): void {
+    this.pageForeground = true; this.devicePageChanged();
     this.refreshLayoutScale();
     if (this.sportActive()) this.startSportClock();
     this.consumeNotificationRoute(); this.consumeWechatAuthResult();
@@ -401,6 +412,7 @@ struct Index {
     if (this.screen === 'sport-records') this.loadSportRecords();
   }
   aboutToDisappear(): void {
+    this.pageForeground = false; this.devicePageChanged();
     ++this.pageGeneration; ++this.contentGeneration; ++this.careGeneration;
     this.clearSmsCountdown();
     this.stopSportClock();
@@ -699,7 +711,7 @@ struct Index {
   private async openDeviceFeature(feature: WatchDeviceFeatureKey): Promise<void> {
     if (!this.wearableSnapshot.connected || !watchDeviceFeatureSupported(this.wearableSnapshot.capabilities, feature)) return;
     this.clearDeviceFeature(); this.selectedDeviceFeature = feature; this.openInnerPage('device-feature');
-    await this.refreshDeviceFeature();
+    if (this.wearableSnapshot.provider !== 'Urion') await this.refreshDeviceFeature();
   }
 
   private async refreshDeviceFeature(): Promise<void> {
@@ -1358,6 +1370,7 @@ struct Index {
           this.clearDeviceEditor(); this.clearDeviceFeature();
         }
         this.wearableSnapshot = snapshot;
+        this.devicePageChanged();
         if (this.screen === 'wearable-metric') this.loadTrendData();
         if (snapshot.connected && this.screen === 'device-search') {
           this.screen = 'home';
@@ -1520,8 +1533,8 @@ struct Index {
   }
 
   private wearableLatest(metric: WearableMetricKey): string {
-    if (!this.wearableSnapshot.connected) return '暂无记录';
-    if (!this.wearableCapability(metric)) return '设备不支持';
+    if (!this.wearableSnapshot.connected && !this.wearableMetricRecords(metric).length) return '暂无记录';
+    if (this.wearableSnapshot.connected && !this.wearableCapability(metric) && !this.wearableMetricRecords(metric).length) return '设备不支持';
     return this.displayRecord(latestMetricRecord(this.wearableSnapshot.records, metric));
   }
 
@@ -1531,9 +1544,8 @@ struct Index {
   }
 
   private visibleWearableMetrics(): WearableMetricSpec[] {
-    if (!this.wearableSnapshot.connected) return [];
     return this.wearableMetrics.filter((metric: WearableMetricSpec) =>
-      metric.key !== 'sport' && this.wearableCapability(metric.key));
+      metric.key !== 'sport' && (this.wearableSnapshot.connected && this.wearableCapability(metric.key) || this.wearableMetricRecords(metric.key).length > 0));
   }
 
   private metricMiniChartPoints(metric: WearableMetricKey): number[][] {
@@ -2144,7 +2156,7 @@ struct Index {
   private async openCare(): Promise<void> {
     if (this.guest) { this.showFeature('远程关爱', '请先登录赛电账号，再查看成员与共享授权。'); return; }
     this.screen = 'care';
-    await this.refreshCare();
+    if (!saydianApi.globalHealthEnabled) await this.refreshCare();
   }
 
   private async refreshCare(): Promise<void> {
@@ -2159,6 +2171,7 @@ struct Index {
   }
 
   private async refreshCareSummary(force: boolean = false): Promise<void> {
+    if (saydianApi.globalHealthEnabled) return;
     if (this.guest || (!force && Date.now() - this.careSummaryUpdatedAt < 60000)) return;
     await this.readCareMembers(this.careGeneration);
   }
@@ -2762,7 +2775,7 @@ struct Index {
       }.backgroundColor(Color.Transparent).type(ButtonType.Normal).borderRadius(12).width(48).height(this.controlHeight(48))
         .enabled(!this.careBusy && !this.paymentBusy && !this.formBusy && !this.commerceBusy && !this.deviceSettingsWriting &&
           !this.deviceFeatureWriting && !this.sportActionBusy).onClick(() => this.back()).accessibilityText(this.tr('返回上一页'))
-      Text(this.tr(this.screen === 'health-reports' ? 'reports' : this.screen === 'health-record' ? '记录详情' : this.screen === 'device-dials' ? '表盘中心' :
+      Text(this.tr(this.screen === 'ecg-history' ? '心电历史' : this.screen === 'health-reports' ? 'reports' : this.screen === 'health-record' ? '记录详情' : this.screen === 'device-dials' ? '表盘中心' :
         this.screen === 'device-feature' ? this.deviceFeatureSpec().title : this.screen === 'device-settings' ? '设备设置' :
         this.screen === 'device-units' ? '手表单位' : this.screen === 'device-alarms' ? '闹钟' : this.screen === 'device-alarm-edit' ?
           (this.watchAlarmDraft.id < 0 ? '添加闹钟' : '编辑闹钟') : this.screen === 'profile-edit' ? '个人资料' : this.screen === 'addresses' ? '收货地址' :
@@ -3161,8 +3174,9 @@ struct Index {
             .width(34).height(34).justifyContent(FlexAlign.Center).backgroundColor(RED_SOFT).borderRadius(11)
           Column({ space: 3 }) {
             Text(this.tr('运动记录')).fontSize(16).fontWeight(FontWeight.Bold).fontColor(INK).width('100%')
-            Text(this.wearableSnapshot.connected ? this.wearableLatest('sport') : '查看已保存的运动记录')
-              .fontSize(13).fontColor(MUTED).width('100%').maxLines(2)
+            if (this.wearableSnapshot.connected) {
+              Text(this.wearableLatest('sport')).fontSize(13).fontColor(MUTED).width('100%').maxLines(2)
+            }
           }.layoutWeight(1).alignItems(HorizontalAlign.Start)
           SymbolGlyph($r('sys.symbol.chevron_right')).fontSize(20).fontColor([RED])
         }.width('100%').constraintSize({ minHeight: 72 }).padding({ left: 12, right: 12, top: 10, bottom: 10 })
@@ -3203,7 +3217,7 @@ struct Index {
                 .fontSize(13).fontColor(MUTED).width('100%').maxLines(1)
                 .textOverflow({ overflow: TextOverflow.Ellipsis })
               Row({ space: 6 }) {
-                Text(this.tr(this.wearableSnapshot.provider === 'Yuc' ? 'W8' : 'Vep')).fontSize(12).fontWeight(FontWeight.Bold)
+                Text(this.tr(this.wearableSnapshot.provider === 'Urion' ? 'U19' : this.wearableSnapshot.provider === 'Yuc' ? 'W8' : 'W9')).fontSize(12).fontWeight(FontWeight.Bold)
                   .fontColor(this.wearableSnapshot.provider === 'Yuc' ? GREEN : BLUE)
                   .padding({ left: 8, right: 8, top: 3, bottom: 3 })
                   .backgroundColor(this.wearableSnapshot.provider === 'Yuc' ? GREEN_SOFT : BLUE_SOFT).borderRadius(10)
@@ -3211,7 +3225,7 @@ struct Index {
               }.width('100%')
             }.layoutWeight(1).alignItems(HorizontalAlign.Start)
             Column({ space: 3 }) {
-              Text(batteryText(this.wearableSnapshot.battery)).fontSize(15).fontWeight(FontWeight.Bold)
+              Text(batteryText(this.wearableSnapshot.battery, (key: string) => this.tr(key))).fontSize(15).fontWeight(FontWeight.Bold)
                 .fontColor(this.wearableSnapshot.battery.lowBattery ? RED : GREEN)
               Text(this.tr('电量')).fontSize(11).fontColor(MUTED)
             }.alignItems(HorizontalAlign.End)
@@ -3289,7 +3303,7 @@ struct Index {
         Flex({ wrap: FlexWrap.Wrap, justifyContent: FlexAlign.SpaceBetween }) {
           this.DeviceAction({ title: '同步时间', icon: $r('sys.symbol.clock_arrow_2_circlepath'), color: RED, background: RED_SOFT,
             action: () => vepWearable.syncTime(), id: 'wearable_sync_time' })
-          if (this.wearableSnapshot.capabilities.findDevice) {
+          if (this.wearableSnapshot.capabilities.findDevice || this.wearableSnapshot.provider === 'Urion') {
             this.DeviceAction({ title: '查找手表', icon: $r('sys.symbol.bell_badge_local'), color: BLUE, background: BLUE_SOFT,
               action: () => vepWearable.findDevice(), id: 'wearable_find' })
           }
@@ -3987,7 +4001,7 @@ struct Index {
           Row({ space: 7 }) {
             Text(this.tr(device.name)).fontSize(18).fontWeight(FontWeight.Bold).fontColor(INK).layoutWeight(1)
               .maxLines(1).textOverflow({ overflow: TextOverflow.Ellipsis })
-            Text(this.tr(device.provider === 'Yuc' ? 'W8' : 'Vep')).fontSize(12).fontWeight(FontWeight.Bold)
+            Text(this.tr(device.provider === 'Urion' ? 'U19' : device.provider === 'Yuc' ? 'W8' : 'W9')).fontSize(12).fontWeight(FontWeight.Bold)
               .fontColor(device.provider === 'Vep' ? TECH_BLUE : GREEN)
               .padding({ left: 8, right: 8, top: 3, bottom: 3 })
               .backgroundColor(device.provider === 'Vep' ? BLUE_SOFT : GREEN_SOFT).borderRadius(10)
@@ -4240,6 +4254,7 @@ struct Index {
 
   @Builder
   HealthAllContent() {
+    if (!this.guest) { Button(this.tr('心电历史')).onClick(() => this.openInnerPage('ecg-history')) }
     Row({ space: 14 }) {
       Column({ space: 6 }) {
         Text(this.tr('健康数据总览')).fontSize(19).fontWeight(FontWeight.Bold).fontColor(Color.White).width('100%')
@@ -5460,6 +5475,7 @@ struct Index {
 
   @Builder
   WearableMetricContent() {
+    if (this.selectedWearableMetric === 'ecg') { Button(this.tr('历史记录')).onClick(() => this.openInnerPage('ecg-history')) }
     Row() {
       ForEach(['day', 'week', 'month'], (period: string) => {
         Button(this.tr(period === 'day' ? '日' : period === 'week' ? '周' : '月')).layoutWeight(1)
@@ -5575,31 +5591,8 @@ struct Index {
               Text(displayNumber(this.chartMaximum())).fontSize(12).fontColor(MUTED).layoutWeight(1)
               Text(this.trendPeriod === 'day' ? '触摸图表查看记录' : '按日汇总 · 触摸查看记录').fontSize(12).fontColor(MUTED)
             }.width('100%')
-            Stack({ alignContent: Alignment.TopStart }) {
-              ForEach(this.chartNames(), (name: string, seriesIndex: number) => {
-                if (this.selectedWearableMetric === 'activity') {
-                  ForEach(this.plottedSeries(name).points, (point: TrendPoint, pointIndex: number) => {
-                    Column().width(8).height(Math.max(1, point.value / Math.max(1, this.chartMaximum()) * 128))
-                      .backgroundColor(RED).position({ x: Math.min(this.trendChartWidth - 8,
-                        spreadChartX(pointIndex, this.plottedSeries(name).points.length, this.trendChartWidth)),
-                        y: 144 - Math.max(1, point.value / Math.max(1, this.chartMaximum()) * 128) })
-                  })
-                } else {
-                  if (this.seriesPoints(name).length > 1) {
-                    Polyline({ width: this.trendChartWidth, height: 160 }).points(this.seriesPoints(name))
-                      .fillOpacity(0).stroke(seriesIndex === 0 ? RED : BLUE).strokeWidth(2)
-                  }
-                  ForEach(this.seriesPoints(name), (point: number[]) => {
-                    Column().width(6).height(6).borderRadius(3).backgroundColor(seriesIndex === 0 ? RED : BLUE).position({ x: point[0] - 3, y: point[1] - 3 })
-                  })
-                }
-              }, (name: string) => name)
-            }.width('100%').height(160).onAreaChange((oldArea: Area, area: Area) => this.trendChartWidth = Number(area.width))
-              .onTouch((event: TouchEvent) => {
-                if ((event.type === TouchType.Down || event.type === TouchType.Move) && event.touches.length) {
-                  this.inspectTrend(event.touches[0].x);
-                }
-              }).id('health_trend_chart')
+            HealthTrendChart({ records: this.currentTrendRecords(), period: this.trendPeriod, units: this.displayUnits, names: this.chartNames(),
+              onInspect: (x: number, width: number): void => { this.trendChartWidth = width; this.inspectTrend(x); } })
             Row() {
               Text(this.chartStartLabel()).fontSize(12).fontColor(MUTED).layoutWeight(1)
               Text(this.chartEndLabel()).fontSize(12).fontColor(MUTED)
@@ -5685,22 +5678,7 @@ struct Index {
         } else if (this.selectedHealthRecord.metric === 'sport') {
           this.Notice({ message: '该记录没有手机前台轨迹，仍保留手表运动数据。', color: GOLD_SOFT })
         }
-        if (this.selectedHealthRecord.samples.length > 1) {
-          Polyline({ width: this.recordChartWidth, height: 160 }).points(waveformPoints(this.selectedHealthRecord.samples.slice(this.waveformSegment * 1000, (this.waveformSegment + 1) * 1000), this.recordChartWidth))
-            .fillOpacity(0).stroke(RED).strokeWidth(1.5).width('100%').height(160)
-            .onAreaChange((oldArea: Area, area: Area) => this.recordChartWidth = Number(area.width))
-          Text(waveformPageLabel(this.selectedHealthRecord.samples.length, this.waveformSegment, this.selectedHealthRecord.sampleFrequency))
-            .fontSize(14).fontColor(MUTED).width('100%').textAlign(TextAlign.Center)
-          if (this.selectedHealthRecord.samples.length > 1000) {
-            Row({ space: 8 }) {
-              Button(this.tr('上一段')).layoutWeight(1).height(this.controlHeight()).fontSize(16).fontColor(RED).backgroundColor(Color.Transparent)
-                .enabled(this.waveformSegment > 0).onClick(() => this.waveformSegment--)
-              Text(`${this.waveformSegment + 1}/${Math.ceil(this.selectedHealthRecord.samples.length / 1000)}`).fontSize(14).fontColor(MUTED)
-              Button(this.tr('下一段')).layoutWeight(1).height(this.controlHeight()).fontSize(16).fontColor(RED).backgroundColor(Color.Transparent)
-                .enabled((this.waveformSegment + 1) * 1000 < this.selectedHealthRecord.samples.length).onClick(() => this.waveformSegment++)
-            }.width('100%').accessibilityText(this.tr('逐段查看完整心电波形'))
-          }
-        }
+        if (this.selectedHealthRecord.metric === 'ecg') { EcgWaveformView({ record: this.selectedHealthRecord, locale: this.appLocale }) }
       }.width('100%').padding(16).backgroundColor(SURFACE).borderRadius(18).border({ width: 1, color: LINE })
     } else { this.StateCard({ title: '记录暂不可用' }) }
   }
@@ -6032,11 +6010,11 @@ struct Index {
     }.width('100%').padding(16).backgroundColor(SURFACE)
     if (this.listLoading) { LoadingProgress().width(40).height(40).color(RED) }
     else if (this.listError) {
-      this.StateCard({ title: '健康百科加载失败', icon: $r('sys.symbol.cloud') })
-      Button(this.tr('重新加载')).constraintSize({ minHeight: 48 }).fontSize(16).fontColor(RED).backgroundColor(Color.Transparent)
+      this.StateCard({ title: '加载失败，重试', icon: $r('sys.symbol.cloud') })
+      Button(this.tr('重试')).constraintSize({ minHeight: 48 }).fontSize(16).fontColor(RED).backgroundColor(Color.Transparent)
         .onClick(() => this.openArticles())
     } else if (!this.articles.length) {
-      Text(this.tr('该分类暂无百科内容')).fontSize(16).fontColor(INK).textAlign(TextAlign.Center).width('100%').margin({ top: 160 })
+      Text(this.tr('暂无内容')).fontSize(16).fontColor(INK).textAlign(TextAlign.Center).width('100%').margin({ top: 160 })
     }
     ForEach(this.articles, (item: Article) => {
       Row({ space: 16 }) {
@@ -6068,7 +6046,8 @@ struct Index {
         } else if (this.screen === 'device-dials') {
           this.InstalledDialsContent()
         } else if (this.screen === 'device-feature') {
-          this.DeviceFeatureContent()
+          if (this.wearableSnapshot.provider === 'Urion') { UrionFeaturesPage({ feature: this.selectedDeviceFeature, locale: this.appLocale }) }
+          else { this.DeviceFeatureContent() }
         } else if (this.screen === 'device-settings') {
           this.DeviceSettingsContent()
         } else if (this.screen === 'device-units' || this.screen === 'device-alarms' || this.screen === 'device-alarm-edit') {
@@ -6077,6 +6056,8 @@ struct Index {
           this.WearableMetricContent()
         } else if (this.screen === 'health-record') {
           this.HealthRecordContent()
+        } else if (this.screen === 'ecg-history') {
+          OwnEcgHistoryPage({ locale: this.appLocale })
         } else if (this.screen === 'health-reports') {
           this.GlobalReportsContent()
         } else if (this.screen === 'health-all') {
@@ -6110,7 +6091,8 @@ struct Index {
         } else if (this.screen === 'shop-payment') {
           this.PaymentContent()
         } else if (this.screen.startsWith('care')) {
-          this.CareContent()
+          if (saydianApi.globalHealthEnabled) { GlobalCarePage({ units: this.displayUnits, foreground: this.pageForeground, locale: this.appLocale }) }
+          else { this.CareContent() }
         } else if (this.screen === 'about') {
           this.AboutContent()
         } else if (this.screen === 'contact') {

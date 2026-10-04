@@ -31,6 +31,10 @@ export interface YucWearableListener {
   onSport?: (data: YucSportTelemetry) => void;
 }
 
+// SDK 2.1.5 AITools.init() initializes its ECG decoder with initHeart(250,...).
+// This rate is verified for this bundled SDK; other SDK versions must provide their own evidence.
+const YUC_215_ECG_SAMPLE_RATE: number = 250;
+
 interface YucCommandResult {
   code: number;
   data: HashMap<string, Object> | null;
@@ -54,7 +58,7 @@ export class YucWearableAdapter {
     const data = this.nested(result, 'data');
     const level = this.number(data ?? result, 'deviceBatteryValue',
       this.number(result, 'batteryLevel', -1));
-    const state = this.number(data ?? result, 'deviceBatteryState', 0);
+    const state = this.number(data ?? result, 'deviceBatteryState', -1);
     if (level >= 0 && level <= 100) this.listener?.onBattery?.(level, state);
   };
 
@@ -189,7 +193,7 @@ export class YucWearableAdapter {
       model: this.text(data, 'deviceId'),
       firmware: this.text(data, 'deviceVersion'),
       batteryLevel: this.number(data, 'deviceBatteryValue', -1),
-      batteryState: this.number(data, 'deviceBatteryState', 0)
+      batteryState: this.number(data, 'deviceBatteryState', -1)
     };
   }
 
@@ -422,7 +426,7 @@ export class YucWearableAdapter {
       const samples = result.get('data') as number[] | undefined;
       const hrv = this.named('HRV', this.number(result, 'hrv'), 'ms');
       this.listener?.onRealtime?.({ metric: 'ecg', values: hrv ? [hrv] : [],
-        samples: samples ?? [], sampleFrequency: 250 });
+        samples: samples ?? [], sampleFrequency: YUC_215_ECG_SAMPLE_RATE });
     } else if (dataType === Constants.DATATYPE.Real_UploadECGHR && this.activeMeasurement === 'ecg') {
       this.emitRealtime('ecg', [this.named('心率', this.number(result, 'heartRate',
         this.number(result, 'heartValue')), 'BPM')]);
@@ -486,7 +490,8 @@ export class YucWearableAdapter {
     if (!deviceKey || timestamp <= 0 || values.length === 0) return undefined;
     return { id: `${deviceKey}|${metric}|${timestamp}|watch_history`, deviceKey: deviceKey,
       metric: metric, timestamp: timestamp, source: 'watch_history', values: values,
-      samples: [], sampleFrequency: 0 };
+      samples: [], sampleFrequency: 0, quality: 'unknown', rawVersion: 1,
+      timezoneOffsetMinutes: -new Date(timestamp).getTimezoneOffset() };
   }
 
   private values(values: Array<HealthValue | undefined>): HealthValue[] {

@@ -27,6 +27,13 @@ import type { HealthOwnerSession, HealthUploadRequest } from '../model/HealthUpl
 import { assertHealthUploadAccepted, sameHealthSession } from '../model/HealthUpload';
 import { AI_API_READ_TIMEOUT_MS } from '../model/RequestPolicy';
 import { globalApiPath } from '../model/GlobalConfiguration';
+import type { HealthRecord } from '../model/WearableContracts';
+import { globalHealthRow, globalHealthAccepted } from '../model/GlobalHealthUpload';
+import { currentAppLocale } from '../model/GlobalLocale';
+import { globalViewId, globalCategories, globalArticles, globalArticle, globalCareMembers, globalViewRecords, viewObject } from '../model/GlobalHealthViews';
+import type { GlobalCareMember, GlobalCareOverview, GlobalCareWrite } from '../model/GlobalHealthViews';
+import { validateGlobalEcg } from '../model/GlobalEcg';
+import type { GlobalEcgWaveform } from '../model/GlobalEcg';
 import { normalizeIdentifier, parseAuthCapabilities, parseGlobalSession, parseVerificationChallenge,
   globalRegistrationValidation, globalUnverifiedRegistrationValidation, parseGlobalProfile, validGlobalPassword } from '../model/GlobalAuth';
 import type { AuthChannel, GlobalAuthCapabilities, VerificationChallenge, VerificationPurpose } from '../model/GlobalAuth';
@@ -41,9 +48,12 @@ export interface SessionStore {
 }
 export interface ApiTransport {
   request(path: string, fields?: FormField[], session?: Session, jsonBody?: string,
-    method?: 'GET' | 'POST' | 'PUT' | 'DELETE', readTimeoutMs?: number): Promise<Envelope>;
+    method?: 'GET' | 'POST' | 'PUT' | 'DELETE', readTimeoutMs?: number, idempotencyKey?: string): Promise<Envelope>;
   upload?(path: string, file: UploadFile, session: Session): Promise<Envelope>;
   download?(path: string, session: Session): Promise<ArrayBuffer>;
+  hash?(text: string): Promise<string>;
+  prepareEcg?(record: HealthRecord, session: Session): Promise<HealthRecord>;
+  waveform?(path: string, session: Session): Promise<GlobalEcgWaveform>;
 }
 
 // This is the production coordinator, also exercised by host tests with synthetic stores/transports.
@@ -76,6 +86,46 @@ export class AccountClient {
 
   current(): Session | undefined { return this.session ? validateStoredSession(this.session) : undefined; }
   healthSession(): HealthOwnerSession { return { ownerId: this.session?.memberId ?? '', generation: this.generation }; }
+  get globalHealthEnabled(): boolean { return this.globalAuth; }
+  async prepareGlobalHealthRecord(record: HealthRecord, owner: HealthOwnerSession): Promise<HealthRecord> {
+    if (!sameHealthSession(owner, this.healthSession())) throw new ApiError('Account changed');
+    if (record.metric !== 'ecg' || !record.samples.length) return record;
+    if (!this.transport.prepareEcg) throw new ApiError('Waveform unavailable');
+    let session = await this.ensureSession();
+    if (!sameHealthSession(owner, this.healthSession())) throw new ApiError('Account changed');
+    let result: HealthRecord;
+    try { result = await this.transport.prepareEcg(record, session); }
+    catch (error) {
+      if (!sameHealthSession(owner, this.healthSession())) throw new ApiError('Account changed');
+      if (!(error instanceof ApiError) || error.status !== 401) throw error;
+      session = await this.ensureSession(session.accessToken);
+      if (!sameHealthSession(owner, this.healthSession())) throw new ApiError('Account changed');
+      result = await this.transport.prepareEcg(record, session);
+    }
+    if (!sameHealthSession(owner, this.healthSession())) throw new ApiError('Account changed');
+    return result;
+  }
+  async uploadGlobalHealthRecords(records: HealthRecord[], owner: HealthOwnerSession): Promise<string[]> {
+    if (!this.globalAuth || !sameHealthSession(owner, this.healthSession())) throw new ApiError('Account changed');
+    if (records.length > 200 || new Set(records.map((record) => record.id)).size !== records.length) throw new ApiError('Invalid batch');
+    const needsDaily = records.some((record) => !!record.aggregation);
+    let dailySupported = false;
+    if (needsDaily) {
+      const capabilities = await this.authorized(globalApiPath('/health/capabilities'));
+      const data = capabilities.data as Record<string, Object> | undefined;
+      dailySupported = data?.['dailySummaryVersions'] === true && data?.['dailySummaryVersion'] === 1;
+    }
+    if (!sameHealthSession(owner, this.healthSession())) throw new ApiError('Account changed');
+    const rows = records.map((record) => globalHealthRow(record, dailySupported)).filter((row) => row !== undefined);
+    if (!rows.length) return [];
+    if (!this.transport.hash) throw new ApiError('Hash unavailable');
+    const body = JSON.stringify({ records: rows });
+    const digest = await this.transport.hash(body);
+    if (!/^[a-f0-9]{64}$/.test(digest) || !sameHealthSession(owner, this.healthSession())) throw new ApiError('Invalid batch');
+    const response = await this.authorizedRequest(globalApiPath('/health/records/batch'), undefined, body, 'POST', 60000, `global-health-${digest}`);
+    if (!sameHealthSession(owner, this.healthSession())) throw new ApiError('Account changed');
+    return globalHealthAccepted(response.data, rows.map((row) => row.id));
+  }
   observeHealthSession(listener: (session: HealthOwnerSession) => void): void {
     this.healthSessionListener = listener; this.notifyHealthSession();
   }
@@ -103,6 +153,55 @@ export class AccountClient {
   }
   private assertEpoch(epoch: number): void {
     if (epoch !== this.generation) throw new ApiError('已忽略旧账号请求');
+  }
+  private async globalViewRead(path: string): Promise<Envelope> {
+    const epoch = this.generation;
+    const result = await this.authorized(globalApiPath(path)); this.assertEpoch(epoch); return result;
+  }
+  async globalCareRelationships(): Promise<GlobalCareMember[]> {
+    return globalCareMembers((await this.globalViewRead('/care/relationships')).data);
+  }
+  async globalEcg(record: HealthRecord, relationshipId?: string): Promise<GlobalEcgWaveform> {
+    if (record.metric !== 'ecg' || !record.id || record.id.length > 160 || !this.transport.waveform) throw new ApiError('波形暂不可用');
+    const epoch = this.generation;
+    const path = globalApiPath(relationshipId ? `/care/relationships/${globalViewId(relationshipId)}/health/${encodeURIComponent(record.id)}/ecg` : `/health/records/${encodeURIComponent(record.id)}/ecg`);
+    let session = await this.ensureSession(); this.assertEpoch(epoch);
+    let result: GlobalEcgWaveform;
+    try { result = await this.transport.waveform(path, session); }
+    catch (error) {
+      this.assertEpoch(epoch);
+      if (!(error instanceof ApiError) || error.status !== 401) throw error;
+      session = await this.ensureSession(session.accessToken); this.assertEpoch(epoch);
+      result = await this.transport.waveform(path, session);
+    }
+    this.assertEpoch(epoch);
+    return validateGlobalEcg(result.samples, result.sampleRateHz, result.sampleCount, result.sha256, record.waveformReference);
+  }
+  async globalEcgHistory(before: string = ''): Promise<{ records: HealthRecord[]; nextCursor: string; }> {
+    if (before.length > 512) throw new ApiError('记录暂不可用');
+    const data = viewObject((await this.globalViewRead(`/health/records?metric=ecg&limit=50${before ? '&before=' + encodeURIComponent(before) : ''}`)).data);
+    return { records: globalViewRecords(data['items'], 'own:server'), nextCursor: typeof data['nextCursor'] === 'string' ? data['nextCursor'] : '' };
+  }
+  async globalCareSummary(id: string): Promise<GlobalCareOverview> {
+    const data = viewObject((await this.globalViewRead(`/care/relationships/${globalViewId(id)}/summary`)).data);
+    if (!Array.isArray(data['metrics'])) throw new ApiError('加载失败，重试');
+    const metrics = data['metrics'].filter(x => typeof x === 'string') as string[];
+    const records = globalViewRecords(data['records'], `care:${id}`);
+    return { metrics, records };
+  }
+  async globalCareRecords(id: string, metric: string, from: number, to: number): Promise<HealthRecord[]> {
+    if (!/^[a-z_]+$/.test(metric) || !Number.isFinite(from) || !Number.isFinite(to) || from >= to) throw new ApiError('日期无效');
+    return globalViewRecords((await this.globalViewRead(`/care/relationships/${globalViewId(id)}/health?metric=${metric}&from=${encodeURIComponent(new Date(from).toISOString())}&to=${encodeURIComponent(new Date(to).toISOString())}`)).data, `care:${id}`);
+  }
+  async globalCareWrite(id: string, action: 'respond' | 'permissions' | 'revoke', value?: GlobalCareWrite): Promise<void> {
+    const epoch = this.generation; const path = globalApiPath(`/care/relationships/${globalViewId(id)}${action === 'revoke' ? '' : '/' + action}`);
+    await this.authorizedRequest(path, undefined, action === 'revoke' ? undefined : JSON.stringify(value), action === 'revoke' ? 'DELETE' : 'POST');
+    this.assertEpoch(epoch);
+  }
+  async globalCareInvite(identifier: string): Promise<void> {
+    const epoch = this.generation; const parsed = normalizeIdentifier(identifier.includes('@') ? 'email' : 'sms', identifier);
+    await this.authorizedRequest(globalApiPath('/care/invitations'), undefined, JSON.stringify({ identifier: parsed }), 'POST');
+    this.assertEpoch(epoch);
   }
 
   async restore(): Promise<Session | undefined> {
@@ -459,13 +558,13 @@ export class AccountClient {
   }
 
   private async authorizedRequest(path: string, fields?: FormField[], jsonBody?: string,
-    method?: 'GET' | 'POST' | 'PUT' | 'DELETE', readTimeoutMs?: number): Promise<Envelope> {
+    method?: 'GET' | 'POST' | 'PUT' | 'DELETE', readTimeoutMs?: number, idempotencyKey?: string): Promise<Envelope> {
     const epoch = this.generation;
     try {
       let session = await this.ensureSession();
       this.assertEpoch(epoch);
       let response: Envelope;
-      try { response = await this.transport.request(path, fields, session, jsonBody, method, readTimeoutMs); }
+      try { response = await this.transport.request(path, fields, session, jsonBody, method, readTimeoutMs, idempotencyKey); }
       catch (error) {
         this.assertEpoch(epoch);
         if (error instanceof ApiError) {
@@ -473,7 +572,7 @@ export class AccountClient {
         } else { throw new ApiError('请求失败，请稍后重试'); }
         session = await this.ensureSession(session.accessToken);
         this.assertEpoch(epoch);
-        response = await this.transport.request(path, fields, session, jsonBody, method, readTimeoutMs);
+        response = await this.transport.request(path, fields, session, jsonBody, method, readTimeoutMs, idempotencyKey);
       }
       this.assertEpoch(epoch);
       return response;
@@ -893,19 +992,26 @@ export class AccountClient {
   }
 
   async articles(): Promise<Article[]> {
+    if (this.globalAuth) return this.articlesByCategory(0);
     return parseArticles((await this.transport.request('/api/rf-article/article/index')).data);
   }
 
   async articleCategories(): Promise<ArticleCategory[]> {
+    if (this.globalAuth) return globalCategories((await this.transport.request(globalApiPath(`/content/categories?locale=${encodeURIComponent(currentAppLocale())}`))).data);
     return parseArticleCategories((await this.transport.request('/api/rf-article/article-cate/index?pid=3')).data);
   }
 
-  async articlesByCategory(categoryId: number): Promise<Article[]> {
+  async articlesByCategory(categoryId: number | string): Promise<Article[]> {
+    if (this.globalAuth) return globalArticles((await this.transport.request(globalApiPath(`/content/articles?locale=${encodeURIComponent(currentAppLocale())}&page=1&pageSize=30${categoryId ? '&categoryId=' + globalViewId(String(categoryId)) : ''}`))).data);
     if (!Number.isSafeInteger(categoryId) || categoryId < 0) throw new ApiError('健康分类无效');
     return parseArticles((await this.transport.request(`/api/rf-article/article/index?page=1${categoryId ? '&cate_id=' + categoryId : ''}`)).data);
   }
 
   async article(id: string, agreement: boolean): Promise<Article> {
+    if (this.globalAuth) {
+      if (agreement) throw new ApiError('请选择协议');
+      return globalArticle((await this.transport.request(globalApiPath(`/content/articles/${globalViewId(id)}?locale=${encodeURIComponent(currentAppLocale())}`))).data);
+    }
     if (!/^\d+$/.test(id)) throw new ApiError('内容编号不正确');
     const path = agreement ? '/api/rf-article/article-single/view' : '/api/rf-article/article/view';
     return parseArticle((await this.transport.request(`${path}?id=${encodeURIComponent(id)}`)).data);
