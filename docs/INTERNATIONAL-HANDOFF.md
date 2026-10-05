@@ -1,5 +1,8 @@
 # Saydian international — implementation handoff
 
+> Current cross-computer/release state: [CURRENT-HANDOFF.md](CURRENT-HANDOFF.md).
+> The September environment/version/gate snapshots below are historical, not current release acceptance.
+
 ## Start here: update before editing
 
 1. `git status --short --branch` and `git remote -v`.

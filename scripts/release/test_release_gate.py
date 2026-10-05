@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import base64
+import hashlib
 import importlib.util
 import json
 import os
@@ -34,6 +35,25 @@ XCODE_RELEASE_GATE = HERE / "validate_xcode_release.sh"
 
 
 class ReleaseGateTest(unittest.TestCase):
+    def test_verify_hashes_local_artifact_without_reading_it_all(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            payload = b"verified-package" * 140_000
+            digest = hashlib.sha256(payload).hexdigest()
+            release = self.android_release(build=24, sha=digest)
+            (root / "manifest.json").write_text(json.dumps(release), encoding="utf-8")
+            (root / "candidate.apk").write_bytes(payload)
+            args = argparse.Namespace(
+                manifest=str(root / "manifest.json"), version="0.2.1", build=24,
+                minimum_supported_build=23, sha256=digest,
+                apk_url=release["destination"]["url"], apk_file=str(root / "candidate.apk"),
+            )
+            with mock.patch.object(Path, "read_bytes", side_effect=AssertionError("whole-file read")):
+                gate.verify_manifest_command(args)
+                (root / "candidate.apk").write_bytes(b"corrupted")
+                with self.assertRaisesRegex(gate.GateError, "Local APK bytes"):
+                    gate.verify_manifest_command(args)
+
     def test_apk_numeric_resources_must_resolve_uniquely_from_actual_table(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             resources = Path(directory) / "resources.txt"

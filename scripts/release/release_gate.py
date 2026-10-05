@@ -446,7 +446,12 @@ def verify_manifest_command(args: argparse.Namespace) -> None:
     if destination.get("type") != "android_apk" or destination.get("url") != args.apk_url:
         fail("Manifest APK destination does not match the public release URL.")
     if args.apk_file:
-        digest = hashlib.sha256(Path(args.apk_file).read_bytes()).hexdigest()
+        # Hash large packages incrementally instead of allocating the whole APK.
+        with Path(args.apk_file).open("rb") as stream:
+            hasher = hashlib.sha256()
+            for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+                hasher.update(chunk)
+            digest = hasher.hexdigest()
         if digest != args.sha256.lower():
             fail("Local APK bytes do not match the manifest SHA-256.")
     print("Production Android manifest verification passed.")

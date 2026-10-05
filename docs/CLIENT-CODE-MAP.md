@@ -36,6 +36,15 @@ Outputs are `app-armeabi-v7a-sideload-release.apk` and `app-arm64-v8a-sideload-r
 
 This command creates internal QA packages with the existing QA signing/configuration; it does not publish a store release or deploy the server. Production signing, private configuration and release checks remain in `scripts/release`. SDKs, SQLCipher encryption, language resources and used assets are retained.
 
+## Portable source handoff
+
+`tool/handoff/portable_handoff.py` provides build / verify / import commands using Python and Git only.
+It uses committed App/server branches, explicit documents and the optionally verified 1013 IPA.
+Working-tree caches, ignored signing files and device containers are not copied. Existing archives/checkouts are refused rather than replaced.
+
+Run its local fixture suite with `python3 -m unittest discover -s tool/handoff -p 'test_*.py'`.
+Follow [CURRENT-HANDOFF.md](CURRENT-HANDOFF.md) for the live source/release distinction and clean-machine setup.
+
 ## Checks
 
 Run `dart format --output=none --set-exit-if-changed lib test`, `flutter analyze --no-pub` and the full Flutter tests. Build Debug and Release after functional changes. Preserve the implementation log and record actual installed-package checksum, UI and server byte verification separately from unit tests. Windows cannot substitute for macOS/iPhone acceptance.

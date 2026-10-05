@@ -2,4 +2,6 @@ include: package:flutter_lints/flutter.yaml
 
 analyzer:
   exclude:
+    # Ignored build outputs and one-off device probes are not project sources.
+    - build/**
     - third_party/**
