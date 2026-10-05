@@ -34,3 +34,12 @@
 - 编译后 Git diff 确认 lib、ios、android、pubspec.yaml/lock 无本轮差异；原正式 IPA SHA-256 仍为 14363daa2d17155ba08ba4437b6f624dfa482d4b8aba0575d3243a3c0b094d45。未安装/驱动设备，不构建新正式 IPA，不重跑 Android 原生手机测试或鸿蒙任务；本轮发布 Python 门禁为完整 25/25。
 - 服务端仅只读保留当前 main a9a884a；公开 /global/health/ready 读回同 revision，ready/database=ok。没有服务端源码修改、部署、后台表单保存或健康数据写入。
 - 提交使用 skip-ci：本轮维护工具/分析范围/说明，运行时和工作流未变，本机全部上述门禁已实际执行；避免触发用户停止的其他平台任务，不据此宣布远端 CI 通过。普通交接 ZIP 不上传 Public GitHub 附件。
+
+## 真实交接包预验收
+
+- 工具提交 520e8877e5673b94fd9740941375313dd35f1d7f 已正常推送；本地 HEAD 与 origin 当前分支一致、工作树干净。
+- 用真实 App 与服务端 main a9a884a 构建 Health-preflight.zip，并携带已有正式 1013 IPA；原材料保持只读。
+- unzip -tq 通过；从该 ZIP 解压出的 IMPORT.py verify 全文件和 Bundle refs 校验通过。
+- 从该 ZIP 的实际解压内容离线导入两个全新目录，App HEAD=520e887、Server HEAD=a9a884a；Git fsck、干净工作树、远端恢复均通过。
+- 本条只是追加真实回执，不修改已验证的维护工具或运行时。最终交接包须在本记录提交后重新生成、重新从最终 ZIP 导入验收，不能把预验收包当最终包。
+- 最终 ZIP 的独立 SHA-256 与验收回执作为包旁附件交付；不把大包、历史安装包或敏感配置写入 Git。回执不循环回写源码/归档，最终源码 ID 以 manifest.json 为准。
