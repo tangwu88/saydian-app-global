@@ -1563,7 +1563,7 @@ struct Index {
 
   private todayText(): string {
     const today = new Date();
-    return `${today.getMonth() + 1}月${today.getDate()}日`;
+    return today.toLocaleDateString(this.appLocale, { month: 'short', day: 'numeric' });
   }
 
   private openDeviceSearch(): void {
