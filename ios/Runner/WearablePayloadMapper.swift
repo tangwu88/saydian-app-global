@@ -1,5 +1,45 @@
 import Foundation
 
+/// All iOS builds/accounts use this scope. No remote or review-only override.
+enum IOSWellnessPolicy {
+  static let metrics: Set<String> = ["steps", "distance", "calories", "sleep"]
+  static let blockedFeatures: Set<String> = ["health_monitoring", "health_assessment", "health_reminders"]
+  static let blockedEB1Commands: Set<UInt8> = [0x14, 0x15, 0x16, 0x2c, 0x2d, 0x32, 0x34, 0x35, 0x36, 0x38, 0x39, 0x3a]
+
+  static func capabilities(_ original: [String: Any]) -> [String: Any] {
+    var value = original
+    value["metrics"] = (original["metrics"] as? [String] ?? []).filter { metrics.contains($0) }
+    value["manualMetrics"] = [String]()
+    value["stoppableManualMetrics"] = [String]()
+    for key in ["features", "integratedFeatures"] {
+      value[key] = (original[key] as? [String] ?? []).filter { !blockedFeatures.contains($0) }
+    }
+    return value
+  }
+
+  static func record(_ original: [String: Any]) -> [String: Any]? {
+    guard let type = original["type"] as? String, metrics.contains(type) else { return nil }
+    let keys: Set<String> = type == "sleep"
+      ? ["value", "hours", "deepHours", "lightHours", "remHours", "awakeMinutes", "wakeCount"] : ["value"]
+    let recordKeys: Set<String> = ["id", "type", "unit", "measuredAt", "timezone", "deviceId", "firmwareVersion", "source", "origin", "rawVersion", "aggregation", "sourceModel"]
+    var value = original.filter { recordKeys.contains($0.key) }
+    value["values"] = (original["values"] as? [String: Any] ?? [:]).filter { keys.contains($0.key) }
+    value["quality"] = "unknown"
+    return value
+  }
+
+  static func event(type: String, payload: [String: Any]) -> [String: Any]? {
+    if type == "healthRecord" { return record(payload) }
+    if type.hasPrefix("measurement") || type.lowercased().contains("ecg") { return nil }
+    if type == "capabilitiesUpdated" { return capabilities(payload) }
+    if type == "sportData" {
+      let keys: Set<String> = ["durationSeconds", "distanceKm", "distanceMeters", "calories", "caloriesCal", "steps", "speed", "pace"]
+      return payload.filter { keys.contains($0.key) }
+    }
+    return payload
+  }
+}
+
 enum WearableSportMode: Equatable {
   case outdoorRun
   case outdoorWalk
@@ -8,6 +48,18 @@ enum WearableSportMode: Equatable {
 }
 
 enum WearablePayloadMapper {
+  /// The SDK supplies a date-level activity/sleep total, not a reading at noon. The
+  /// incoming payload is stamped at read time; its date remains explicit.
+  /// AppController persists immutable daily versions and deduplicates retries.
+  static func activityDailySummary(_ original: [String: Any], localDate: String) -> [String: Any] {
+    var value = original
+    let deviceID = original["deviceId"] as? String ?? ""
+    let type = original["type"] as? String ?? ""
+    value["id"] = "\(deviceID):\(type):daily:\(localDate)"
+    value["aggregation"] = ["kind": "daily_summary", "localDate": localDate]
+    return value
+  }
+
   static func sportMode(_ wireName: String) -> WearableSportMode? {
     switch wireName {
     case "running": .outdoorRun

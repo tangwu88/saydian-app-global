@@ -1305,6 +1305,12 @@ struct IOSWechatAuthState {
       return
     }
     let arguments = call.arguments as? [String: Any]
+    if ["startMeasurement", "stopMeasurement", "setAutoMeasureSetting", "setAutoMeasureInterval", "setHeartRateWarning"].contains(call.method)
+      || (["readDeviceFeature", "writeDeviceFeature", "triggerDeviceAction"].contains(call.method)
+        && IOSWellnessPolicy.blockedFeatures.contains(arguments?["feature"] as? String ?? "")) {
+      result(FlutterError(code: "IOS_WELLNESS_SCOPE", message: "Not available in this iOS edition.", details: nil))
+      return
+    }
     switch call.method {
     case "scanDevices":
       adapter.scanDevices(result)
@@ -1330,9 +1336,15 @@ struct IOSWechatAuthState {
         result: result
       )
     case "getCapabilities":
-      result(adapter.capabilities())
+      result(IOSWellnessPolicy.capabilities(adapter.capabilities()))
     case "syncHealthData":
-      adapter.syncHealthData(cursor: arguments?["cursor"] as? String, result: result)
+      adapter.syncHealthData(cursor: arguments?["cursor"] as? String) { payload in
+        if let rows = payload as? [[String: Any]] {
+          result(rows.compactMap(IOSWellnessPolicy.record))
+        } else {
+          result(payload)
+        }
+      }
     case "startMeasurement":
       adapter.startMeasurement(arguments?["metric"] as? String ?? "", result: result)
     case "stopMeasurement":
@@ -1344,7 +1356,7 @@ struct IOSWechatAuthState {
     case "readSportRecords":
       adapter.readSportRecords(result)
     case "readAutoMeasureSettings":
-      adapter.readAutoMeasureSettings(result)
+      result([String: Bool]())
     case "setAutoMeasureSetting":
       adapter.setAutoMeasureSetting(
         arguments?["type"] as? String ?? "",
@@ -1352,7 +1364,7 @@ struct IOSWechatAuthState {
         result: result
       )
     case "readHeartRateWarning":
-      adapter.readHeartRateWarning(result)
+      result(nil)
     case "setHeartRateWarning":
       adapter.setHeartRateWarning(arguments?["value"] as? Int ?? 120, result: result)
     case "readDeviceFeature":
@@ -3018,11 +3030,11 @@ private final class VeepooWearableAdapter: WearableAdapter {
     guard let model = connected else { return [] }
     let tableID = model.deviceAddress
     let days = max(Int(model.saveDays), 1)
+    let observedAt = Date()
     var records: [[String: Any]] = []
     for offset in 0..<days {
-      guard let date = Calendar.current.date(byAdding: .day, value: -offset, to: Date()) else { continue }
+      guard let date = Calendar.current.date(byAdding: .day, value: -offset, to: observedAt) else { continue }
       let dateString = Self.dayFormatter.string(from: date)
-      let dayAtNoon = Self.parseDate("\(dateString) 12:00") ?? date
 
       VPDataBaseOperation.veepooSDKGetStepData(
         withDate: dateString,
@@ -3031,13 +3043,13 @@ private final class VeepooWearableAdapter: WearableAdapter {
       ) { [weak self] dictionary in
         guard let self, let dictionary else { return }
         if let value = Self.number(dictionary["Step"]), value.doubleValue > 0 {
-          records.append(self.record(type: "steps", values: ["value": value], unit: "步", at: dayAtNoon))
+          records.append(self.activityRecord(type: "steps", values: ["value": value], unit: "步", localDate: dateString, observedAt: observedAt))
         }
         if let value = Self.number(dictionary["Dis"]), value.doubleValue > 0 {
-          records.append(self.record(type: "distance", values: ["value": value], unit: "km", at: dayAtNoon))
+          records.append(self.activityRecord(type: "distance", values: ["value": value], unit: "km", localDate: dateString, observedAt: observedAt))
         }
         if let value = Self.number(dictionary["Cal"]), value.doubleValue > 0 {
-          records.append(self.record(type: "calories", values: ["value": value], unit: "kcal", at: dayAtNoon))
+          records.append(self.activityRecord(type: "calories", values: ["value": value], unit: "kcal", localDate: dateString, observedAt: observedAt))
         }
       }
 
@@ -3048,20 +3060,19 @@ private final class VeepooWearableAdapter: WearableAdapter {
         var daySteps = 0.0
         var dayDistance = 0.0
         var dayCalories = 0.0
-        for (time, item) in heartData {
-          if let value = Self.number(item["heartValue"]), value.doubleValue > 0 {
-            records.append(record(type: "heart_rate", values: ["value": value], unit: "bpm", at: Self.parseDate("\(dateString) \(time)") ?? date))
-          }
+        // This combined SDK table also carries activity; ignore physiology.
+        for item in heartData.values {
           daySteps += Self.number(item["stepValue"])?.doubleValue ?? 0
           dayDistance += Self.number(item["disValue"])?.doubleValue ?? 0
           dayCalories += Self.number(item["calValue"])?.doubleValue ?? 0
         }
-        if daySteps > 0 { records.append(record(type: "steps", values: ["value": NSNumber(value: daySteps)], unit: "步", at: dayAtNoon)) }
-        if dayDistance > 0 { records.append(record(type: "distance", values: ["value": NSNumber(value: dayDistance)], unit: "km", at: dayAtNoon)) }
-        if dayCalories > 0 { records.append(record(type: "calories", values: ["value": NSNumber(value: dayCalories)], unit: "kcal", at: dayAtNoon)) }
+        if daySteps > 0 { records.append(activityRecord(type: "steps", values: ["value": NSNumber(value: daySteps)], unit: "步", localDate: dateString, observedAt: observedAt)) }
+        if dayDistance > 0 { records.append(activityRecord(type: "distance", values: ["value": NSNumber(value: dayDistance)], unit: "km", localDate: dateString, observedAt: observedAt)) }
+        if dayCalories > 0 { records.append(activityRecord(type: "calories", values: ["value": NSNumber(value: dayCalories)], unit: "kcal", localDate: dateString, observedAt: observedAt)) }
       }
 
-      if let bloodData = VPDataBaseOperation.veepooSDKGetBloodData(withDate: dateString, andTableID: tableID) as? [[String: Any]] {
+      if IOSWellnessPolicy.metrics.contains("blood_pressure"),
+         let bloodData = VPDataBaseOperation.veepooSDKGetBloodData(withDate: dateString, andTableID: tableID) as? [[String: Any]] {
         for item in bloodData {
           guard let high = Self.number(item["systolic"]), let low = Self.number(item["diastolic"]), high.doubleValue > 0, low.doubleValue > 0 else { continue }
           let at = Self.parseDate("\(dateString) \(item["Time"] as? String ?? "12:00")") ?? date
@@ -3075,16 +3086,20 @@ private final class VeepooWearableAdapter: WearableAdapter {
           let minutes = Self.number(item["SLE_MINUTE"])?.doubleValue ?? 0
           let duration = hours + minutes / 60.0
           guard duration > 0 else { continue }
-          let at = Self.parseDate(item["SLEEP_TIME"] as? String ?? "") ?? dayAtNoon
+          let at = Self.parseDate(item["SLEEP_TIME"] as? String ?? "")
           var values: [String: NSNumber] = ["value": NSNumber(value: duration)]
           if let deep = Self.number(item["DEEP_HOUR"]), deep.doubleValue >= 0 { values["deepHours"] = deep }
           if let light = Self.number(item["LIGHT_HOUR"]), light.doubleValue >= 0 { values["lightHours"] = light }
           if let wake = Self.number(item["WakeUpTime"]), wake.intValue >= 0 { values["wakeCount"] = wake }
-          records.append(record(type: "sleep", values: values, unit: "h", at: at))
+          if let at {
+            records.append(record(type: "sleep", values: values, unit: "h", at: at))
+          } else {
+            records.append(activityRecord(type: "sleep", values: values, unit: "h", localDate: dateString, observedAt: observedAt))
+          }
         }
       }
 
-      if model.oxygenType > 0,
+      if IOSWellnessPolicy.metrics.contains("blood_oxygen"), model.oxygenType > 0,
          let oxygenData = VPDataBaseOperation.veepooSDKGetDeviceOxygenData(withDate: dateString, andTableID: tableID) as? [[String: Any]] {
         for item in oxygenData {
           guard let value = Self.number(item["oxygenValue"] ?? item["Oxygen"]), value.doubleValue > 0 else { continue }
@@ -3093,7 +3108,7 @@ private final class VeepooWearableAdapter: WearableAdapter {
         }
       }
 
-      if model.temperatureType > 0,
+      if IOSWellnessPolicy.metrics.contains("body_temperature"), model.temperatureType > 0,
          let temperatureData = VPDataBaseOperation.veepooSDKGetDeviceTemperatureData(withDate: dateString, andTableID: tableID) as? [[String: Any]] {
         for item in temperatureData {
           guard let value = Self.number(item["value"]), value.doubleValue > 0 else { continue }
@@ -3104,7 +3119,7 @@ private final class VeepooWearableAdapter: WearableAdapter {
         }
       }
 
-      if model.hrvType > 0,
+      if IOSWellnessPolicy.metrics.contains("hrv"), model.hrvType > 0,
          let hrvData = VPDataBaseOperation.veepooSDKGetDeviceHrvData(withDate: dateString, andTableID: tableID) as? [[String: Any]] {
         for item in hrvData {
           guard let value = Self.number(item["hrvValue"] ?? item["HRV"]), value.doubleValue > 0 else { continue }
@@ -3113,7 +3128,7 @@ private final class VeepooWearableAdapter: WearableAdapter {
         }
       }
 
-      if model.bloodGlucoseType > 0,
+      if IOSWellnessPolicy.metrics.contains("blood_glucose"), model.bloodGlucoseType > 0,
          let glucoseData = VPDataBaseOperation.veepooSDKGetDeviceBloodGlucoseData(withDate: dateString, andTableID: tableID) as? [[String: Any]] {
         for item in glucoseData {
           let time = item["time"] as? String ?? "12:00"
@@ -3127,7 +3142,7 @@ private final class VeepooWearableAdapter: WearableAdapter {
         }
       }
 
-      if model.ecgType > 0,
+      if IOSWellnessPolicy.metrics.contains("ecg"), model.ecgType > 0,
          let ecgData = VPDataBaseOperation.veepooSDKGetDeviceOffStoreECG(withDate: dateString, andTableID: tableID) {
         for item in ecgData {
           let values = ecgValues(item)
@@ -3148,7 +3163,7 @@ private final class VeepooWearableAdapter: WearableAdapter {
         }
       }
 
-      if model.bodyCompositionType > 0,
+      if IOSWellnessPolicy.metrics.contains("body_composition"), model.bodyCompositionType > 0,
          let bodyData = VPDataBaseOperation.veepooSDKGetDeviceOffStoreBodyComposition(withDate: dateString, andTableID: tableID) {
         for item in bodyData {
           let values = bodyCompositionValues(item)
@@ -3160,7 +3175,7 @@ private final class VeepooWearableAdapter: WearableAdapter {
         }
       }
 
-      if model.bloodAnalysisType > 0 {
+      if IOSWellnessPolicy.metrics.contains("blood_composition"), model.bloodAnalysisType > 0 {
         let bloodData = VPDataBaseOperation.veepooSDKGetDeviceBloodAnalysisData(withDate: dateString, andTableID: tableID) ?? []
         for item in bloodData {
           let groups: [(String, [String])] = [
@@ -3185,6 +3200,19 @@ private final class VeepooWearableAdapter: WearableAdapter {
       }
     }
     return Dictionary(grouping: records, by: { $0["id"] as? String ?? UUID().uuidString }).compactMap { $0.value.first }
+  }
+
+  private func activityRecord(
+    type: String,
+    values: [String: NSNumber],
+    unit: String,
+    localDate: String,
+    observedAt: Date
+  ) -> [String: Any] {
+    WearablePayloadMapper.activityDailySummary(
+      record(type: type, values: values, unit: unit, at: observedAt),
+      localDate: localDate
+    )
   }
 
   private func emitRecord(
@@ -5246,6 +5274,7 @@ private final class WearableStreamHandler: NSObject, FlutterStreamHandler {
   }
 
   func emit(type: String, payload: [String: Any]) {
+    guard let payload = IOSWellnessPolicy.event(type: type, payload: payload) else { return }
     DispatchQueue.main.async { [weak self] in
       self?.eventSink?(["type": type, "payload": payload])
     }

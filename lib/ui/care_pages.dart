@@ -1,9 +1,10 @@
 part of 'pages.dart';
 
 class CarePage extends StatefulWidget {
-  const CarePage({required this.controller, super.key});
+  const CarePage({required this.controller, this.showTitle = true, super.key});
 
   final AppController controller;
+  final bool showTitle;
 
   @override
   State<CarePage> createState() => _CarePageState();
@@ -25,7 +26,10 @@ class _CarePageState extends State<CarePage> {
 
   @override
   Widget build(BuildContext context) => widget.controller.isGlobalEdition
-      ? GlobalCarePage(controller: widget.controller)
+      ? GlobalCarePage(
+          controller: widget.controller,
+          showTitle: widget.showTitle,
+        )
       : ListenableBuilder(
           listenable: widget.controller,
           builder: (context, _) {

@@ -45,6 +45,43 @@ Widget localizedHost(GlobalLocaleController controller) => GlobalLocaleScope(
 
 void main() {
   test(
+    'wellness disclaimer requires doctor advice before medical decisions',
+    () {
+      const decisionWarnings = <String, String>{
+        'en': 'Consult a doctor before making any medical decisions.',
+        'zh_Hans': '作出任何医疗决定前，请先咨询医生',
+        'zh_Hant': '作出任何醫療決定前，請先諮詢醫生',
+        'de': 'bevor Sie medizinische Entscheidungen treffen',
+        'es': 'antes de tomar cualquier decisión médica',
+        'fr': 'avant toute décision médicale',
+        'ja': '医療に関する判断を行う前に',
+        'ko': '의료 관련 결정을 내리기 전에',
+      };
+      for (final locale in GlobalLocaleController.supportedLocales) {
+        final suffix = locale.toLanguageTag().replaceAll('-', '_');
+        final catalog =
+            jsonDecode(File('lib/l10n/app_$suffix.arb').readAsStringSync())
+                as Map<String, dynamic>;
+        final disclaimer = catalog['healthDisclaimer'] as String;
+        expect(disclaimer, contains(decisionWarnings[suffix]!), reason: suffix);
+        expect(
+          lookupAppLocalizations(locale).healthDisclaimer,
+          disclaimer,
+          reason:
+              'The generated runtime warning must match the ARB in $suffix.',
+        );
+      }
+      final chinese =
+          jsonDecode(File('lib/l10n/app_zh.arb').readAsStringSync())
+              as Map<String, dynamic>;
+      expect(
+        chinese['healthDisclaimer'],
+        contains(decisionWarnings['zh_Hans']!),
+      );
+    },
+  );
+
+  test(
     'all eight declared languages have the complete key set and real translated labels',
     () {
       final base =

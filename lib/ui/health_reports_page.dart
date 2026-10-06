@@ -11,6 +11,7 @@ import '../domain/health_report_models.dart';
 import '../services/app_controller.dart';
 import '../services/app_payment_bridge.dart';
 import 'app_theme.dart';
+import 'ios_wellness_scope.dart';
 
 String _reportCopy(BuildContext context, String english, String chinese) =>
     Localizations.localeOf(context).languageCode == 'zh' ? chinese : english;
@@ -47,7 +48,7 @@ class _HealthProfilePageState extends State<HealthProfilePage>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    unawaited(_load());
+    if (!widget.controller.isIosWellnessEdition) unawaited(_load());
   }
 
   @override
@@ -599,6 +600,9 @@ class _HealthProfilePageState extends State<HealthProfilePage>
 
   @override
   Widget build(BuildContext context) {
+    if (widget.controller.isIosWellnessEdition) {
+      return const IosWellnessUnavailablePage();
+    }
     return Scaffold(
       appBar: AppBar(
         title: Text(context.l10n.healthProfile),
@@ -736,7 +740,7 @@ class _HealthReportDetailPageState extends State<HealthReportDetailPage> {
   @override
   void initState() {
     super.initState();
-    unawaited(_load());
+    if (!widget.controller.isIosWellnessEdition) unawaited(_load());
   }
 
   Future<void> _load() async {
@@ -820,6 +824,9 @@ class _HealthReportDetailPageState extends State<HealthReportDetailPage> {
 
   @override
   Widget build(BuildContext context) {
+    if (widget.controller.isIosWellnessEdition) {
+      return const IosWellnessUnavailablePage();
+    }
     final content = _map(_payload?['content']);
     final trends = _maps(content['trends']);
     final suggestions = _strings(content['suggestions']);

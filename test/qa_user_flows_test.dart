@@ -410,9 +410,9 @@ void main() {
           syncRecords: [
             HealthRecord(
               id: 'record-1',
-              metric: HealthMetric.heartRate,
-              values: const {'value': 72},
-              unit: 'bpm',
+              metric: HealthMetric.steps,
+              values: const {'value': 720},
+              unit: '步',
               measuredAt: DateTime.utc(2026, 8, 13),
               timezone: '+08:00',
               deviceId: 'QA:WATCH:01',

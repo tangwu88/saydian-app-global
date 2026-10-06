@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import '../domain/feature_models.dart';
 import '../domain/ecg_waveform.dart';
 import '../domain/models.dart';
+import '../domain/ios_wellness_policy.dart';
 import 'global_storage_scope.dart';
 import 'wearable_bridge.dart';
 import 'wearable_routing.dart';
@@ -475,9 +476,11 @@ class YuchengWearableBridge
     for (final type in [
       YuchengHealthDataType.step,
       YuchengHealthDataType.sleep,
-      YuchengHealthDataType.heartRate,
-      YuchengHealthDataType.bloodPressure,
-      YuchengHealthDataType.combined,
+      if (!IosWellnessPolicy.current.enabled) ...[
+        YuchengHealthDataType.heartRate,
+        YuchengHealthDataType.bloodPressure,
+        YuchengHealthDataType.combined,
+      ],
     ]) {
       final result = await _client
           .health(type)
@@ -510,6 +513,12 @@ class YuchengWearableBridge
   };
   @override
   Future<void> startMeasurement(HealthMetric metric) async {
+    if (IosWellnessPolicy.current.enabled) {
+      throw PlatformException(
+        code: 'IOS_WELLNESS_SCOPE',
+        message: 'Not available in this iOS edition.',
+      );
+    }
     _connectedId;
     if (metric == HealthMetric.ecg) {
       await _startEcg();
@@ -925,7 +934,7 @@ class YuchengWearableBridge
       PlatformException(code: 'FEATURE_UNSUPPORTED', message: message);
 
   void _handleEvent(Map<String, Object?> event) {
-    if (_handleEcgEvent(event)) return;
+    if (!IosWellnessPolicy.current.enabled && _handleEcgEvent(event)) return;
     const nativeEventTypes = <String>{
       'bluetoothStateChange',
       'deviceRealHeartRate',
@@ -949,6 +958,12 @@ class YuchengWearableBridge
                 orElse: () => null,
               ) ??
               '';
+    if (IosWellnessPolicy.current.enabled &&
+        (type.startsWith('deviceReal') && type != 'deviceRealSport' ||
+            type == 'deviceHealthDataMeasureStateChange' ||
+            type.toLowerCase().contains('ecg'))) {
+      return;
+    }
     final rawPayload = event['data'] ?? event[type];
     final payload = rawPayload is Map
         ? rawPayload.map((k, v) => MapEntry('$k', v))

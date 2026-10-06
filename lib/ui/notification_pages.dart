@@ -299,6 +299,12 @@ class _NotificationDetailPageState extends State<NotificationDetailPage> {
 
   Future<void> _load() async {
     if (widget.initial['_localNotification'] == true) return;
+    if (widget.controller.isIosWellnessEdition &&
+        (widget.initial['kind'] == 'health_warning' ||
+            widget.initial['_eventType'] ==
+                NotificationEventType.healthWarning.name)) {
+      return;
+    }
     final value = await widget.controller.loadNotification(widget.id);
     if (mounted && value.isNotEmpty) setState(() => _value = value);
   }
@@ -308,7 +314,12 @@ class _NotificationDetailPageState extends State<NotificationDetailPage> {
     final title = '${_value['title'] ?? _value['name'] ?? '消息详情'}';
     final raw = '${_value['content'] ?? _value['description'] ?? ''}';
     final content = _resolveNotificationContent(_value, raw);
-    final isHealthWarning = _value['kind'] == 'health_warning';
+    final isHealthWarning =
+        _value['kind'] == 'health_warning' ||
+        _value['_eventType'] == NotificationEventType.healthWarning.name;
+    if (widget.controller.isIosWellnessEdition && isHealthWarning) {
+      return const IosWellnessUnavailablePage();
+    }
     final createdAt = '${_value['created_at'] ?? _value['createdAt'] ?? ''}';
     return Scaffold(
       appBar: AppBar(title: Text(context.l10n.messageDetails)),

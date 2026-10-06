@@ -184,7 +184,10 @@ class SettingsPage extends StatelessWidget {
                   context,
                   Scaffold(
                     appBar: AppBar(title: Text(context.l10n.remoteCare)),
-                    body: CarePage(controller: controller),
+                    body: CarePage(
+                      controller: controller,
+                      showTitle: !controller.isIosWellnessEdition,
+                    ),
                   ),
                 ),
               ),

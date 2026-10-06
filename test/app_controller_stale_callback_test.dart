@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:saydian_app/domain/models.dart';
@@ -366,6 +367,32 @@ void main() {
     },
   );
 
+  test(
+    'iOS repeated daily sync ignores preserved sleep-only extra fields',
+    () async {
+      debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+      addTearDown(() => debugDefaultTargetPlatformOverride = null);
+      final store = MemoryHealthStore();
+      final fixture = await setup(store: store);
+      final original = HealthRecord.fromJson({
+        ..._record(daily: true).toJson(),
+        'id': 'synthetic-sleep-original',
+        'type': 'sleep',
+        'unit': 'h',
+        'values': {'value': 7, 'sleepScore': 90, 'heartRate': 70},
+      });
+      await store.upsert([original]);
+      fixture.wearable.records = [original.copyWith(id: 'synthetic-received')];
+      expect(await fixture.controller.syncDeviceData(), isTrue);
+      expect(await fixture.controller.syncDeviceData(), isTrue);
+      final retained = await store.recent(limit: 100);
+      expect(retained, hasLength(1));
+      expect(retained.single.id, original.id);
+      expect(retained.single.values, original.values);
+      expect(fixture.controller.healthRecords.single.values, {'value': 7});
+    },
+  );
+
   test('held daily summaries are pending rather than cloud complete', () async {
     final store = MemoryHealthStore();
     final fixture = await setup(store: store);
@@ -481,6 +508,7 @@ class _Wearable extends Fake
   final eventsController = StreamController<WearableEvent>.broadcast();
   int syncCount = 0;
   Object? syncError;
+  List<HealthRecord> records = const [];
   Future<DeviceInfo?>? details;
   @override
   Stream<WearableEvent> get events => eventsController.stream;
@@ -513,7 +541,7 @@ class _Wearable extends Fake
     syncCount++;
     final error = syncError;
     if (error != null) throw error;
-    return const [];
+    return records;
   }
 
   @override

@@ -6,6 +6,36 @@ import XCTest
 
 class RunnerTests: XCTestCase {
 
+  func testActivityDailyTotalPreservesReadTimeAndLocalDateWithoutInventingNoon() {
+    let original: [String: Any] = ["id": "synthetic", "type": "steps",
+      "deviceId": "synthetic-device", "measuredAt": "2026-10-06T17:00:00.000Z",
+      "timezone": "+08:00", "values": ["value": 20]]
+    let summary = WearablePayloadMapper.activityDailySummary(original, localDate: "2026-10-07")
+    XCTAssertEqual(summary["measuredAt"] as? String, original["measuredAt"] as? String)
+    XCTAssertEqual(summary["values"] as? [String: Int], ["value": 20])
+    XCTAssertEqual(summary["aggregation"] as? [String: String], ["kind": "daily_summary", "localDate": "2026-10-07"])
+    XCTAssertEqual(summary["id"] as? String, "synthetic-device:steps:daily:2026-10-07")
+    XCTAssertNil(original["aggregation"])
+    XCTAssertEqual(original["id"] as? String, "synthetic")
+  }
+
+  func testIOSActivitySleepScopeRejectsPhysiologyAndPreservesOriginalSleep() throws {
+    let original: [String: Any] = ["id": "synthetic", "type": "sleep",
+      "values": ["value": 7, "deepHours": 2, "sleepScore": 90, "heartRate": 70],
+      "samples": [1, 2]]
+    let projected = try XCTUnwrap(IOSWellnessPolicy.record(original))
+    XCTAssertEqual(projected["values"] as? [String: Int], ["value": 7, "deepHours": 2])
+    XCTAssertNil(projected["samples"])
+    XCTAssertEqual((original["values"] as? [String: Int])?["sleepScore"], 90)
+    XCTAssertNil(IOSWellnessPolicy.record(["type": "heart_rate"]))
+    XCTAssertNil(IOSWellnessPolicy.record(["type": "unknown_sensor"]))
+    XCTAssertNil(IOSWellnessPolicy.event(type: "measurementProgress", payload: [:]))
+    XCTAssertTrue(IOSWellnessPolicy.blockedEB1Commands.contains(0x14))
+    XCTAssertTrue(IOSWellnessPolicy.blockedEB1Commands.contains(0x16))
+    XCTAssertTrue(IOSWellnessPolicy.blockedEB1Commands.contains(0x2c))
+    XCTAssertFalse(IOSWellnessPolicy.blockedEB1Commands.contains(0x07))
+  }
+
   func testHistoricalRecordUsesObservationDateTimezone() throws {
     let formatter = ISO8601DateFormatter()
     let zone = try XCTUnwrap(TimeZone(identifier: "America/New_York"))

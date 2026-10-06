@@ -105,6 +105,10 @@ final class UrionGattTransport: NSObject, FlutterStreamHandler, CBCentralManager
     case "writeFrame":
       let arguments = call.arguments as? [String: Any]
       let bytes = arguments?["bytes"] as? FlutterStandardTypedData
+      if let command = bytes?.data.first, IOSWellnessPolicy.blockedEB1Commands.contains(command) {
+        result(FlutterError(code: "IOS_WELLNESS_SCOPE", message: "Not available in this iOS edition.", details: nil))
+        return
+      }
       guard let peripheral = active, let characteristic = writer,
         let bytes, bytes.data.count == 16, pendingWrite == nil else {
         result(FlutterError(code: "WRITE_UNAVAILABLE", message: "手表暂时无响应，请重试", details: nil))

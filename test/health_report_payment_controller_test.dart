@@ -14,7 +14,7 @@ void main() {
   tearDown(() => debugDefaultTargetPlatformOverride = null);
 
   test(
-    'Apple transaction finishes only after server confirms success',
+    'iOS wellness does not initiate a report purchase even with a successful provider',
     () async {
       debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
       final api = _HealthPaymentApi(
@@ -24,21 +24,22 @@ void main() {
       final controller = _controller(api: api, storeKit: storeKit);
       addTearDown(controller.dispose);
 
-      final result = await controller.startHealthPurchase(
-        offer: _singleOffer,
-        report: _awaitingReport,
+      await expectLater(
+        controller.startHealthPurchase(
+          offer: _singleOffer,
+          report: _awaitingReport,
+        ),
+        throwsA(isA<FeatureNotConfiguredException>()),
       );
-
-      expect(result.state, HealthPurchaseFlowState.succeeded);
-      expect(api.lastChannel, 'apple_iap');
-      expect(api.lastSignedTransaction, 'signed-jws');
-      expect(storeKit.purchasedAccountToken, _paymentId);
-      expect(storeKit.finished, ['transaction-1']);
+      expect(api.lastChannel, isNull);
+      expect(api.verifyCalls, 0);
+      expect(storeKit.purchasedAccountToken, isNull);
+      expect(storeKit.finished, isEmpty);
     },
   );
 
   test(
-    'Apple transaction remains unfinished while server confirmation is pending',
+    'iOS wellness leaves StoreKit untouched when the provider is pending',
     () async {
       debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
       final api = _HealthPaymentApi(verifyStatus: HealthPaymentStatus.pending);
@@ -46,12 +47,16 @@ void main() {
       final controller = _controller(api: api, storeKit: storeKit);
       addTearDown(controller.dispose);
 
-      final result = await controller.startHealthPurchase(
-        offer: _singleOffer,
-        report: _awaitingReport,
+      await expectLater(
+        controller.startHealthPurchase(
+          offer: _singleOffer,
+          report: _awaitingReport,
+        ),
+        throwsA(isA<FeatureNotConfiguredException>()),
       );
-
-      expect(result.state, HealthPurchaseFlowState.awaitingConfirmation);
+      expect(api.lastChannel, isNull);
+      expect(api.verifyCalls, 0);
+      expect(storeKit.purchasedAccountToken, isNull);
       expect(storeKit.finished, isEmpty);
     },
   );

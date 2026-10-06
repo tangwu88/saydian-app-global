@@ -726,6 +726,15 @@ class HealthRecord {
   /// Bluetooth display names are not verified models and must not be copied.
   final String sourceModel;
 
+  /// Display ordering for a daily total uses its calendar day, not the later
+  /// instant when that immutable version was read. Transport keeps measuredAt.
+  DateTime get displaySortTime {
+    final day = aggregation?.localDate;
+    if (day == null) return measuredAt;
+    return DateTime.tryParse('${day}T00:00:00$timezone')?.toUtc() ??
+        DateTime.parse('${day}T00:00:00Z');
+  }
+
   factory HealthRecord.fromJson(Map<String, Object?> json) {
     final rawValues = json['values'];
     final source = MeasurementSource.values.firstWhere(

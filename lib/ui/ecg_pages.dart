@@ -29,6 +29,9 @@ class HealthRecordDetailPage extends StatelessWidget {
   }
 
   Widget _buildRecord(BuildContext context) {
+    final projected = controller.wellnessPolicy.projectRecord(this.record);
+    if (projected == null) return const IosWellnessUnavailablePage();
+    final record = projected;
     if (record.metric == HealthMetric.ecg) {
       return _EcgRecordDetailPage(
         record: record,
@@ -37,7 +40,9 @@ class HealthRecordDetailPage extends StatelessWidget {
       );
     }
     final time = HealthAnalysisService.displayTime(record);
-    final date = Localizations.localeOf(context).languageCode == 'zh'
+    final date = record.aggregation != null
+        ? DateFormat.yMMMd(context.l10n.localeName).format(time)
+        : Localizations.localeOf(context).languageCode == 'zh'
         ? DateFormat('yyyy-MM-dd HH:mm').format(time)
         : DateFormat.yMMMd(context.l10n.localeName).add_jm().format(time);
     final values = <MapEntry<String, num>>[...record.values.entries];
@@ -123,29 +128,31 @@ class HealthRecordDetailPage extends StatelessWidget {
             ),
           ],
           const SizedBox(height: 12),
-          Builder(
-            builder: (context) {
-              final interpretation = interpretHealthRecord(
-                record,
-                english: Localizations.localeOf(context).languageCode != 'zh',
-              );
-              return FeatureStateCard(
-                message: interpretation.title,
-                detail: interpretation.detail,
-                icon: record.metric == HealthMetric.ecg
-                    ? Icons.monitor_heart_outlined
-                    : Icons.insights_rounded,
-                color: SaydianColors.brandRed,
-              );
-            },
-          ),
+          if (!controller.isIosWellnessEdition)
+            Builder(
+              builder: (context) {
+                final interpretation = interpretHealthRecord(
+                  record,
+                  english: Localizations.localeOf(context).languageCode != 'zh',
+                );
+                return FeatureStateCard(
+                  message: interpretation.title,
+                  detail: interpretation.detail,
+                  icon: record.metric == HealthMetric.ecg
+                      ? Icons.monitor_heart_outlined
+                      : Icons.insights_rounded,
+                  color: SaydianColors.brandRed,
+                );
+              },
+            ),
           const SizedBox(height: 12),
-          FeatureStateCard(
-            message: context.l10n.longTermTrendHint,
-            detail: context.l10n.measurementVariationHint,
-            icon: Icons.health_and_safety_outlined,
-            color: SaydianColors.green,
-          ),
+          if (!controller.isIosWellnessEdition)
+            FeatureStateCard(
+              message: context.l10n.longTermTrendHint,
+              detail: context.l10n.measurementVariationHint,
+              icon: Icons.health_and_safety_outlined,
+              color: SaydianColors.green,
+            ),
         ],
       ),
     );

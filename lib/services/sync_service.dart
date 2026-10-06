@@ -1,4 +1,5 @@
 import '../domain/models.dart';
+import '../domain/ios_wellness_policy.dart';
 import '../domain/health_record_validation.dart';
 import 'api_client.dart';
 import 'local_health_store.dart';
@@ -24,6 +25,7 @@ class HealthSyncService {
   final SaydianApi _api;
 
   Future<SyncOutcome> synchronizeNow({bool Function()? isCurrent}) async {
+    final policy = IosWellnessPolicy.current;
     bool canContinue() => isCurrent?.call() ?? true;
     final supportApi = _api is DailySummarySupportApi
         ? _api as DailySummarySupportApi
@@ -45,6 +47,7 @@ class HealthSyncService {
       final pending = await _store.pending(
         limit: 10,
         includeDailySummaries: dailySupported,
+        allowedMetrics: policy.allowedMetrics,
       );
       if (!canContinue()) {
         return SyncOutcome(uploaded: uploaded, rejected: rejected);
@@ -54,6 +57,7 @@ class HealthSyncService {
             !dailySupported &&
             (await _store.pending(
               limit: 1,
+              allowedMetrics: policy.allowedMetrics,
             )).any((record) => record.aggregation != null);
         return SyncOutcome(
           uploaded: uploaded,
@@ -86,12 +90,12 @@ class HealthSyncService {
       try {
         final preparedRecords = <HealthRecord>[];
         for (final record in records) {
-          var prepared = record;
+          var prepared = policy.projectRecord(record)!;
           if (_api is HealthRecordPreparationApi &&
               !preparationFailures.containsKey(record.id)) {
             try {
               prepared = await (_api as HealthRecordPreparationApi)
-                  .prepareHealthRecord(record);
+                  .prepareHealthRecord(prepared);
             } on ApiException catch (error) {
               if (error.code == 'STALE_HEALTH_SESSION' ||
                   error.statusCode == 401) {
@@ -105,13 +109,15 @@ class HealthSyncService {
           if (!canContinue()) {
             return SyncOutcome(uploaded: uploaded, rejected: rejected);
           }
-          if (!identical(prepared, record)) {
+          if (!policy.enabled && !identical(prepared, record)) {
             await _store.savePreparedRecord(prepared);
             if (!canContinue()) {
               return SyncOutcome(uploaded: uploaded, rejected: rejected);
             }
           }
-          preparedRecords.add(prepared);
+          // Never persist the restricted view over a historical full sleep row.
+          final projected = policy.projectRecord(prepared);
+          if (projected != null) preparedRecords.add(projected);
         }
         final result = await _api.uploadHealthBatch(
           SyncBatch(cursor: cursor, records: preparedRecords),
@@ -119,7 +125,11 @@ class HealthSyncService {
         if (!canContinue()) {
           return SyncOutcome(uploaded: uploaded, rejected: rejected);
         }
-        await _store.markSynced(result.acceptedIds);
+        final submittedIds = preparedRecords.map((record) => record.id).toSet();
+        final acceptedIds = result.acceptedIds
+            .where(submittedIds.contains)
+            .toList();
+        await _store.markSynced(acceptedIds);
         if (!canContinue()) {
           return SyncOutcome(uploaded: uploaded, rejected: rejected);
         }
@@ -129,9 +139,9 @@ class HealthSyncService {
             return SyncOutcome(uploaded: uploaded, rejected: rejected);
           }
         }
-        uploaded += result.acceptedIds.length;
+        uploaded += acceptedIds.length;
         rejected += result.rejected.length;
-        if (result.acceptedIds.isEmpty) {
+        if (acceptedIds.isEmpty) {
           return SyncOutcome(
             uploaded: uploaded,
             rejected: rejected,

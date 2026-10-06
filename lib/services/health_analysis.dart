@@ -218,6 +218,8 @@ class HealthAnalysisService {
   }
 
   static DateTime displayTime(HealthRecord record) {
+    final day = record.aggregation?.localDate;
+    if (day != null) return DateTime.parse(day);
     // Older Yuc builds stored every SDK epoch as `+00:00`, even though the
     // watch data represents an absolute instant that must be shown in the
     // phone's local timezone. Keep existing encrypted history readable after

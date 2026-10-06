@@ -519,10 +519,11 @@ class _SportSessionPageState extends State<SportSessionPage> {
                       (liveData['steps'] ?? 0).toInt(),
                     ),
                   ),
-                  _SportLiveMetric(
-                    label: context.l10n.liveHeartRate,
-                    value: '${(liveData['heartRate'] ?? 0).toInt()} bpm',
-                  ),
+                  if (!widget.controller.isIosWellnessEdition)
+                    _SportLiveMetric(
+                      label: context.l10n.liveHeartRate,
+                      value: '${(liveData['heartRate'] ?? 0).toInt()} bpm',
+                    ),
                   _SportLiveMetric(
                     label: context.l10n.watchCalories,
                     value:
@@ -764,6 +765,7 @@ class SportRecordDetailPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final record = controller.wellnessPolicy.projectSport(this.record);
     final duration = Duration(seconds: record.durationSeconds);
     final distance = controller.distanceUnit == '英里'
         ? record.distanceKm * 0.621371

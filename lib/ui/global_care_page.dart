@@ -11,8 +11,13 @@ import '../l10n/global_locale_controller.dart';
 import '../services/app_controller.dart';
 
 class GlobalCarePage extends StatefulWidget {
-  const GlobalCarePage({required this.controller, super.key});
+  const GlobalCarePage({
+    required this.controller,
+    this.showTitle = true,
+    super.key,
+  });
   final AppController controller;
+  final bool showTitle;
   @override
   State<GlobalCarePage> createState() => _GlobalCareOverviewState();
 }
@@ -157,13 +162,15 @@ class _GlobalCareOverviewState extends State<GlobalCarePage> {
                   Row(
                     children: [
                       Expanded(
-                        child: Text(
-                          l.remoteCare,
-                          style: const TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
+                        child: widget.showTitle
+                            ? Text(
+                                l.remoteCare,
+                                style: const TextStyle(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              )
+                            : const SizedBox.shrink(),
                       ),
                       TextButton.icon(
                         onPressed: _manage,
@@ -298,9 +305,13 @@ class _GlobalCareOverviewState extends State<GlobalCarePage> {
               ),
               if (record != null)
                 Text(
-                  DateFormat.yMMMd(
-                    context.l10n.localeName,
-                  ).add_jm().format(record.measuredAt.toLocal()),
+                  record.aggregation != null
+                      ? DateFormat.yMMMd(
+                          context.l10n.localeName,
+                        ).format(DateTime.parse(record.aggregation!.localDate))
+                      : DateFormat.yMMMd(
+                          context.l10n.localeName,
+                        ).add_jm().format(record.measuredAt.toLocal()),
                   style: const TextStyle(
                     fontSize: 12,
                     color: SaydianColors.muted,
@@ -473,7 +484,10 @@ class _GlobalCareManagementPageState extends State<GlobalCareManagementPage> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(dialog.l10n.careSharingHint),
-                  for (final entry in _metricLabels(dialog).entries)
+                  for (final entry in _metricLabels(dialog).entries.where(
+                    (entry) => widget.controller.wellnessPolicy
+                        .allowsWireMetric(entry.key),
+                  ))
                     CheckboxListTile(
                       title: Text(entry.value),
                       value: selected.contains(entry.key),

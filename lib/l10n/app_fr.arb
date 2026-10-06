@@ -1,4 +1,5 @@
 {
+  "iosActivitySleepScope": "Cette version iOS prend uniquement en charge l’activité et le sommeil. Les mesures physiologiques, l’interprétation des risques médicaux et l’analyse par IA ne sont pas disponibles. Les données déjà enregistrées sont conservées.",
   "scanLocationTitle": "Activer la localisation",
   "scanLocationHint": "Activez la localisation, puis réessayez.",
   "scanPermissionTitle": "Autoriser l’accès aux appareils",
@@ -432,7 +433,7 @@
   "allData": "Toutes les données",
   "healthRecords": "Historique de santé",
   "workoutsAndRecords": "Activités et historique",
-  "healthDisclaimer": "Les mesures sont indicatives. Consultez un professionnel de santé si vous vous sentez mal.",
+  "healthDisclaimer": "Les mesures du dispositif servent uniquement de référence de bien-être général, pas au diagnostic ni au traitement. Consultez un médecin avant toute décision médicale. Si vous vous sentez mal, consultez un professionnel de santé.",
   "healthSafetyAdvice": "Reposez-vous puis mesurez à nouveau. En cas de malaise, consultez un professionnel de santé.",
   "defaultUser": "Utilisateur Saydian",
   "dailyGreeting": "Prenez soin de vous aujourd’hui",

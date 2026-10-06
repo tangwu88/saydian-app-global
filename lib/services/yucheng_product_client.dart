@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/services.dart';
+import '../domain/ios_wellness_policy.dart';
 import 'package:yc_product_plugin/yc_product_plugin.dart' as yc;
 
 abstract final class YuchengHealthDataType {
@@ -103,6 +104,16 @@ class PluginYuchengProductClient
     implements YuchengProductClient, YuchengEcgClient {
   PluginYuchengProductClient({yc.YcProductPlugin? plugin})
     : _plugin = plugin ?? yc.YcProductPlugin();
+
+  void _requirePhysiology() {
+    if (IosWellnessPolicy.current.enabled) {
+      throw PlatformException(
+        code: 'IOS_WELLNESS_SCOPE',
+        message: 'Not available in this iOS edition.',
+      );
+    }
+  }
+
   final yc.YcProductPlugin _plugin;
   final _events = StreamController<Map<String, Object?>>.broadcast();
   final Map<String, yc.BluetoothDevice> _scanned = {};
@@ -322,6 +333,7 @@ class PluginYuchengProductClient
 
   @override
   Future<YuchengOperationResult<int>> ecgSampleRate() async {
+    _requirePhysiology();
     try {
       // The pinned Android plugin already exposes the vendor query, but its
       // Dart facade omits it. Type 1 is ECG; never change device sampling.
@@ -358,13 +370,20 @@ class PluginYuchengProductClient
   }
 
   @override
-  Future<YuchengOperationResult<void>> startEcg() async =>
-      _r(await _plugin.startECGMeasurement());
+  Future<YuchengOperationResult<void>> startEcg() async {
+    _requirePhysiology();
+    return _r(await _plugin.startECGMeasurement());
+  }
+
   @override
-  Future<YuchengOperationResult<void>> stopEcg() async =>
-      _r(await _plugin.stopECGMeasurement());
+  Future<YuchengOperationResult<void>> stopEcg() async {
+    _requirePhysiology();
+    return _r(await _plugin.stopECGMeasurement());
+  }
+
   @override
   Future<YuchengOperationResult<Map<String, num>>> ecgResult() async {
+    _requirePhysiology();
     final response = await _plugin.getECGResult();
     final result = response?.data;
     return YuchengOperationResult(
@@ -409,6 +428,14 @@ class PluginYuchengProductClient
   Future<YuchengOperationResult<List<Map<String, Object?>>>> health(
     int type,
   ) async {
+    if (IosWellnessPolicy.current.enabled &&
+        !{
+          YuchengHealthDataType.step,
+          YuchengHealthDataType.sleep,
+          YuchengHealthDataType.sportHistory,
+        }.contains(type)) {
+      _requirePhysiology();
+    }
     final r = await _plugin.queryDeviceHealthData(type);
     final rows = (r?.data ?? const [])
         .map((v) => _healthRow(v))
@@ -489,9 +516,13 @@ class PluginYuchengProductClient
   Future<YuchengOperationResult<void>> measure({
     required bool enabled,
     required int type,
-  }) async => _r(
-    await _plugin.appControlMeasureHealthData(enabled, _measurement(type)),
-  );
+  }) async {
+    _requirePhysiology();
+    return _r(
+      await _plugin.appControlMeasureHealthData(enabled, _measurement(type)),
+    );
+  }
+
   @override
   Future<YuchengOperationResult<void>> sport({
     required int state,
@@ -505,16 +536,22 @@ class PluginYuchengProductClient
     }, type),
   );
   @override
-  Future<YuchengOperationResult<void>> setHealthMonitoring(
-    bool enabled,
-  ) async => _r(await _plugin.setDeviceHealthMonitoringMode(isEnable: enabled));
+  Future<YuchengOperationResult<void>> setHealthMonitoring(bool enabled) async {
+    _requirePhysiology();
+    return _r(await _plugin.setDeviceHealthMonitoringMode(isEnable: enabled));
+  }
+
   @override
-  Future<YuchengOperationResult<void>> setHeartRateAlarm(int value) async => _r(
-    await _plugin.setDeviceHeartRateAlarm(
-      isEnable: value > 0,
-      maxHeartRate: value,
-    ),
-  );
+  Future<YuchengOperationResult<void>> setHeartRateAlarm(int value) async {
+    _requirePhysiology();
+    return _r(
+      await _plugin.setDeviceHeartRateAlarm(
+        isEnable: value > 0,
+        maxHeartRate: value,
+      ),
+    );
+  }
+
   @override
   Future<YuchengOperationResult<void>> findDevice() async =>
       _r(await _plugin.findDevice());

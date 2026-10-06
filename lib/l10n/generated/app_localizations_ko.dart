@@ -9,6 +9,10 @@ class AppLocalizationsKo extends AppLocalizations {
   AppLocalizationsKo([String locale = 'ko']) : super(locale);
 
   @override
+  String get iosActivitySleepScope =>
+      '이 iOS 버전은 활동과 수면만 지원합니다. 생리 측정, 의료 위험 해석 및 AI 분석은 제공되지 않습니다. 기존 기록은 보존됩니다.';
+
+  @override
   String get scanLocationTitle => '위치 서비스를 켜 주세요';
 
   @override
@@ -1336,7 +1340,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get workoutsAndRecords => '운동 및 기록';
 
   @override
-  String get healthDisclaimer => '측정 결과는 건강 관리 참고용입니다. 몸이 불편하면 의료 전문가와 상담하세요.';
+  String get healthDisclaimer =>
+      '웨어러블 측정값은 일상적인 건강 관리 참고용이며 진단이나 치료에 사용할 수 없습니다. 의료 관련 결정을 내리기 전에 반드시 의사와 상담하세요. 몸이 불편하면 진료를 받으세요.';
 
   @override
   String get healthSafetyAdvice => '휴식 후 다시 측정하세요. 몸이 불편하면 의료진과 상담하세요.';

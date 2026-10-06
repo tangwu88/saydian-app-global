@@ -28,6 +28,7 @@ import 'global_legal_page.dart';
 import 'global_care_page.dart';
 import 'health_reports_page.dart';
 import 'health_trend_page.dart';
+import 'ios_wellness_scope.dart';
 import 'prototype_pages.dart';
 import 'shop_pages.dart';
 import 'feature_visibility.dart';
@@ -392,6 +393,9 @@ class AiPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (controller.isIosWellnessEdition) {
+      return const IosWellnessUnavailablePage();
+    }
     return RefreshIndicator(
       onRefresh: controller.refreshAiArticles,
       child: ListView(
@@ -594,7 +598,7 @@ class _AiChatPageState extends State<AiChatPage> {
   @override
   void initState() {
     super.initState();
-    unawaited(_loadMessages());
+    if (!widget.controller.isIosWellnessEdition) unawaited(_loadMessages());
   }
 
   @override
@@ -643,6 +647,9 @@ class _AiChatPageState extends State<AiChatPage> {
 
   @override
   Widget build(BuildContext context) {
+    if (widget.controller.isIosWellnessEdition) {
+      return const IosWellnessUnavailablePage();
+    }
     return Scaffold(
       appBar: AppBar(title: Text(context.l10n.aiAssistant)),
       backgroundColor: const Color(0xFFF7F4F1),

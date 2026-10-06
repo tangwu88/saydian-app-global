@@ -1,0 +1,30 @@
+Draft review notes for the candidate 1.0.1 (1014); do not assert final testing/upload until the release record confirms it.
+Credentials are intentionally omitted. Keep the existing verified Health review credentials only in Apple's protected sign-in fields.
+
+Product scope
+SAYDIAN Health for iOS is now an activity-and-sleep companion. This scope is fixed for all iOS users and build modes; it is not an account-specific, location-specific, remote-config or review-only restriction. We will not restore physiological or AI functionality after review through a hidden switch.
+
+The iOS UI, controller, device-command integration and upload boundaries restrict the edition to steps, distance, estimated calories and sleep duration/stages where the connected device supplies them. Physiological measurements, calibration controls, ECG, clinical/risk interpretation, medical alerts, general AI chat and paid AI health reports are unavailable. Sports views do not show heart-rate data. Remote Care permits activity/sleep categories only.
+
+Old local records are retained rather than erased. Historical physiological records, sleep scores/risk fields, physiological companion fields and waveforms are not displayed or uploaded by this build. AI requests are blocked before network transmission. We have not supplied medical accuracy or regulatory evidence and do not claim this edition as a medical device.
+
+Sign-in and account review
+Open SAYDIAN Health. Use the email/password sign-in flow with the credentials supplied in Apple's App Review Information fields. This flow does not require an SMS or email code. A watch is not required for sign-in, personal profile, account settings, support, privacy/terms or account deletion. Without a compatible watch, watch-generated data is unavailable rather than fabricated.
+
+Device connection and activity/sleep review
+Use a compatible SAYDIAN watch that supports this app's Bluetooth integration. Keep it powered on and nearby, and ensure it is not connected to another companion app. After signing in, open the Watch/Device tab, choose Add device/Start searching, grant Bluetooth access and select the actual watch from the scan list. Connection and sync status are shown in the app. Only features and records actually reported by the connected model are shown.
+
+Keep the app in the foreground for a manual sync. The existing foreground periodic sync checks at 30-minute intervals when connected; iOS background scheduling is not promised to run at an exact interval. Upload success requires server acknowledgement. Unconfirmed allowed records remain locally pending. Repeated sync does not intentionally duplicate confirmed records; older physiological pending rows remain preserved and are not falsely acknowledged.
+
+Health safety
+The public description and localized in-app notice state that this edition is for general wellness reference, not diagnosis, treatment, emergency services or medical decision support. They explicitly advise consulting a doctor before making medical decisions and seeking care if unwell.
+
+Privacy and account deletion
+Profile > Account settings contains the in-app account deletion flow. Privacy, terms and support are available in the app and at the international URLs below. Data is sent only to the international /global service; no domestic fallback is used. Data-sharing permissions are controlled by the participating accounts. The new iOS build does not send health data to an AI service.
+
+Support: https://app.saydian.cn/global/support
+Privacy: https://app.saydian.cn/global/privacy-policy
+Terms: https://app.saydian.cn/global/terms
+
+Evidence boundary
+Final new-build phone screenshots, installation, login, watch connection and activity/sleep upload/readback must be checked before these notes are submitted. Existing Say Ring screenshots, accounts, hardware evidence or a video of the old Health build are not evidence of this candidate.

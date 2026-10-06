@@ -1,4 +1,5 @@
 {
+  "iosActivitySleepScope": "이 iOS 버전은 활동과 수면만 지원합니다. 생리 측정, 의료 위험 해석 및 AI 분석은 제공되지 않습니다. 기존 기록은 보존됩니다.",
   "scanLocationTitle": "위치 서비스를 켜 주세요",
   "scanLocationHint": "휴대폰 위치를 켜고 다시 시도하세요.",
   "scanPermissionTitle": "기기 접근을 허용해 주세요",
@@ -432,7 +433,7 @@
   "allData": "전체 데이터",
   "healthRecords": "건강 기록",
   "workoutsAndRecords": "운동 및 기록",
-  "healthDisclaimer": "측정 결과는 건강 관리 참고용입니다. 몸이 불편하면 의료 전문가와 상담하세요.",
+  "healthDisclaimer": "웨어러블 측정값은 일상적인 건강 관리 참고용이며 진단이나 치료에 사용할 수 없습니다. 의료 관련 결정을 내리기 전에 반드시 의사와 상담하세요. 몸이 불편하면 진료를 받으세요.",
   "healthSafetyAdvice": "휴식 후 다시 측정하세요. 몸이 불편하면 의료진과 상담하세요.",
   "defaultUser": "Saydian 사용자",
   "dailyGreeting": "오늘도 건강한 하루 보내세요",

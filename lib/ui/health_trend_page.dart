@@ -12,6 +12,7 @@ import '../services/app_controller.dart';
 import '../services/health_analysis.dart';
 import 'app_theme.dart';
 import 'prototype_pages.dart';
+import 'ios_wellness_scope.dart';
 
 bool _english(BuildContext context) =>
     Localizations.localeOf(context).languageCode != 'zh';
@@ -180,13 +181,18 @@ class _HealthTrendPageState extends State<HealthTrendPage> {
   bool get _sameOwner =>
       widget.ownerAccountKey == null ||
       widget.ownerAccountKey == widget.controller.session?.accountKey;
-  Future<List<HealthRecord>> _read(DateTime start, DateTime end) =>
-      widget.recordLoader?.call(start, end) ??
-      widget.controller.loadHealthRecords(
-        metric: widget.metric,
-        start: start,
-        end: end,
-      );
+  Future<List<HealthRecord>> _read(DateTime start, DateTime end) async {
+    final policy = widget.controller.wellnessPolicy;
+    if (!policy.allowsMetric(widget.metric)) return const [];
+    final records =
+        await (widget.recordLoader?.call(start, end) ??
+            widget.controller.loadHealthRecords(
+              metric: widget.metric,
+              start: start,
+              end: end,
+            ));
+    return policy.projectRecords(records);
+  }
 
   HealthTrendData get _data => _analysis.analyze(
     metric: widget.metric,
@@ -331,6 +337,9 @@ class _HealthTrendPageState extends State<HealthTrendPage> {
 
   @override
   Widget build(BuildContext context) {
+    if (!widget.controller.wellnessPolicy.allowsMetric(widget.metric)) {
+      return const IosWellnessUnavailablePage();
+    }
     final range = HealthTrendRange.forPeriod(_period, _anchor);
     final rangeLabel = _english(context)
         ? switch (_period) {
@@ -1027,7 +1036,11 @@ class _RecordTile extends StatelessWidget {
           style: const TextStyle(fontWeight: FontWeight.w800),
         ),
         subtitle: Text(
-          _english(context)
+          record.aggregation != null
+              ? DateFormat.yMMMd(
+                  context.l10n.localeName,
+                ).format(HealthAnalysisService.displayTime(record))
+              : _english(context)
               ? DateFormat.yMMMd(
                   context.l10n.localeName,
                 ).add_jm().format(HealthAnalysisService.displayTime(record))

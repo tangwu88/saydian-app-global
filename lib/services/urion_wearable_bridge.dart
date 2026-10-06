@@ -9,6 +9,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../domain/device_state_machine.dart';
 import '../domain/feature_models.dart';
 import '../domain/models.dart';
+import '../domain/ios_wellness_policy.dart';
 import 'urion_eb1_protocol.dart';
 import 'wearable_bridge.dart';
 
@@ -105,6 +106,13 @@ class UrionWearableBridge
     for (final frame in _buffer.add(
       bytes is Uint8List ? bytes : bytes as List<int>,
     )) {
+      if (IosWellnessPolicy.current.enabled &&
+          (frame.command == 0x37 ||
+              frame.command == 0x33 ||
+              (frame.command == 0x73 &&
+                  {1, 2, 3, 4, 5, 6}.contains(frame[1])))) {
+        continue;
+      }
       if (frame.command == 0x37) {
         try {
           _dynamicPressure = Eb1DynamicBloodPressureSettings.parse(frame);
@@ -226,6 +234,13 @@ class UrionWearableBridge
     List<int> payload = const [],
     int count = 1,
   ]) async {
+    if (IosWellnessPolicy.current.enabled &&
+        IosWellnessPolicy.blockedEB1Commands.contains(command)) {
+      throw PlatformException(
+        code: 'IOS_WELLNESS_SCOPE',
+        message: 'Not available in this iOS edition.',
+      );
+    }
     final id = _deviceId;
     if (id == null) {
       throw PlatformException(code: 'NOT_CONNECTED', message: '请先连接手表');
@@ -404,6 +419,38 @@ class UrionWearableBridge
   @override
   Future<DeviceCapabilities> getCapabilities() => _runConnected(() async {
     if (_capabilities != null) return _capabilities!;
+    if (IosWellnessPolicy.current.enabled) {
+      final daily = await _exchange(0x07, [0], 2);
+      Eb1DailySnapshot.parse(daily[0], daily[1]);
+      final generalFeatures = <DeviceFeature>{
+        if (_findSupported) DeviceFeature.findWatch,
+      };
+      try {
+        final screen = (await _exchange(0x1f, [1])).single;
+        if (screen[1] == 1 && screen[2] >= 1 && screen[2] <= 20) {
+          generalFeatures.add(DeviceFeature.screenDisplay);
+        }
+      } on PlatformException catch (error) {
+        if (error.code != 'UNSUPPORTED_DEVICE') rethrow;
+      }
+      try {
+        final profile = (await _exchange(0x0a, [1])).single;
+        final goals = (await _exchange(0x21, [1])).single;
+        if (profile[1] == 1 &&
+            (profile[2] == 0 || profile[2] == 1) &&
+            goals[1] == 1) {
+          generalFeatures.add(DeviceFeature.basicSettings);
+        }
+      } on PlatformException catch (error) {
+        if (error.code != 'UNSUPPORTED_DEVICE') rethrow;
+      }
+      return _capabilities = DeviceCapabilities(
+        metrics: {HealthMetric.steps, HealthMetric.sleep},
+        manualMetrics: const {},
+        features: generalFeatures,
+        integratedFeatures: generalFeatures,
+      );
+    }
     final metrics = <HealthMetric>{};
     final features = <DeviceFeature>{};
     final manualMetrics = <HealthMetric>{};

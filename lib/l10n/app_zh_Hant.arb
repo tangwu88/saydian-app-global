@@ -1,4 +1,5 @@
 {
+  "iosActivitySleepScope": "此 iOS 版本僅支援活動與睡眠，不提供生理測量、醫療風險解讀和 AI 分析。先前儲存的記錄仍會保留。",
   "scanLocationTitle": "請開啟手機定位",
   "scanLocationHint": "開啟手機定位後重試。",
   "scanPermissionTitle": "請允許相關權限",
@@ -432,7 +433,7 @@
   "allData": "全部資料",
   "healthRecords": "健康記錄",
   "workoutsAndRecords": "運動與記錄",
-  "healthDisclaimer": "測量結果僅供健康管理參考，如有不適請諮詢專業醫護人員。",
+  "healthDisclaimer": "裝置讀數僅供健康參考，非診斷或治療。作出任何醫療決定前，請先諮詢醫生。如有不適，請就醫。",
   "healthSafetyAdvice": "請休息後再測；如有明顯不適，請及時諮詢醫護人員。",
   "defaultUser": "Saydian使用者",
   "dailyGreeting": "今天也要保持好狀態",

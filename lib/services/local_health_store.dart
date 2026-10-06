@@ -40,6 +40,7 @@ abstract interface class HealthStore implements NotificationInboxStorage {
   Future<List<HealthRecord>> pending({
     int limit = 200,
     bool includeDailySummaries = true,
+    Set<HealthMetric>? allowedMetrics,
   });
   Future<HealthRecord?> latestDailySummary({
     required String deviceId,
@@ -1040,16 +1041,25 @@ class EncryptedHealthStore implements HealthStore, HealthStoreRecoveryStatus {
   Future<List<HealthRecord>> pending({
     int limit = 200,
     bool includeDailySummaries = true,
+    Set<HealthMetric>? allowedMetrics,
   }) async {
+    if (allowedMetrics?.isEmpty == true) return const [];
     final ownerId = _ownerId;
     final rows = await _enqueue(
       () => _db.query(
         'health_records',
         columns: ['payload'],
-        where: includeDailySummaries
-            ? 'owner_id = ? AND synced = 0'
-            : 'owner_id = ? AND synced = 0 AND aggregation_kind IS NULL',
-        whereArgs: [ownerId],
+        where:
+            (includeDailySummaries
+                ? 'owner_id = ? AND synced = 0'
+                : 'owner_id = ? AND synced = 0 AND aggregation_kind IS NULL') +
+            (allowedMetrics == null
+                ? ''
+                : ' AND metric IN (${List.filled(allowedMetrics.length, '?').join(',')})'),
+        whereArgs: [
+          ownerId,
+          ...?allowedMetrics?.map((metric) => metric.wireName),
+        ],
         orderBy: 'measured_at ASC',
         limit: limit,
       ),
@@ -1379,11 +1389,14 @@ class MemoryHealthStore implements HealthStore {
   Future<List<HealthRecord>> pending({
     int limit = 200,
     bool includeDailySummaries = true,
+    Set<HealthMetric>? allowedMetrics,
   }) async => _records.values
       .where(
         (record) =>
             !_synced.contains(record.id) &&
             !_invalid.contains(record.id) &&
+            (allowedMetrics == null ||
+                allowedMetrics.contains(record.metric)) &&
             (includeDailySummaries || record.aggregation == null),
       )
       .take(limit)

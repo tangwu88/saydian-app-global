@@ -9,6 +9,10 @@ class AppLocalizationsDe extends AppLocalizations {
   AppLocalizationsDe([String locale = 'de']) : super(locale);
 
   @override
+  String get iosActivitySleepScope =>
+      'Diese iOS-Version unterstützt nur Aktivität und Schlaf. Physiologische Messungen, medizinische Risikobewertungen und KI-Analysen sind nicht verfügbar. Bereits gespeicherte Daten bleiben erhalten.';
+
+  @override
   String get scanLocationTitle => 'Standort einschalten';
 
   @override
@@ -1409,7 +1413,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get healthDisclaimer =>
-      'Messwerte dienen nur der allgemeinen Gesundheitsorientierung. Wenden Sie sich bei Beschwerden an medizinisches Fachpersonal.';
+      'Wearable-Messwerte dienen nur der allgemeinen Gesundheitsorientierung, nicht der Diagnose oder Behandlung. Konsultieren Sie einen Arzt, bevor Sie medizinische Entscheidungen treffen. Suchen Sie bei Beschwerden medizinische Hilfe.';
 
   @override
   String get healthSafetyAdvice =>

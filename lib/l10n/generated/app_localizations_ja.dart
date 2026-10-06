@@ -9,6 +9,10 @@ class AppLocalizationsJa extends AppLocalizations {
   AppLocalizationsJa([String locale = 'ja']) : super(locale);
 
   @override
+  String get iosActivitySleepScope =>
+      'このiOS版は活動と睡眠のみ対応しています。生理測定、医療リスクの解釈、AI分析は利用できません。以前の記録は保持されます。';
+
+  @override
   String get scanLocationTitle => '位置情報をオンにしてください';
 
   @override
@@ -1332,7 +1336,8 @@ class AppLocalizationsJa extends AppLocalizations {
   String get workoutsAndRecords => '運動と記録';
 
   @override
-  String get healthDisclaimer => '測定結果は健康管理の参考です。体調がすぐれない場合は医療専門家にご相談ください。';
+  String get healthDisclaimer =>
+      'ウェアラブルの測定値は日常の健康管理の参考であり、診断や治療には使用できません。医療に関する判断を行う前に、必ず医師にご相談ください。体調がすぐれない場合は医療機関を受診してください。';
 
   @override
   String get healthSafetyAdvice => '休憩してから再測定してください。体調がすぐれない場合は医療機関にご相談ください。';

@@ -401,7 +401,9 @@ class GlobalSaydianApiClient extends SaydianApiClient
   Future<void> globalShareCare(String id, Set<String> metrics) async {
     _decode(
       await _authorizedPostJson(_carePath(id, '/permissions'), {
-        'metrics': metrics.toList(),
+        'metrics': metrics
+            .where(IosWellnessPolicy.current.allowsWireMetric)
+            .toList(),
       }),
     );
   }
@@ -1722,6 +1724,29 @@ class _GlobalHttpClient extends http.BaseClient {
 
   @override
   Future<http.StreamedResponse> send(http.BaseRequest request) async {
+    final policy = IosWellnessPolicy.current;
+    final metric = request.url.queryParameters['metric'];
+    if (policy.enabled &&
+        ((metric != null &&
+                request.url.path.contains('/health') &&
+                !policy.allowsWireMetric(metric)) ||
+            RegExp(
+              r'/content/(?:articles|categories)(?:/|$)',
+            ).hasMatch(request.url.path))) {
+      throw const FeatureNotConfiguredException(
+        'Not available in this iOS edition.',
+      );
+    }
+    // Last transport boundary: no stale route can send data to AI, reports,
+    // physiological alerts or ECG endpoints in the activity/sleep iOS app.
+    if (IosWellnessPolicy.current.enabled &&
+        RegExp(
+          r'/ai(?:/|$)|/health/(?:profile|reports|warning-rules|warnings)(?:/|$)|/ecg(?:/|$)',
+        ).hasMatch(request.url.path)) {
+      throw const FeatureNotConfiguredException(
+        'Not available in this iOS edition.',
+      );
+    }
     if (request.url.origin != origin.origin ||
         request.url.userInfo.isNotEmpty ||
         (request.url.path != GlobalEnvironment.apiPrefix &&

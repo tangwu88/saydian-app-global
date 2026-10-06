@@ -1,4 +1,5 @@
 {
+  "iosActivitySleepScope": "このiOS版は活動と睡眠のみ対応しています。生理測定、医療リスクの解釈、AI分析は利用できません。以前の記録は保持されます。",
   "scanLocationTitle": "位置情報をオンにしてください",
   "scanLocationHint": "スマートフォンの位置情報をオンにして再試行。",
   "scanPermissionTitle": "必要な権限を許可してください",
@@ -432,7 +433,7 @@
   "allData": "すべてのデータ",
   "healthRecords": "健康記録",
   "workoutsAndRecords": "運動と記録",
-  "healthDisclaimer": "測定結果は健康管理の参考です。体調がすぐれない場合は医療専門家にご相談ください。",
+  "healthDisclaimer": "ウェアラブルの測定値は日常の健康管理の参考であり、診断や治療には使用できません。医療に関する判断を行う前に、必ず医師にご相談ください。体調がすぐれない場合は医療機関を受診してください。",
   "healthSafetyAdvice": "休憩してから再測定してください。体調がすぐれない場合は医療機関にご相談ください。",
   "defaultUser": "Saydianユーザー",
   "dailyGreeting": "今日も自分を大切に",

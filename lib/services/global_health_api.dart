@@ -284,7 +284,12 @@ mixin GlobalHealthApi on SaydianApiClient
             _ => null,
           }
         : null;
-    for (final record in batch.records) {
+    for (final original in batch.records) {
+      final record = IosWellnessPolicy.current.projectRecord(original);
+      if (record == null) {
+        rejected[original.id] = 'Not available in this iOS edition.';
+        continue;
+      }
       final offset = _globalTimezoneOffset(record.timezone);
       // These native labels describe provenance, not a validated health score.
       // Keep the original local record; never promote them to V2 `valid`.

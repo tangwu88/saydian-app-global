@@ -1,0 +1,34 @@
+Candidate copy for SAYDIAN Health 1.0.1 (1014).
+Status: source scope implemented; final device/release acceptance and Apple field updates remain pending.
+Do not copy this status line into the public description.
+
+SUBTITLE
+Activity & Sleep Companion
+
+PROMOTIONAL TEXT
+Connect a compatible SAYDIAN watch to review activity and sleep, keep your profile up to date, and choose which activity or sleep records to share with family.
+
+DESCRIPTION
+SAYDIAN Health is a companion app for activity and sleep tracking with compatible SAYDIAN watches.
+
+Review your daily steps and sleep duration. Distance, estimated energy expenditure, sleep stages and workout details are available only when your connected watch actually provides them. Missing or unsupported data is not presented as a measurement.
+
+Connect your watch over Bluetooth, check its connection and battery status, and sync available activity and sleep records. Watch controls and workout options vary by device. Keep your watch nearby and the app open when syncing. Repeated uploads use record identifiers to avoid duplicate records.
+
+Manage your nickname, avatar and personal profile. With Remote Care, invite family members and choose which activity or sleep categories to share. Sharing requires the participating accounts and their permission; it is not emergency monitoring.
+
+The iOS edition supports activity and sleep only. It does not provide physiological measurements, disease-risk assessments, medical alerts, AI health advice or paid health-analysis reports. A compatible watch is required for watch-generated activity and sleep data. You can sign in, manage your account and access help without a watch.
+
+Bluetooth access is used to connect the watch. Photo or camera access is optional for features such as a profile picture; location may be used for supported phone-weather and workout-route features when you grant permission. Manage optional permissions in iOS Settings. Account deletion is available in the app under Profile > Account settings.
+
+Activity and sleep estimates are for general wellness reference, not diagnosis, treatment, emergency services or medical decision support. Consult a doctor before making any medical decisions. If you feel unwell, seek medical care.
+
+Support: https://app.saydian.cn/global/support
+Privacy: https://app.saydian.cn/global/privacy-policy
+Terms: https://app.saydian.cn/global/terms
+
+KEYWORDS
+activity,sleep,steps,watch,fitness,walking,wellness,tracker,Bluetooth
+
+WHAT'S NEW
+This iOS update focuses on activity and sleep. It restricts physiological measurements, clinical interpretations, medical alerts, AI features and paid health-analysis reports for every iOS account. Existing local records are retained. Activity and sleep sync checks server acknowledgements and preserves unconfirmed records for retry without duplicating confirmed uploads.

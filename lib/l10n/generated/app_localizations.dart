@@ -110,6 +110,12 @@ abstract class AppLocalizations {
     Locale.fromSubtags(languageCode: 'zh', scriptCode: 'Hant'),
   ];
 
+  /// No description provided for @iosActivitySleepScope.
+  ///
+  /// In en, this message translates to:
+  /// **'This iOS edition supports activity and sleep only. Physiological measurements, medical risk interpretations and AI analysis are not available. Previously saved records are retained.'**
+  String get iosActivitySleepScope;
+
   /// No description provided for @scanLocationTitle.
   ///
   /// In en, this message translates to:
@@ -2657,7 +2663,7 @@ abstract class AppLocalizations {
   /// No description provided for @healthDisclaimer.
   ///
   /// In en, this message translates to:
-  /// **'Measurements are for wellness reference only. Consult a healthcare professional if you feel unwell.'**
+  /// **'Wearable readings are for general wellness reference, not diagnosis or treatment. Consult a doctor before making any medical decisions. If you feel unwell, seek medical care.'**
   String get healthDisclaimer;
 
   /// No description provided for @healthSafetyAdvice.

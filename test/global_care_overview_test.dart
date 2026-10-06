@@ -35,6 +35,7 @@ class _Controller extends AppController {
   final calls = <String>[];
   Completer<Map<String, Object?>>? pending;
   bool denied = false;
+  bool dailySummary = false;
   @override
   Future<List<GlobalCareRelationship>> globalCareRelationships() async => [
     for (final id in ['one', 'two'])
@@ -43,7 +44,7 @@ class _Controller extends AppController {
         status: 'active',
         received: false,
         name: 'QA $id',
-        metrics: const {'heart_rate'},
+        metrics: dailySummary ? const {'steps'} : const {'heart_rate'},
       ),
   ];
   @override
@@ -52,11 +53,11 @@ class _Controller extends AppController {
     if (denied) throw const ApiException('synthetic denied', statusCode: 403);
     return pending?.future ??
         {
-          'metrics': ['heart_rate'],
+          'metrics': [dailySummary ? 'steps' : 'heart_rate'],
           'records': [
             {
               'id': 'synthetic-$id',
-              'metric': 'heart_rate',
+              'metric': dailySummary ? 'steps' : 'heart_rate',
               'values': {
                 'heartRate': session?.memberId == 'b'
                     ? 91
@@ -66,6 +67,11 @@ class _Controller extends AppController {
               },
               'unit': 'bpm',
               'observedAt': '2026-10-03T12:00:00Z',
+              if (dailySummary)
+                'aggregation': {
+                  'kind': 'daily_summary',
+                  'localDate': '2026-10-01',
+                },
             },
             {
               'id': 'not-authorized',
@@ -98,6 +104,37 @@ Future<void> _pump(WidgetTester tester, _Controller controller) async {
 }
 
 void main() {
+  testWidgets('daily care caption uses the source day without a fake time', (
+    tester,
+  ) async {
+    final controller = _Controller()..dailySummary = true;
+    addTearDown(controller.dispose);
+    await _pump(tester, controller);
+    expect(find.text('Oct 1, 2026'), findsOneWidget);
+    expect(find.textContaining('Oct 3, 2026'), findsNothing);
+    expect(find.textContaining('12:00'), findsNothing);
+  });
+  testWidgets('embedded care keeps one title and its management action', (
+    tester,
+  ) async {
+    final controller = _Controller();
+    addTearDown(controller.dispose);
+    await tester.pumpWidget(
+      MaterialApp(
+        locale: const Locale('en'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          appBar: AppBar(title: const Text('Family care')),
+          body: GlobalCarePage(controller: controller, showTitle: false),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Family care'), findsOneWidget);
+    expect(find.text('Manage'), findsOneWidget);
+    expect(find.byIcon(Icons.manage_accounts_outlined), findsOneWidget);
+  });
   testWidgets(
     'overview filters unshared metrics and clears old member before replacement arrives',
     (tester) async {

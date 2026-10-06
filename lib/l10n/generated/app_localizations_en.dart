@@ -9,6 +9,10 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
+  String get iosActivitySleepScope =>
+      'This iOS edition supports activity and sleep only. Physiological measurements, medical risk interpretations and AI analysis are not available. Previously saved records are retained.';
+
+  @override
   String get scanLocationTitle => 'Turn on location';
 
   @override
@@ -1390,7 +1394,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get healthDisclaimer =>
-      'Measurements are for wellness reference only. Consult a healthcare professional if you feel unwell.';
+      'Wearable readings are for general wellness reference, not diagnosis or treatment. Consult a doctor before making any medical decisions. If you feel unwell, seek medical care.';
 
   @override
   String get healthSafetyAdvice =>

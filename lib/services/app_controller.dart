@@ -17,6 +17,7 @@ import '../domain/health_report_models.dart';
 import '../domain/health_record_validation.dart';
 import '../domain/health_record_dedup.dart';
 import '../domain/models.dart';
+import '../domain/ios_wellness_policy.dart';
 import '../domain/global_account.dart';
 import '../domain/global_care.dart';
 import '../l10n/global_locale_controller.dart';
@@ -126,16 +127,22 @@ class AppController extends ChangeNotifier {
   ApiException? lastApiError;
 
   Future<List<Map<String, Object?>>> loadGlobalArticleCategories() =>
-      (_api as GlobalContentApi).getGlobalArticleCategories();
+      isIosWellnessEdition
+      ? Future.value(const [])
+      : (_api as GlobalContentApi).getGlobalArticleCategories();
   Future<List<Map<String, Object?>>> loadGlobalArticles({
     String? categoryId,
     int page = 1,
-  }) => (_api as GlobalContentApi).getGlobalArticles(
-    categoryId: categoryId,
-    page: page,
-  );
+  }) => isIosWellnessEdition
+      ? Future.value(const [])
+      : (_api as GlobalContentApi).getGlobalArticles(
+          categoryId: categoryId,
+          page: page,
+        );
   Future<Map<String, Object?>> loadGlobalArticle(String id) =>
-      (_api as GlobalContentApi).getGlobalArticle(id);
+      isIosWellnessEdition
+      ? Future.value(const {})
+      : (_api as GlobalContentApi).getGlobalArticle(id);
 
   Future<Map<String, Object?>> loadGlobalShopProducts({
     String? keyword,
@@ -477,42 +484,98 @@ class AppController extends ChangeNotifier {
     ),
   );
 
-  Future<Map<String, Object?>> globalCareSummary(String id) =>
-      (_api as GlobalCareHealthApi).globalCareSummary(id);
+  Future<Map<String, Object?>> globalCareSummary(String id) async {
+    final value = await (_api as GlobalCareHealthApi).globalCareSummary(id);
+    if (!isIosWellnessEdition) return value;
+    return {
+      'metrics': (value['metrics'] as List? ?? const [])
+          .whereType<String>()
+          .where(wellnessPolicy.allowsWireMetric)
+          .toList(),
+      'records': _projectCareRows(
+        (value['records'] as List? ?? const []).whereType<Map>().map(
+          (row) => row.cast<String, Object?>(),
+        ),
+      ),
+    };
+  }
+
+  List<Map<String, Object?>> _projectCareRows(
+    Iterable<Map<String, Object?>> rows,
+  ) => rows
+      .map(wellnessPolicy.projectCareRow)
+      .whereType<Map<String, Object?>>()
+      .toList(growable: false);
   Future<List<Map<String, Object?>>> globalCareRecordsRange(
     String id,
     String metric,
     DateTime start,
     DateTime end,
-  ) => (_api as GlobalCareHealthApi).globalCareRecordsRange(
-    id,
-    metric,
-    start,
-    end,
-  );
+  ) async {
+    if (!wellnessPolicy.allowsWireMetric(metric)) return const [];
+    return _projectCareRows(
+      await (_api as GlobalCareHealthApi).globalCareRecordsRange(
+        id,
+        metric,
+        start,
+        end,
+      ),
+    );
+  }
+
   Future<HealthRecord> loadEcgWaveform(
     HealthRecord record, {
     String? relationshipId,
-  }) => (_api as GlobalSaydianApiClient).loadEcgWaveform(
-    record,
-    relationshipId: relationshipId,
-  );
+  }) {
+    if (isIosWellnessEdition) {
+      throw const FeatureNotConfiguredException(
+        'Not available in this iOS edition.',
+      );
+    }
+    return (_api as GlobalSaydianApiClient).loadEcgWaveform(
+      record,
+      relationshipId: relationshipId,
+    );
+  }
 
-  Future<List<GlobalCareRelationship>> globalCareRelationships() =>
-      (_api as GlobalCareApi).globalCareRelationships();
+  Future<List<GlobalCareRelationship>> globalCareRelationships() async =>
+      (await (_api as GlobalCareApi).globalCareRelationships())
+          .map(
+            (row) => !isIosWellnessEdition
+                ? row
+                : GlobalCareRelationship(
+                    id: row.id,
+                    status: row.status,
+                    received: row.received,
+                    name: row.name,
+                    metrics: row.metrics
+                        .where(wellnessPolicy.allowsWireMetric)
+                        .toSet(),
+                    expiresAt: row.expiresAt,
+                  ),
+          )
+          .toList(growable: false);
   Future<void> globalInviteCare(String identifier) =>
       (_api as GlobalCareApi).globalInviteCare(identifier);
   Future<void> globalRespondCare(String id, bool accepted) =>
       (_api as GlobalCareApi).globalRespondCare(id, accepted);
   Future<void> globalShareCare(String id, Set<String> metrics) =>
-      (_api as GlobalCareApi).globalShareCare(id, metrics);
+      (_api as GlobalCareApi).globalShareCare(
+        id,
+        metrics.where(wellnessPolicy.allowsWireMetric).toSet(),
+      );
   Future<void> globalRevokeCare(String id) =>
       (_api as GlobalCareApi).globalRevokeCare(id);
   Future<List<Map<String, Object?>>> globalCareRecords(
     String id,
     String metric,
     DateTime day,
-  ) => (_api as GlobalCareApi).globalCareRecords(id, metric, day);
+  ) async {
+    if (!wellnessPolicy.allowsWireMetric(metric)) return const [];
+    return _projectCareRows(
+      await (_api as GlobalCareApi).globalCareRecords(id, metric, day),
+    );
+  }
 
   Future<GlobalAuthCapabilities> globalAuthCapabilities() =>
       (_api as GlobalAccountApi).getAuthCapabilities();
@@ -706,16 +769,34 @@ class AppController extends ChangeNotifier {
   CloudHealthSyncState cloudSyncState = CloudHealthSyncState.localOnly;
   int cloudSyncUploadedCount = 0;
   DeviceInfo? connectedDevice;
-  DeviceCapabilities? capabilities;
+  IosWellnessPolicy get wellnessPolicy => IosWellnessPolicy.current;
+  bool get isIosWellnessEdition => wellnessPolicy.enabled;
+  DeviceCapabilities? _capabilities;
+  DeviceCapabilities? get capabilities => _capabilities;
+  set capabilities(DeviceCapabilities? value) => _capabilities = value == null
+      ? null
+      : wellnessPolicy.projectCapabilities(value);
   DeviceCapabilityState deviceCapabilityState =
       DeviceCapabilityState.disconnected;
   SportMode? activeSport;
   bool sportPaused = false;
-  Map<String, num> liveSportData = const {};
+  Map<String, num> _liveSportData = const {};
+  Map<String, num> get liveSportData => _liveSportData;
+  set liveSportData(Map<String, num> value) =>
+      _liveSportData = wellnessPolicy.projectSportValues(value);
   List<DeviceInfo> scannedDevices = const [];
   DeviceScanIssue? deviceScanIssue;
-  List<HealthRecord> healthRecords = const [];
-  List<SportRecord> sportRecords = const [];
+  List<HealthRecord> _healthRecords = const [];
+  List<HealthRecord> get healthRecords => _healthRecords;
+  set healthRecords(List<HealthRecord> value) => _healthRecords = wellnessPolicy
+      .projectRecords(value)
+      .where(wellnessPolicy.isDisplayable)
+      .toList(growable: false);
+  List<SportRecord> _sportRecords = const [];
+  List<SportRecord> get sportRecords => _sportRecords;
+  set sportRecords(List<SportRecord> value) => _sportRecords = value
+      .map(wellnessPolicy.projectSport)
+      .toList(growable: false);
   List<Map<String, Object?>> careMembers = const [];
   List<Map<String, Object?>> careInvitations = const [];
   String careStatus = '等待加载';
@@ -726,8 +807,27 @@ class AppController extends ChangeNotifier {
   String? articleCategoryLoadError;
   String? articleListLoadError;
   String? articleDetailLoadError;
-  List<Map<String, Object?>> notifications = const [];
-  List<NotificationEvent> notificationInboxEvents = const [];
+  List<Map<String, Object?>> _notifications = const [];
+  List<Map<String, Object?>> get notifications => _notifications;
+  set notifications(List<Map<String, Object?>> value) =>
+      _notifications = isIosWellnessEdition
+      ? value
+            .where(
+              (row) =>
+                  row['kind'] != 'health_warning' &&
+                  row['_eventType'] != 'healthWarning',
+            )
+            .toList(growable: false)
+      : value;
+  List<NotificationEvent> _notificationInboxEvents = const [];
+  List<NotificationEvent> get notificationInboxEvents =>
+      _notificationInboxEvents;
+  set notificationInboxEvents(List<NotificationEvent> value) =>
+      _notificationInboxEvents = isIosWellnessEdition
+      ? value
+            .where((event) => event.type != NotificationEventType.healthWarning)
+            .toList(growable: false)
+      : value;
   int notificationUnreadCount = 0;
   int? remoteNotificationUnreadCount;
   NotificationRouteIntent? pendingNotificationRoute;
@@ -760,7 +860,10 @@ class AppController extends ChangeNotifier {
   bool heartRateWarningSupported = false;
   String deviceSettingsStatus = '连接手表后可读取';
   HealthWarningSettings healthWarningSettings = const HealthWarningSettings();
-  List<HealthWarningAlert> healthWarningAlerts = const [];
+  List<HealthWarningAlert> _healthWarningAlerts = const [];
+  List<HealthWarningAlert> get healthWarningAlerts => _healthWarningAlerts;
+  set healthWarningAlerts(List<HealthWarningAlert> value) =>
+      _healthWarningAlerts = isIosWellnessEdition ? const [] : value;
   HealthWarningAlert? activeHealthWarningAlert;
   NotificationEvent? activeCareInvitationAlert;
 
@@ -795,6 +898,7 @@ class AppController extends ChangeNotifier {
           capabilities != null);
 
   bool shouldShowHealthMetric(HealthMetric metric) {
+    if (!wellnessPolicy.allowsMetric(metric)) return false;
     // Keep saved history available from its history route, but do not present
     // an unsupported sensor as a live feature of the connected U19.
     if (connectedDevice?.sdkSource == WearableSdkSource.urion &&
@@ -808,6 +912,7 @@ class AppController extends ChangeNotifier {
   }
 
   bool canMeasureHealthMetric(HealthMetric metric) =>
+      !isIosWellnessEdition &&
       connectedDevice != null &&
       _hasResolvedDeviceCapabilities &&
       capabilities?.supportsManualMeasurement(metric) == true;
@@ -1954,6 +2059,8 @@ class AppController extends ChangeNotifier {
         return false;
       }
       final validRecords = receivedRecords
+          .map(wellnessPolicy.projectRecord)
+          .whereType<HealthRecord>()
           .map(sanitizeWearableTransportRecord)
           .where(hasSaneWearableTransportValues)
           .toList(growable: false);
@@ -1969,12 +2076,15 @@ class AppController extends ChangeNotifier {
         if (!_isDeviceSyncCurrent(generation, deviceId, sessionGeneration)) {
           return false;
         }
-        if (previous != null &&
-            previous.values.length == record.values.length &&
-            previous.values.entries.every(
+        final previousView = previous == null
+            ? null
+            : wellnessPolicy.projectRecord(previous);
+        if (previousView != null &&
+            previousView.values.length == record.values.length &&
+            previousView.values.entries.every(
               (entry) => record.values[entry.key] == entry.value,
             ) &&
-            previous.unit == record.unit) {
+            previousView.unit == record.unit) {
           continue;
         }
         final observedAt =
@@ -2189,6 +2299,7 @@ class AppController extends ChangeNotifier {
   }
 
   Future<bool> startMeasurement(HealthMetric metric) async {
+    if (isIosWellnessEdition) return false;
     if (_activeMeasurementMetric != null ||
         deviceState == DeviceConnectionState.measuring) {
       measurementErrorMessage = '另一项手表测量尚未结束，请稍后重试';
@@ -2390,6 +2501,7 @@ class AppController extends ChangeNotifier {
     required DateTime start,
     required DateTime end,
   }) async {
+    if (!wellnessPolicy.allowsMetric(metric)) return const [];
     final generation = _sessionGeneration;
     final records = await _healthStore.range(
       metric: metric,
@@ -2398,7 +2510,10 @@ class AppController extends ChangeNotifier {
     );
     if (!_isCurrentSessionGeneration(generation)) return const [];
     return deduplicateHealthRecords(
-      records.where(hasSaneWearableTransportValues),
+      wellnessPolicy
+          .projectRecords(records)
+          .where(wellnessPolicy.isDisplayable)
+          .where(hasSaneWearableTransportValues),
     );
   }
 
@@ -2455,6 +2570,7 @@ class AppController extends ChangeNotifier {
   };
 
   Future<bool> saveHealthWarningSettings(HealthWarningSettings settings) async {
+    if (isIosWellnessEdition) return false;
     if (settings.heartRateUpper < 20 || settings.heartRateUpper > 300) {
       errorMessage = '心率报警值需设置在 20–300 bpm';
       notifyListeners();
@@ -2502,6 +2618,7 @@ class AppController extends ChangeNotifier {
   }
 
   Future<void> refreshHealthWarningCloudState() async {
+    if (isIosWellnessEdition) return;
     final api = _api;
     if (api is! SaydianHealthCloudApi || session == null) return;
     final expectedGeneration = _sessionGeneration;
@@ -2740,6 +2857,14 @@ class AppController extends ChangeNotifier {
   }
 
   Future<void> _refreshDeviceSettings() async {
+    if (isIosWellnessEdition) {
+      autoMeasureSettings = const {};
+      autoMeasureIntervals = const {};
+      heartRateWarningSupported = false;
+      isDeviceSettingsLoading = false;
+      notifyListeners();
+      return;
+    }
     await Future<void>.delayed(Duration.zero);
     if (_disposed) return;
     if (connectedDevice == null) {
@@ -2821,6 +2946,7 @@ class AppController extends ChangeNotifier {
   }.contains(error.code);
 
   Future<void> setAutoMeasureSetting(String type, bool enabled) async {
+    if (isIosWellnessEdition) return;
     if (connectedDevice == null) {
       errorMessage = '请先连接手表';
       notifyListeners();
@@ -2837,6 +2963,7 @@ class AppController extends ChangeNotifier {
   }
 
   Future<void> setAutoMeasureInterval(String type, int minutes) async {
+    if (isIosWellnessEdition) return;
     if (connectedDevice == null) {
       errorMessage = '请先连接手表';
       notifyListeners();
@@ -2991,6 +3118,7 @@ class AppController extends ChangeNotifier {
   }
 
   Future<void> setHeartRateWarning(int value) async {
+    if (isIosWellnessEdition) return;
     if (connectedDevice == null) {
       errorMessage = '请先连接手表';
       notifyListeners();
@@ -3007,6 +3135,11 @@ class AppController extends ChangeNotifier {
   }
 
   FeatureAvailability availabilityFor(DeviceFeature feature) {
+    if (!wellnessPolicy.allowsFeature(feature)) {
+      return const FeatureAvailability(
+        FeatureAvailabilityStatus.unsupportedDevice,
+      );
+    }
     if (connectedDevice == null) {
       return const FeatureAvailability(FeatureAvailabilityStatus.needsDevice);
     }
@@ -3598,6 +3731,7 @@ class AppController extends ChangeNotifier {
   });
 
   Future<void> refreshAiArticles() async {
+    if (isIosWellnessEdition) return;
     aiStatus = '正在加载';
     notifyListeners();
     try {
@@ -3612,6 +3746,7 @@ class AppController extends ChangeNotifier {
   Future<List<Map<String, Object?>>> loadArticleCategories({
     int parentId = 3,
   }) async {
+    if (isIosWellnessEdition) return const [];
     articleCategoryLoadError = null;
     final api = _api;
     final articleApi = api is SaydianArticleApi
@@ -3640,6 +3775,7 @@ class AppController extends ChangeNotifier {
     int? categoryId,
     int page = 1,
   }) async {
+    if (isIosWellnessEdition) return const [];
     articleListLoadError = null;
     final api = _api;
     final articleApi = api is SaydianArticleApi
@@ -3665,6 +3801,7 @@ class AppController extends ChangeNotifier {
   }
 
   Future<Map<String, Object?>> loadArticle(int id) async {
+    if (isIosWellnessEdition) return const {};
     articleDetailLoadError = null;
     try {
       return await _api.getArticle(id);
@@ -3677,6 +3814,7 @@ class AppController extends ChangeNotifier {
   }
 
   Future<Map<String, Object?>> loadSingleArticle(int id) async {
+    if (isIosWellnessEdition) return const {};
     articleDetailLoadError = null;
     try {
       return await _api.getSingleArticle(id);
@@ -4285,6 +4423,11 @@ class AppController extends ChangeNotifier {
     required bool showLocalNotification,
     required int expectedGeneration,
   }) async {
+    if (isIosWellnessEdition &&
+        NotificationEvent.tryParse(payload)?.type ==
+            NotificationEventType.healthWarning) {
+      return null;
+    }
     if (!_notificationStorageReady ||
         !_isCurrentSessionGeneration(expectedGeneration) ||
         session == null) {
@@ -4566,6 +4709,7 @@ class AppController extends ChangeNotifier {
     DateTime? day,
     int? memberId,
   }) async {
+    if (isIosWellnessEdition) return const {};
     final generation = _sessionGeneration;
     if (_accountTransitioning) return const {};
     try {
@@ -4592,6 +4736,7 @@ class AppController extends ChangeNotifier {
   }
 
   Future<void> refreshAiMessages({required int app}) async {
+    if (isIosWellnessEdition) return;
     final generation = _sessionGeneration;
     final owner = session;
     await Future<void>.delayed(Duration.zero);
@@ -4638,6 +4783,7 @@ class AppController extends ChangeNotifier {
     required int app,
     required String message,
   }) async {
+    if (isIosWellnessEdition) return false;
     final normalized = message.trim();
     if (normalized.isEmpty || _accountTransitioning || isBusy) return false;
     final generation = _sessionGeneration;
@@ -4855,6 +5001,11 @@ class AppController extends ChangeNotifier {
   }
 
   SaydianHealthReportApi get _requiredHealthReportApi {
+    if (isIosWellnessEdition) {
+      throw const FeatureNotConfiguredException(
+        'Not available in this iOS edition.',
+      );
+    }
     final api = _api;
     if (api is SaydianHealthReportApi) return api as SaydianHealthReportApi;
     throw const FeatureNotConfiguredException('健康档案暂时无法使用，请稍后再试');
@@ -5044,6 +5195,7 @@ class AppController extends ChangeNotifier {
   }
 
   Future<int> restoreAppleHealthPurchases() async {
+    if (isIosWellnessEdition) return 0;
     if (defaultTargetPlatform != TargetPlatform.iOS) {
       throw const FeatureNotConfiguredException('当前设备无需恢复苹果购买');
     }
@@ -5466,6 +5618,9 @@ class AppController extends ChangeNotifier {
         syncStatus = '正在读取手表数据 ${(deviceSyncProgress * 100).round()}%';
       }
     } else if (event.type == 'healthRecord') {
+      if (!wellnessPolicy.allowsWireMetric('${event.payload['type'] ?? ''}')) {
+        return;
+      }
       final eventGeneration =
           _activeMeasurementSessionGeneration ??
           _connectedDeviceSessionGeneration;
@@ -5496,7 +5651,9 @@ class AppController extends ChangeNotifier {
             record.origin == MeasurementOrigin.watchHistory) {
           record = record.copyWith(origin: MeasurementOrigin.appMeasurement);
         }
-        record = sanitizeWearableTransportRecord(record);
+        record = wellnessPolicy.projectRecord(
+          sanitizeWearableTransportRecord(record),
+        )!;
         if (!hasSaneWearableTransportValues(record)) {
           if (_isCurrentMeasurementResult(
             record,
@@ -5932,6 +6089,7 @@ class AppController extends ChangeNotifier {
     HealthRecord record, {
     required int expectedGeneration,
   }) {
+    if (isIosWellnessEdition) return;
     if (!_isCurrentSessionGeneration(expectedGeneration)) return;
     if (record.measuredAt.isBefore(
       DateTime.now().toUtc().subtract(const Duration(minutes: 5)),
@@ -6011,6 +6169,7 @@ class AppController extends ChangeNotifier {
     final storedLatest = await _healthStore.latestForEachMetric();
     if (!_isCurrentSessionGeneration(expectedGeneration)) return;
     final invalidIds = [...storedRecent, ...storedLatest]
+        .where((record) => wellnessPolicy.allowsMetric(record.metric))
         .where((record) => !hasSaneWearableTransportValues(record))
         .map((record) => record.id)
         .toSet();

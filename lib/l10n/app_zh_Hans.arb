@@ -1,4 +1,5 @@
 {
+  "iosActivitySleepScope": "此 iOS 版本仅支持活动与睡眠，不提供生理测量、医疗风险解读和 AI 分析。此前保存的记录仍会保留。",
   "scanLocationTitle": "请开启手机定位",
   "scanLocationHint": "开启手机定位后重试。",
   "scanPermissionTitle": "请允许相关权限",
@@ -432,7 +433,7 @@
   "allData": "全部数据",
   "healthRecords": "健康记录",
   "workoutsAndRecords": "运动与记录",
-  "healthDisclaimer": "测量结果仅供健康管理参考，如有不适请咨询专业医务人员。",
+  "healthDisclaimer": "设备读数仅供健康参考，非诊断或治疗。作出任何医疗决定前，请先咨询医生。如有不适，请就医。",
   "healthSafetyAdvice": "请休息后复测；如有明显不适，请及时咨询医务人员。",
   "defaultUser": "赛电用户",
   "dailyGreeting": "今天也要保持好状态",

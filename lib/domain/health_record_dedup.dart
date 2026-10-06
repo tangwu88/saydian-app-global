@@ -33,7 +33,10 @@ List<HealthRecord> deduplicateHealthRecords(Iterable<HealthRecord> records) {
     }
   }
   final result = selected.values.toList(growable: false)
-    ..sort((a, b) => b.measuredAt.compareTo(a.measuredAt));
+    ..sort((a, b) {
+      final dayOrder = b.displaySortTime.compareTo(a.displaySortTime);
+      return dayOrder != 0 ? dayOrder : b.measuredAt.compareTo(a.measuredAt);
+    });
   return result;
 }
 

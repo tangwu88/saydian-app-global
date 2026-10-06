@@ -1,4 +1,5 @@
 {
+  "iosActivitySleepScope": "This iOS edition supports activity and sleep only. Physiological measurements, medical risk interpretations and AI analysis are not available. Previously saved records are retained.",
   "scanLocationTitle": "Turn on location",
   "scanLocationHint": "Enable phone location, then retry.",
   "scanPermissionTitle": "Allow device access",
@@ -439,7 +440,7 @@
   "allData": "All data",
   "healthRecords": "Readings",
   "workoutsAndRecords": "Workouts and records",
-  "healthDisclaimer": "Measurements are for wellness reference only. Consult a healthcare professional if you feel unwell.",
+  "healthDisclaimer": "Wearable readings are for general wellness reference, not diagnosis or treatment. Consult a doctor before making any medical decisions. If you feel unwell, seek medical care.",
   "healthSafetyAdvice": "Rest and measure again. If you feel unwell, seek medical advice.",
   "defaultUser": "Saydian user",
   "dailyGreeting": "Take care of yourself today",

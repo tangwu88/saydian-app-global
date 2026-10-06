@@ -12,6 +12,8 @@
 
 ## 最近记录
 
+- [2026-10-07 iOS 审核整改核查](release/IOS-APP-REVIEW-REMEDIATION-20261007.md) — 用户已授权活动与睡眠版；统一限制 iOS 页面、设备命令、旧数据读取及上传，保留历史和 Android 功能。构建 1014、各轮失败与验收边界见记录；未完成的送审步骤不算通过。
+
 - [2026-10-05 发布工具整理与跨电脑交接](IMPLEMENTATION-LOG-20261005-CLEANUP-HANDOFF.md) — 分块校验与可复现打包/离线导入；不改运行时，不恢复安卓真机测试或鸿蒙构建，结果与边界见记录。
 
 - [2026-10-04 iOS 1.0.1 TestFlight](IMPLEMENTATION-LOG-20261004-IOS-TESTFLIGHT.md) — 最新国际代码的新签名构建、Beta Review 与现有公开邀请组；各阶段结果及真机未验收项分别记录，不撤回旧审核，不构建鸿蒙。

@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 
 import '../domain/feature_models.dart';
 import '../domain/models.dart';
+import '../domain/ios_wellness_policy.dart';
 import 'global_storage_scope.dart';
 import 'wearable_bridge.dart';
 
@@ -535,20 +536,40 @@ class RoutedWearableBridge
   }
 
   @override
-  Future<DeviceCapabilities> getCapabilities() =>
-      _activeBridge.getCapabilities();
+  Future<DeviceCapabilities> getCapabilities() async => IosWellnessPolicy
+      .current
+      .projectCapabilities(await _activeBridge.getCapabilities());
 
   @override
-  Future<List<HealthRecord>> syncHealthData({String? cursor}) =>
-      _activeBridge.syncHealthData(cursor: cursor);
+  Future<List<HealthRecord>> syncHealthData({String? cursor}) async =>
+      IosWellnessPolicy.current.projectRecords(
+        await _activeBridge.syncHealthData(cursor: cursor),
+      );
+
+  void _requirePhysiology() {
+    if (IosWellnessPolicy.current.enabled) {
+      throw PlatformException(
+        code: 'IOS_WELLNESS_SCOPE',
+        message: 'Not available in this iOS edition.',
+      );
+    }
+  }
+
+  void _requireFeature(DeviceFeature feature) {
+    if (!IosWellnessPolicy.current.allowsFeature(feature)) _requirePhysiology();
+  }
 
   @override
-  Future<void> startMeasurement(HealthMetric metric) =>
-      _activeBridge.startMeasurement(metric);
+  Future<void> startMeasurement(HealthMetric metric) async {
+    _requirePhysiology();
+    await _activeBridge.startMeasurement(metric);
+  }
 
   @override
-  Future<void> stopMeasurement(HealthMetric metric) =>
-      _activeBridge.stopMeasurement(metric);
+  Future<void> stopMeasurement(HealthMetric metric) async {
+    _requirePhysiology();
+    await _activeBridge.stopMeasurement(metric);
+  }
 
   @override
   Future<void> startSport(SportMode mode) => _activeBridge.startSport(mode);
@@ -581,19 +602,26 @@ class RoutedWearableBridge
   }
 
   @override
-  Future<List<SportRecord>> readSportRecords() =>
-      _activeBridge.readSportRecords();
+  Future<List<SportRecord>> readSportRecords() async =>
+      (await _activeBridge.readSportRecords())
+          .map(IosWellnessPolicy.current.projectSport)
+          .toList();
 
   @override
   Future<Map<String, bool>> readAutoMeasureSettings() =>
-      _activeBridge.readAutoMeasureSettings();
+      IosWellnessPolicy.current.enabled
+      ? Future.value({})
+      : _activeBridge.readAutoMeasureSettings();
 
   @override
-  Future<void> setAutoMeasureSetting(String type, bool enabled) =>
-      _activeBridge.setAutoMeasureSetting(type, enabled);
+  Future<void> setAutoMeasureSetting(String type, bool enabled) async {
+    _requirePhysiology();
+    await _activeBridge.setAutoMeasureSetting(type, enabled);
+  }
 
   @override
   Future<Map<String, AutoMeasureIntervalSetting>> readAutoMeasureIntervals() {
+    if (IosWellnessPolicy.current.enabled) return Future.value({});
     final bridge = _activeBridge;
     if (bridge is! WearableAutoMeasureIntervalBridge) return Future.value({});
     return (bridge as WearableAutoMeasureIntervalBridge)
@@ -602,6 +630,7 @@ class RoutedWearableBridge
 
   @override
   Future<void> setAutoMeasureInterval(String type, int minutes) {
+    _requirePhysiology();
     final bridge = _activeBridge;
     if (bridge is! WearableAutoMeasureIntervalBridge) {
       throw PlatformException(
@@ -616,27 +645,39 @@ class RoutedWearableBridge
   }
 
   @override
-  Future<int?> readHeartRateWarning() => _activeBridge.readHeartRateWarning();
+  Future<int?> readHeartRateWarning() => IosWellnessPolicy.current.enabled
+      ? Future.value(null)
+      : _activeBridge.readHeartRateWarning();
 
   @override
-  Future<void> setHeartRateWarning(int value) =>
-      _activeBridge.setHeartRateWarning(value);
+  Future<void> setHeartRateWarning(int value) async {
+    _requirePhysiology();
+    await _activeBridge.setHeartRateWarning(value);
+  }
 
   @override
-  Future<Map<String, Object?>> readDeviceFeature(DeviceFeature feature) =>
-      _activeBridge.readDeviceFeature(feature);
+  Future<Map<String, Object?>> readDeviceFeature(DeviceFeature feature) async {
+    _requireFeature(feature);
+    return _activeBridge.readDeviceFeature(feature);
+  }
 
   @override
   Future<void> writeDeviceFeature(
     DeviceFeature feature,
     Map<String, Object?> values,
-  ) => _activeBridge.writeDeviceFeature(feature, values);
+  ) async {
+    _requireFeature(feature);
+    await _activeBridge.writeDeviceFeature(feature, values);
+  }
 
   @override
   Future<void> triggerDeviceAction(
     DeviceFeature feature, {
     bool enabled = true,
-  }) => _activeBridge.triggerDeviceAction(feature, enabled: enabled);
+  }) async {
+    _requireFeature(feature);
+    await _activeBridge.triggerDeviceAction(feature, enabled: enabled);
+  }
 
   void _subscribeToSourceEvents() {
     if (_subscriptions.isNotEmpty) return;
@@ -658,6 +699,29 @@ class RoutedWearableBridge
   }
 
   void _forwardEvent(WearableTransport transport, WearableEvent event) {
+    final policy = IosWellnessPolicy.current;
+    if (policy.enabled) {
+      if (event.type == 'healthRecord') {
+        if (!policy.allowsWireMetric('${event.payload['type'] ?? ''}')) return;
+        event = WearableEvent(
+          type: event.type,
+          payload: policy
+              .projectRecord(HealthRecord.fromJson(event.payload))!
+              .toJson(),
+        );
+      } else if (event.type.startsWith('measurement') ||
+          event.type.toLowerCase().contains('ecg')) {
+        return;
+      } else if (event.type == 'sportData') {
+        event = WearableEvent(
+          type: event.type,
+          payload: policy.projectSportValues({
+            for (final entry in event.payload.entries)
+              if (entry.value is num) entry.key: entry.value as num,
+          }),
+        );
+      }
+    }
     if (_pendingRecoveryWork.containsKey(transport) &&
         (_sourceConnectionGenerations[transport] != _connectionGeneration ||
             _activeTransport != transport)) {

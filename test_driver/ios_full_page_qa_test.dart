@@ -4,7 +4,8 @@ import 'package:integration_test/integration_test_driver_extended.dart';
 
 Future<void> main() async {
   final output = Directory(
-    'build/ios/real-device-qa-20261002/screenshots/final-expanded',
+    Platform.environment['SAYDIAN_QA_SCREENSHOTS_DIR'] ??
+        'build/ios-wellness-1014/private-page-screenshots',
   );
   await output.create(recursive: true);
   await integrationDriver(

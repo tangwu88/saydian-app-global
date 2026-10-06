@@ -2,6 +2,7 @@ import 'widgets/safe_network_image.dart';
 import '../l10n/global_locale_controller.dart';
 import '../l10n/ui_labels.dart';
 import 'global_care_page.dart';
+import 'ios_wellness_scope.dart';
 import 'global_auth_page.dart';
 import 'global_legal_page.dart';
 import 'dart:async';
@@ -502,8 +503,10 @@ class _HealthWarningPageState extends State<HealthWarningPage> {
       text: settings.temperatureUpper.toStringAsFixed(1),
     );
     widget.controller.addListener(_refresh);
-    unawaited(widget.controller.refreshNotificationHistory(allPages: true));
-    unawaited(widget.controller.markAllHealthWarningsRead());
+    if (!widget.controller.isIosWellnessEdition) {
+      unawaited(widget.controller.refreshNotificationHistory(allPages: true));
+      unawaited(widget.controller.markAllHealthWarningsRead());
+    }
   }
 
   @override
@@ -612,6 +615,9 @@ class _HealthWarningPageState extends State<HealthWarningPage> {
 
   @override
   Widget build(BuildContext context) {
+    if (widget.controller.isIosWellnessEdition) {
+      return const IosWellnessUnavailablePage();
+    }
     final warnings = widget.controller.notifications
         .where(_isExplicitHealthWarning)
         .toList();
@@ -1490,6 +1496,9 @@ class _HealthCalibrationPageState extends State<HealthCalibrationPage> {
   @override
   Widget build(BuildContext context) {
     final isBloodPressure = widget.metric == HealthMetric.bloodPressure;
+    if (widget.controller.isIosWellnessEdition) {
+      return const IosWellnessUnavailablePage();
+    }
     return Scaffold(
       appBar: AppBar(
         title: Text(

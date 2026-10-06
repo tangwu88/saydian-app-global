@@ -232,7 +232,10 @@ void main() {
       );
 
       final result = await api.uploadHealthBatch(
-        SyncBatch(cursor: null, records: [_record('unknown-model')]),
+        SyncBatch(
+          cursor: null,
+          records: [_record('unknown-model', metric: HealthMetric.steps)],
+        ),
       );
 
       expect(result.acceptedIds, {'unknown-model'});

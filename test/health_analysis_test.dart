@@ -24,6 +24,18 @@ void main() {
     rawVersion: 1,
   );
 
+  test('daily summary charts use the SDK day, not the later read time', () {
+    final at = DateTime.utc(2026, 10, 6, 17);
+    final daily = record(
+      id: 'synthetic-daily',
+      metric: HealthMetric.steps,
+      at: at,
+      values: const {'value': 20},
+    ).copyWith(aggregation: const HealthAggregation.dailySummary('2026-10-05'));
+    expect(HealthAnalysisService.displayTime(daily), DateTime(2026, 10, 5));
+    expect(daily.measuredAt, at);
+  });
+
   test('day analysis deduplicates records and keeps timezone display time', () {
     final first = record(
       id: 'same',

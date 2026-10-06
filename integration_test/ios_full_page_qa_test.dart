@@ -5,7 +5,11 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:saydian_app/app.dart';
+import 'package:saydian_app/domain/ios_wellness_policy.dart';
+import 'package:saydian_app/l10n/global_locale_controller.dart';
 import 'package:saydian_app/services/app_controller.dart';
+
+import 'ios_wellness_sync_qa_test.dart' as wellness_sync;
 
 void main() {
   final binding = IntegrationTestWidgetsFlutterBinding.ensureInitialized();
@@ -16,11 +20,23 @@ void main() {
   ) async {
     final controller = AppController.production();
     addTearDown(controller.dispose);
+    await GlobalLocaleController.instance.load();
+    final originalLocale = GlobalLocaleController.instance.locale;
+    addTearDown(
+      () => GlobalLocaleController.instance.setLocale(originalLocale),
+    );
+    expect(
+      await GlobalLocaleController.instance.setLocale(const Locale('en')),
+      isTrue,
+    );
     await controller.initialize();
-    if (controller.isAuthenticated) {
-      await controller.restoreWearableConnection();
-    }
-    if (!controller.isAuthenticated) controller.enterPreview();
+    expect(controller.isIosWellnessEdition, isTrue);
+    expect(
+      controller.isAuthenticated,
+      isTrue,
+      reason: 'Real sign-in required; no preview substitution',
+    );
+    await controller.restoreWearableConnection();
 
     await tester.pumpWidget(
       RepaintBoundary(
@@ -29,6 +45,14 @@ void main() {
       ),
     );
     await _settle(tester);
+    expect(find.byKey(const Key('ios-wellness-scope')), findsOneWidget);
+    expect(find.byKey(const Key('dashboard-ai-ask')), findsNothing);
+    expect(
+      controller.healthRecords.every(
+        (r) => IosWellnessPolicy.metrics.contains(r.metric),
+      ),
+      isTrue,
+    );
     await _capture(tester, binding, captureKey, '01-home');
 
     final notificationButton = find.byIcon(Icons.notifications_none_rounded);
@@ -43,11 +67,7 @@ void main() {
       of: find.byKey(const Key('dashboard-functions')),
       matching: find.byType(InkWell),
     );
-    for (final entry in const [
-      ('remote-care', 0),
-      ('health-encyclopedia', 1),
-      ('health-alerts', 2),
-    ]) {
+    for (final entry in const [('remote-care', 0)]) {
       if (featureEntries.evaluate().length <= entry.$2) continue;
       await tester.tap(featureEntries.at(entry.$2));
       await _settle(tester);
@@ -99,8 +119,9 @@ void main() {
     }
 
     for (final metric in const [
-      ('blood-pressure', 'health-metric-bloodPressure'),
-      ('blood-oxygen', 'health-metric-bloodOxygen'),
+      ('steps', 'health-metric-steps'),
+      ('distance', 'health-metric-distance'),
+      ('calories', 'health-metric-calories'),
       ('sleep', 'health-metric-sleep'),
     ]) {
       final card = find.byKey(Key(metric.$2));
@@ -128,10 +149,9 @@ void main() {
       );
       await _capture(tester, binding, captureKey, '07-all-health-data');
       for (final row in const [
-        ('heart-rate', ['Heart rate', '心率']),
-        ('blood-oxygen', ['Blood oxygen', '血氧']),
-        ('blood-pressure', ['Blood pressure', '血压']),
         ('steps', ['Steps', '步数']),
+        ('distance', ['Distance', '距离']),
+        ('calories', ['Calories', '热量']),
         ('sleep', ['Sleep', '睡眠']),
       ]) {
         final item = _firstText(row.$2);
@@ -192,8 +212,6 @@ void main() {
       await _pop(tester);
     }
     for (final feature in const [
-      ('health-monitoring', 'Health monitoring'),
-      ('pulse-insights', 'Pulse insights'),
       ('display', 'Display'),
       ('watch-settings', 'Settings'),
       ('connection-help', 'Connection help'),
@@ -278,6 +296,7 @@ void main() {
 
     expect(tester.takeException(), isNull);
   });
+  wellness_sync.main();
 }
 
 Finder _firstText(List<String> values) {
@@ -289,7 +308,9 @@ Finder _firstText(List<String> values) {
 }
 
 Future<void> _tapText(WidgetTester tester, Finder text) async {
-  await tester.ensureVisible(text);
+  await Scrollable.ensureVisible(tester.element(text), alignment: 0.4);
+  // Scroll position changes require layout before a real-device hit test.
+  await tester.pump();
   for (final type in const [TextButton, ListTile, InkWell]) {
     final action = find.ancestor(of: text, matching: find.byType(type));
     if (action.evaluate().isNotEmpty) {
@@ -301,11 +322,13 @@ Future<void> _tapText(WidgetTester tester, Finder text) async {
 }
 
 Future<void> _settle(WidgetTester tester) async {
-  await tester.pumpAndSettle(
-    const Duration(milliseconds: 100),
-    EnginePhase.sendSemanticsUpdate,
-    const Duration(seconds: 8),
-  );
+  // Real sync/progress indicators can legitimately animate indefinitely.
+  // Wait for route transitions, not for every background animation to stop.
+  // Page/state assertions and the independent sync test still must succeed.
+  for (var frame = 0; frame < 15; frame++) {
+    await tester.pump(const Duration(milliseconds: 200));
+  }
+  expect(tester.takeException(), isNull);
 }
 
 Future<void> _capture(

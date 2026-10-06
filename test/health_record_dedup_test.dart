@@ -3,6 +3,21 @@ import 'package:saydian_app/domain/health_record_dedup.dart';
 import 'package:saydian_app/domain/models.dart';
 
 void main() {
+  test(
+    'historical daily reads sort by the source day, without changing time',
+    () {
+      final at = DateTime.utc(2026, 10, 6, 17);
+      final today = _record('today', at, const {'value': 20}).copyWith(
+        aggregation: const HealthAggregation.dailySummary('2026-10-07'),
+      );
+      final yesterday = _record('yesterday', at, const {'value': 10}).copyWith(
+        aggregation: const HealthAggregation.dailySummary('2026-10-06'),
+      );
+      final result = deduplicateHealthRecords([yesterday, today]);
+      expect(result.map((r) => r.id), ['today', 'yesterday']);
+      expect(result.every((r) => r.measuredAt == at), isTrue);
+    },
+  );
   test('same watch metric and second keeps the richer record', () {
     final measuredAt = DateTime.utc(2026, 8, 28, 8, 30, 15, 120);
     final result = deduplicateHealthRecords([

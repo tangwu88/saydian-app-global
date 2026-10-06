@@ -1,4 +1,5 @@
 import 'notification_models.dart';
+import '../domain/ios_wellness_policy.dart';
 
 enum NotificationRouteTarget {
   careInvitationReview,
@@ -27,7 +28,9 @@ final class NotificationRouteService {
           NotificationEventType.careInvitation =>
             NotificationRouteTarget.careInvitationReview,
           NotificationEventType.healthWarning =>
-            NotificationRouteTarget.healthWarningHistory,
+            IosWellnessPolicy.current.enabled
+                ? NotificationRouteTarget.notificationInbox
+                : NotificationRouteTarget.healthWarningHistory,
           NotificationEventType.system =>
             NotificationRouteTarget.notificationInbox,
         },

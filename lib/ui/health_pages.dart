@@ -22,9 +22,13 @@ class HealthPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final latest = controller.latestByMetric;
-    final visibleMetrics = coreMetrics
-        .where(controller.shouldShowHealthMetric)
-        .toList(growable: false);
+    final visibleMetrics = [
+      ...coreMetrics,
+      if (controller.isIosWellnessEdition) ...[
+        HealthMetric.distance,
+        HealthMetric.calories,
+      ],
+    ].where(controller.shouldShowHealthMetric).toList(growable: false);
     final calibrationMetrics = <HealthMetric>[
       if (controller.connectedDevice?.sdkSource != WearableSdkSource.urion &&
           controller.canMeasureHealthMetric(HealthMetric.bloodPressure))
@@ -142,6 +146,7 @@ Future<void> _showHealthMeasurementDialog(
   AppController controller,
   HealthMetric metric,
 ) async {
+  if (controller.isIosWellnessEdition) return;
   if (metric == HealthMetric.bloodPressure &&
       controller.connectedDevice?.sdkSource == WearableSdkSource.urion &&
       !controller.isMeasurementRunning(metric)) {
@@ -542,8 +547,9 @@ class _HealthRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final record = this.record;
     final status = record != null
-        ? '${context.l10n.recentData} · ${DateFormat.MMMd(context.l10n.localeName).add_jm().format(record!.measuredAt.toLocal())}'
+        ? '${context.l10n.recentData} · ${record.aggregation == null ? DateFormat.MMMd(context.l10n.localeName).add_jm().format(record.measuredAt.toLocal()) : DateFormat.MMMd(context.l10n.localeName).format(DateTime.parse(record.aggregation!.localDate))}'
         : !connected
         ? context.l10n.connectWatch
         : supported == false

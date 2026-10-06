@@ -106,21 +106,29 @@ class DashboardPage extends StatelessWidget {
       HealthMetric.bloodComposition,
       HealthMetric.sleep,
     ];
-    final metrics = supportedMetrics
-        .where((metric) {
-          if (controller.isGlobalEdition &&
-              disconnected &&
-              const {
-                HealthMetric.bodyTemperature,
-                HealthMetric.hrv,
-                HealthMetric.bodyComposition,
-                HealthMetric.bloodComposition,
-              }.contains(metric)) {
-            return false;
-          }
-          return controller.shouldShowHealthMetric(metric);
-        })
-        .toList(growable: false);
+    final metrics =
+        (controller.isIosWellnessEdition
+                ? const [
+                    HealthMetric.steps,
+                    HealthMetric.distance,
+                    HealthMetric.calories,
+                    HealthMetric.sleep,
+                  ]
+                : supportedMetrics)
+            .where((metric) {
+              if (controller.isGlobalEdition &&
+                  disconnected &&
+                  const {
+                    HealthMetric.bodyTemperature,
+                    HealthMetric.hrv,
+                    HealthMetric.bodyComposition,
+                    HealthMetric.bloodComposition,
+                  }.contains(metric)) {
+                return false;
+              }
+              return controller.shouldShowHealthMetric(metric);
+            })
+            .toList(growable: false);
     final textScale = MediaQuery.textScalerOf(context).scale(1).clamp(1.0, 2.0);
     return SafeArea(
       bottom: false,
@@ -135,14 +143,20 @@ class DashboardPage extends StatelessWidget {
                 delegate: SliverChildListDelegate([
                   _DashboardHeader(controller: controller),
                   const SizedBox(height: 12),
-                  _AiHealthAssistantCard(controller: controller),
-                  const SizedBox(height: 12),
+                  if (!controller.isIosWellnessEdition) ...[
+                    _AiHealthAssistantCard(controller: controller),
+                    const SizedBox(height: 12),
+                  ],
                   _FeatureEntryGrid(
+                    wellnessOnly: controller.isIosWellnessEdition,
                     onCare: () => Navigator.of(context).push(
                       MaterialPageRoute<void>(
                         builder: (_) => Scaffold(
                           appBar: AppBar(title: Text(context.l10n.remoteCare)),
-                          body: CarePage(controller: controller),
+                          body: CarePage(
+                            controller: controller,
+                            showTitle: !controller.isIosWellnessEdition,
+                          ),
                         ),
                       ),
                     ),
@@ -176,6 +190,15 @@ class DashboardPage extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 16),
+                  if (controller.isIosWellnessEdition) ...[
+                    _InlineNotice(
+                      key: const Key('ios-wellness-scope'),
+                      message: context.l10n.iosActivitySleepScope,
+                      icon: Icons.info_outline,
+                      color: SaydianColors.blue,
+                    ),
+                    const SizedBox(height: 12),
+                  ],
                   _SectionTitle(
                     title: context.l10n.healthData,
                     subtitle: DateFormat.MMMd(
@@ -669,6 +692,7 @@ class _GoalProgressRow extends StatelessWidget {
 
 class _FeatureEntryGrid extends StatelessWidget {
   const _FeatureEntryGrid({
+    required this.wellnessOnly,
     required this.onCare,
     required this.onEncyclopedia,
     required this.onWarning,
@@ -676,6 +700,7 @@ class _FeatureEntryGrid extends StatelessWidget {
   });
 
   final VoidCallback onCare;
+  final bool wellnessOnly;
   final VoidCallback onEncyclopedia;
   final VoidCallback onWarning;
   final VoidCallback onMall;
@@ -696,22 +721,24 @@ class _FeatureEntryGrid extends StatelessWidget {
                 onTap: onCare,
               ),
             ),
-            Expanded(
-              child: _FeatureEntry(
-                label: context.l10n.healthLibrary,
-                icon: Icons.menu_book_rounded,
-                color: SaydianColors.sage,
-                onTap: onEncyclopedia,
+            if (!wellnessOnly)
+              Expanded(
+                child: _FeatureEntry(
+                  label: context.l10n.healthLibrary,
+                  icon: Icons.menu_book_rounded,
+                  color: SaydianColors.sage,
+                  onTap: onEncyclopedia,
+                ),
               ),
-            ),
-            Expanded(
-              child: _FeatureEntry(
-                label: context.l10n.healthAlerts,
-                icon: Icons.health_and_safety_rounded,
-                color: SaydianColors.clay,
-                onTap: onWarning,
+            if (!wellnessOnly)
+              Expanded(
+                child: _FeatureEntry(
+                  label: context.l10n.healthAlerts,
+                  icon: Icons.health_and_safety_rounded,
+                  color: SaydianColors.clay,
+                  onTap: onWarning,
+                ),
               ),
-            ),
             if (showSaydianMall)
               Expanded(
                 child: _FeatureEntry(
@@ -1074,6 +1101,7 @@ _HomeMetricStatus _homeMetricStatus(
   HealthRecord? record,
 ) {
   if (record == null) return _HomeMetricStatus.noData;
+  if (controller.isIosWellnessEdition) return _HomeMetricStatus.recorded;
   final quality = record.quality.toLowerCase();
   if (quality.contains('poor') ||
       quality.contains('warning') ||

@@ -9,6 +9,10 @@ class AppLocalizationsZh extends AppLocalizations {
   AppLocalizationsZh([String locale = 'zh']) : super(locale);
 
   @override
+  String get iosActivitySleepScope =>
+      '此 iOS 版本仅支持活动与睡眠，不提供生理测量、医疗风险解读和 AI 分析。此前保存的记录仍会保留。';
+
+  @override
   String get scanLocationTitle => '请开启手机定位';
 
   @override
@@ -1312,7 +1316,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get workoutsAndRecords => '运动与记录';
 
   @override
-  String get healthDisclaimer => '测量结果仅供健康管理参考，如有不适请咨询专业医务人员。';
+  String get healthDisclaimer => '设备读数仅供健康参考，非诊断或治疗。作出任何医疗决定前，请先咨询医生。如有不适，请就医。';
 
   @override
   String get healthSafetyAdvice => '请休息后复测；如有明显不适，请及时咨询医务人员。';
@@ -2039,6 +2043,10 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
   AppLocalizationsZhHans() : super('zh_Hans');
 
   @override
+  String get iosActivitySleepScope =>
+      '此 iOS 版本仅支持活动与睡眠，不提供生理测量、医疗风险解读和 AI 分析。此前保存的记录仍会保留。';
+
+  @override
   String get scanLocationTitle => '请开启手机定位';
 
   @override
@@ -3342,7 +3350,7 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
   String get workoutsAndRecords => '运动与记录';
 
   @override
-  String get healthDisclaimer => '测量结果仅供健康管理参考，如有不适请咨询专业医务人员。';
+  String get healthDisclaimer => '设备读数仅供健康参考，非诊断或治疗。作出任何医疗决定前，请先咨询医生。如有不适，请就医。';
 
   @override
   String get healthSafetyAdvice => '请休息后复测；如有明显不适，请及时咨询医务人员。';
@@ -4067,6 +4075,10 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
 /// The translations for Chinese, using the Han script (`zh_Hant`).
 class AppLocalizationsZhHant extends AppLocalizationsZh {
   AppLocalizationsZhHant() : super('zh_Hant');
+
+  @override
+  String get iosActivitySleepScope =>
+      '此 iOS 版本僅支援活動與睡眠，不提供生理測量、醫療風險解讀和 AI 分析。先前儲存的記錄仍會保留。';
 
   @override
   String get scanLocationTitle => '請開啟手機定位';
@@ -5372,7 +5384,7 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get workoutsAndRecords => '運動與記錄';
 
   @override
-  String get healthDisclaimer => '測量結果僅供健康管理參考，如有不適請諮詢專業醫護人員。';
+  String get healthDisclaimer => '裝置讀數僅供健康參考，非診斷或治療。作出任何醫療決定前，請先諮詢醫生。如有不適，請就醫。';
 
   @override
   String get healthSafetyAdvice => '請休息後再測；如有明顯不適，請及時諮詢醫護人員。';

@@ -246,6 +246,46 @@ void main() {
   });
 
   test(
+    'SQLite pending applies metric scope before limit and preserves other owners',
+    () async {
+      final directory = await Directory.systemTemp.createTemp(
+        'saydian-wellness-sqlite-',
+      );
+      addTearDown(() => directory.delete(recursive: true));
+      final store = _store(directory, _environmentA);
+      addTearDown(store.close);
+      await store.initialize();
+      await store.switchOwner('synthetic-a');
+      await store.upsert([
+        for (var i = 0; i < 220; i++) _record('old-heart-$i'),
+        _record('step', metric: HealthMetric.steps),
+      ]);
+      final filtered = await store.pending(
+        limit: 1,
+        allowedMetrics: {HealthMetric.steps, HealthMetric.sleep},
+      );
+      expect(filtered.single.id, 'step');
+      expect(await store.pending(limit: 1, allowedMetrics: {}), isEmpty);
+      expect(await store.pending(limit: 300), hasLength(221));
+      await store.switchOwner('synthetic-b');
+      expect(
+        await store.pending(allowedMetrics: {HealthMetric.steps}),
+        isEmpty,
+      );
+      await store.switchOwner('synthetic-a');
+      expect(await store.pending(limit: 300), hasLength(221));
+      expect(
+        (await store.range(
+          metric: HealthMetric.heartRate,
+          start: DateTime.utc(2020),
+          end: DateTime.utc(2030),
+        )).first.values,
+        {'value': 72},
+      );
+    },
+  );
+
+  test(
     'push installation and explanation are environment scoped; old keys remain',
     () async {
       FlutterSecureStorage.setMockInitialValues({
@@ -353,11 +393,14 @@ Session _session(String account) => Session(
 );
 
 final _measuredAt = DateTime.utc(2026, 9, 9, 3, 4, 5);
-HealthRecord _record(String id) => HealthRecord(
+HealthRecord _record(
+  String id, {
+  HealthMetric metric = HealthMetric.heartRate,
+}) => HealthRecord(
   id: id,
-  metric: HealthMetric.heartRate,
+  metric: metric,
   values: const {'value': 72},
-  unit: 'bpm',
+  unit: metric.defaultUnit,
   measuredAt: _measuredAt,
   timezone: '+00:00',
   deviceId: 'synthetic-watch',
