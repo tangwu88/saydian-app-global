@@ -1,0 +1,67 @@
+{
+  "schema": "saydian-health-public-content-draft-v1",
+  "reviewedAt": "2026-10-07",
+  "status": "source_copy_published_public_api_verified",
+  "product": "SAYDIAN Health",
+  "realm": "global",
+  "locale": "en",
+  "publication": {
+    "verifiedAt": "2026-10-07T00:53:54Z",
+    "method": "Anonymous category/list/detail HTTP readback; every source paragraph and reference URL matched.",
+    "categoryId": "180a8248-5d99-46ea-8557-a76bf489f774",
+    "articleIdsBySlug": {
+      "understanding-wearable-sleep-estimates": "e9b1d15f-8dd0-4b80-b9e3-6eaad6831760",
+      "building-a-consistent-sleep-routine": "365ddfe0-569c-44b9-a3e9-3718354cbc73"
+    },
+    "deviceReadingVerified": false,
+    "clinicalValidation": false
+  },
+  "publishingBoundary": [
+    "Use the existing international content workflow and server-assigned IDs.",
+    "Publish English only; do not overwrite Chinese articles or legal documents.",
+    "No personal records, medical accuracy claims, diagnostic thresholds or AI-generated advice.",
+    "Confirm anonymous English category, list and detail readback before marking published."
+  ],
+  "categoryTitle": "Health library",
+  "articles": [
+    {
+      "slug": "understanding-wearable-sleep-estimates",
+      "title": "Understanding wearable sleep estimates",
+      "summary": "Read your sleep record as an estimate, not a diagnosis.",
+      "paragraphs": [
+        "SAYDIAN Health displays sleep records reported by a compatible connected watch. Missing data means no usable record was received; it does not mean you had no sleep.",
+        "Consumer trackers may use movement and other signals to estimate sleep. Being still is not necessarily being asleep. A published study of a different commercial tracker found limitations in identifying wakefulness and sleep stages. That study did not evaluate SAYDIAN devices.",
+        "Compare your record with your own sleep notes and how you feel. Do not treat a sleep total or stage label as a diagnosis, an exact measurement, or proof that a sleep disorder is absent.",
+        "Medical sleep studies are different from a consumer watch record. A clinician can select appropriate tests and interpret the results. If sleep problems persist, discuss them with a health professional.",
+        "For general wellness education only, not diagnosis, treatment or emergency monitoring. Consult a doctor before making medical decisions. If you feel unwell, seek medical care."
+      ],
+      "references": [
+        {
+          "title": "NHLBI: Sleep Studies",
+          "url": "https://www.nhlbi.nih.gov/health/sleep-studies"
+        },
+        {
+          "title": "Mouritzen et al. (2020): Assessing the performance of a commercial multisensory sleep tracker",
+          "url": "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0243214"
+        }
+      ]
+    },
+    {
+      "slug": "building-a-consistent-sleep-routine",
+      "title": "Building a consistent sleep routine",
+      "summary": "Practical habits to support a regular routine, without promises or sleep scores.",
+      "paragraphs": [
+        "Make room in your schedule for sleep. Try to keep bedtime and waking time consistent, including weekends. Use the hour before bed for quiet activities and reduce bright light from screens.",
+        "Keep your bedroom quiet, cool and dark. Avoid heavy meals close to bedtime. Caffeine, nicotine and alcohol can interfere with sleep; consider their timing and discuss concerns with a health professional.",
+        "Spend time outdoors and include physical activity in your day when appropriate for you. A watch record may help you notice patterns, but no routine guarantees a particular sleep total or resolves a medical condition.",
+        "If sleep difficulties persist or affect daily life, seek professional advice rather than relying on an app result. This article provides general wellness education only. Consult a doctor before making medical decisions. If you feel unwell, seek medical care."
+      ],
+      "references": [
+        {
+          "title": "NHLBI: Healthy Sleep Habits",
+          "url": "https://www.nhlbi.nih.gov/health/sleep-deprivation/healthy-sleep-habits"
+        }
+      ]
+    }
+  ]
+}

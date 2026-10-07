@@ -451,3 +451,60 @@ analyzer r22 零问题（3.6 秒）；Swift Foundation 原生策略/日期测试
   1014/r7 未上传 Apple、未撤回旧审核或重新提交。原签名/地区/后台/Android 业务不改变，Android 真机与鸿蒙构建仍停止。
 - 交付前 git diff --check 通过，fetch 无更新；差异检查没有新增真实凭据、原始健康字段/值或私人截图。
   代码与本记录一起提交当前国际分支；Git 提交及推送回执以最后实时核对为准，不把本地 commit 当远端成功。
+
+## 08:45 后接续：英文公共内容及首 ACK 验收门槛
+
+### 修改原因与现场
+
+- 基线 `575eb81e1ba20f7f17c5468304bfe1d8b63255dd`，当前国际分支干净；remote / fetch / ff-only pull 确认无更新。
+  源码完整 Git archive 保存在 `/private/tmp/health-1014-english-fresh-ack.gGmUv2/source-575eb81.tar`，目录 0700、归档 0600，87777280 bytes。
+  本轮不改 `lib/`、原生产品行为、版本、API、签名、地区或旧健康库；原 r7 两份 IPA 哈希重新核对一致。
+- P2：英文公共百科类别/列表 HTTP 200，文章 0 篇；客户端入口已恢复，但不能把空列表写成英文文章验收。
+  新增 `HEALTH-LIBRARY-EN-20261007.json`，两篇原创一般睡眠教育，参考 NIH/NHLBI 及原始研究；不声称 SAYDIAN 医学准确性验证。
+  原中文、法律资料及个人健康记录不纳入草稿，不伪造翻译或测量数据。
+- P1 验收缺口：此前日汇总原 ID 重传 ACK 通过，但新 SDK 记录首次上传未证明。
+  仅加强 `integration_test/ios_wellness_sync_qa_test.dart`：连接 ready 后保存本地/云端 ID 基线，留 60 秒真实走动窗口，再读取 SDK。
+  新门槛要求当天真实步数增加、新 ID 原内容 ACK 后服务器回读一致且不再 pending；旧队列 complete/零拒绝原门槛不放宽。
+- 服务器回读核对原 metric、values、unit、时间、来源设备/origin、daily aggregation。健康字段只在手机测试进程中比较，失败断言和日志仅输出布尔/聚合计数。
+  不注入样本，不改时间、数值或原 ID，不把已上传记录当首次 ACK；超过基线读取上限直接停线。
+
+### 服务端协同与公开回读
+
+- 按用户既有授权向“导入-app服务端”任务发送 `/global` 联调要求；由服务端任务使用其既有正式内容流程发布。
+  不直接操作对方工作树、凭据、国内或 SayRing；摘要排序修复只允许确证隔离的 global 派生查询。
+- 08:53 匿名 HTTP 回读确认 en-only 新类别 `180a8248-5d99-46ea-8557-a76bf489f774` 和两篇 PUBLISHED 文章。
+  `e9b1d15f-8dd0-4b80-b9e3-6eaad6831760` / `365ddfe0-569c-44b9-a3e9-3718354cbc73` 均为 product=saydian-global、locale=en。
+  类别/列表/详情成功；用 jq 对两篇原稿逐段及全部参考 URL 做包含校验，均 true。此为公开 API 验收，不是 iPhone 阅读通过。
+- 另发现旧 en 类别“帮助中心”显示中文（ID `37652ffa-31ab-42bd-b0fe-c92031f3b05b`），已委托服务端保留原元数据/审计后，仅修正该 en 显示名；结果待回读。
+  服务端已用模拟场景复现 daily_summary 摘要误选旧日风险，36 项现有相关测试未覆盖此场景；只证明风险，不声称线上用户已经发生。
+  旧 3 条 future_time 行保持原状态；不为通过门禁重写、删除、伪 ACK 或静默跳过。
+
+### 本轮构建与主机验证
+
+- 首轮文档路径检索使用根目录文件名返回不存在，按 `rg --files` 改为 docs 实际路径；thread limit=60 超出工具最大值，改为 50。失败未导致代码/外部数据改动。
+- `dart format integration_test/ios_wellness_sync_qa_test.dart` 首次 1 文件变化，补充步数增加门槛后 0 变化；`git diff --check` 通过。
+  `flutter analyze --no-pub` 两轮均零问题（3.1 / 3.4 秒）。JSON jq 格式及文章数量校验通过。
+  后续 publication 状态校验首次因 jq 管道/and 优先级写法返回 false，加括号后为 true；JSON 原内容未因此改写。
+- `TZ=UTC flutter test --no-pub --reporter expanded` 1035/1035，通过，108 秒；Asia/Shanghai 1035/1035，通过，70 秒。
+  这些是完整主机测试，不覆盖真实 Bluetooth/SDK/API ACK；测试日志留私有目录。
+- 发布工具 unittest 25/25，通过，25.566 秒；所有模拟发布/回滚/国内旧域名打印均为测试夹具，没有部署或改变公开清单。
+  `swiftc ios/Runner/WearablePayloadMapper.swift test/native/ios_wellness_policy_main.swift` 编译通过，UTC / Asia/Shanghai Foundation 可执行测试均 passed；不是 XCTest 真机执行。
+- 当前产品入口 iOS Debug 无签名构建 25.2 秒成功；诊断 Profile r3 119.7 秒成功，加入“当天步数增加”门槛后 r4 62.5 秒成功。
+  两份诊断包分开保留，最终使用 `build/ios-wellness-1014/profile-fresh-ack-r4/Runner.app`；严格签名校验通过。
+  实际 cn.saydian.app.global / 1.0.1 / 1014 / W7SXQ4A226 / UIDeviceFamily=[1]，get-task-allow=true，AOT 含本轮 QA 标记；不是 App Store 上传包。
+- Android 只做编译回归：sideload 双 ARM Debug 9.4 秒、显式 SAIDIAN_ALLOW_QA_RELEASE=true Release 3.6 秒成功。
+  JAVA_HOME=Temurin17 的 testSideloadDebugUnitTest 9 秒成功（300 tasks，295 up-to-date）；22 项 XML 为已有结果/缓存，不冒充本轮新执行 22 项。
+  XML 路径初查 android/app/build 不存在，使用 rg 查到 build/app/test-results。Kotlin/SDK/模拟器 arm64 厂商警告保留，未改依赖或弱化门禁。
+
+### 实机连接中断与停线
+
+- 初次 live devicectl 显示指定 iPhone15 Pro Max available (paired)，包 1.0.1 / 1014，正常 r7 进程 PID 13880 与原安装容器准确匹配。
+  随后尝试只终止该确认进程时返回 CoreDevice 4000 / RemotePairing 1001：建立隧道过程中连接中断。无法确认终止成功，不把它记为正常退出。
+- 再次设备清单显示不可用；08:54 IOUSB 树无 iPhone，符合物理连接已断开。已请用户重新插拔并解锁，拒绝镜像的选择继续尊重。
+  本轮尚未复制新手机库、覆盖安装诊断包或执行 Drive；没有卸载、改库、导出密钥/Token、使用旧截图或制造传感器/ACK 结果。
+- 正常手机包尚未被本轮诊断包替换；新的 r4 首 ACK/步数增加及最新英文正文真机阅读均待 USB 恢复后执行。
+  原 r7 App Store IPA 5046b440f756d8f2270e30798156533cded10d83f66bbafd2507e1ccc0ec2775；Ad Hoc IPA 02a4a981a6ce0a798a54b9d5a9701046376e8ec9e4973663d96fd1bea73e4b60，重新哈希一致。
+- 本轮 Apple TestFlight 最后有效只读显示最新仍 1013 正在测试、1014 缺席；随后分发链接未正确导航，直接打开可见分发地址只显示壳页，未取得新的正式审核状态。
+  返回原 TestFlight 地址；未修改 Apple 字段、上传新包、撤回旧审核或提交审核。历史正式 1012 等待审核不冒充本轮更新。
+- 新 SDK 首 ACK、旧待传时间语义、安全范围内的摘要修复、全页真实账号验收与审核素材仍未闭环；1014/r7 保持 candidate，不能报告可上架/已送审。
+  Android 真机与鸿蒙构建停止，待手机恢复后先对加密库做前后保护，再用 r4 Drive（keep-app-running）收证并恢复正常 r7。

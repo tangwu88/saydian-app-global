@@ -195,7 +195,12 @@ String _fingerprint(List<HealthRecord> records) {
   return sha256.convert(utf8.encode(jsonEncode(rows))).toString();
 }
 
-Future<Set<String>> _cloudIds(SecureSessionVault vault, String owner) async {
+Future<Set<String>> _cloudIds(
+  SecureSessionVault vault,
+  String owner, {
+  Map<String, HealthRecord> receipts = const {},
+  Set<String>? verified,
+}) async {
   final client = http.Client();
   final ids = <String>{};
   try {
@@ -239,6 +244,36 @@ Future<Set<String>> _cloudIds(SecureSessionVault vault, String owner) async {
             isTrue,
             reason: 'Duplicate server record ID',
           );
+          final expected = receipts[row['id']];
+          if (expected != null) {
+            // Boolean assertions avoid printing private fields on failure.
+            final source = row['source'];
+            final values = row['values'];
+            final observed = row['observedAt'] is String
+                ? DateTime.tryParse(row['observedAt'] as String)
+                : null;
+            final aggregation = row['aggregation'];
+            final sameAggregation = expected.aggregation == null
+                ? aggregation == null
+                : aggregation is Map &&
+                      mapEquals(aggregation, expected.aggregation!.toJson());
+            final matches =
+                row['metric'] == expected.metric.wireName &&
+                observed?.toUtc() == expected.measuredAt.toUtc() &&
+                values is Map &&
+                mapEquals(values, expected.values) &&
+                row['unit'] == expected.unit &&
+                sameAggregation &&
+                source is Map &&
+                source['origin'] == expected.origin.wireName &&
+                source['deviceId'] == expected.deviceId;
+            expect(
+              matches,
+              isTrue,
+              reason: 'Server readback differs from the original submitted row',
+            );
+            verified?.add(expected.id);
+          }
         }
         cursor = data['nextCursor'] as String?;
         if (cursor == null) {
@@ -325,8 +360,41 @@ void main() {
       await controller.sendAiMessage(app: 1, message: 'Not transmitted'),
       isFalse,
     );
+    final initialRows = await store.recent(limit: 10000);
+    expect(
+      initialRows.length < 10000,
+      isTrue,
+      reason: 'Fresh-record baseline may have been truncated',
+    );
+    final initialIds = initialRows.map((r) => r.id).toSet();
+    final initialCloudIds = await _cloudIds(vault, owner);
+    final acceptedBeforeWindow = api.accepted.toSet();
+    final freshWindowStarted = DateTime.now().toUtc();
+    final local = freshWindowStarted.toLocal();
+    final activityDay =
+        '${local.year.toString().padLeft(4, '0')}-${local.month.toString().padLeft(2, '0')}-${local.day.toString().padLeft(2, '0')}';
+    final baselineSteps = <String, num>{};
+    for (final record in initialRows) {
+      final value = record.values['value'];
+      if (record.metric == HealthMetric.steps &&
+          record.aggregation?.localDate == activityDay &&
+          value != null) {
+        final previous = baselineSteps[record.deviceId];
+        if (previous == null || value > previous) {
+          baselineSteps[record.deviceId] = value;
+        }
+      }
+    }
+    debugPrint('IOS_WELLNESS_QA_PHASE: fresh-activity-window-ready');
+    // Leave time for the wearer to create real steps. Never insert a fixture,
+    // adjust a timestamp/value, or treat an already uploaded row as first ACK.
+    final activityWindowEnd = DateTime.now().add(const Duration(seconds: 60));
+    while (DateTime.now().isBefore(activityWindowEnd)) {
+      await tester.pump(const Duration(milliseconds: 500));
+    }
     final completionFailures = <String>[];
     var lastCloud = <String>{};
+    final verifiedReceipts = <String>{};
     for (var retry = 0; retry < 2; retry++) {
       debugPrint('IOS_WELLNESS_QA_PHASE: sync-${retry + 1}');
       expect(await controller.syncDeviceData(), isTrue);
@@ -354,7 +422,12 @@ void main() {
         isNotEmpty,
         reason: 'Actual activity/sleep samples required',
       );
-      final cloud = await _cloudIds(vault, owner);
+      final cloud = await _cloudIds(
+        vault,
+        owner,
+        receipts: api.submitted,
+        verified: verifiedReceipts,
+      );
       lastCloud = cloud;
       // The public endpoint folds inactive daily versions. Raw point records
       // remain visible; every active local summary must still be read back.
@@ -387,6 +460,43 @@ void main() {
         'IOS_WELLNESS_QA: retry=${retry + 1} accepted=${api.accepted.length} serverAllowed=${cloud.length} allowedPending=${pending.length} preservedHistory=true',
       );
     }
+    final freshAccepted = api.accepted.where((id) {
+      final record = api.submitted[id];
+      return !initialIds.contains(id) &&
+          !initialCloudIds.contains(id) &&
+          !acceptedBeforeWindow.contains(id) &&
+          verifiedReceipts.contains(id) &&
+          lastCloud.contains(id) &&
+          record != null &&
+          record.origin == MeasurementOrigin.watchHistory &&
+          !record.measuredAt.isBefore(freshWindowStarted);
+    }).toSet();
+    final pendingAfterSync = await store.pending(
+      limit: 10000,
+      allowedMetrics: IosWellnessPolicy.metrics,
+    );
+    final freshPending = pendingAfterSync.where(
+      (r) => freshAccepted.contains(r.id),
+    );
+    final freshStepIncrease = freshAccepted.any((id) {
+      final record = api.submitted[id]!;
+      final previous = baselineSteps[record.deviceId];
+      final value = record.values['value'];
+      return record.metric == HealthMetric.steps &&
+          record.aggregation?.localDate == activityDay &&
+          previous != null &&
+          value != null &&
+          value > previous;
+    });
+    debugPrint(
+      'IOS_WELLNESS_QA_FRESH: verifiedNewAck=${freshAccepted.length} freshPending=${freshPending.length} currentDayStepIncrease=$freshStepIncrease',
+    );
+    if (freshAccepted.isEmpty || freshPending.isNotEmpty) {
+      completionFailures.add('New SDK sample first ACK/readback not proven');
+    }
+    if (!freshStepIncrease) {
+      completionFailures.add('New current-day activity increase not proven');
+    }
     final confirmedDaily = controller.healthRecords.where(
       (record) => record.aggregation != null && lastCloud.contains(record.id),
     );
@@ -401,7 +511,7 @@ void main() {
     );
     expect(result.acceptedIds.contains(replay.id), isTrue);
     expect(result.rejected.isEmpty, isTrue);
-    final afterReplay = await _cloudIds(vault, owner);
+    final afterReplay = await _cloudIds(vault, owner, receipts: api.submitted);
     expect(
       afterReplay.length == lastCloud.length &&
           afterReplay.containsAll(lastCloud),
