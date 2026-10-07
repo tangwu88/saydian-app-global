@@ -585,3 +585,32 @@ analyzer r22 零问题（3.6 秒）；Swift Foundation 原生策略/日期测试
 - 本轮实际新增结论：iPhone 可无线配对、r4 真实 SDK 上传 7 个唯一 ID 获 ACK；公共首页/英中代表百科详情通过；QA 读回契约假设已修正并编译。
   完整内容指纹、新当天步数增加/首 ACK/第二次重复同步/优先新记录 replay 的最终 r5 现场验收仍未执行成功，旧三条时间语义及共享摘要排序仍是停线。
   最后 IOUSB 依然没有 iPhone；下一轮请用可传数据的 USB 线、解锁并保持 Health 前台，不启用镜像，再重跑 r5，不把无线卡住的结果当通过。
+
+## 15:03 接续只读检查与正常版启动
+
+- 用户要求继续；国际分支基线 c3207e9e66a8ce73daed6d86f096ff8e87bf0f1d，status 干净、remote 核对、fetch / ff-only pull 无更新。
+  本轮不改生产或 QA 源码，不重建二进制、不覆盖安装、不恢复 Android 真机测试或鸿蒙；仅追加当前证据和交接记录。
+- 指定 iPhone 15 Pro Max 当前 iOS 26.6，Developer Mode / DDI 可用，安装 cn.saydian.app.global / 1.0.1 / 1014。
+  CoreDevice 明确 transportType=localNetwork / tunnelState=connected；两次 IOUSB 树仅控制器、没有 iPhone，不将配对可用冒充 USB。
+  lockState 的两个布尔值仍不能证明当前解锁或 App 前台；已请用户用数据线连接、解锁并保持 Health 前台，不启用镜像。
+- 当前安装地址仍为正常 r7 的 396A5F31-9428-4373-9CE1-6D58CCD820B7/Runner.app；初始进程列表没有匹配的 Health 进程。
+  另一个 Runner PID 16483 属于不同安装容器，未终止或当作 Health。只启动本国际 Bundle，launch JSON info.outcome=success / PID 16503。
+  后续两次独立进程查询仍匹配实际 Health 安装路径，持续超过 20 秒；只证明正常版进程存活，不证明当前画面、手表连接、VM Service 或热重载。
+- 私有 0700 目录 /private/tmp/health-1014-resume-20261007.c3PArp 仅留设备管理证据，不复制健康库、解密数据或导出凭据。
+  先前手动库保护步骤不冒充本轮执行；没有卸载或修改健康值/时间/ID。当前不重复已卡住的无线 r5 Drive，完整闭环仍待现场条件恢复。
+- r5 诊断包与正常 r7 Ad Hoc 的严格签名验证通过；App Store / Ad Hoc IPA SHA-256 分别仍为 5046b440f756d8f2270e30798156533cded10d83f66bbafd2507e1ccc0ec2775 / 02a4a981a6ce0a798a54b9d5a9701046376e8ec9e4973663d96fd1bea73e4b60。
+  可用空间从本轮 9.5 GiB 外部变化为约 11 GiB；本任务没有清理，不把空间增加算作成果。无本任务编译会话，不新跑旧输入的全量或跨端构建。
+- 本轮 Apple 首次有效 TestFlight 页面显示最新仍为 1.0.1 (1013)，处理完成 / 正在测试，say / say public，邀请 3、安装 1；1014 未出现在列表。
+  点击分发后正文仍为加载壳页，直接打开已知 inflight 地址也未取得状态；返回 TestFlight 导航超时、随后仅空页，不能把此前历史 1012 状态当本轮最新。
+  未上传、撤回、改字段或送审；新 1014 未作为可试用版本发布。
+- 匿名 /global/health/ready 实测 ready / revision=f58878a8a918f97d72cfa87b23928b4d109d519e，已不同于上午 48d4932。
+  只读 fetch 服务端 origin/main、查看五个新提交；不 pull、改工作树或部署。HealthService 两版 blob 同为 087b54843a778c94e4e95f7a94c61f8c4cb509ad，health 目录无差异。
+  新版改动涉及商城/库存/小程序认证，不据此声称最新日摘要风险已修复，亦不将源码比较当真实认证 API 回归。
+- 沿用用户已授权的“导入-app服务端”协同，请其仅给出 /global 专用摘要选择隔离方案、最小文件和必要测试；明确不改源码/数据/共享类别、不部署、不扩大其他 App 行为。
+  方案及实际验收尚未返回时不写通过。旧三行时间语义保持待核实，不通过改时间、清队列或伪 ACK 绕过门槛。
+- 检索纠错保留：首个 IOUSB 文本过滤误匹配 IOKitDiagnostics，改为无属性树和精确属性过滤；服务端工作树不存在客户端交接路径，改按实际文件/提交只读查证。
+  launch 结果首次误读根 outcome 产生 false，按 JSON keys 查到 info.outcome=success，再独立查进程；一个编排括号错误在执行任何工具前失败，修正后正常运行。
+  这些是查询/编排错误，不据此归因为 App 崩溃、上传失败或已修复代码。
+- 文档差异校验 git diff --check 通过；git diff 575eb81..HEAD -- lib ios android assets pubspec.yaml pubspec.lock 无差异，确认正常 r7 的产品输入未变。
+  本轮不重复编译/全量测试，不将上午双时区各 1035 项当本轮新执行；没有新增页面、SDK、读回、去重或零待传通过结果。
+  交付前再次 fetch，HEAD 与 origin 当前分支同为 c3207e9；只提交这三个文档变更，不纳入私有设备文件。服务端隔离方案仍在只读分析中。
