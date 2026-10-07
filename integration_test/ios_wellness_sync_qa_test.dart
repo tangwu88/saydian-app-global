@@ -40,7 +40,8 @@ class _ReceiptApi extends GlobalSaydianApiClient {
       isTrue,
     );
     for (final record in batch.records) {
-      submitted[record.id] = record;
+      // Compare the actual iOS transport projection, not hidden legacy fields.
+      submitted[record.id] = IosWellnessPolicy.current.projectRecord(record)!;
     }
     try {
       final result = await super.uploadHealthBatch(batch);
@@ -257,16 +258,37 @@ Future<Set<String>> _cloudIds(
                 ? aggregation == null
                 : aggregation is Map &&
                       mapEquals(aggregation, expected.aggregation!.toJson());
-            final matches =
-                row['metric'] == expected.metric.wireName &&
-                observed?.toUtc() == expected.measuredAt.toUtc() &&
-                values is Map &&
-                mapEquals(values, expected.values) &&
-                row['unit'] == expected.unit &&
-                sameAggregation &&
-                source is Map &&
-                source['origin'] == expected.origin.wireName &&
-                source['deviceId'] == expected.deviceId;
+            // V2 stores JS/SQL Date at millisecond precision and deliberately
+            // omits raw deviceId in GET. Device-scoped identity is checked by
+            // replaying the same original record against the server fingerprint.
+            final fields = <String, bool>{
+              'metric': row['metric'] == expected.metric.wireName,
+              'timeMilliseconds':
+                  observed != null &&
+                  observed.millisecondsSinceEpoch ==
+                      expected.measuredAt.millisecondsSinceEpoch,
+              'values': values is Map && mapEquals(values, expected.values),
+              'unit': row['unit'] == expected.unit,
+              'aggregation': sameAggregation,
+              'platform': source is Map && source['platform'] == 'ios',
+              'origin':
+                  source is Map && source['origin'] == expected.origin.wireName,
+              'measurementSource':
+                  source is Map &&
+                  source['measurementSource'] == expected.source.name,
+              'rawVersion':
+                  source is Map && source['rawVersion'] == expected.rawVersion,
+              'firmware':
+                  source is Map &&
+                  (source['firmware'] ?? '') == expected.firmwareVersion,
+              'model':
+                  source is Map &&
+                  (source['model'] ?? '') == expected.sourceModel.trim(),
+            };
+            final matches = fields.values.every((value) => value);
+            if (!matches) {
+              debugPrint('IOS_WELLNESS_QA_READBACK_FIELDS: $fields');
+            }
             expect(
               matches,
               isTrue,
@@ -505,7 +527,11 @@ void main() {
       isNotEmpty,
       reason: 'Real server-confirmed daily record required for replay evidence',
     );
-    final replay = confirmedDaily.first;
+    final replay =
+        confirmedDaily
+            .where((record) => freshAccepted.contains(record.id))
+            .firstOrNull ??
+        confirmedDaily.first;
     final result = await api.uploadHealthBatch(
       SyncBatch(cursor: null, records: [replay]),
     );

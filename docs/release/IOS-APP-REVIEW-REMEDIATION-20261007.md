@@ -520,3 +520,68 @@ analyzer r22 零问题（3.6 秒）；Swift Foundation 原生策略/日期测试
   保留此风险和旧 pending 三行，后续需隔离设计或用户明确扩大对应服务端修复范围；不通过放宽客户端门槛掩盖。
 - 实施源码/草稿/日志已提交 `fccd286363b920407d2b45125d5fc8cda5fe23dc`，push 成功；`git ls-remote` 独立核对远端当前分支同 SHA，工作树干净。
   本节是随后取得的协同/推送回执记录，不修改生产行为；最后文档交付提交与远端核对另以实际回执为准。
+
+## 11:13 重新连接后的真实手表验收
+
+- 用户回复已重新连接。国际分支基线 `9426382ff039da5c630bf6b29dac900c81376480`，status 干净，remote / fetch / ff-only pull 无更新。
+  没有其他 Flutter/Xcode 构建进程；本轮复用已签名 r4 诊断包，不重新构建、不改生产源码或平台范围。
+- 开始时 Mac 仅 498 MiB 可用，随后外部状态恢复到 8.6 GiB；本任务未清缓存或删除文件，不能将空间增加算作本任务成果。
+  r4 严格签名验证通过，实际 Bundle cn.saydian.app.global，AOT 包含 currentDayStepIncrease 验收标记。
+- live devicectl 显示指定 iPhone15 Pro Max available (paired)，原正常包仍为 1.0.1 / 1014，原安装容器匹配，初次查询无该 App 运行进程。
+  原加密库 311296 bytes，目录中只有主库、无 WAL/SHM/journal；只复制到私有 0700 目录 `/private/tmp/health-1014-reconnected-qa.RFn6Iq`，副本 0600。
+- 手动覆盖安装 r4 诊断包成功，安装后启动前加密库 cmp 退出 0，完全保留。
+  首次 chmod/cmp 在异步 copy 未完成时返回文件不存在；等待该复制命令成功完成后重新 chmod/cmp 成功，没有重新建库或删除手机文件。
+- 运行 `flutter drive --profile --keep-app-running --no-pub --device-id 00008130-001C098C2290001C --use-application-binary=build/ios-wellness-1014/profile-fresh-ack-r4/Runner.app --driver=test_driver/ios_full_page_qa_test.dart --target=integration_test/ios_wellness_sync_qa_test.dart --dart-define=SAYDIAN_API_BASE_URL=https://app.saydian.cn`。
+  截图及完整原始日志仅输出本轮私有目录；不卸载，不输出 VM URL、会话/Token 或健康原值，不上传私人截图。
+- Flutter 提示当前走无线调试、安装启动 37.1 秒。IOUSB 两次查询无 iPhone；用户接续前只恢复了无线配对，已提示可接可传数据的 USB 线。
+  无线后续实际成功连接 VMServiceFlutterDriver，自动覆盖安装后的 Bundle cn.saydian.app.global / 1.0.1 / 1014；匹配进程 PID 15299。
+  controller 初始化、登录态能力 HTTP 200 / dailySummaryVersions=true、原队列检查及手表连接 ready 已到达，不把仅安装写成真机通过。
+- 原三条旧记录仍 HTTP 201 / future_time 被拒绝；手机服务器时钟差 0 分钟，未来差值 under_1h，daily=0、legacyNoonMarkers=3。
+  连接后的本批 6 条有 3 条实际 ACK / 3 条拒绝；发生在走动基线前，不当作本轮走动窗口的新记录验收。
+  原拒绝行保持 pending，不改原时间、值、ID，不伪造 ACK；完整读回、指纹、重传去重及首 ACK 结果待驱动结束后追加。
+- 已到达 fresh-activity-window-ready，提示用户此时佩戴手表走约 30–50 步，保持 App 前台、不手动点同步。
+  本轮只允许真实设备活动/睡眠；窗口前后比较结果仍待验，不用旧时段或主机测试代替。
+
+### r4 失败保留与契约修正
+
+- r4 驱动最终退出 1：实际测试输出 +4 / -1，认证同步用例在首次读回比较失败；三个公共 UI/英中阅读用例及框架收尾通过。
+  英文已发布列表及第一篇正文、中文列表/详情均真实执行到 reading=passed；不是模拟器或旧文章空态结果。
+- 第一轮同步 SDK 返回成功，累计 7 个唯一 ID 实际 ACK；首批 3 个、窗口后新增 4 个。
+  旧三行仍 pending，6 个批次累计 18 次拒绝都是同三行 future_time。设备/服务器时钟差仍 0 分钟。
+  首次原内容回读断言失败后退出，第二轮同步、最终新步数增加、完整指纹和原记录 replay 未执行，不能认定整轮通过。
+- P2 验收脚本错误：`_cloudIds` 要求 `source.deviceId`，但服务端既有 GET 契约有意不返回原设备 ID，只保存账号作用域哈希及可选绑定。
+  只读检查服务端 48d4932 的 HealthService 返回及不可变重传判断；线上 `/global/health/ready` revision 与该源码 HEAD 完全一致。
+  GET 同时用 JS/SQL Date（毫秒精度）返回观察时刻；原始 App 时间/值/ID 不改，不向 API 添加原设备标识以迁就测试。
+- 仅修改 QA：按实际 iOS transport projection 比较，时刻用已有服务的毫秒精度，校验 metric/values/unit/aggregation 和全部既有源元字段。
+  设备作用域身份通过同一原 ID/内容的真实 replay 和服务端 sourceDeviceKey 不可变冲突检查验收；有 fresh ACK 时优先重传该 fresh 日汇总。
+  新增失败字段布尔诊断，不输出私人原值；完整零 pending / 零拒绝 / 新当天步数增加原门槛不放宽。其他字段仍待 r5 实机复核。
+- 本轮修改前再次 status / fetch 确认远端基线仍 9426382，脏文件只有本任务日志；完整日志与 r4 QA 源文件已另存私有目录后修改。
+  服务端路径首次误查根 src 不存在，rg 查到 apps/api/src/health/health.service.ts；只读，未修改对方工作树、部署或共享服务。
+- 停止确认的诊断 PID 15299，复制当前加密库；恢复正常 r7 Ad Hoc，启动前与该副本 cmp 退出 0，副本 0600。
+  正常 r7 独立启动 PID 15312；其后等待新 QA 构建，不把之前 test host 留在用户手机、不卸载或清库。
+- `dart format` 本轮 QA 1 文件变化，`git diff --check` 通过；analyzer 零问题，3.1 秒。
+  r5 诊断构建、双时区全量回归和后续真机结果在完成后追加；生产源码与原 r7 IPA 内容不变。
+
+### r5 构建通过、无线 RPC 停线与恢复
+
+- r5 Profile 编译成功，51.4 秒 / 63.4 MB；独立保留 build/ios-wellness-1014/profile-fresh-ack-r5/Runner.app，严格签名验证及新字段诊断 AOT 标记通过。
+  实际 cn.saydian.app.global / 1.0.1 / 1014；本轮仅 QA 源码变化，不用诊断二进制上传 App Store，不重建或冒充新的正常 r7。
+- 最终 QA 源码 UTC 全量 1035/1035（54 秒）、Asia/Shanghai 1035/1035（48 秒）通过；analyzer 零问题。
+  本轮 Android 真机与鸿蒙不执行。正常生产目标的源码及 r7 构建矩阵与上一轮字节输入相同，沿用既有证据，不声称本轮重新构建所有正式包。
+- 正常 r7 进程 PID 15312 经当前安装路径确认后停止，重新取得 stopped 状态的库副本作为 r5 安装基线，主库无 sidecar。
+  手动覆盖安装 r5 成功；启动前 after-r5-install.db 与 before-r5-stopped.db cmp 退出 0。原版本/数据没有卸载或回退。
+- r5 Drive 使用相同 keep-app-running / 预编译 binary 路径，连接 VMServiceFlutterDriver 后 request_data 长期不返回。
+  日志没有 initialized 或任何 IOS_WELLNESS_QA_PHASE / 已执行用例结果；get_health 曾等待后连接，但不能据此认定真正初始化、手表连接、读回或 fresh ACK 已验收。
+- 对既有本机 VM 服务做一次只读 HTTP、一次只读 WebSocket getVM/getStack 诊断，各 8 秒上限。
+  HTTP 超时；WebSocket 升级成功但 RPC 未响应。仅解析函数名的诊断未得到调用栈，不打印 VM URL、变量、Token 或健康值，不修改程序内存。
+- 设备管理仍显示原 iPhone 15 Pro Max，iOS 26.6、ddiServicesAvailable=true；lockState 的 passcodeRequired=false / unlockedSinceBoot=true 不等于当前屏幕已解锁或 App 前台。
+  当前 r5 进程 PID 15327 与实际安装容器匹配；仅激活既有 App 返回同 PID，但日志仍不进展，不能确认根因是网络、挂起或初始化内部等待。
+- 在已有安全诊断及激活无效后停止本任务 Drive（Ctrl-C，命令退出 0 是取消，不是测试通过），终止已核对的 PID 15327。
+  本轮 stopped 加密库与安装前字节不同；可能已有初始化写入，但没有用例指纹证据，不能声称完整内容保留验收通过，更没有恢复旧库来伪造一致。
+  所有副本仍 0700 私有目录 / 0600 文件，不解密或导出 Keychain 密钥。
+- 恢复正常 r7 Ad Hoc，启动前与最新 after-r5-stopped.db cmp 退出 0；安装本身未改变停止时库内容。
+  正常独立启动 PID 15361，后续 11:38 再次查询该安装路径仍为同进程（超过 20 秒），不是诊断包残留。
+  没有重写/删除旧健康行、伪 ACK、卸载、OTA、改表盘、扩大共享服务范围或修改 Apple 送审字段。
+- 本轮实际新增结论：iPhone 可无线配对、r4 真实 SDK 上传 7 个唯一 ID 获 ACK；公共首页/英中代表百科详情通过；QA 读回契约假设已修正并编译。
+  完整内容指纹、新当天步数增加/首 ACK/第二次重复同步/优先新记录 replay 的最终 r5 现场验收仍未执行成功，旧三条时间语义及共享摘要排序仍是停线。
+  最后 IOUSB 依然没有 iPhone；下一轮请用可传数据的 USB 线、解锁并保持 Health 前台，不启用镜像，再重跑 r5，不把无线卡住的结果当通过。

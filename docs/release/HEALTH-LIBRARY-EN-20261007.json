@@ -14,6 +14,15 @@
       "building-a-consistent-sleep-routine": "365ddfe0-569c-44b9-a3e9-3718354cbc73"
     },
     "deviceReadingVerified": false,
+    "representativeDeviceReading": {
+      "verifiedAt": "2026-10-07T03:18:14Z",
+      "device": "iPhone 15 Pro Max",
+      "build": "1.0.1 (1014) Profile QA r4",
+      "scope": "Public production widgets: English library list and first article detail; Chinese reading checked separately.",
+      "passed": true,
+      "allArticleDetailsVerified": false,
+      "authenticatedFullAppVerified": false
+    },
     "clinicalValidation": false
   },
   "publishingBoundary": [
