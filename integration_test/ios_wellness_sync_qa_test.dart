@@ -407,10 +407,15 @@ void main() {
         }
       }
     }
+    debugPrint(
+      'IOS_WELLNESS_QA_BASELINE: currentDayStepsAvailable=${baselineSteps.isNotEmpty}',
+    );
     debugPrint('IOS_WELLNESS_QA_PHASE: fresh-activity-window-ready');
     // Leave time for the wearer to create real steps. Never insert a fixture,
     // adjust a timestamp/value, or treat an already uploaded row as first ACK.
-    final activityWindowEnd = DateTime.now().add(const Duration(seconds: 60));
+    // Allow a real wearer time to receive the prompt and walk. This changes
+    // only the bounded collection window, not the fresh-step or ACK gates.
+    final activityWindowEnd = DateTime.now().add(const Duration(seconds: 120));
     while (DateTime.now().isBefore(activityWindowEnd)) {
       await tester.pump(const Duration(milliseconds: 500));
     }
@@ -510,8 +515,13 @@ void main() {
           value != null &&
           value > previous;
     });
+    final freshMetrics = <String, int>{};
+    for (final id in freshAccepted) {
+      final metric = api.submitted[id]!.metric.wireName;
+      freshMetrics[metric] = (freshMetrics[metric] ?? 0) + 1;
+    }
     debugPrint(
-      'IOS_WELLNESS_QA_FRESH: verifiedNewAck=${freshAccepted.length} freshPending=${freshPending.length} currentDayStepIncrease=$freshStepIncrease',
+      'IOS_WELLNESS_QA_FRESH: verifiedNewAck=${freshAccepted.length} freshPending=${freshPending.length} currentDayStepIncrease=$freshStepIncrease freshMetrics=$freshMetrics',
     );
     if (freshAccepted.isEmpty || freshPending.isNotEmpty) {
       completionFailures.add('New SDK sample first ACK/readback not proven');

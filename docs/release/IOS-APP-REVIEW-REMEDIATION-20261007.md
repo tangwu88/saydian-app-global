@@ -614,3 +614,64 @@ analyzer r22 零问题（3.6 秒）；Swift Foundation 原生策略/日期测试
 - 文档差异校验 git diff --check 通过；git diff 575eb81..HEAD -- lib ios android assets pubspec.yaml pubspec.lock 无差异，确认正常 r7 的产品输入未变。
   本轮不重复编译/全量测试，不将上午双时区各 1035 项当本轮新执行；没有新增页面、SDK、读回、去重或零待传通过结果。
   交付前再次 fetch，HEAD 与 origin 当前分支同为 c3207e9；只提交这三个文档变更，不纳入私有设备文件。服务端隔离方案仍在只读分析中。
+
+## 15:57 USB 恢复后的实机闭环复测
+
+- 用户回复 USB 已连接；修改前国际分支 699b0347430eec9b427cd92e6a4f543e3070bba7，干净 / fetch / ff-only pull 无更新。
+  IOUSB 出现 iPhone，CoreDevice 实际 UDID 为指定 00008130-001C098C2290001C，transportType=wired，iOS 26.6 / DDI / Developer Mode 正常。
+  无并发 Flutter/Xcode 构建；安卓真机及鸿蒙仍停止，不启用镜像。
+- 初始 Health 安装为正常 r7 / 1.0.1 (1014)，没有匹配的 Health 运行进程；没有终止另一个 Bundle 的 Runner。
+  主加密库 327680 bytes、无 WAL/SHM/journal，复制到私有 0700 目录 /private/tmp/health-1014-usb-qa-20261007.L0Oft1，库副本 0600。
+  r5 严格签名与版本核对通过；手动覆盖安装成功，安装后启动前 cmp 退出 0。没有卸载、清库、读出密钥或改健康原值。
+- r5 Drive 使用原 keep-app-running / 预编译 binary / production API 命令，真实 VMServiceFlutterDriver 连接后进入 initialized / connection-restored。
+  自动安装后的实际 Health 容器 B2C3FB9F-4D36-4786-8039-F2EB249ECE42，PID 16874 匹配；不将仅 VM 已连接当初始化通过。
+- 原队列检查后，连接恢复读入 3 条并实际 ACK 3、拒绝 0；在 fresh 窗口之前，不当作本轮走动首次 ACK。
+  进入 60 秒 fresh 窗口时已提示佩戴走 30–50 步、App 前台且不点同步；尚未收到用户完成走动回复，不推断真实操作是否发生。
+- 第一次真实同步：complete / allowedPending=0 / accepted=3 / rejected=0；第二次 accepted 累计 4，其余相同。
+  两次完整指标过滤分页回读 serverAllowed=213，实际提交投影字段一致、没有重复 ID；旧非允许指标的内容及待传指纹均保持一致。
+  仅覆盖脚本所明确比较的历史范围，不假称全部原始库内容指纹验收通过。
+- 新 SDK 首 ACK/完整原内容回读已证明 1 条、freshPending=0；currentDayStepIncrease=false，未证明当天真实步数增长。
+  同一原 ID/内容真实 replay 得到 ACK、无拒绝，重传前后服务器 ID 集合不变。正常补传和去重分项通过，但最终完成门槛仍失败。
+  Drive 退出 1，+4 / -1；唯一最终错误为 New current-day activity increase not proven。公共用例/框架收尾通过，不写全 App 验收成功。
+- 当前零允许指标 pending 不能证明上午旧三行的原时间语义正确，未通过修改/删除/伪 ACK 消除旧行。
+  服务端只读隔离分析已返回：Health 和 Say Ring 均走 /global，不能仅凭前缀改变共用摘要排序并保证另一 App 不变。
+  提议需显式 latest_day_v1 参数及模式确认标记，属于 API 扩展；本轮未实施、未部署，不擅自突破原 API 契约不变约束。
+- 当前路径确认 PID 16874 后终止，复制最新停止库；恢复正常 r7 Ad Hoc，安装前后与该最新副本 cmp 退出 0。
+  正常版启动 PID 16882 / 806288D9-278B-4994-A263-662F219CE404/Runner.app/Runner，待下一次 QA 构建，不留下测试 UI。
+- 第二轮只修改 integration_test/ios_wellness_sync_qa_test.dart：采集窗口由 60 秒延至 120 秒，新增匿名 current-day baseline 布尔和 fresh 指标计数。
+  原始值/时间/ID、全量 ACK、零拒绝、回读、重复同步、当天步数增长门槛全部不变；不以窗口变长当产品修复。
+  生产输入和正常 r7 IPA 不变。下一包选择现有 ios_full_page_qa_test.dart，登录态逐页读取与同步组合执行；构建/回归结果完成后追加。
+
+### r6 主机门禁、诊断包与再次断线
+
+- dart format 本轮 QA 1 文件 / 0 改动，git diff --check 通过；analyzer 零问题，2.7 秒。
+  `TZ=UTC flutter test --no-pub --reporter expanded` 1035/1035（54 秒）；Asia/Shanghai 同命令 1035/1035（59 秒）。
+  `python3 -m unittest discover -s scripts/release -p 'test_*.py'` 25/25（16.031 秒），仅夹具，没有真实发布或回滚。
+- `swiftc ios/Runner/WearablePayloadMapper.swift test/native/ios_wellness_policy_main.swift` 编译后，UTC / Asia/Shanghai 均执行 passed。
+  这是 Foundation 可执行测试，不是 iOS SDK XCTest 真机执行；原生 XCTest 未新执行。
+- `flutter build ios --profile --no-pub --target=integration_test/ios_full_page_qa_test.dart --build-name=1.0.1 --build-number=1014 --dart-define=SAYDIAN_API_BASE_URL=https://app.saydian.cn` 成功，Xcode 34.7 秒 / 63.5 MB。
+  独立保留 build/ios-wellness-1014/profile-full-page-fresh-r6/Runner.app，拒绝覆盖已有同名目录，严格 codesign 通过。
+  实际 Bundle cn.saydian.app.global / 1.0.1 / 1014 / Team W7SXQ4A226 / UIDeviceFamily=[1] / get-task-allow=true，包含 REAL_DEVICE_PAGE 和新增基线标记。
+  AOT App.framework/App SHA-256 为 3369d757bb0721cfd8d57bb39a0635f74ff4fbe3280d2afc41f21876b605e1f3；仅为诊断包，不得上传 Apple。
+- 后续产品主入口 iOS Debug 无签名构建成功，Xcode 37.6 秒；不会覆盖上述独立 r6 或正常 r7 归档/IPA。
+  git diff 575eb81 -- lib ios android assets pubspec.yaml pubspec.lock 无差异；r7 两个 IPA SHA-256 重新核对仍与前文一致。
+- 16:14 覆盖安装前设备查询返回 CoreDevice 1011，apps/processes 结果不成功，依赖它的 jq 无法遍历 null；立即停止依赖动作。
+  实时 IOUSB 无 iPhone、设备清单指定手机 unavailable，证明当前连线已断；不将此算成 App 崩溃或源码失败。
+  r6 尚未安装、Drive 未运行、没有登录态逐页截图或新步数验收；最后成功安装的手机包为上文恢复的正常 r7，不是残留 QA。
+  已请用户重新插稳并持续连接，采集时手机可留 Mac 旁、佩戴手表在附近原地踏步；不启用镜像。
+- r5 本轮两张公共空态截图已逐张视觉检查：首页功能入口/右侧通知/底栏、Watch 连接空态可见，顶部范围横幅未恢复。
+  英文、中文公共列表及第一篇正文 reading=passed。公共场景未读真实账号库/连接 SDK，与前面的真实同步独立记录；不冒充全页、登录写入或硬件演示视频验收。
+- Android 仅尝试编译：`flutter build apk --debug --flavor sideload --no-pub --target-platform=android-arm,android-arm64 --dart-define=SAYDIAN_API_BASE_URL=https://app.saydian.cn` 退出 1，16.7 秒。
+  原因为 Gradle 9.1.0 官方分发下载 10000ms 超时，未到 App 编译。依赖缓存已不存在，Release 和原生 Gradle 测试未新运行，不沿用旧 XML 当本轮通过。
+  查 JDK 初始系统/常见安装路径缺失；只读 flutter config 找到实际 Temurin17 目录，未改全局配置、JDK、Gradle 版本或仓库 checksum。
+- 官方 curl 下载亦超时：首轮约 118 秒 / 66313207 of 134528013 bytes，自动重试重新开始后已取消；第二个有界下载在明确缺依赖缓存后取消。
+  仅停止自己的两个下载进程（退出 130），当前生成的 31391744-byte 未完成 ZIP 保留私有目录，不校验通过、不安装/放入缓存或删除原始材料。
+  停止该旁支恢复以保持 iOS 优先；Android 真机、鸿蒙、未知来源软件安装和任何发布均未执行。
+- 服务端 CareService 48d4932 / f58878a 的 blob 同为 8795a910f3790bd3b3e1b33f1140446e0e0aacc2，关爱摘要风险确未在此范围更新。
+  兼容参数/确认字段需要明确 API 扩展授权，已向用户提出仅新版 Health 启用的方案；尚未获得本次扩展回复，不发起实现/部署或改 Say Ring/国内默认行为。
+- 交付前 fetch 确认 HEAD / origin 当前分支仍为 699b034；只有本任务 QA 与记录改动，不 pull 脏树。
+  无残留 Flutter Drive / Xcode / Gradle wrapper 会话。空间约 6.8 GiB，无清理；私有 JSON、日志、库、截图与部分下载均 0600、目录 0700，不进 Git。
+  新 SDK 首 ACK/回读/重传去重及零允许指标待传分项已证明；当天步数增长、旧行时间语义、登录态逐页及关爱摘要整改仍未闭环，1014 本轮未上传或送审。
+- 交付时再次只读 Apple TestFlight 页面仅空壳，未取得新状态；不把 15:03 的有效 1013 列表当作此时新结果，不写提交/批准/新试用成功。
+  下一轮预编译命令将 `--use-application-binary` 指向 profile-full-page-fresh-r6/Runner.app、`--target` 指向 integration_test/ios_full_page_qa_test.dart，保留既有 profile / keep-app-running / no-pub / 指定 UDID / production API / 私有输出参数。
+  必须先重新核对实际手机路径和进程、保护最新加密主库及所有 sidecar，安装后启动前比较，再进入两分钟窗口；结束后恢复正常 r7 并核对最新停止库，不使用旧副本回滚健康数据。
