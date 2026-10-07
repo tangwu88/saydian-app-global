@@ -1727,12 +1727,9 @@ class _GlobalHttpClient extends http.BaseClient {
     final policy = IosWellnessPolicy.current;
     final metric = request.url.queryParameters['metric'];
     if (policy.enabled &&
-        ((metric != null &&
-                request.url.path.contains('/health') &&
-                !policy.allowsWireMetric(metric)) ||
-            RegExp(
-              r'/content/(?:articles|categories)(?:/|$)',
-            ).hasMatch(request.url.path))) {
+        metric != null &&
+        request.url.path.contains('/health') &&
+        !policy.allowsWireMetric(metric)) {
       throw const FeatureNotConfiguredException(
         'Not available in this iOS edition.',
       );

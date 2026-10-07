@@ -126,23 +126,19 @@ class AppController extends ChangeNotifier {
   /// Stable API classification only; raw response bodies never reach the UI.
   ApiException? lastApiError;
 
+  // Public educational reading does not analyze or transmit personal health
+  // records. It remains available alongside the fixed iOS wellness scope.
   Future<List<Map<String, Object?>>> loadGlobalArticleCategories() =>
-      isIosWellnessEdition
-      ? Future.value(const [])
-      : (_api as GlobalContentApi).getGlobalArticleCategories();
+      (_api as GlobalContentApi).getGlobalArticleCategories();
   Future<List<Map<String, Object?>>> loadGlobalArticles({
     String? categoryId,
     int page = 1,
-  }) => isIosWellnessEdition
-      ? Future.value(const [])
-      : (_api as GlobalContentApi).getGlobalArticles(
-          categoryId: categoryId,
-          page: page,
-        );
+  }) => (_api as GlobalContentApi).getGlobalArticles(
+    categoryId: categoryId,
+    page: page,
+  );
   Future<Map<String, Object?>> loadGlobalArticle(String id) =>
-      isIosWellnessEdition
-      ? Future.value(const {})
-      : (_api as GlobalContentApi).getGlobalArticle(id);
+      (_api as GlobalContentApi).getGlobalArticle(id);
 
   Future<Map<String, Object?>> loadGlobalShopProducts({
     String? keyword,

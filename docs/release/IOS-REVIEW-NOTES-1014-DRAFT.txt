@@ -6,6 +6,8 @@ SAYDIAN Health for iOS is now an activity-and-sleep companion. This scope is fix
 
 The iOS UI, controller, device-command integration and upload boundaries restrict the edition to steps, distance, estimated calories and sleep duration/stages where the connected device supplies them. Physiological measurements, calibration controls, ECG, clinical/risk interpretation, medical alerts, general AI chat and paid AI health reports are unavailable. Sports views do not show heart-rate data. Remote Care permits activity/sleep categories only.
 
+Health library is a public educational reader, separate from personal health processing. It does not analyze or transmit a user's health records or enable physiological measurements or medical alerts. Articles depend on published language availability; missing translations are not replaced with fabricated content. Educational descriptions of wearable technology are not evidence of this product's accuracy or regulatory approval.
+
 Old local records are retained rather than erased. Historical physiological records, sleep scores/risk fields, physiological companion fields and waveforms are not displayed or uploaded by this build. AI requests are blocked before network transmission. We have not supplied medical accuracy or regulatory evidence and do not claim this edition as a medical device.
 
 Sign-in and account review

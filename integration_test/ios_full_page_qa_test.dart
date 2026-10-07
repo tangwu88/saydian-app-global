@@ -45,7 +45,9 @@ void main() {
       ),
     );
     await _settle(tester);
-    expect(find.byKey(const Key('ios-wellness-scope')), findsOneWidget);
+    expect(find.byKey(const Key('ios-wellness-scope')), findsNothing);
+    expect(find.text('Health library'), findsOneWidget);
+    expect(find.text('Health alerts'), findsNothing);
     expect(find.byKey(const Key('dashboard-ai-ask')), findsNothing);
     expect(
       controller.healthRecords.every(
@@ -67,7 +69,7 @@ void main() {
       of: find.byKey(const Key('dashboard-functions')),
       matching: find.byType(InkWell),
     );
-    for (final entry in const [('remote-care', 0)]) {
+    for (final entry in const [('remote-care', 0), ('health-library', 1)]) {
       if (featureEntries.evaluate().length <= entry.$2) continue;
       await tester.tap(featureEntries.at(entry.$2));
       await _settle(tester);

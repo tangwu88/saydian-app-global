@@ -23,6 +23,7 @@ import 'ios_store_empty_state_test.dart' as empty_state;
 class _ReceiptApi extends GlobalSaydianApiClient {
   _ReceiptApi(super.vault) : super(client: _ReceiptHttpClient());
   final accepted = <String>{};
+  final submitted = <String, HealthRecord>{};
   int rejected = 0;
 
   @override
@@ -38,8 +39,17 @@ class _ReceiptApi extends GlobalSaydianApiClient {
       batch.records.every((r) => IosWellnessPolicy.metrics.contains(r.metric)),
       isTrue,
     );
+    for (final record in batch.records) {
+      submitted[record.id] = record;
+    }
     try {
       final result = await super.uploadHealthBatch(batch);
+      final ids = batch.records.map((record) => record.id).toSet();
+      expect(
+        result.acceptedIds.every(ids.contains),
+        isTrue,
+        reason: 'ACK contains an ID outside this submitted batch',
+      );
       accepted.addAll(result.acceptedIds);
       rejected += result.rejected.length;
       debugPrint(
@@ -167,11 +177,12 @@ class _ReceiptHttpClient extends http.BaseClient {
   void close() => _inner.close();
 }
 
-Future<void> _wait(bool Function() ready) async {
+Future<void> _wait(bool Function() ready, {void Function()? onTimeout}) async {
   final end = DateTime.now().add(const Duration(seconds: 120));
   while (!ready() && DateTime.now().isBefore(end)) {
     await Future<void>.delayed(const Duration(milliseconds: 500));
   }
+  if (!ready()) onTimeout?.call();
   expect(
     ready(),
     isTrue,
@@ -297,6 +308,9 @@ void main() {
     debugPrint('IOS_WELLNESS_QA_PHASE: connection-restored');
     await _wait(
       () => controller.connectedDevice != null && !controller.isDeviceSyncing,
+      onTimeout: () => debugPrint(
+        'IOS_WELLNESS_QA_CONNECTION: state=${controller.deviceState.name} connected=${controller.connectedDevice != null} syncing=${controller.isDeviceSyncing} capabilities=${controller.capabilities?.metrics.length ?? 0}',
+      ),
     );
     expect(controller.capabilities!.metrics.isNotEmpty, isTrue);
     expect(
@@ -311,6 +325,8 @@ void main() {
       await controller.sendAiMessage(app: 1, message: 'Not transmitted'),
       isFalse,
     );
+    final completionFailures = <String>[];
+    var lastCloud = <String>{};
     for (var retry = 0; retry < 2; retry++) {
       debugPrint('IOS_WELLNESS_QA_PHASE: sync-${retry + 1}');
       expect(await controller.syncDeviceData(), isTrue);
@@ -325,27 +341,32 @@ void main() {
       debugPrint(
         'IOS_WELLNESS_QA_STATE: state=${controller.cloudSyncState.name} allowedPending=${pending.length} accepted=${api.accepted.length} rejected=${api.rejected}',
       );
-      expect(controller.cloudSyncState, CloudHealthSyncState.complete);
-      expect(
-        await store.pending(
-          limit: 1,
-          allowedMetrics: IosWellnessPolicy.metrics,
-        ),
-        isEmpty,
-      );
+      // Keep the original release gate, but first collect independent readback
+      // and history evidence even when a pre-existing row is still rejected.
+      if (controller.cloudSyncState != CloudHealthSyncState.complete ||
+          pending.isNotEmpty) {
+        completionFailures.add(
+          'retry=${retry + 1} state=${controller.cloudSyncState.name} allowedPending=${pending.length}',
+        );
+      }
       expect(
         controller.healthRecords,
         isNotEmpty,
         reason: 'Actual activity/sleep samples required',
       );
       final cloud = await _cloudIds(vault, owner);
-      expect(cloud.containsAll(api.accepted), isTrue);
+      lastCloud = cloud;
+      // The public endpoint folds inactive daily versions. Raw point records
+      // remain visible; every active local summary must still be read back.
+      final acceptedPoints = api.accepted.where(
+        (id) => api.submitted[id]?.aggregation == null,
+      );
+      expect(cloud.containsAll(acceptedPoints), isTrue);
       expect(
         cloud.containsAll(controller.healthRecords.map((r) => r.id)),
         isTrue,
         reason: 'Local allowed records missing on server',
       );
-      expect(api.rejected, 0);
       expect(
         _fingerprint(
           (await store.recent(limit: 10000))
@@ -363,9 +384,38 @@ void main() {
         originalPending,
       );
       debugPrint(
-        'IOS_WELLNESS_QA: retry=${retry + 1} accepted=${api.accepted.length} serverAllowed=${cloud.length} allowedPending=0 preservedHistory=true',
+        'IOS_WELLNESS_QA: retry=${retry + 1} accepted=${api.accepted.length} serverAllowed=${cloud.length} allowedPending=${pending.length} preservedHistory=true',
       );
     }
+    final confirmedDaily = controller.healthRecords.where(
+      (record) => record.aggregation != null && lastCloud.contains(record.id),
+    );
+    expect(
+      confirmedDaily,
+      isNotEmpty,
+      reason: 'Real server-confirmed daily record required for replay evidence',
+    );
+    final replay = confirmedDaily.first;
+    final result = await api.uploadHealthBatch(
+      SyncBatch(cursor: null, records: [replay]),
+    );
+    expect(result.acceptedIds.contains(replay.id), isTrue);
+    expect(result.rejected.isEmpty, isTrue);
+    final afterReplay = await _cloudIds(vault, owner);
+    expect(
+      afterReplay.length == lastCloud.length &&
+          afterReplay.containsAll(lastCloud),
+      isTrue,
+      reason: 'Replay changed server record IDs',
+    );
+    debugPrint('IOS_WELLNESS_QA_REPLAY: accepted=true serverIdsUnchanged=true');
+    expect(
+      completionFailures,
+      isEmpty,
+      reason:
+          'Readback evidence cannot substitute for a completely ACKed queue',
+    );
+    expect(api.rejected, 0);
     expect(tester.takeException(), isNull);
   });
   empty_state.main();

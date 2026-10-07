@@ -71,7 +71,9 @@ void main() {
       expect(controller.memberProfile, isEmpty);
       expect(find.byKey(const Key('dashboard-ai-ask')), findsNothing);
       if (page.$1 == 0) {
-        expect(find.byKey(const Key('ios-wellness-scope')), findsOneWidget);
+        expect(find.byKey(const Key('ios-wellness-scope')), findsNothing);
+        expect(find.text('Health library'), findsOneWidget);
+        expect(find.text('Health alerts'), findsNothing);
       } else {
         expect(find.byType(AppBar), findsOneWidget);
       }
@@ -92,6 +94,79 @@ void main() {
       }
     }
   });
+
+  for (final language in const ['en', 'zh-Hans']) {
+    testWidgets('public iOS live Health library reading in $language', (
+      tester,
+    ) async {
+      final vault = MemorySessionVault();
+      final api = GlobalSaydianApiClient(vault, locale: () => language);
+      final controller = AppController(
+        vault,
+        api,
+        MemoryHealthStore(),
+        _NoHardware(),
+        allowAutomaticWearableRestore: false,
+      );
+      addTearDown(controller.dispose);
+      // Public content only: no phone vault, account, health store or hardware.
+      final articles = await api.getGlobalArticles();
+      await tester.pumpWidget(
+        MaterialApp(
+          locale: language == 'en'
+              ? const Locale('en')
+              : const Locale.fromSubtags(
+                  languageCode: 'zh',
+                  scriptCode: 'Hans',
+                ),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          theme: buildSaydianTheme(),
+          home: ArticleCategoryPage(controller: controller),
+        ),
+      );
+      await tester.pumpAndSettle(
+        const Duration(milliseconds: 200),
+        EnginePhase.sendSemanticsUpdate,
+        const Duration(seconds: 45),
+      );
+      expect(find.byKey(const Key('global-article-library')), findsOneWidget);
+      final labels = AppLocalizations.of(
+        tester.element(find.byType(GlobalArticleLibraryPage)),
+      )!;
+      if (language == 'en' && articles.isEmpty) {
+        expect(
+          find.text(labels.articlesEmpty).evaluate().isNotEmpty ||
+              find
+                  .text(labels.articleLanguageUnavailable)
+                  .evaluate()
+                  .isNotEmpty,
+          isTrue,
+        );
+        expect(find.text('健康百科'), findsNothing);
+      } else {
+        expect(articles.isNotEmpty, isTrue);
+        final article = articles.first;
+        await tester.tap(
+          find.byKey(ValueKey('global-article-${article['id']}')),
+        );
+        await tester.pumpAndSettle(
+          const Duration(milliseconds: 200),
+          EnginePhase.sendSemanticsUpdate,
+          const Duration(seconds: 45),
+        );
+        expect(find.byType(ArticleDetailPage), findsOneWidget);
+        expect(find.text(labels.articleContentUnavailable), findsNothing);
+        if (language == 'zh-Hans') {
+          expect(find.textContaining('看懂睡眠报告'), findsOneWidget);
+        }
+      }
+      expect(controller.healthRecords, isEmpty);
+      expect(controller.connectedDevice, isNull);
+      expect(tester.takeException(), isNull);
+      debugPrint('IOS_LIBRARY_PUBLIC_QA: locale=$language reading=passed');
+    });
+  }
 }
 
 class _NoHardware implements WearableBridge {

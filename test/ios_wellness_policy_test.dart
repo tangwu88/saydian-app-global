@@ -419,6 +419,101 @@ void main() {
     },
   );
 
+  for (final platform in [TargetPlatform.iOS, TargetPlatform.android]) {
+    testWidgets(
+      '$platform home retains public education without scope banner',
+      (tester) async {
+        debugDefaultTargetPlatformOverride = platform;
+        try {
+          const prefix = '/global/api/saydian-app/v2/content';
+          const categoryId = 'ec9a343b-254a-432b-9f5c-55f08045b1a1';
+          const articleId = 'f097cc8b-0b4e-4780-a68c-c571b094320c';
+          final requests = <http.Request>[];
+          final vault = MemorySessionVault();
+          final api = GlobalSaydianApiClient(
+            vault,
+            locale: () => 'en',
+            client: MockClient((request) async {
+              requests.add(request);
+              final Object data = switch (request.url.path) {
+                '$prefix/categories' => [
+                  {'id': categoryId, 'name': 'Synthetic sleep education'},
+                ],
+                '$prefix/articles' => {
+                  'items': [
+                    {'id': articleId, 'title': 'Synthetic educational article'},
+                  ],
+                },
+                '$prefix/articles/$articleId' => {
+                  'id': articleId,
+                  'title': 'Synthetic educational article',
+                  'contentHtml': '<p>Synthetic public reading fixture.</p>',
+                },
+                _ => throw StateError('Unexpected route: ${request.url.path}'),
+              };
+              return http.Response(
+                jsonEncode({'code': 200, 'data': data}),
+                200,
+              );
+            }),
+          );
+          final controller = AppController(
+            vault,
+            api,
+            MemoryHealthStore(),
+            _Wearable(),
+          );
+          addTearDown(controller.dispose);
+          await tester.pumpWidget(
+            MaterialApp(
+              locale: const Locale('en'),
+              localizationsDelegates: AppLocalizations.localizationsDelegates,
+              supportedLocales: AppLocalizations.supportedLocales,
+              home: DashboardPage(controller: controller),
+            ),
+          );
+          await tester.pumpAndSettle();
+          expect(find.byKey(const Key('ios-wellness-scope')), findsNothing);
+          expect(find.text('Health library'), findsOneWidget);
+          expect(
+            find.text('Health alerts'),
+            platform == TargetPlatform.iOS ? findsNothing : findsOneWidget,
+          );
+          expect(find.textContaining('Consult a doctor'), findsOneWidget);
+          await tester.tap(find.text('Health library'));
+          await tester.pumpAndSettle();
+          expect(
+            find.byKey(const Key('global-article-library')),
+            findsOneWidget,
+          );
+          await tester.tap(find.text('Synthetic sleep education'));
+          await tester.pumpAndSettle();
+          expect(requests.last.url.queryParameters['categoryId'], categoryId);
+          await tester.tap(find.text('Synthetic educational article'));
+          await tester.pumpAndSettle();
+          expect(
+            find.text('Synthetic public reading fixture.'),
+            findsOneWidget,
+          );
+          expect(requests.last.url.path, '$prefix/articles/$articleId');
+          expect(
+            requests.every(
+              (request) =>
+                  request.method == 'GET' &&
+                  request.body.isEmpty &&
+                  !request.headers.containsKey('Authorization') &&
+                  request.url.queryParameters['locale'] == 'en',
+            ),
+            isTrue,
+          );
+          expect(tester.takeException(), isNull);
+        } finally {
+          debugDefaultTargetPlatformOverride = null;
+        }
+      },
+    );
+  }
+
   for (final route in ['dashboard', 'ai', 'detail', 'calibration']) {
     testWidgets('iOS $route does not expose clinical or AI controls', (
       tester,

@@ -190,15 +190,6 @@ class DashboardPage extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  if (controller.isIosWellnessEdition) ...[
-                    _InlineNotice(
-                      key: const Key('ios-wellness-scope'),
-                      message: context.l10n.iosActivitySleepScope,
-                      icon: Icons.info_outline,
-                      color: SaydianColors.blue,
-                    ),
-                    const SizedBox(height: 12),
-                  ],
                   _SectionTitle(
                     title: context.l10n.healthData,
                     subtitle: DateFormat.MMMd(
@@ -721,15 +712,14 @@ class _FeatureEntryGrid extends StatelessWidget {
                 onTap: onCare,
               ),
             ),
-            if (!wellnessOnly)
-              Expanded(
-                child: _FeatureEntry(
-                  label: context.l10n.healthLibrary,
-                  icon: Icons.menu_book_rounded,
-                  color: SaydianColors.sage,
-                  onTap: onEncyclopedia,
-                ),
+            Expanded(
+              child: _FeatureEntry(
+                label: context.l10n.healthLibrary,
+                icon: Icons.menu_book_rounded,
+                color: SaydianColors.sage,
+                onTap: onEncyclopedia,
               ),
+            ),
             if (!wellnessOnly)
               Expanded(
                 child: _FeatureEntry(

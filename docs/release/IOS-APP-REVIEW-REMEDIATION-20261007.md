@@ -328,3 +328,126 @@ analyzer r22 零问题（3.6 秒）；Swift Foundation 原生策略/日期测试
   隐私余项/闭源 SDK、实际审核账号登录、最终新包连接视频和商店截图亦未完成验收；英文文案和审核说明仅交草案。
 - Apple 新版 1014 未上传、未正式/外部重新送审；旧 1012 等待审核未撤回，1013 公开 TestFlight 保持原状态。
   签名包是 `BLOCKED / candidate`，待上述门禁关闭后再上传及替换审核构建。本轮不构建鸿蒙、不恢复 Android 真机测试、不替服务端部署。
+
+### 07:28 用户确认已连接后的闭环复测
+
+- 用户在正常 1014 App 确认已连接手表。开始时分支干净，fetch 后 HEAD / 远端仍为 `1eb8a1fa56e784652cc854257ceabfd548fe7f50`。
+  实际手机应用列表仍为 cn.saydian.app.global / 1.0.1 / 1014，正常进程 PID 13418；安装成功或用户连接确认不直接算 ACK 通过。
+- 本组仅修改 `integration_test/ios_wellness_sync_qa_test.dart` 的证据采集，正式 App 源码、r6 IPA、原记录和 API 不变。
+  原测试在队列未清零时过早终止，无法收集独立回读；将完成门槛延后到两个实读、回读和保留数据断言之后，仍要求 complete、零待传和零拒绝才能整轮通过。
+  新增同一已确认日汇总原 ID/值/时间的真实重传，要求 ACK 且回读 ID 集合不变；不改样本或新造 ID。
+- 只读服务端已存在的 `health-record-scope.ts` 明确 API 折叠非 active 日汇总版本；原始点记录始终可见。
+  因此回读要求所有已 ACK 的点记录及客户端 active 日汇总可见，不错误要求被有意折叠的旧版本出现在列表。所有批次 ACK 仍须为实际提交的 ID 子集。
+  断言只输出布尔值/数量/状态；不在失败信息中输出记录 ID 集合、返回拒绝详情或健康值。连接超时追加安全状态计数。
+- 初轮格式化一文件有变化；analyzer 零问题（3.2 秒），UTC / Shanghai 全量各 1033/1033（63 / 54 秒）。
+  初轮 Profile 编译成功（112.6 秒 / 63.4 MB），但在加入 API 折叠契约和安全布尔断言前生成，仅保留为 profile-connected-r1，不安装为本轮最终诊断包。
+  后续一文件格式化零变化，analyzer 零问题（2.7 秒）；最终诊断 Profile / 双时区完整测试仍在执行，结果继续追加。
+- 服务器检索初次误用 src 根路径及猜测的 daily-summary.ts，不存在；改用实际 apps/api/src 和已显示 import 的 health-record-scope.ts，未修改服务端或猜测部署状态。
+  签名包核查、手机查询和备份只读；未开启用户拒绝的 iPhone 镜像。
+- 诊断前 SIGTERM 正常 App PID 13418，随后拷贝最新加密库至私有目录 `health-1014-connected-followup.mi1xtH`（0700），库副本 0600 / 311296 bytes。
+  没有卸载、清库、导出密钥或凭据；安装后启动前必须再拷贝比较，结束必须恢复原 r6 正常 Ad Hoc 入口。
+
+### 已连接复测最终结果
+
+- 最终诊断 r2 analyzer 零问题（2.7 秒），UTC / Asia/Shanghai 全量各 1033/1033（51 / 57 秒）。
+  Profile 67.4 秒 / 63.4 MB 成功，独立保留 profile-connected-r2，严格签名核查成功。
+- 指定 iPhone 15 Pro Max 实际 drive 发现 VM 并执行用例；两次手表同步均返回 true，四项限定能力已 ready。
+  两轮各回读 210 条服务器可见记录，客户端 active 日汇总及点记录可见、服务端 ID 唯一，旧生理历史及其待传指纹均保持一致。
+  本轮没有新记录首次 ACK；不能把已有服务器记录回读称为新测量上传通过。
+- 3 条旧人工中午时间标记仍被 HTTP 201 的业务结果以 future_time 拒绝，保持 pending。
+  六次批次累计 18 个拒绝回执，是同 3 条重复重试，不是 18 条新记录；手机/服务端时差诊断为零分钟。
+  已确认日汇总按原 ID/值/时间重传：提交 1、ACK 1、拒绝 0，服务端可见 ID 集合不变，真实重传去重通过。
+- 整体闭环用例仍失败：两轮均 allowedPending=3、state=pending，没有放宽零待传门槛。
+  公共生产空态 UI 独立用例通过；不代替真实登录/测量验收。
+- 诊断安装前/后、正常 r6 Ad Hoc 恢复前/后均比较加密库，启动前 cmp 退出 0；311296 bytes、副本 0600、目录 0700。
+  正常 App 已恢复并独立启动 PID 13801；实际包 cn.saydian.app.global / 1.0.1 / 1014。没有卸载、删除、改写旧记录或公开原始健康资料。
+  r6 两个 IPA 校验值保持原值；1014 未上传、未重新送审。
+
+### 首页提示与百科接续修改（2026-10-07）
+
+- 用户反馈：首页健康预警/健康百科消失、顶部多出对用户无用的提示。
+  P2 复现：固定 iOS 范围同时隐藏两个入口，首页插入 ios-wellness-scope 长说明。百科公共阅读被误当成生理数据操作一并封锁。
+  预期：移除额外范围横幅，保留原有简短健康安全提示；恢复通用百科阅读，不恢复个人风险判断、测量、AI 或健康数据发送。
+- 先核对分支/远端，fetch 无更新，基线 1eb8a1fa56e784652cc854257ceabfd548fe7f50。
+  当前两个自有测试/记录修改完整备份至 /private/tmp/health-home-library-prechange.fbFwYE，原图/历史安装包/加密库不修改。
+- 公开只读 GET 检查 /global/api/saydian-app/v2/content/categories 与 articles：中文有两篇睡眠原理及一篇心率原理科普。
+  详情为通用教育，无个人数据或个体诊断接口；不把文章作为本产品准确性/监管证明。
+  英文文章 total=0，英文分类实际仍中文名称；保留既有语言过滤与空态，不伪造英文内容或混入中文。
+- 拟修改 dashboard_pages.dart、app_controller.dart、global_api_client.dart 及相应主机/真机空态测试，恢复现有公共阅读链路。
+  健康预警按用户此前批准的活动/睡眠范围仍关闭；原始记录、SDK、阈值、API 契约和 Android 功能不变。
+- 初次检索使用不存在的测试文件及 zsh 未匹配通配符，按 rg --files 找到 ios_wellness_policy_test.dart；无相关测试执行，不计失败回归。
+  新 UI 的主机、跨端编译、新包安装验收随后追加；旧 r6 IPA 不代表此次 UI 修改。
+
+### 首页/百科主机初轮
+
+- dart format 首次 5 文件、1 变化；定向 3 文件 101 通过 / 2 失败。
+  两个新用例的公共 GET、类别选择、详情阅读和安全文案断言已执行，但没有在用例内部 finally 清除 debugDefaultTargetPlatformOverride，框架收尾不变量失败。
+  不改产品逻辑或放宽断言；修正夹具 finally，重新格式化 1 文件有变化。第一次补丁因格式化后缩进不匹配未应用，按实际文件重试。
+- 定向第二轮 103/103 通过（4 秒）；新增 iOS / Android 公共阅读链路、UUID 类别/详情、不携带登录或健康数据、首页无范围横幅及保留安全提示断言。
+  原有 iOS AI/生理 API 发送前拒绝用例继续通过，Android 健康预警入口仍可见。
+- 实机公共空态驱动改为断言百科存在、范围横幅和健康预警不存在；追加实际英文/中文公共文章 GET 及 UI 阅读，不读取手机会话/健康库、不操作手表。
+  格式化此驱动 1 文件有变化，analyzer 零问题（3.3 秒），git diff --check 通过。
+  全量双时区、发布门禁、Android 工程回归已启动；本轮无 Android 真机测试或鸿蒙构建。
+
+### 首页/百科全量与跨端回归
+
+- UTC 全量 1035/1035（51 秒）、Asia/Shanghai 全量 1035/1035（60 秒）通过；负向夹具的预期异常不算产品异常。
+  发布 Python 25/25（8.075 秒）通过，为本地受控模拟，不是实际发布或向国内地址发送请求。
+- Android sideload 双 ARM Debug 67.7 秒、QA Release 41.5 秒 / 68.3 MB 成功。
+  Gradle testSideloadDebugUnitTest 11 秒成功；本轮为缓存复用的原生门禁，不声称新原生用例执行或 Android 真机验收。
+  插件 Built-in Kotlin、SDK XML/Gradle 弃用警告保留，未改依赖或降低发行门禁。
+- Swift Foundation iOS 原生范围/日汇总策略在 UTC 和 Asia/Shanghai 实际执行通过；原生生产源码没有变化。
+  iOS Debug 正在独占构建，后续 Profile 公共页面用例和正常新版 Ad Hoc 安装结果继续追加。
+- 指定手机 available (paired)，当前仍是正常 r6 1.0.1 包。只读应用/容器清单存入私有 0700 目录 health-home-library-device.Piad8l。
+  加密库目录清单只有该库，无同名 WAL/SHM；没有导出密钥或解密内容。
+- iOS 普通入口 Debug 无签名构建成功（Xcode 26.4 秒），不安装或以脱离调试器的 Debug 判断冷启动。
+  Android 原生 task 回读明确 UP-TO-DATE；初次查 XML 误用 android/app/build，按实际 build/app/test-results 重查，未运行不存在的测试。
+  devicectl --filter 的 JSON 仍含其他 App，后续 jq 只按精确 cn.saydian.app.global 提取，不操作其他 App。
+  实际已安装 1.0.1 / 1014、正常进程 PID 13801 与该包容器匹配；Profile 公共页面目标已启动串行构建。
+- 再检索找到旧全页面实机驱动仍要求范围横幅；原文件先备份，再同步为无横幅、有百科/无健康预警并加入百科路由。
+  此完整认证驱动本轮未执行，不能沿用上一版全页面结果；本轮执行公共页面独立驱动。格式化 1 文件零变化，最终 analyzer 结果另记。
+- 最终 analyzer 零问题（2.8 秒）；公共页面 Profile 成功（56.5 秒 / 60.7 MB），独立保存 profile-home-library-r1，codesign --verify --deep --strict 通过。
+  全量 Provisioning plist 含日期/二进制，直接转 JSON 被 plutil 拒绝；改为只提取团队与设备列表子键，不打印证书数据或导出私钥。
+  原 r6 App Store / Ad Hoc 两个 IPA SHA-256 保持原值；独占执行显式 lib/main.dart 正常 Release archive-r7，不把测试宿主作为发布包。
+
+### 新首页正常安装包 r7 与设备保护
+
+- 显式 lib/main.dart production archive-r7 59.9 秒 / 251.7 MB、App Store 导出 7.4 秒成功。
+  独立保存 final-home-library-r7，不覆盖 final-r6；同一归档 Ad Hoc 导出 EXPORT SUCCEEDED。
+  App Store IPA 36994079 bytes，SHA-256 5046b440f756d8f2270e30798156533cded10d83f66bbafd2507e1ccc0ec2775。
+  Ad Hoc SHA-256 02a4a981a6ce0a798a54b9d5a9701046376e8ec9e4973663d96fd1bea73e4b60。
+- 两个实际 IPA 私有解包后严格签名核查通过，Bundle cn.saydian.app.global、1.0.1 / 1014、团队 W7SXQ4A226、仅 iPhone、get-task-allow=false。
+  无 APNs/HealthKit entitlement；App Store profile 无设备列表，Ad Hoc 包含指定手机；生产 AOT 未含公共 QA/时间诊断标记。
+- RunnerTests 使用既有隔离 DerivedData，build-for-testing 成功；本轮没有执行完整 XCTest，不把编译当执行。
+  公共 Profile 的开发 profile 包含同一 15 Pro Max，get-task-allow=true；只作本轮测试，不作为生产上传包。
+- 为避免 flutter drive 再次安装后直接启动、无法在最后一次安装与启动间比对，采用 devicectl 手动安装、加密库比较、手动启动后 --use-existing-app 接入。
+  bundled iproxy 直接执行两次分别缺 libusbmuxd / glue dylib，按 Flutter 缓存源码设置三个现有库目录的 DYLD_LIBRARY_PATH 后 --help 成功；未安装替代工具或修改 SDK 原件。
+  手动测试包安装前/后加密库 cmp 退出 0，311296 bytes、0600；没有卸载、清库或启用镜像。
+- 首次裸 devicectl 启动 Profile 未发现 VM 服务，不算 UI 测试执行通过。
+  按本机 Flutter getIOSLaunchArguments 的 Profile 参数重新启动同一已安装测试包；不重装、不关闭 VM 鉴权、不改应用源码或设备数据。
+- 同一 Profile 裸启动即使带官方启动参数，仍无 VM；Bonjour flutter attach 仅等待，主动停止本任务自己的 attach。
+  --use-existing-app 方案未跑用例，不计通过。锁状态查询 passcodeRequired=false / unlockedSinceBoot=true，不据此臆测物理当前画面。
+  停止自己的测试 App、再比较加密库一致后，改用此前已工作的 Flutter 调试器启动路径，固定 --keep-app-running，禁止结束卸载。
+  此路径含工具自动同包覆盖安装；会核对整个驱动前/后加密库，不宣称在自动安装与启动间插入了额外比较。
+  结束仍须手动安装已核验 r7 正常 Ad Hoc，并在启动前比较数据库；未执行的 UI/保留数据项不算通过。
+
+### 新首页/百科实机最终验证
+
+- 通过 Flutter 调试器路径成功连接指定手机的实际 Profile VM；UI 驱动退出 0。
+  实际执行生产首页/设备空态、英文线上公共百科空态、中文线上类别/列表/首篇详情三个 widget 用例，含框架收尾共 +4 / All tests passed（8 秒）。
+  英/中 reading=passed，首页百科可见、范围长横幅/健康预警不可见；安全提示保留。严格按公开测试边界，不读取当前账号或设备健康值、不制造测量结果。
+- 实际生产页面空态截图保留 public-home-library-r1，目视检查首页两列入口、最右消息铃铛、无新增长范围提示，原安全提醒位于页面底部，无溢出。
+  它们是公开空态测试宿主，不是已登录用户的全 App/硬件审核截图。
+- 停止本任务的测试进程后，整个驱动前/后加密库 cmp 退出 0，且与初始安装前副本相同。
+  正常 r7 Ad Hoc 手动覆盖安装，启动前再比较库 cmp 退出 0；311296 bytes、副本 0600，所有库留在私有 0700 目录。
+  没有卸载、清库、伪 ACK、重写记录、导出密钥/Token 或发布真实健康截图。
+- r7 正常发布入口独立启动成功，PID 13874，实际包 cn.saydian.app.global / 1.0.1 / 1014。
+  随后冷启动/进程存活检查继续追加；此安装不代表 TestFlight 新包、正式审核提交或全部手表闭环通过。
+- 正常 r7 包实际应用列表为 1.0.1 / 1014，三次独立启动 PID 13874 / 13875 / 13880。
+  首次后续进程查询仍存活，第二/第三次各等待 20 秒后查询同一安装容器匹配进程，均成功；最后保持正常 App 运行。
+  不把进程存活等同真实账号全部页面、资料保存、删除账号、测量首 ACK 或后台同步通过。
+- 新 UI 正常 App 与真实页面公共驱动的证据已分开；英文线上文章仍缺素材，不发布自编医疗内容或伪造翻译。
+  07:28 实测仍是 3 条旧 future_time 待传，保留历史与不伪 ACK 的停线边界不变。本轮未复测新生成 SDK 样本首次上传，也未关闭服务端 latest-day 风险。
+  1014/r7 未上传 Apple、未撤回旧审核或重新提交。原签名/地区/后台/Android 业务不改变，Android 真机与鸿蒙构建仍停止。
+- 交付前 git diff --check 通过，fetch 无更新；差异检查没有新增真实凭据、原始健康字段/值或私人截图。
+  代码与本记录一起提交当前国际分支；Git 提交及推送回执以最后实时核对为准，不把本地 commit 当远端成功。

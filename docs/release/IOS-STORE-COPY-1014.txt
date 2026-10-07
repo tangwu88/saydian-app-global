@@ -17,6 +17,8 @@ Connect your watch over Bluetooth, check its connection and battery status, and 
 
 Manage your nickname, avatar and personal profile. With Remote Care, invite family members and choose which activity or sleep categories to share. Sharing requires the participating accounts and their permission; it is not emergency monitoring.
 
+Read general educational content in Health library when published articles are available in your language. This public reading feature does not evaluate your personal health records or provide individual medical advice.
+
 The iOS edition supports activity and sleep only. It does not provide physiological measurements, disease-risk assessments, medical alerts, AI health advice or paid health-analysis reports. A compatible watch is required for watch-generated activity and sleep data. You can sign in, manage your account and access help without a watch.
 
 Bluetooth access is used to connect the watch. Photo or camera access is optional for features such as a profile picture; location may be used for supported phone-weather and workout-route features when you grant permission. Manage optional permissions in iOS Settings. Account deletion is available in the app under Profile > Account settings.
@@ -32,3 +34,4 @@ activity,sleep,steps,watch,fitness,walking,wellness,tracker,Bluetooth
 
 WHAT'S NEW
 This iOS update focuses on activity and sleep. It restricts physiological measurements, clinical interpretations, medical alerts, AI features and paid health-analysis reports for every iOS account. Existing local records are retained. Activity and sleep sync checks server acknowledgements and preserves unconfirmed records for retry without duplicating confirmed uploads.
+Health library remains available for public educational reading. The Home screen no longer repeats a lengthy edition-scope banner; the health safety notice is retained.
