@@ -1,5 +1,11 @@
 # SAYDIAN Health 当前交接说明
 
+## 2026-10-11 正常产品入口真机 Debug
+
+指定 iPhone 15 Pro Max 已实时确认为 USB wired / iOS 26.6 / Developer Mode enabled，正常 `lib/main.dart` Debug 构建并覆盖安装 1.0.1 (1014)。
+手动安装前后停止状态加密库逐字节一致；Dart VM getVM / main isolate 与 DevTools HTTP 200，313 ms 热重载通过，保持 Flutter 附加，不启用镜像。
+本轮仅启动调试，不修改产品代码/API，不执行新全页/手表业务验收，不上传 Apple；10-07 停线项保留。精确记录见 [真机 Debug 启动](QA-20261011-IOS-DEBUG-START.md)。
+
 ## 2026-10-07 苹果整改接续
 
 本分支正在制作 `1.0.1 (1014)` 活动与睡眠限定版，以下 2026-10-05 快照不代表新源码或新包验收。
