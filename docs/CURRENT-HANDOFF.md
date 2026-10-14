@@ -2,6 +2,12 @@
 
 ## 2026-10-14 美国系统与 1018 构建
 
+2026-10-15 最新：Google 1018 正式 AAB 已实际上传并保存，自动预检查完成，发布概览显示“您的更改现在可以送审”。Apple 1018 已替换为 Dashboard / Device / Data privacy 三张 1179×2556 英文截图，旧 AI/预警/Watch 截图引用已移除；Apple 当前为“可供审核”的草稿，最终提交按钮可用但未点击。此前外部 10-14 18:36 的旧截图审核已为此次替换退回。用户随后明确回答“仍未测试，先完成上传和提审准备”；因此两端最终送审必须等 1018 两戒指活动/睡眠和美国同步真实验收，不能自动提交。
+
+QRing 厂商 consumer rules 的两条 `-printmapping map.txt` 是 immutable cache 反复损坏的原因，已在生成 AAR 时移除，仅修改输出位置行为，SDK 类/JNI/DEX/Flutter payload 不变。正式 AAB 新 SHA256 为 `d097ac2ae4a2041991293b30d2d357d3fdb485bba459d441113e12dd05c00e78`，产物 `build/store-us-1018/qring-cache-fix/app-play-release.aab`；旧包保留。源码远端 `codex/saydian-us-api-20261014` 为 `69e1ecfe0845aab8e2ebfeedd2db1b9003b5c49e`，本地源码相同树、clean。两渠道各 38 原生测试、完整双时区各 1105、发行25、native/auth90通过/1跳过；CI 38596674403 的质量/鸿蒙已通过，Android/iOS 最终结论须另核对。
+
+美国公开 r3 隐私/协议英文实读、支持/注销 HTTPS 和审核专用账号登录/回读/登出通过。额外发现公开注销页 CSS 把已 hidden 的未启用 SMS form 显示为 grid；服务器独立候选已在真实本地浏览器修正，尚未发布。当前仓库中美自动部署开关均 true，不能为了这个候选盲推 main 或改动国内发布范围。最新记录见 [本轮上传与门禁](IMPLEMENTATION-20261015-STORE-UPLOAD.md)；以下 10-14 快照的“尚未上传”等状态仅供历史追溯。
+
 国际版第一方服务已切换为 `https://app.saydian.com/global`，API 为 `/global/api/saydian-app/v2`。美国使用独立新库、文件及密钥；北京数据属于国内测试，保留并独立管理，不执行历史迁移，也不自动导入手机旧域名缓存或复用旧会话。美国服务实际验收、60 次持续同步、99 表备份恢复及证书续期演练通过；独立 CI 自动部署已启用并完成同版本部署演练。以下旧日期的 `.cn`、旧名称及 1014 状态均为历史记录。
 
 App 源码分支 `codex/saydian-us-api-20261014` 已同步 `1500f8d8025a9bb1079de104eb5e8bec8dd40c3b`，当前正式版本 `1.0.1 (1018)`；保持英文默认、设备通用提示、LuckRing/QRing、iOS 活动/睡眠范围和安卓远程推送关闭。Apple 实际报告的定位警告通过 SDK 官方前台定位编译设置修正；未新增始终定位或后台定位权限。
@@ -9,6 +15,8 @@ App 源码分支 `codex/saydian-us-api-20261014` 已同步 `1500f8d8025a9bb1079d
 1018 已实际上传 Apple、处理完成、完成标准加密及法国不分发声明，关联到 1.0.1 正式草稿并持久保存。既有内部 TestFlight 组 `say` 自动获得此构建，状态正在测试；未新增测试员或发布外部测试。iPhone 当前仍不可用，尚未覆盖安装或完成两戒指的新美国同步验收，不能沿用 1016 的连接反馈当作本次通过。Google 1018 AAB 已构建和验证，商店英文及隐私资料已保存，AAB 尚未上传。Apple 截图和 Google AAB 的本机文件选择仍需支持的上传工具或用户操作；两端均未提交审核。
 
 完整命令、失败保留、重试、产物 SHA、CI 和最新待验收项见 [美国部署与接口记录](IMPLEMENTATION-20261014-US-API.md)。已有正式产物位于忽略目录 `build/store-us-1018/accepted-live-builds/`；仅 Dashboard、Device、Data privacy 三张英文截图已通过本轮视觉检查，未采用错误态 Profile 或旧版本 About 图。
+
+10-15 最终补记：完整源码 push CI `38596665683` 全部 success，质量、两时区鸿蒙、Android、iOS均通过，之前的QRing缓存错误已在云端Release后原生测试实际排除。并行PR CI的iOS被取消，不能将该run说成全部通过；使用完整push证据。注销页CSS独立候选为[服务器PR31](https://github.com/tangwu88/saydianserver/pull/31)，已同步、附任务且本地完整验证；未合main、未部署，生产样式问题仍保留。两端按用户最新选择继续等待1018两戒指实机反馈，最终审核未提交。
 
 ## 2026-10-11 正常产品入口真机 Debug
 

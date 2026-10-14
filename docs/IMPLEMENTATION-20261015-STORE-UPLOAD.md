@@ -18,3 +18,20 @@
 - Apple 实时记录发现外部已于 10 月 14 日 18:36 提交 1018，审核 ID `c7e09585-0973-4c50-b7f1-1e8abb65d36c`，状态等待审核。视觉实查旧 global-dashboard-appstore-v2.jpg 含 AI wellness assistant、Health alerts、Watch，与当前 iOS 边界不符。按用户替换截图后重新提审要求处理这一审核项目，不动其他 App。
 - 指定真实 iPhone 在本轮 devicectl 中仍不可用，未覆盖安装，新戒指美国同步实机反馈仍待。
 - 实施记录首次通过 shell stdin 追加中文时出现 Non-UTF-8 编码错误，正文没有写入；随后通过文本 patch 完整追加。本地源码 checkpoint `9f8947a` 保留，未覆盖失败证据。
+
+## 实际商店上传与最新用户验收范围
+
+- 修复源码及本轮日志由已连接 GitHub API 发布，树 `ad41e801ca7689aefa2486abc43e396473548918` 与本地 ad0bd39 完全一致；远端 `69e1ecfe0845aab8e2ebfeedd2db1b9003b5c49e`，PR2 原分支 fast-forward 更新，未合入 main。原本地 checkpoint 保留，fresh tracking checkout clean。普通 Git push 因终端缺少凭据失败，未提取密码或伪称推送成功。
+- Apple 旧审核 `c7e09585-0973-4c50-b7f1-1e8abb65d36c` 为替换截图而退回，仅此 App 的一项 1018。三张新截图实际上传、3/10 持久显示；6.5 英寸旧 AI/Health alerts/Watch 图片引用移除，原素材库保留。Apple 1.0.1 仍关联已接受的1018，新增 10-15 00:21 审核草稿，状态“可供审核”，最终“提交以供审核”按钮可用但未点击。截图自动持久保存；无新增账号、构建、邀请或其他 App 操作。
+- Google 成功接受 65.5MB AAB，版本1018/1.0.1、min26、target36、2 ABI，包含 ReTrace 和原生符号。已保存到正式轨道发布概览，自动常见问题检查完成，显示“您的更改现在可以送审”，仅一项正式版1018未送审变化。没有点击最终“提交1项更改以供审核”。既有 en-US SayDian、2832字符说明、三张英文/Device截图、512图标和1024×500英文大图再次核对，未加入第四张错误态/旧About图。
+- 用户最新明确回答“仍未测试，先完成上传和提审准备”，撤销本轮立即送审时机，保留最终测试后提交的目标。指定 iPhone 仍 unavailable；新两戒指数据及美国同步未实测。不能沿用1016的连接反馈作为通过，也不能把可供审核等同已提交或已上架。
+- 公共 HTTPS readiness/database为OK，revision仍a5198b8；浏览器实读r3英文隐私、协议、支持及注销页。审核专用账号通过正常美国HTTPS邮箱/密码登录、本人资料回读及登出，密码/令牌未输出。完整账户删除及跨国令牌证明仍使用前轮已接受真实HTTP证据，本轮不删除审核账号。
+- 本轮 native/auth Node 91项：90通过、1跳过，与前轮一致；没有新增厂商下载或模拟硬件通过。云端CI38596674403/38596665683目前质量与两时区鸿蒙成功，Android编译中，iOS排队，不能声称整轮CI完成。
+- 额外公开注销页显示问题已形成服务器独立CSS候选：`form {display:grid}` 覆盖HTML hidden；修正后本地真实浏览器SMS隐藏、密码仍可见。生产尚未修改。观察到国内/美国自动发布均true，需要独立美国发布范围处理，不能盲合 main 引发国内升级。见服务器 `docs/implementation-log/2026-10-15-global-deletion-hidden.md`。
+- 上传、草稿、Google预检查及截图证据保存于忽略的 `build/store-us-1018/`，无受保护登录字段的密码、原始健康数据或图片提交Git。接续先检查CI真实结论、独立美国页面修正及用户1018实机反馈，再进行最终送审。
+
+## 最终自动检查与候选保全
+
+- 完整源码 push CI `38596665683` 对 `69e1ecfe0845aab8e2ebfeedd2db1b9003b5c49e` 实际 conclusion=success；质量、UTC/Shanghai鸿蒙、Android和iOS全部success。Android已实际完成Release后两渠道原生单元测试，不再触发immutable workspace错误。并行PR CI `38596674403` 的质量/鸿蒙/Android成功，iOS取消，不能把该PR run称为整轮success；完整证明使用上述push run，不是推测取消原因。
+- 注销CSS候选源码 `d8ac2d5abfac43d5ebadccfaf1ba33cd619fb5af`、tree `8a051840e715cbc74ff9be84d8529a4d9ad64f45` 与保留本地3af9d0b逐字一致，发布为独立草稿[服务器PR31](https://github.com/tangwu88/saydianserver/pull/31)，已附当前任务；未merge或触发中美生产部署。根级typecheck/test/build/API文档，58工具、62H5流程、38H5契约及44部署测试通过；API的25个实库测试本地跳过仍保留，不假称成功。实际本地浏览器使用真实US公开能力响应，隐藏SMS、保留密码表单；生产尚为原CSS。
+- 本轮最终商店状态：Apple1018可供审核的未提交草稿，三张新版英语素材已保存；Google1018唯一未送审正式版变更，官方自动检查完成并允许送审。遵从用户“仍未测试，先完成上传和提审准备”，最终送审均未执行。
