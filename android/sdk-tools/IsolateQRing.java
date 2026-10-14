@@ -1,5 +1,7 @@
 import java.io.*;
 import java.nio.file.*;
+import java.nio.charset.StandardCharsets;
+import java.util.regex.*;
 import java.util.zip.*;
 import org.objectweb.asm.*;
 import org.objectweb.asm.commons.*;
@@ -24,6 +26,25 @@ public final class IsolateQRing {
             return super.mapValue(value);
         }
     };
+    private static byte[] consumerRules(byte[] input) {
+        String rules = new String(input, StandardCharsets.UTF_8);
+        // QRing repeats its vendor build rules twice. R8 resolves this output
+        // relative to the extracted AAR and writes into Gradle's immutable
+        // transform cache. The app already owns its mapping output; keep every
+        // SDK keep/optimization rule and remove only these two output lines.
+        Matcher mapping = Pattern.compile(
+            "(?m)^[ \\t]*-printmapping[ \\t]+map\\.txt[ \\t]*(?:\\r?\\n|$)").matcher(rules);
+        int count = 0;
+        while (mapping.find()) count++;
+        if (count != 2) {
+            throw new IllegalArgumentException("Expected two QRing mapping outputs, found " + count);
+        }
+        String cleaned = mapping.replaceAll("");
+        if (Pattern.compile("(?m)^[ \\t]*-printmapping\\b").matcher(cleaned).find()) {
+            throw new IllegalArgumentException("Unexpected QRing mapping output; review the vendor rules");
+        }
+        return cleaned.getBytes(StandardCharsets.UTF_8);
+    }
     private static byte[] rewrite(byte[] input, boolean archive) throws IOException {
         if (!archive) {
             ClassReader reader = new ClassReader(input);
@@ -54,6 +75,8 @@ public final class IsolateQRing {
                     name = NAMES.map(name.substring(0, name.length() - 6)) + ".class";
                 } else if (name.endsWith(".jar")) {
                     data = rewrite(data, true);
+                } else if (name.equals("proguard.txt")) {
+                    data = consumerRules(data);
                 }
                 ZipEntry target = new ZipEntry(name);
                 target.setTime(0);

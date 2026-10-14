@@ -88,7 +88,8 @@ jobs:
             --apk build/app/outputs/flutter-apk/app-play-release.apk \
             --dependency-report build/playReleaseRuntimeClasspath.txt \
             --pubspec-lock pubspec.lock
-      - run: cd android && ./gradlew :app:testSideloadDebugUnitTest
+      - name: Run both channel unit tests after release builds (reuse immutable SDK transforms)
+        run: cd android && ./gradlew :app:testSideloadDebugUnitTest :app:testPlayDebugUnitTest -Ptarget-platform=android-arm,android-arm64
 
   ios:
     runs-on: macos-26
