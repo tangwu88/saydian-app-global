@@ -1,3 +1,4 @@
+import 'data_privacy_page.dart';
 import 'dart:async';
 import 'dart:convert';
 
@@ -536,6 +537,7 @@ class _GlobalAuthPageState extends State<GlobalAuthPage> {
                             ),
                             child: Text(l.privacyPolicy),
                           ),
+                          const DataPrivacyLink(),
                         ],
                       ),
                       if (_error != null)

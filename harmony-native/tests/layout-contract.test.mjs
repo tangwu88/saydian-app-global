@@ -131,7 +131,7 @@ test('care member and sharing cards preserve readable member details',()=>{
   assert.ok(sharing.includes('.constraintSize({ minHeight: 76 })'));
 });
 
-test('visual system uses the black SAYDIAN Health palette and consistent surfaces',()=>{
+test('visual system uses the black SayDian palette and consistent surfaces',()=>{
   const source=readUiSource(new URL('../entry/src/main/ets/pages/Index.ets',import.meta.url),'utf8');
   for(const token of [
     "const RED: string = '#17191C'",
@@ -201,7 +201,7 @@ test('care summary refresh and member page use the same list while all metric st
 test('launcher identity uses the requested name and a high-resolution brand icon',()=>{
   const app=JSON.parse(readFileSync(new URL('../AppScope/app.json5',import.meta.url),'utf8')).app;
   const strings=JSON.parse(readFileSync(new URL('../AppScope/resources/base/element/string.json',import.meta.url),'utf8')).string;
-  assert.equal(strings.find(item=>item.name==='app_name')?.value,'SAYDIAN Health');
+  assert.equal(strings.find(item=>item.name==='app_name')?.value,'SayDian');
   assert.equal(app.icon,'$media:app_icon_v3');
   const module=JSON.parse(readFileSync(new URL('../entry/src/main/module.json5',import.meta.url),'utf8')).module;
   assert.equal(module.abilities[0].icon,'$media:app_icon_v3');

@@ -2890,7 +2890,7 @@ struct Index {
         this.LanguagePicker()
         Row({ space: 10 }) {
           Image($r('app.media.app_icon')).width(52).height(52).objectFit(ImageFit.Contain)
-          Text('SAYDIAN Health').fontSize(18).fontWeight(FontWeight.Bold).fontColor(INK)
+          Text('SayDian').fontSize(18).fontWeight(FontWeight.Bold).fontColor(INK)
         }.width(190).height(92).justifyContent(FlexAlign.Center)
           .accessibilityText(this.tr('Saydian')).margin({ top: 18, bottom: 22 })
         this.AuthMethodSelector()
@@ -2969,7 +2969,7 @@ struct Index {
         }.width('100%').height(this.controlHeight(56))
         Row({ space: 8 }) {
           Image($r('app.media.app_icon')).width(42).height(42).objectFit(ImageFit.Contain)
-          Text('SAYDIAN Health').fontSize(15).fontWeight(FontWeight.Bold).fontColor(INK)
+          Text('SayDian').fontSize(15).fontWeight(FontWeight.Bold).fontColor(INK)
         }.width(154).height(76).justifyContent(FlexAlign.Center)
           .accessibilityText(this.tr('赛电 SAYDIAN')).margin({ top: 12, bottom: 16 })
         this.AuthMethodSelector()
@@ -5194,7 +5194,7 @@ struct Index {
   AboutContent() {
     Row({ space: 9 }) {
       Image($r('app.media.app_icon')).width(50).height(50).objectFit(ImageFit.Contain)
-      Text('SAYDIAN Health').fontSize(17).fontWeight(FontWeight.Bold).fontColor(INK)
+      Text('SayDian').fontSize(17).fontWeight(FontWeight.Bold).fontColor(INK)
     }.width(176).height(92).justifyContent(FlexAlign.Center)
       .accessibilityText(this.tr('赛电 SAYDIAN')).margin({ top: 24, bottom: 12 })
     Text(this.tr('赛电健康')).fontSize(22).fontWeight(FontWeight.Bold).fontColor(INK).width('100%').textAlign(TextAlign.Center)

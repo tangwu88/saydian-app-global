@@ -58,3 +58,10 @@
 -dontwarn org.openjsse.javax.net.ssl.SSLParameters
 -dontwarn org.openjsse.javax.net.ssl.SSLSocket
 -dontwarn org.openjsse.net.ssl.OpenJSSE
+
+# Preserve reflection entry points in the isolated QRing BBPro runtime.
+-keep class cc.saidian.vendor.qring.bbpro.** { *; }
+-keep class com.realsil.sdk.bbpro.DspConfig { *; }
+# CoolWear dispatches model/proxy callbacks using vendor signatures.
+-keep class ce.com.cenewbluesdk.** { *; }
+-keep interface ce.com.cenewbluesdk.** { *; }

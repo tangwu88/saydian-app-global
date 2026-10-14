@@ -1597,6 +1597,7 @@ class SaydianApiClient
           'totalArray': record.samples,
         });
         break;
+      case HealthMetric.stress:
       case HealthMetric.sleep:
       case HealthMetric.steps:
       case HealthMetric.distance:

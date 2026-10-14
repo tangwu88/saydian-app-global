@@ -10,14 +10,14 @@ const _blockedMedia = [
   'http://sd.cc/watch.jpg',
   'https://app.saidian.cc/watch.jpg',
   '/files/relative-watch.jpg',
-  'https://app.saydian.cn/global/files/watch.jpg',
+  'https://app.saydian.com/global/files/watch.jpg',
   'https://cdn.example.invalid/watch.jpg',
 ];
 const _allowedMedia = {
   '/api/saydian-app/v2/files/relative-watch.jpg':
-      'https://app.saydian.cn/global/api/saydian-app/v2/files/relative-watch.jpg',
-  'https://app.saydian.cn/global/api/saydian-app/v2/files/watch.jpg':
-      'https://app.saydian.cn/global/api/saydian-app/v2/files/watch.jpg',
+      'https://app.saydian.com/global/api/saydian-app/v2/files/relative-watch.jpg',
+  'https://app.saydian.com/global/api/saydian-app/v2/files/watch.jpg':
+      'https://app.saydian.com/global/api/saydian-app/v2/files/watch.jpg',
 };
 
 class _ShopMediaController extends Fake implements AppController {
@@ -111,7 +111,7 @@ void _expectOnlyAllowedMedia(List<String> urls) {
     final uri = Uri.parse(url);
     expect(uri.scheme, 'https');
     expect({'sd.cc', 'app.saidian.cc'}, isNot(contains(uri.host)));
-    if (uri.host == 'app.saydian.cn') {
+    if (uri.host == 'app.saydian.com') {
       expect(uri.path, startsWith('/global/api/saydian-app/v2/'));
     }
   }

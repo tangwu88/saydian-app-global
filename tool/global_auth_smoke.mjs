@@ -1,7 +1,7 @@
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
-const origin = 'https://app.saydian.cn';
+const origin = 'https://app.saydian.com';
 const prefix = '/global/api/saydian-app/v2';
 const canonicalPrefix = '/api/saydian-app/v2';
 const locales = new Set(['en', 'zh-Hans', 'zh-Hant', 'de', 'fr', 'es', 'ja', 'ko']);

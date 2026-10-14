@@ -662,7 +662,7 @@ class XcodeReleaseBuildGateTest(unittest.TestCase):
                 "SAIDIAN_DEVELOPMENT_TEAM": "TESTTEAM",
                 "SAIDIAN_CODE_SIGN_IDENTITY": "Apple Distribution",
                 "SAIDIAN_PROVISIONING_PROFILE_SPECIFIER": "Global App Store",
-                "SAYDIAN_API_BASE_URL": "https://app.saydian.cn",
+                "SAYDIAN_API_BASE_URL": "https://app.saydian.com",
             }
         )
         self.assertEqual(0, complete.returncode, complete.stderr)
@@ -678,7 +678,7 @@ class XcodeReleaseBuildGateTest(unittest.TestCase):
             "SAIDIAN_DEVELOPMENT_TEAM": "TESTTEAM",
             "SAIDIAN_CODE_SIGN_IDENTITY": "Apple Distribution",
             "SAIDIAN_PROVISIONING_PROFILE_SPECIFIER": "Global App Store",
-            "SAYDIAN_API_BASE_URL": "https://app.saydian.cn",
+            "SAYDIAN_API_BASE_URL": "https://app.saydian.com",
         }
         for override in (
             {"PRODUCT_BUNDLE_IDENTIFIER": "cc.saidian.app"},
@@ -699,16 +699,15 @@ class XcodeReleaseBuildGateTest(unittest.TestCase):
         project = (root / "ios/Runner.xcodeproj/project.pbxproj").read_text()
         self.assertEqual(3, project.count("TARGETED_DEVICE_FAMILY = 1;"))
         self.assertNotIn('TARGETED_DEVICE_FAMILY = "1,2";', project)
-        self.assertIn("INFOPLIST_FILE = Runner/Info-AppStore.plist;", project)
-        self.assertIn(
-            "CODE_SIGN_ENTITLEMENTS = Runner/RunnerAppStore.entitlements;",
-            project,
-        )
+        self.assertRegex(project, r'INFOPLIST_FILE = "?Runner/Info-AppStore\.plist"?;')
+        self.assertRegex(project, r'CODE_SIGN_ENTITLEMENTS = "?Runner/RunnerAppStore\.entitlements"?;')
         with (root / "ios/Runner/Info-AppStore.plist").open("rb") as source:
             info = plistlib.load(source)
         for key in (
             "NSAppleMusicUsageDescription",
             "NSSpeechRecognitionUsageDescription",
+            "NSHealthShareUsageDescription",
+            "NSHealthUpdateUsageDescription",
         ):
             self.assertGreater(len(info[key].strip()), 20)
         self.assertNotIn("NSLocationAlwaysAndWhenInUseUsageDescription", info)
@@ -732,7 +731,7 @@ class XcodeReleaseBuildGateTest(unittest.TestCase):
         for locale in locales:
             with self.subTest(locale=locale):
                 content = (runner / f"{locale}.lproj/InfoPlist.strings").read_text(encoding="utf-8")
-                self.assertIn('"CFBundleDisplayName" = "SAYDIAN Health";', content)
+                self.assertIn('"CFBundleDisplayName" = "SayDian";', content)
                 self.assertNotIn('"CFBundleDisplayName" = "Saydian";', content)
 
     def test_release_rejects_ambiguous_or_misspelled_modes(self) -> None:

@@ -3,6 +3,8 @@ import path from 'node:path';
 
 const vendorDir = path.resolve('ios/Runner/Vendor');
 const frameworkNames = [
+  'BluetoothLibrary',
+  'QCBandSDK',
   'ABParTool',
   'DFUnits',
   'GRDFUSDK',

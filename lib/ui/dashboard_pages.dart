@@ -69,8 +69,16 @@ class _AppShellState extends State<AppShell> {
               label: context.l10n.health,
             ),
             NavigationDestination(
-              icon: const Icon(Icons.watch_outlined),
-              selectedIcon: const Icon(Icons.watch_rounded),
+              icon: Icon(
+                controller.connectedDevice?.isRing == true
+                    ? Icons.circle_outlined
+                    : Icons.watch_outlined,
+              ),
+              selectedIcon: Icon(
+                controller.connectedDevice?.isRing == true
+                    ? Icons.circle
+                    : Icons.watch_rounded,
+              ),
               label: context.l10n.device,
             ),
             NavigationDestination(
@@ -142,6 +150,10 @@ class DashboardPage extends StatelessWidget {
               sliver: SliverList(
                 delegate: SliverChildListDelegate([
                   _DashboardHeader(controller: controller),
+                  if (controller.connectedDevice?.isRing == true) ...[
+                    const SizedBox(height: 12),
+                    RingDeviceHero(controller: controller),
+                  ],
                   const SizedBox(height: 12),
                   if (!controller.isIosWellnessEdition) ...[
                     _AiHealthAssistantCard(controller: controller),

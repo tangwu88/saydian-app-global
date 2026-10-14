@@ -23,7 +23,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get scanPermissionHint =>
-      'Allow the required permissions in Settings, then return to find your watch.';
+      'Allow the required permissions in Settings, then return to find your device.';
 
   @override
   String get loginProtectionTitle => 'Sign-in protection';
@@ -34,34 +34,34 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get workoutStartOnWatch =>
-      'This watch cannot start workouts from the app. Start the workout directly on your watch.';
+      'This device cannot start workouts from the app. Start the workout directly on your device.';
 
   @override
   String get finishWorkoutConfirm => 'Finish this workout?';
 
   @override
   String get finishLeaveWorkoutHint =>
-      'Before leaving, the watch workout will stop and the recorded duration and route will be saved.';
+      'Before leaving, the device workout will stop and the recorded duration and route will be saved.';
 
   @override
   String get finishAndLeave => 'Finish and leave';
 
   @override
   String get workoutRouteMissing =>
-      'No phone-recorded route is available for this session. The watch workout data is still saved.';
+      'No phone-recorded route is available for this session. The device workout data is still saved.';
 
   @override
   String get workoutDuration => 'Workout duration';
 
   @override
-  String get workoutWatchHeartRate => 'Watch heart rate';
+  String get workoutWatchHeartRate => 'Device heart rate';
 
   @override
   String get messageSendFailed =>
       'Could not send. Check your connection and try again.';
 
   @override
-  String get noWatchShopHint => 'Need a device? Visit the Saydian store.';
+  String get noWatchShopHint => 'Need a device? Visit the SayDian store.';
 
   @override
   String get notificationInAppHint =>
@@ -156,7 +156,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Do not send verification codes, passwords or complete health records to unofficial accounts.';
 
   @override
-  String get brandHealthTitle => 'SAYDIAN Health';
+  String get brandHealthTitle => 'SayDian';
 
   @override
   String get accountAndSecurity => 'Account and security';
@@ -193,7 +193,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get reportInsufficientDataHint =>
-      'No payment order is created when data is insufficient. Wear your watch as usual, sync its data, then try again.';
+      'No payment order is created when data is insufficient. Wear your device as usual, sync its data, then try again.';
 
   @override
   String get waitingPaymentConfirmation => 'Waiting for payment confirmation';
@@ -220,11 +220,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get calibrateOnWatchHint =>
-      'Follow the instructions on your watch to complete calibration.';
+      'Follow the instructions on your device to complete calibration.';
 
   @override
   String get spotCheckCuffHint =>
-      'This is a resting spot check for reference only. For a more accurate reading, use the watch’s pump-and-cuff measurement.';
+      'This is a resting spot check for reference only. For a more accurate reading, use the device’s pump-and-cuff measurement.';
 
   @override
   String get setHealthUpperLimits => 'Set upper-limit health alerts';
@@ -263,7 +263,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get watchHealthReference =>
-      'Watch measurements are for everyday wellness reference.';
+      'Device measurements are for everyday wellness reference.';
 
   @override
   String get calibrationReferenceHint =>
@@ -278,7 +278,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get calibrationDisabledHint =>
-      'Turning this off restores the watch’s general measurement mode.';
+      'Turning this off restores the device’s general measurement mode.';
 
   @override
   String get diastolicLowerLabel => 'Diastolic pressure (lower number)';
@@ -313,31 +313,31 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get riskIndicatorsMissing =>
-      'The watch did not return risk indicators for this measurement.';
+      'The device did not return risk indicators for this measurement.';
 
   @override
   String get riskAnalysisTitle => 'Risk analysis';
 
   @override
   String get watchAlgorithmReference =>
-      'The values below come from the watch’s algorithm and are for health trend reference only.';
+      'The values below come from the device’s algorithm and are for health trend reference only.';
 
   @override
   String get ecgHealthReport => 'ECG health report';
 
   @override
-  String get brandedEcgReport => 'Saydian · ECG health report';
+  String get brandedEcgReport => 'SayDian · ECG health report';
 
   @override
   String get ecgReportSafety =>
-      'Note: this report uses watch measurement data. It is for wellness reference only and cannot replace a doctor’s diagnosis.';
+      'Note: this report uses device measurement data. It is for wellness reference only and cannot replace a doctor’s diagnosis.';
 
   @override
-  String get installedWatchFaces => 'Installed watch faces';
+  String get installedWatchFaces => 'Installed faces';
 
   @override
   String get switchInstalledWatchFace =>
-      'Switch between watch faces already on your watch.';
+      'Switch between faces already on your device.';
 
   @override
   String get useSelectedWatchFace => 'Use';
@@ -347,17 +347,17 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get photoWatchFaceHint =>
-      'Choose a clear photo, check the preview, then send it to your watch.';
+      'Choose a clear photo, check the preview, then send it to your device.';
 
   @override
   String get timeDisplayPosition => 'Time position';
 
   @override
-  String get transferSetWatchFace => 'Send and set as watch face';
+  String get transferSetWatchFace => 'Send to device';
 
   @override
   String get watchTransferKeepNear =>
-      'Keep the watch near your phone during transfer and stay on this page.';
+      'Keep the device near your phone during transfer and stay on this page.';
 
   @override
   String get callMediaAudio => 'Call and media audio';
@@ -367,19 +367,19 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get sosContactHint =>
-      'When SOS is triggered on the watch, it will first contact the person selected here. Choose a family member you contact regularly.';
+      'When SOS is triggered on the device, it will first contact the person selected here. Choose a family member you contact regularly.';
 
   @override
   String get noHealthAssessments =>
-      'No configurable health assessments are available on this watch.';
+      'No configurable health assessments are available on this device.';
 
   @override
   String get modelFeaturesVary =>
-      'Supported features vary by model. Refer to the features shown on your watch.';
+      'Supported features vary by model. Refer to the features shown on your device.';
 
   @override
   String get assessmentEnabledHint =>
-      'When enabled, the watch provides daily trend information.';
+      'When enabled, the device provides daily trend information.';
 
   @override
   String get assessmentSafety =>
@@ -387,14 +387,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get autoMonitorIntervalHint =>
-      'When enabled, the watch measures automatically at its configured interval.';
+      'When enabled, the device measures automatically at its configured interval.';
 
   @override
-  String get watchHeartRateAlert => 'Watch heart rate alert';
+  String get watchHeartRateAlert => 'Device heart rate alert';
 
   @override
   String get sustainedLimitWatchAlert =>
-      'The watch alerts you if the value stays above the limit.';
+      'The device alerts you if the value stays above the limit.';
 
   @override
   String get ecgWaveformTitle => 'ECG waveform';
@@ -405,11 +405,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get ecgElectrodeHint =>
-      'Heart rate and HRV results remain available. Keep touching the watch electrode throughout your next measurement.';
+      'Heart rate and HRV results remain available. Keep touching the device electrode throughout your next measurement.';
 
   @override
   String get screenAutoTimeHint =>
-      'The watch adjusts automatically based on the time.';
+      'The device adjusts automatically based on the time.';
 
   @override
   String get raiseWristScreenHint =>
@@ -420,7 +420,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get watchThresholdHint =>
-      'The watch alerts you when the limit is reached.';
+      'The device alerts you when the limit is reached.';
 
   @override
   String get watchMeasurementSafety =>
@@ -444,10 +444,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get watchFaceDownloadHint =>
-      'Keep your watch nearby until transfer finishes.';
+      'Keep your device nearby until transfer finishes.';
 
   @override
-  String get refreshWatchFaces => 'Refresh watch faces';
+  String get refreshWatchFaces => 'Refresh faces';
 
   @override
   String get openTestFlight => 'Open TestFlight';
@@ -527,20 +527,20 @@ class AppLocalizationsEn extends AppLocalizations {
   String get finishWorkout => 'Finish workout';
 
   @override
-  String get watchDistance => 'Watch distance';
+  String get watchDistance => 'Device distance';
 
   @override
-  String get watchSteps => 'Watch steps';
+  String get watchSteps => 'Device steps';
 
   @override
   String get liveHeartRate => 'Live heart rate';
 
   @override
-  String get watchCalories => 'Watch calories';
+  String get watchCalories => 'Device calories';
 
   @override
   String get connectForWorkout =>
-      'Connect your watch on the Device page first. Your watch will record the workout.';
+      'Connect your device on the Device page first. Your device will record the workout.';
 
   @override
   String latestVersion(String version) {
@@ -593,16 +593,17 @@ class AppLocalizationsEn extends AppLocalizations {
       'Browse products here. Ordering is not available in this region yet.';
 
   @override
-  String get appName => 'SAYDIAN Health';
+  String get appName => 'SayDian';
 
   @override
-  String get searchingNearby => 'Searching for nearby watches';
+  String get searchingNearby => 'Searching for nearby devices';
 
   @override
   String get noDevices => 'No devices found';
 
   @override
-  String get selectWatch => 'Check the name and signal, then select your watch';
+  String get selectWatch =>
+      'Check the name and signal, then select your device';
 
   @override
   String get searchingHint =>
@@ -610,11 +611,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get activateWatch =>
-      'Charge your watch to activate it, then place it near your phone';
+      'Charge your device to activate it, then place it near your phone';
 
   @override
   String get checkWatchConnection =>
-      'If the watch is connected in this phone\'s Bluetooth settings or on another phone, disconnect it and search again';
+      'If the device is connected in this phone\'s Bluetooth settings or on another phone, disconnect it and search again';
 
   @override
   String get running => 'Running';
@@ -837,13 +838,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get refresh => 'Refresh';
 
   @override
-  String get useWatchFace => 'Use this watch face?';
+  String get useWatchFace => 'Use this face?';
 
   @override
   String get downloadAndUse => 'Download and use';
 
   @override
-  String get watchFaceFailed => 'Could not set the watch face';
+  String get watchFaceFailed => 'Could not set the face';
 
   @override
   String get statusNormal => 'Normal';
@@ -935,7 +936,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get smsCode => 'SMS verification code';
 
   @override
-  String get watchFaceShop => 'Watch face store';
+  String get watchFaceShop => 'Face gallery';
 
   @override
   String get selectCity => 'Select city';
@@ -975,7 +976,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get searchRecovery =>
-      'Keep the watch close. If it is connected in system Bluetooth or on another phone, disconnect it first, then try again.';
+      'Keep the device close. If it is connected in system Bluetooth or on another phone, disconnect it first, then try again.';
 
   @override
   String get deviceName => 'Device name';
@@ -990,7 +991,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get firmwareVersion => 'Firmware version';
 
   @override
-  String get watchBattery => 'Watch battery';
+  String get watchBattery => 'Device battery';
 
   @override
   String get chargingStatus => 'Charging status';
@@ -1054,7 +1055,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get choose => 'Select';
 
   @override
-  String get connectWatchToUse => 'Connect a watch to use this feature';
+  String get connectWatchToUse => 'Connect a device to use this feature';
 
   @override
   String get selectPhoto => 'Select photo';
@@ -1079,7 +1080,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get monitoringHint =>
-      'Available health monitoring settings appear after connecting your watch.';
+      'Available health monitoring settings appear after connecting your device.';
 
   @override
   String get previewUnavailable => 'Preview unavailable';
@@ -1094,7 +1095,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get healthProfile => 'Health profile';
 
   @override
-  String get photoWatchFace => 'Photo watch face';
+  String get photoWatchFace => 'Photo face';
 
   @override
   String get cameraRemote => 'Camera remote';
@@ -1155,10 +1156,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get connectionInstructions =>
-      '1. Turn on Bluetooth and allow nearby device access.\n2. Keep your watch charged and near your phone.\n3. Tap Search for watches and select your watch.\n4. Confirm on the watch if prompted.';
+      '1. Turn on Bluetooth and allow nearby device access.\n2. Keep your device charged and near your phone.\n3. Tap Search for devices and select your device.\n4. Confirm on the device if prompted.';
 
   @override
-  String get syncNearbyHint => 'Keep your watch nearby while syncing.';
+  String get syncNearbyHint => 'Keep your device nearby while syncing.';
 
   @override
   String get invalidCode => 'Check the code and try again';
@@ -1178,31 +1179,31 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get addSmartDevice => 'Connect a watch';
+  String get addSmartDevice => 'Connect a device';
 
   @override
-  String get watchNearbyHint => 'Turn on Bluetooth and keep your watch nearby';
+  String get watchNearbyHint => 'Turn on Bluetooth and keep your device nearby';
 
   @override
-  String get startSearch => 'Search for watches';
+  String get startSearch => 'Search for devices';
 
   @override
   String get readingData => 'Reading data…';
 
   @override
-  String get readingCapabilities => 'Checking watch features…';
+  String get readingCapabilities => 'Checking device features…';
 
   @override
-  String get capabilitiesHint => 'Keep your watch nearby.';
+  String get capabilitiesHint => 'Keep your device nearby.';
 
   @override
-  String get capabilitiesFailed => 'Could not read this watch’s features';
+  String get capabilitiesFailed => 'Could not read this device’s features';
 
   @override
-  String get keepWatchNear => 'Keep your watch near your phone and try again';
+  String get keepWatchNear => 'Keep your device near your phone and try again';
 
   @override
-  String get personalizeWatch => 'Watch faces & style';
+  String get personalizeWatch => 'Display & style';
 
   @override
   String get signInCloudHint => 'Sign in to view cloud data.';
@@ -1353,7 +1354,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get haveAccount => 'Already have an account?';
 
   @override
-  String get noAccount => 'New to Saydian?';
+  String get noAccount => 'New to SayDian?';
 
   @override
   String get showPassword => 'Show password';
@@ -1375,7 +1376,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get health => 'Health';
 
   @override
-  String get device => 'Watch';
+  String get device => 'Device';
 
   @override
   String get profile => 'Profile';
@@ -1401,7 +1402,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Rest and measure again. If you feel unwell, seek medical advice.';
 
   @override
-  String get defaultUser => 'Saydian user';
+  String get defaultUser => 'SayDian user';
 
   @override
   String get dailyGreeting => 'Take care of yourself today';
@@ -1431,17 +1432,17 @@ class AppLocalizationsEn extends AppLocalizations {
   String get shop => 'Shop';
 
   @override
-  String get connectWatch => 'Connect a watch';
+  String get connectWatch => 'Connect a device';
 
   @override
-  String get addDevice => 'Connect a watch';
+  String get addDevice => 'Connect a device';
 
   @override
   String get connectWatchForData =>
-      'Connect your watch to view supported health data';
+      'Connect your device to view supported health data';
 
   @override
-  String get connectingWatch => 'Connecting to your watch…';
+  String get connectingWatch => 'Connecting to your device…';
 
   @override
   String get noHealthData => 'No health data to show yet';
@@ -1490,38 +1491,38 @@ class AppLocalizationsEn extends AppLocalizations {
   String get online => 'Online';
 
   @override
-  String get syncData => 'Sync watch';
+  String get syncData => 'Sync device';
 
   @override
   String get syncComplete => 'Data synced';
 
   @override
   String get syncFailedTryAgain =>
-      'Could not sync. Keep your watch nearby and try again.';
+      'Could not sync. Keep your device nearby and try again.';
 
   @override
   String get disconnect => 'Disconnect';
 
   @override
-  String get findWatch => 'Find my watch';
+  String get findWatch => 'Find my device';
 
   @override
-  String get watchFaces => 'Watch faces';
+  String get watchFaces => 'Faces';
 
   @override
-  String get deviceFeatures => 'Watch controls';
+  String get deviceFeatures => 'Device controls';
 
   @override
-  String get aboutDevice => 'About this watch';
+  String get aboutDevice => 'About this device';
 
   @override
   String get connectionHelp => 'Connection help';
 
   @override
-  String get searchNearbyWatch => 'Search for a nearby watch';
+  String get searchNearbyWatch => 'Search for a nearby device';
 
   @override
-  String get useWatch => 'Please use this feature on your watch';
+  String get useWatch => 'Please use this feature on your device';
 
   @override
   String get myOrders => 'My orders';
@@ -1569,7 +1570,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get customerService => 'Customer support';
 
   @override
-  String get aboutApp => 'About SAYDIAN Health';
+  String get aboutApp => 'About SayDian';
 
   @override
   String get security => 'Account security';
@@ -1614,7 +1615,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get gettingReady => 'Getting things ready…';
 
   @override
-  String get enableNotifications => 'Enable Saydian notifications';
+  String get enableNotifications => 'Enable SayDian notifications';
 
   @override
   String get notificationExplanation =>
@@ -2050,47 +2051,47 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get measurementContactEcg =>
-      'No electrode contact detected. Wear your watch correctly and keep your finger on the ECG electrode.';
+      'No electrode contact detected. Wear your device correctly and keep your finger on the ECG electrode.';
 
   @override
   String get measurementContactElectrode =>
-      'No electrode contact detected. Wear your watch and follow its electrode instructions.';
+      'No electrode contact detected. Wear your device and follow its electrode instructions.';
 
   @override
   String get measurementCheckFit =>
-      'Check that your watch fits snugly against your wrist.';
+      'Check that your device fits securely and follow its measurement instructions.';
 
   @override
   String get measurementWaitPressure =>
-      'Measuring blood pressure. Keep your watch in place and your arm still while you wait.';
+      'Measuring blood pressure. Keep your device in place and your arm still while you wait.';
 
   @override
   String get measurementWaitEcg =>
-      'Wear your watch correctly and keep your finger on the ECG electrode.';
+      'Wear your device correctly and keep your finger on the ECG electrode.';
 
   @override
   String get measurementWaitHrv =>
-      'Keep your watch against your wrist and stay still while waiting for the HRV result.';
+      'Keep your device in place and stay still while waiting for the HRV result.';
 
   @override
   String get measurementWaitElectrode =>
-      'Follow the watch instructions and keep contact with the electrodes until the measurement ends.';
+      'Follow the device instructions and keep contact with the electrodes until the measurement ends.';
 
   @override
   String get measurementWaitStill =>
-      'Keep your watch in place and stay still while waiting for the result.';
+      'Keep your device in place and stay still while waiting for the result.';
 
   @override
-  String get finishMeasurementOnWatch => 'End the measurement on your watch.';
+  String get finishMeasurementOnWatch => 'End the measurement on your device.';
 
   @override
   String get startMeasurement => 'Start measurement';
 
   @override
-  String get watchEndedMeasureAgain => 'Ended on watch — measure again';
+  String get watchEndedMeasureAgain => 'Ended on device — measure again';
 
   @override
-  String get watchMeasurementEnded => 'I have ended it on my watch';
+  String get watchMeasurementEnded => 'I have ended it on my device';
 
   @override
   String get viewMeasurementLater => 'View later';
@@ -2103,7 +2104,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get deviceDataReadComplete =>
-      'Watch readings received. Online backup is checked separately.';
+      'Device readings received. Online backup is checked separately.';
 
   @override
   String measurementPercent(int percent) {
@@ -2126,7 +2127,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get u19WristMeasurementHint =>
-      'Rest quietly for 5 minutes. Sit with feet flat and keep your wrist supported at heart level. Follow the watch instructions. Wrist readings are for reference; ask a clinician about a validated upper-arm monitor for medical decisions.';
+      'Rest quietly for 5 minutes. Sit with feet flat and keep your wrist supported at heart level. Follow the device instructions. Wrist readings are for reference; ask a clinician about a validated upper-arm monitor for medical decisions.';
 
   @override
   String get manageCare => 'Manage';
@@ -2152,4 +2153,68 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get ecgWaveformLowSignalHint =>
       'Low signal quality · waveform preview';
+
+  @override
+  String get dataPrivacyTitle => 'Data privacy';
+
+  @override
+  String get dataResidencyTitle => 'Stored in the United States';
+
+  @override
+  String get dataResidencyBody =>
+      'Your account, device and synchronized wearable data stored in SayDian’s cloud is kept on servers physically located in the United States. If you use SayDian from another country, the data you choose to synchronize is transferred to the United States.';
+
+  @override
+  String get dataLocalTitle => 'On your phone';
+
+  @override
+  String get dataLocalBody =>
+      'SayDian also keeps an encrypted local history on your phone for offline use and pending synchronization. Data that has not been confirmed by the server remains pending.';
+
+  @override
+  String get dataChoiceTitle => 'Your choices';
+
+  @override
+  String get dataChoiceBody =>
+      'You can use device features with the permissions they need, decline optional permissions, and manage sharing in the app. To request deletion of your account and associated data, open Account → Delete account. See the Privacy Policy for retention and other rights.';
+
+  @override
+  String get dataThirdPartyTitle => 'Optional services';
+
+  @override
+  String get dataThirdPartyBody =>
+      'Weather, notifications and other optional services may process the information needed for the feature under their own policies. The United States storage statement applies to SayDian’s cloud storage, not to your phone or a third party’s independent processing.';
+
+  @override
+  String get iosWellnessSafety =>
+      'SayDian on iOS displays activity and sleep information from compatible devices for everyday wellness. It does not provide medical measurements, diagnosis or treatment. Consult a qualified healthcare professional before making medical decisions.';
+
+  @override
+  String get smartRing => 'Smart ring';
+
+  @override
+  String get ringStress => 'Stress';
+
+  @override
+  String get ringGestures => 'Gesture control';
+
+  @override
+  String get ringCallReminder => 'Call reminders';
+
+  @override
+  String get ringConnectedSyncHint =>
+      'Device connected. Data will appear after synchronization.';
+
+  @override
+  String get ringDisconnecting => 'Disconnecting';
+
+  @override
+  String get ringDisconnectHelp =>
+      'The app has disconnected. If the ring still appears connected in iPhone Bluetooth settings, forget that device there before scanning again.';
+
+  @override
+  String get deviceLabel => 'Device';
+
+  @override
+  String get ringStatusReminder => 'Status reminders';
 }

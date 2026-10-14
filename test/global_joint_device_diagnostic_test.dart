@@ -24,7 +24,7 @@ void main() {
   test('QA environment only permits exact new-domain isolated route', () {
     expect(
       isApprovedGlobalJointQaEnvironment(
-        Uri.parse('https://app.saydian.cn'),
+        Uri.parse('https://app.saydian.com'),
         '/global/api/saydian-app/v2',
       ),
       isTrue,
@@ -32,8 +32,8 @@ void main() {
     for (final origin in [
       'http://127.0.0.1:8082',
       'https://app.saidian.cc',
-      'https://app.saydian.cn:8443',
-      'https://user@app.saydian.cn',
+      'https://app.saydian.com:8443',
+      'https://user@app.saydian.com',
     ]) {
       expect(
         isApprovedGlobalJointQaEnvironment(
@@ -45,7 +45,7 @@ void main() {
     }
     expect(
       isApprovedGlobalJointQaEnvironment(
-        Uri.parse('https://app.saydian.cn'),
+        Uri.parse('https://app.saydian.com'),
         '/api/saydian-app/v2',
       ),
       isFalse,

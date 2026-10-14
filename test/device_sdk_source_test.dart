@@ -45,6 +45,17 @@ void main() {
       iOSDeviceWithoutAddress.identifierLabel,
       'iOS 连接标识 · 36CE3B81…B1EB2C7D',
     );
+    expect(
+      iOSDeviceWithoutAddress.localizedIdentifierLabel(english: true),
+      'iOS ID · 36CE3B81…B1EB2C7D',
+    );
+    expect(
+      const DeviceInfo(
+        id: 'qring:sample',
+        name: 'Ring',
+      ).localizedIdentifierLabel(english: true),
+      'Device ID · sample',
+    );
     expect(iOSDeviceWithAddress.macAddress, '67:97:35:81:2F:44');
     expect(
       iOSDeviceWithAddress.verifiedHardwareMacAddress,

@@ -190,7 +190,7 @@ void main() {
         (widget) =>
             widget is Semantics &&
             widget.properties.label ==
-                'Watch battery 3 of 4 bars, Not charging',
+                'Device battery 3 of 4 bars, Not charging',
       ),
       findsOneWidget,
     );
@@ -226,12 +226,12 @@ void main() {
         home: Scaffold(body: DevicePage(controller: controller)),
       ),
     );
-    await tester.tap(find.text('Sync watch'));
+    await tester.tap(find.text('Sync device'));
     await tester.pumpAndSettle();
 
     expect(
       find.text(
-        'Watch readings received. Online backup is checked separately.',
+        'Device readings received. Online backup is checked separately.',
       ),
       findsOneWidget,
     );
@@ -401,6 +401,9 @@ void main() {
     for (final entry in cases.entries) {
       await tester.pumpWidget(
         MaterialApp(
+          locale: const Locale('zh'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           home: DeviceFeaturePage(
             controller: controller,
             feature: entry.key,
@@ -422,8 +425,7 @@ void main() {
         expect(
           find.byWidgetPredicate(
             (widget) =>
-                widget is Semantics &&
-                widget.properties.label == '系统表盘 1预览暂不可用',
+                widget is Semantics && widget.properties.label == '表盘预览暂不可用',
           ),
           findsOneWidget,
         );
@@ -454,6 +456,9 @@ void main() {
 
         await tester.pumpWidget(
           MaterialApp(
+            locale: const Locale('zh'),
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
             home: DeviceFeaturePage(
               controller: controller,
               feature: DeviceFeature.healthReminders,
@@ -555,6 +560,9 @@ void main() {
 
       await tester.pumpWidget(
         MaterialApp(
+          locale: const Locale('en'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           home: DeviceFeaturePage(
             controller: controller,
             feature: DeviceFeature.findWatch,
@@ -562,7 +570,7 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      await tester.tap(find.widgetWithText(FilledButton, 'Find my watch'));
+      await tester.tap(find.widgetWithText(FilledButton, 'Find my device'));
       await tester.pump();
 
       expect(wearable.findActionStates, [true]);
@@ -575,7 +583,7 @@ void main() {
 
       await tester.pump(const Duration(seconds: 6));
       expect(
-        find.widgetWithText(FilledButton, 'Find my watch'),
+        find.widgetWithText(FilledButton, 'Find my device'),
         findsOneWidget,
       );
       expect(tester.takeException(), isNull);
@@ -729,13 +737,13 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    await tester.tap(find.widgetWithText(FilledButton, 'Find my watch'));
+    await tester.tap(find.widgetWithText(FilledButton, 'Find my device'));
     await tester.pump();
     await tester.tap(find.widgetWithText(FilledButton, 'Stop finding'));
     await tester.pump();
 
     expect(wearable.findActionStates, [true, false]);
-    expect(find.widgetWithText(FilledButton, 'Find my watch'), findsOneWidget);
+    expect(find.widgetWithText(FilledButton, 'Find my device'), findsOneWidget);
     expect(tester.takeException(), isNull);
     controller.setAppForeground(false);
   });
@@ -842,7 +850,7 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(
-      find.text('Everyday wellness insights from your watch.'),
+      find.text('Everyday wellness insights from your device.'),
       findsOneWidget,
     );
     expect(find.text('SAYDIAN Health'), findsNothing);
@@ -862,7 +870,7 @@ void main() {
     await tester.drag(find.byType(ListView).last, const Offset(0, -600));
     await tester.pumpAndSettle();
     expect(find.text('Common questions'), findsOneWidget);
-    expect(find.text('How do I connect my watch?'), findsOneWidget);
+    expect(find.text('How do I connect my device?'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -926,7 +934,7 @@ void main() {
 
     expect(find.text('手动阀'), findsNothing);
     expect(
-      find.text('Everyday wellness insights from your watch.'),
+      find.text('Everyday wellness insights from your device.'),
       findsOneWidget,
     );
   });

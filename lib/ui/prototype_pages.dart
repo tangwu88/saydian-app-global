@@ -1,3 +1,6 @@
+import 'data_privacy_page.dart';
+import 'device_symbol.dart';
+import 'ring_gesture_control_page.dart';
 import 'widgets/safe_network_image.dart';
 import '../l10n/global_locale_controller.dart';
 import '../l10n/ui_labels.dart';
@@ -1690,7 +1693,7 @@ class _FeedbackPageState extends State<FeedbackPage> {
               ),
               DropdownMenuItem(
                 value: '设备连接',
-                child: Text(_usText(context, 'Watch connection', '设备连接')),
+                child: Text(_usText(context, 'Device connection', '设备连接')),
               ),
               DropdownMenuItem(
                 value: '数据问题',
@@ -1752,14 +1755,14 @@ class _FeedbackPageState extends State<FeedbackPage> {
               children: [
                 ExpansionTile(
                   title: Text(
-                    _usText(context, 'How do I connect my watch?', '如何连接手表？'),
+                    _usText(context, 'How do I connect my device?', '如何连接手表？'),
                   ),
                   childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                   children: [
                     Text(
                       _usText(
                         context,
-                        'Open Watch, tap Search for watches, and keep your watch nearby. Confirm on the watch if prompted.',
+                        'Open Device, tap Search for devices, and keep your device nearby. Confirm on the device if prompted.',
                         '打开“设备”页并选择添加设备。搜索时让手表保持亮屏、靠近手机，并在手表端确认配对。',
                       ),
                     ),
@@ -1779,7 +1782,7 @@ class _FeedbackPageState extends State<FeedbackPage> {
                     Text(
                       _usText(
                         context,
-                        'Connect your watch and sync it. New readings appear after they are received.',
+                        'Connect your device and sync it. New readings appear after they are received.',
                         '请确认设备已连接并完成同步。设备不支持的项目不会开放入口；新测量数据同步后才会显示趋势。',
                       ),
                     ),
@@ -2018,19 +2021,29 @@ class _AboutSaydianPageState extends State<AboutSaydianPage> {
 
   @override
   Widget build(BuildContext context) {
-    final introduction =
-        _introduction ??
-        _usText(
-          context,
-          'Everyday wellness insights from your watch.',
-          '记录日常健康趋势，连接家人与设备，让健康管理更简单。',
-        );
+    final introduction = widget.controller.isIosWellnessEdition
+        ? context.l10n.iosActivitySleepScope
+        : _introduction ??
+              _usText(
+                context,
+                'Everyday wellness insights from your device.',
+                '记录日常健康趋势，连接家人与设备，让健康管理更简单。',
+              );
     return Scaffold(
       appBar: AppBar(title: Text(context.l10n.aboutApp)),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(24, 38, 24, 24),
         children: [
           const Center(child: SaydianBrandLockup(width: 176)),
+          const DataPrivacyLink(),
+          if (widget.controller.isIosWellnessEdition)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              child: Text(
+                context.l10n.iosWellnessSafety,
+                textAlign: TextAlign.center,
+              ),
+            ),
           const SizedBox(height: 26),
           Text(
             introduction,
@@ -2079,8 +2092,12 @@ class _AboutSaydianPageState extends State<AboutSaydianPage> {
           ),
           const SizedBox(height: 18),
           FeatureStateCard(
-            message: context.l10n.healthDataExplanation,
-            detail: context.l10n.watchMeasurementSafety,
+            message: widget.controller.isIosWellnessEdition
+                ? context.l10n.iosActivitySleepScope
+                : context.l10n.healthDataExplanation,
+            detail: widget.controller.isIosWellnessEdition
+                ? context.l10n.iosWellnessSafety
+                : context.l10n.watchMeasurementSafety,
             icon: Icons.info_outline_rounded,
           ),
         ],
@@ -2418,6 +2435,8 @@ IconData _deviceFeatureIcon(DeviceFeature feature) => switch (feature) {
   DeviceFeature.photoWatchFace => Icons.photo_outlined,
   DeviceFeature.findWatch => Icons.notifications_active_outlined,
   DeviceFeature.camera => Icons.camera_alt_outlined,
+  DeviceFeature.gestureControl => Icons.gesture_rounded,
+  DeviceFeature.callReminder => Icons.call_outlined,
   DeviceFeature.phoneCalls => Icons.call_outlined,
   DeviceFeature.contacts => Icons.contacts_outlined,
   DeviceFeature.notifications => Icons.notifications_none_rounded,
@@ -2435,7 +2454,7 @@ String _usText(BuildContext context, String english, String chinese) =>
     Localizations.localeOf(context).languageCode == 'zh' ? chinese : english;
 
 String _englishRecordOrigin(MeasurementOrigin origin) => switch (origin) {
-  MeasurementOrigin.watchHistory => 'Watch history',
+  MeasurementOrigin.watchHistory => 'Device history',
   MeasurementOrigin.appMeasurement => 'Started in the app',
   MeasurementOrigin.remoteMember => 'Shared family reading',
   MeasurementOrigin.manualEntry => 'Manual entry',
@@ -2499,54 +2518,56 @@ String _watchHour(BuildContext context, Object? value) {
 
 String _deviceFeatureDescription(BuildContext context, DeviceFeature feature) =>
     switch (feature) {
+      DeviceFeature.gestureControl => context.l10n.ringGestures,
+      DeviceFeature.callReminder => context.l10n.ringCallReminder,
       DeviceFeature.watchFaces => _usText(
         context,
-        'Choose a watch face',
+        'Choose a display face',
         '选择并管理手表表盘',
       ),
       DeviceFeature.photoWatchFace => _usText(
         context,
-        'Use a photo as your watch face',
+        'Use a photo on your device display',
         '用自己的照片制作表盘',
       ),
       DeviceFeature.findWatch => _usText(
         context,
-        'Make your nearby watch vibrate',
+        'Make your nearby device vibrate',
         '让附近的手表响铃或振动',
       ),
       DeviceFeature.camera => _usText(
         context,
-        'Take photos with your watch',
+        'Take photos with your device',
         '使用手表控制手机拍照',
       ),
       DeviceFeature.phoneCalls => _usText(
         context,
-        'Manage calls on your watch',
+        'Manage calls on your device',
         '管理手表通话相关设置',
       ),
       DeviceFeature.contacts => _usText(
         context,
-        'Manage watch contacts',
+        'Manage device contacts',
         '管理手表中的常用联系人',
       ),
       DeviceFeature.notifications => _usText(
         context,
-        'Choose notifications for your watch',
+        'Choose notifications for your device',
         '选择需要在手表上提醒的消息',
       ),
       DeviceFeature.alarms => _usText(
         context,
-        'Set alarms on your watch',
+        'Set alarms on your device',
         '管理手表闹钟和重复日期',
       ),
       DeviceFeature.weather => _usText(
         context,
-        'Show local weather on your watch',
+        'Show local weather on your device',
         '把所在城市天气同步到手表',
       ),
       DeviceFeature.worldClock => _usText(
         context,
-        'See other time zones on your watch',
+        'See other time zones on your device',
         '在手表上查看其他城市时间',
       ),
       DeviceFeature.healthReminders => _usText(
@@ -2561,7 +2582,7 @@ String _deviceFeatureDescription(BuildContext context, DeviceFeature feature) =>
       ),
       DeviceFeature.healthAssessment => _usText(
         context,
-        'View watch-provided insights',
+        'View device-provided insights',
         '查看手表支持的辅助评估',
       ),
       DeviceFeature.screenDisplay => _usText(
@@ -2571,7 +2592,7 @@ String _deviceFeatureDescription(BuildContext context, DeviceFeature feature) =>
       ),
       DeviceFeature.basicSettings => _usText(
         context,
-        'Set watch time and goals',
+        'Set device time and goals',
         '设置手表时间、目标和个人资料',
       ),
     };

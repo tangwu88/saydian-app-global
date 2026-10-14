@@ -235,6 +235,12 @@ void main() {
           'issue=${controller.deviceScanIssue}, error=${controller.errorMessage}',
     );
     expect(find.text(_ScanWearable.watch.name), findsOneWidget);
+    expect(
+      find.text('Check the name and signal, then select your device'),
+      findsOneWidget,
+    );
+    expect(find.text('选择设备'), findsNothing);
+    expect(find.text('Connect a device'), findsOneWidget);
     expect(find.byKey(const Key('device-scan-open-settings')), findsNothing);
 
     await _resume(tester);

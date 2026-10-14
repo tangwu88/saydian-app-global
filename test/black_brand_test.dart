@@ -14,8 +14,8 @@ void main() {
         home: const Scaffold(body: Center(child: SaydianBrandLockup())),
       ),
     );
-    expect(find.text('SAYDIAN'), findsOneWidget);
-    expect(find.text('Health'), findsOneWidget);
+    expect(find.text('SayDian'), findsOneWidget);
+    expect(find.text('Health'), findsNothing);
     expect(find.byType(SaydianBrandMark), findsOneWidget);
     expect(
       Theme.of(

@@ -43,7 +43,7 @@ http.Response _ok(Object data) =>
 Map<String, Object?> _receipt(http.Request request, HealthRecord original) {
   expect(
     request.url.toString(),
-    'https://app.saydian.cn/global/api/saydian-app/v2/files/ecg',
+    'https://app.saydian.com/global/api/saydian-app/v2/files/ecg',
   );
   expect(request.headers['authorization'], 'Bearer synthetic-a');
   final boundary = request.headers['content-type']!.split('boundary=').last;

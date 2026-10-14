@@ -3,18 +3,18 @@
   "scanLocationTitle": "Turn on location",
   "scanLocationHint": "Enable phone location, then retry.",
   "scanPermissionTitle": "Allow device access",
-  "scanPermissionHint": "Allow the required permissions in Settings, then return to find your watch.",
+  "scanPermissionHint": "Allow the required permissions in Settings, then return to find your device.",
   "loginProtectionTitle": "Sign-in protection",
   "verifyContactToReset": "Verify your email or phone number to reset your password.",
-  "workoutStartOnWatch": "This watch cannot start workouts from the app. Start the workout directly on your watch.",
+  "workoutStartOnWatch": "This device cannot start workouts from the app. Start the workout directly on your device.",
   "finishWorkoutConfirm": "Finish this workout?",
-  "finishLeaveWorkoutHint": "Before leaving, the watch workout will stop and the recorded duration and route will be saved.",
+  "finishLeaveWorkoutHint": "Before leaving, the device workout will stop and the recorded duration and route will be saved.",
   "finishAndLeave": "Finish and leave",
-  "workoutRouteMissing": "No phone-recorded route is available for this session. The watch workout data is still saved.",
+  "workoutRouteMissing": "No phone-recorded route is available for this session. The device workout data is still saved.",
   "workoutDuration": "Workout duration",
-  "workoutWatchHeartRate": "Watch heart rate",
+  "workoutWatchHeartRate": "Device heart rate",
   "messageSendFailed": "Could not send. Check your connection and try again.",
-  "noWatchShopHint": "Need a device? Visit the Saydian store.",
+  "noWatchShopHint": "Need a device? Visit the SayDian store.",
   "notificationInAppHint": "Care invitations and alerts remain in Messages.",
   "healthAlertSafetyHint": "Health alerts provide timely reminders, not medical diagnoses. If you feel significantly unwell, seek medical care promptly.",
   "afterSalesService": "After-sales service",
@@ -43,7 +43,7 @@
   "addSupportContact": "Add support contact",
   "contactPreparationHint": "Have your device model and the time of the issue ready before contacting support.",
   "supportPrivacyWarning": "Do not send verification codes, passwords or complete health records to unofficial accounts.",
-  "brandHealthTitle": "SAYDIAN Health",
+  "brandHealthTitle": "SayDian",
   "accountAndSecurity": "Account and security",
   "cityNameLabel": "City name",
   "cityNameExample": "For example: London",
@@ -54,7 +54,7 @@
   "alipayLabel": "Alipay",
   "reportPurchaseTerms": "Check the plan and price before purchasing. Health membership does not renew automatically, and unused credits do not roll over after expiry.",
   "detailedHealthReport": "Detailed health report",
-  "reportInsufficientDataHint": "No payment order is created when data is insufficient. Wear your watch as usual, sync its data, then try again.",
+  "reportInsufficientDataHint": "No payment order is created when data is insufficient. Wear your device as usual, sync its data, then try again.",
   "waitingPaymentConfirmation": "Waiting for payment confirmation",
   "paymentReturnRefreshHint": "Return after payment and refresh the result.",
   "reportPurchaseDataMissing": "There is not enough data yet, so purchasing is unavailable.",
@@ -62,8 +62,8 @@
   "systolicUpperLimit": "Systolic pressure upper limit",
   "diastolicUpperLimit": "Diastolic pressure upper limit",
   "temperatureUpperLimit": "Temperature upper limit",
-  "calibrateOnWatchHint": "Follow the instructions on your watch to complete calibration.",
-  "spotCheckCuffHint": "This is a resting spot check for reference only. For a more accurate reading, use the watch’s pump-and-cuff measurement.",
+  "calibrateOnWatchHint": "Follow the instructions on your device to complete calibration.",
+  "spotCheckCuffHint": "This is a resting spot check for reference only. For a more accurate reading, use the device’s pump-and-cuff measurement.",
   "setHealthUpperLimits": "Set upper-limit health alerts",
   "healthUpperLimitHint": "Receive an alert when a value exceeds your chosen limit.",
   "heartRateAlertLabel": "Heart rate alert",
@@ -75,11 +75,11 @@
   "saveHealthAlerts": "Save",
   "healthAlertHistory": "Alert history",
   "seekProfessionalCare": "If you feel significantly unwell, seek advice from a healthcare professional promptly.",
-  "watchHealthReference": "Watch measurements are for everyday wellness reference.",
+  "watchHealthReference": "Device measurements are for everyday wellness reference.",
   "calibrationReferenceHint": "Use a value just measured with professional equipment.",
   "calibrationWearerHint": "Calibration applies only to the current wearer. Disable or repeat calibration when the wearer changes.",
   "enableCalibration": "Enable calibration",
-  "calibrationDisabledHint": "Turning this off restores the watch’s general measurement mode.",
+  "calibrationDisabledHint": "Turning this off restores the device’s general measurement mode.",
   "diastolicLowerLabel": "Diastolic pressure (lower number)",
   "longTermTrendHint": "Long-term trends provide more useful context.",
   "measurementVariationHint": "A single measurement can be affected by fit, activity and surroundings. If you feel unwell, consult a healthcare professional.",
@@ -89,45 +89,45 @@
   "ecgVariationSafety": "Individual measurements are affected by fit, activity and surroundings and cannot replace a medical diagnosis. If you feel unwell, seek medical care promptly.",
   "ecgBasicOnly": "Only basic ECG data was returned for this measurement.",
   "measurementIndicators": "Measurement indicators",
-  "riskIndicatorsMissing": "The watch did not return risk indicators for this measurement.",
+  "riskIndicatorsMissing": "The device did not return risk indicators for this measurement.",
   "riskAnalysisTitle": "Risk analysis",
-  "watchAlgorithmReference": "The values below come from the watch’s algorithm and are for health trend reference only.",
+  "watchAlgorithmReference": "The values below come from the device’s algorithm and are for health trend reference only.",
   "ecgHealthReport": "ECG health report",
-  "brandedEcgReport": "Saydian · ECG health report",
-  "ecgReportSafety": "Note: this report uses watch measurement data. It is for wellness reference only and cannot replace a doctor’s diagnosis.",
-  "installedWatchFaces": "Installed watch faces",
-  "switchInstalledWatchFace": "Switch between watch faces already on your watch.",
+  "brandedEcgReport": "SayDian · ECG health report",
+  "ecgReportSafety": "Note: this report uses device measurement data. It is for wellness reference only and cannot replace a doctor’s diagnosis.",
+  "installedWatchFaces": "Installed faces",
+  "switchInstalledWatchFace": "Switch between faces already on your device.",
   "useSelectedWatchFace": "Use",
   "downloadUseWatchFace": "Tap to download and use",
-  "photoWatchFaceHint": "Choose a clear photo, check the preview, then send it to your watch.",
+  "photoWatchFaceHint": "Choose a clear photo, check the preview, then send it to your device.",
   "timeDisplayPosition": "Time position",
-  "transferSetWatchFace": "Send and set as watch face",
-  "watchTransferKeepNear": "Keep the watch near your phone during transfer and stay on this page.",
+  "transferSetWatchFace": "Send to device",
+  "watchTransferKeepNear": "Keep the device near your phone during transfer and stay on this page.",
   "callMediaAudio": "Call and media audio",
   "useCelsius": "Use Celsius",
-  "sosContactHint": "When SOS is triggered on the watch, it will first contact the person selected here. Choose a family member you contact regularly.",
-  "noHealthAssessments": "No configurable health assessments are available on this watch.",
-  "modelFeaturesVary": "Supported features vary by model. Refer to the features shown on your watch.",
-  "assessmentEnabledHint": "When enabled, the watch provides daily trend information.",
+  "sosContactHint": "When SOS is triggered on the device, it will first contact the person selected here. Choose a family member you contact regularly.",
+  "noHealthAssessments": "No configurable health assessments are available on this device.",
+  "modelFeaturesVary": "Supported features vary by model. Refer to the features shown on your device.",
+  "assessmentEnabledHint": "When enabled, the device provides daily trend information.",
   "assessmentSafety": "Supplementary assessments are for everyday wellness reference, not diagnosis or treatment.",
-  "autoMonitorIntervalHint": "When enabled, the watch measures automatically at its configured interval.",
-  "watchHeartRateAlert": "Watch heart rate alert",
-  "sustainedLimitWatchAlert": "The watch alerts you if the value stays above the limit.",
+  "autoMonitorIntervalHint": "When enabled, the device measures automatically at its configured interval.",
+  "watchHeartRateAlert": "Device heart rate alert",
+  "sustainedLimitWatchAlert": "The device alerts you if the value stays above the limit.",
   "ecgWaveformTitle": "ECG waveform",
   "ecgWaveformMissing": "No valid ECG waveform was returned for this measurement.",
-  "ecgElectrodeHint": "Heart rate and HRV results remain available. Keep touching the watch electrode throughout your next measurement.",
-  "screenAutoTimeHint": "The watch adjusts automatically based on the time.",
+  "ecgElectrodeHint": "Heart rate and HRV results remain available. Keep touching the device electrode throughout your next measurement.",
+  "screenAutoTimeHint": "The device adjusts automatically based on the time.",
   "raiseWristScreenHint": "The screen lights up when you raise your wrist.",
   "watchHighHeartRate": "High heart rate alert",
-  "watchThresholdHint": "The watch alerts you when the limit is reached.",
+  "watchThresholdHint": "The device alerts you when the limit is reached.",
   "watchMeasurementSafety": "Measurements are for wellness reference only, not diagnosis or treatment.",
   "healthDataExplanation": "About health data",
   "trendUnavailable": "Trends are temporarily unavailable.",
   "recentData": "Last reading",
   "trendReferenceOnly": "For wellness, not diagnosis.",
   "trendVariationSafety": "Readings can vary with fit, activity and surroundings. Seek medical care if you feel unwell.",
-  "watchFaceDownloadHint": "Keep your watch nearby until transfer finishes.",
-  "refreshWatchFaces": "Refresh watch faces",
+  "watchFaceDownloadHint": "Keep your device nearby until transfer finishes.",
+  "refreshWatchFaces": "Refresh faces",
   "openTestFlight": "Open TestFlight",
   "articlesEmpty": "No articles are available in this category yet.",
   "articlesUnavailable": "The health library could not be loaded.",
@@ -152,38 +152,86 @@
   "pauseWorkout": "Pause workout",
   "resumeWorkout": "Resume workout",
   "finishWorkout": "Finish workout",
-  "watchDistance": "Watch distance",
-  "watchSteps": "Watch steps",
+  "watchDistance": "Device distance",
+  "watchSteps": "Device steps",
   "liveHeartRate": "Live heart rate",
-  "watchCalories": "Watch calories",
-  "connectForWorkout": "Connect your watch on the Device page first. Your watch will record the workout.",
+  "watchCalories": "Device calories",
+  "connectForWorkout": "Connect your device on the Device page first. Your device will record the workout.",
   "latestVersion": "You are using the latest version: V{version}",
-  "@latestVersion": {"placeholders":{"version":{"type":"String"}}},
+  "@latestVersion": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
   "workoutPaused": "{mode} paused",
-  "@workoutPaused": {"placeholders":{"mode":{"type":"String"}}},
+  "@workoutPaused": {
+    "placeholders": {
+      "mode": {
+        "type": "String"
+      }
+    }
+  },
   "workoutInProgress": "{mode} in progress",
-  "@workoutInProgress": {"placeholders":{"mode":{"type":"String"}}},
+  "@workoutInProgress": {
+    "placeholders": {
+      "mode": {
+        "type": "String"
+      }
+    }
+  },
   "workoutReady": "Ready to start {mode}",
-  "@workoutReady": {"placeholders":{"mode":{"type":"String"}}},
+  "@workoutReady": {
+    "placeholders": {
+      "mode": {
+        "type": "String"
+      }
+    }
+  },
   "startWorkout": "Start {mode}",
-  "@startWorkout": {"placeholders":{"mode":{"type":"String"}}},
+  "@startWorkout": {
+    "placeholders": {
+      "mode": {
+        "type": "String"
+      }
+    }
+  },
   "finishOtherWorkout": "Finish {mode} first",
-  "@finishOtherWorkout": {"placeholders":{"mode":{"type":"String"}}},
+  "@finishOtherWorkout": {
+    "placeholders": {
+      "mode": {
+        "type": "String"
+      }
+    }
+  },
   "workoutDetails": "{mode} details",
-  "@workoutDetails": {"placeholders":{"mode":{"type":"String"}}},
+  "@workoutDetails": {
+    "placeholders": {
+      "mode": {
+        "type": "String"
+      }
+    }
+  },
   "stepCount": "{count} steps",
-  "@stepCount": {"placeholders":{"count":{"type":"int"}}},
+  "@stepCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "@@locale": "en",
   "globalShopPricePending": "Price to be confirmed",
   "globalShopLoadMore": "Load more",
   "globalShopReadOnly": "Browse products here. Ordering is not available in this region yet.",
-  "appName": "SAYDIAN Health",
-  "searchingNearby": "Searching for nearby watches",
+  "appName": "SayDian",
+  "searchingNearby": "Searching for nearby devices",
   "noDevices": "No devices found",
-  "selectWatch": "Check the name and signal, then select your watch",
+  "selectWatch": "Check the name and signal, then select your device",
   "searchingHint": "Searching. Signal strength updates without moving the list.",
-  "activateWatch": "Charge your watch to activate it, then place it near your phone",
-  "checkWatchConnection": "If the watch is connected in this phone's Bluetooth settings or on another phone, disconnect it and search again",
+  "activateWatch": "Charge your device to activate it, then place it near your phone",
+  "checkWatchConnection": "If the device is connected in this phone's Bluetooth settings or on another phone, disconnect it and search again",
   "running": "Running",
   "walking": "Walking",
   "cycling": "Cycling",
@@ -194,11 +242,41 @@
   "metricMeasurement": "Measure {metric}",
   "metricCalibration": "Calibrate {metric}",
   "metricDetails": "{metric} details",
-  "@metricAnalysis": {"placeholders": {"metric": {"type": "String"}}},
-  "@metricAllData": {"placeholders": {"metric": {"type": "String"}}},
-  "@metricMeasurement": {"placeholders": {"metric": {"type": "String"}}},
-  "@metricCalibration": {"placeholders": {"metric": {"type": "String"}}},
-  "@metricDetails": {"placeholders": {"metric": {"type": "String"}}},
+  "@metricAnalysis": {
+    "placeholders": {
+      "metric": {
+        "type": "String"
+      }
+    }
+  },
+  "@metricAllData": {
+    "placeholders": {
+      "metric": {
+        "type": "String"
+      }
+    }
+  },
+  "@metricMeasurement": {
+    "placeholders": {
+      "metric": {
+        "type": "String"
+      }
+    }
+  },
+  "@metricCalibration": {
+    "placeholders": {
+      "metric": {
+        "type": "String"
+      }
+    }
+  },
+  "@metricDetails": {
+    "placeholders": {
+      "metric": {
+        "type": "String"
+      }
+    }
+  },
   "add": "Add",
   "endTime": "End time",
   "reminderInterval": "Reminder interval",
@@ -213,7 +291,13 @@
   "addWorldClock": "Add world clock",
   "autoBrightness": "Automatic brightness",
   "screenTimeoutSeconds": "Screen timeout: {seconds} s",
-  "@screenTimeoutSeconds": {"placeholders": {"seconds": {"type": "int"}}},
+  "@screenTimeoutSeconds": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
   "raiseToWake": "Raise to wake",
   "activeTime": "Active time",
   "saveSettings": "Save settings",
@@ -259,9 +343,9 @@
   "restorePurchases": "Restore purchases",
   "paymentMethod": "Payment method",
   "refresh": "Refresh",
-  "useWatchFace": "Use this watch face?",
+  "useWatchFace": "Use this face?",
   "downloadAndUse": "Download and use",
-  "watchFaceFailed": "Could not set the watch face",
+  "watchFaceFailed": "Could not set the face",
   "statusNormal": "Normal",
   "statusRecorded": "Recorded",
   "statusAttention": "Check reading",
@@ -291,7 +375,7 @@
   "deliveryAddresses": "Delivery addresses",
   "readAgain": "Read again",
   "smsCode": "SMS verification code",
-  "watchFaceShop": "Watch face store",
+  "watchFaceShop": "Face gallery",
   "selectCity": "Select city",
   "city": "City",
   "confirm": "Confirm",
@@ -304,12 +388,12 @@
   "devicesFound": "Devices found",
   "connect": "Connect",
   "searchAgain": "Search again",
-  "searchRecovery": "Keep the watch close. If it is connected in system Bluetooth or on another phone, disconnect it first, then try again.",
+  "searchRecovery": "Keep the device close. If it is connected in system Bluetooth or on another phone, disconnect it first, then try again.",
   "deviceName": "Device name",
   "deviceModel": "Device model",
   "connectionStatus": "Connection status",
   "firmwareVersion": "Firmware version",
-  "watchBattery": "Watch battery",
+  "watchBattery": "Device battery",
   "chargingStatus": "Charging status",
   "messageDetails": "Message details",
   "dailySummary": "Daily summary",
@@ -330,7 +414,7 @@
   "heightCm": "Height (cm)",
   "weightKg": "Weight (kg)",
   "choose": "Select",
-  "connectWatchToUse": "Connect a watch to use this feature",
+  "connectWatchToUse": "Connect a device to use this feature",
   "selectPhoto": "Select photo",
   "saved": "Saved",
   "saveChanges": "Save changes",
@@ -338,12 +422,12 @@
   "privacyAgreement": "Privacy policy",
   "appPermissions": "App permissions",
   "openSystemSettings": "Open system app settings",
-  "monitoringHint": "Available health monitoring settings appear after connecting your watch.",
+  "monitoringHint": "Available health monitoring settings appear after connecting your device.",
   "previewUnavailable": "Preview unavailable",
   "distance": "Distance",
   "calories": "Calories",
   "healthProfile": "Health profile",
-  "photoWatchFace": "Photo watch face",
+  "photoWatchFace": "Photo face",
   "cameraRemote": "Camera remote",
   "phoneCalls": "Phone calls",
   "contacts": "Contacts",
@@ -363,26 +447,32 @@
   "needsAttention": "Needs attention",
   "tapToOpen": "Tap to open",
   "deviceInfoHint": "View device information",
-  "connectionInstructions": "1. Turn on Bluetooth and allow nearby device access.\n2. Keep your watch charged and near your phone.\n3. Tap Search for watches and select your watch.\n4. Confirm on the watch if prompted.",
-  "syncNearbyHint": "Keep your watch nearby while syncing.",
+  "connectionInstructions": "1. Turn on Bluetooth and allow nearby device access.\n2. Keep your device charged and near your phone.\n3. Tap Search for devices and select your device.\n4. Confirm on the device if prompted.",
+  "syncNearbyHint": "Keep your device nearby while syncing.",
   "invalidCode": "Check the code and try again",
   "codeExpired": "This code has expired. Request a new code.",
   "tooManyAttempts": "Too many attempts. Please wait and try again.",
   "readTerms": "Read the terms and privacy policy to continue",
   "verificationSentTo": "Code sent to {contact}",
-  "addSmartDevice": "Connect a watch",
-  "watchNearbyHint": "Turn on Bluetooth and keep your watch nearby",
-  "startSearch": "Search for watches",
+  "addSmartDevice": "Connect a device",
+  "watchNearbyHint": "Turn on Bluetooth and keep your device nearby",
+  "startSearch": "Search for devices",
   "readingData": "Reading data…",
-  "readingCapabilities": "Checking watch features…",
-  "capabilitiesHint": "Keep your watch nearby.",
-  "capabilitiesFailed": "Could not read this watch’s features",
-  "keepWatchNear": "Keep your watch near your phone and try again",
-  "personalizeWatch": "Watch faces & style",
+  "readingCapabilities": "Checking device features…",
+  "capabilitiesHint": "Keep your device nearby.",
+  "capabilitiesFailed": "Could not read this device’s features",
+  "keepWatchNear": "Keep your device near your phone and try again",
+  "personalizeWatch": "Display & style",
   "signInCloudHint": "Sign in to view cloud data.",
   "aiQuestion": "Ask AI",
   "aiQuestionHint": "Ask your AI assistant about wellbeing",
-  "@verificationSentTo": {"placeholders": {"contact": {"type": "String"}}},
+  "@verificationSentTo": {
+    "placeholders": {
+      "contact": {
+        "type": "String"
+      }
+    }
+  },
   "language": "Language",
   "signIn": "Sign in",
   "signUp": "Sign up",
@@ -427,14 +517,14 @@
   "accountCreated": "Your account is ready",
   "passwordReset": "Password updated",
   "haveAccount": "Already have an account?",
-  "noAccount": "New to Saydian?",
+  "noAccount": "New to SayDian?",
   "showPassword": "Show password",
   "hidePassword": "Hide password",
   "selectCountry": "Select country or region",
   "registrationMethod": "Register with",
   "changeLanguageFailed": "Could not save the language. Please try again.",
   "health": "Health",
-  "device": "Watch",
+  "device": "Device",
   "profile": "Profile",
   "healthData": "Latest readings",
   "allData": "All data",
@@ -442,7 +532,7 @@
   "workoutsAndRecords": "Workouts and records",
   "healthDisclaimer": "Wearable readings are for general wellness reference, not diagnosis or treatment. Consult a doctor before making any medical decisions. If you feel unwell, seek medical care.",
   "healthSafetyAdvice": "Rest and measure again. If you feel unwell, seek medical advice.",
-  "defaultUser": "Saydian user",
+  "defaultUser": "SayDian user",
   "dailyGreeting": "Take care of yourself today",
   "messages": "Messages",
   "aiAssistant": "AI wellness assistant",
@@ -452,10 +542,10 @@
   "healthLibrary": "Health library",
   "healthAlerts": "Health alerts",
   "shop": "Shop",
-  "connectWatch": "Connect a watch",
-  "addDevice": "Connect a watch",
-  "connectWatchForData": "Connect your watch to view supported health data",
-  "connectingWatch": "Connecting to your watch…",
+  "connectWatch": "Connect a device",
+  "addDevice": "Connect a device",
+  "connectWatchForData": "Connect your device to view supported health data",
+  "connectingWatch": "Connecting to your device…",
   "noHealthData": "No health data to show yet",
   "noData": "No data yet",
   "noMessages": "No messages yet.",
@@ -471,17 +561,17 @@
   "connected": "Connected",
   "notConnected": "Not connected",
   "online": "Online",
-  "syncData": "Sync watch",
+  "syncData": "Sync device",
   "syncComplete": "Data synced",
-  "syncFailedTryAgain": "Could not sync. Keep your watch nearby and try again.",
+  "syncFailedTryAgain": "Could not sync. Keep your device nearby and try again.",
   "disconnect": "Disconnect",
-  "findWatch": "Find my watch",
-  "watchFaces": "Watch faces",
-  "deviceFeatures": "Watch controls",
-  "aboutDevice": "About this watch",
+  "findWatch": "Find my device",
+  "watchFaces": "Faces",
+  "deviceFeatures": "Device controls",
+  "aboutDevice": "About this device",
   "connectionHelp": "Connection help",
-  "searchNearbyWatch": "Search for a nearby watch",
-  "useWatch": "Please use this feature on your watch",
+  "searchNearbyWatch": "Search for a nearby device",
+  "useWatch": "Please use this feature on your device",
   "myOrders": "My orders",
   "all": "All",
   "awaitingPayment": "To pay",
@@ -497,7 +587,7 @@
   "permissions": "Permissions",
   "feedback": "Feedback",
   "customerService": "Customer support",
-  "aboutApp": "About SAYDIAN Health",
+  "aboutApp": "About SayDian",
   "security": "Account security",
   "goToSettings": "Open settings",
   "close": "Close",
@@ -512,7 +602,7 @@
   "updateStore": "Update in the app store",
   "downloadAndInstall": "Download and install securely",
   "gettingReady": "Getting things ready…",
-  "enableNotifications": "Enable Saydian notifications",
+  "enableNotifications": "Enable SayDian notifications",
   "notificationExplanation": "Get health alerts and care invitations. Health values are not shown on the lock screen. You can turn notifications off in system settings.",
   "notNow": "Not now",
   "enable": "Enable",
@@ -636,7 +726,13 @@
   "submitReview": "Submit review",
   "defaultVariant": "Default option",
   "selectedItems": "{count} selected",
-  "@selectedItems": {"placeholders":{"count":{"type":"int"}}},
+  "@selectedItems": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "signInToShopHint": "Sign in to manage your cart, addresses and orders.",
   "checkoutPriceChanged": "The order total changed. Review the refreshed amount before continuing.",
   "shopHelpIntro": "Order, delivery and after-sales options follow the services available for your market.",
@@ -696,30 +792,42 @@
   "shareProduct": "Share product",
   "customerReviews": "Customer reviews",
   "stockCount": "{count} in stock",
-  "@stockCount": {"placeholders":{"count":{"type":"int"}}},
-  "measurementContactEcg": "No electrode contact detected. Wear your watch correctly and keep your finger on the ECG electrode.",
-  "measurementContactElectrode": "No electrode contact detected. Wear your watch and follow its electrode instructions.",
-  "measurementCheckFit": "Check that your watch fits snugly against your wrist.",
-  "measurementWaitPressure": "Measuring blood pressure. Keep your watch in place and your arm still while you wait.",
-  "measurementWaitEcg": "Wear your watch correctly and keep your finger on the ECG electrode.",
-  "measurementWaitHrv": "Keep your watch against your wrist and stay still while waiting for the HRV result.",
-  "measurementWaitElectrode": "Follow the watch instructions and keep contact with the electrodes until the measurement ends.",
-  "measurementWaitStill": "Keep your watch in place and stay still while waiting for the result.",
-  "finishMeasurementOnWatch": "End the measurement on your watch.",
+  "@stockCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "measurementContactEcg": "No electrode contact detected. Wear your device correctly and keep your finger on the ECG electrode.",
+  "measurementContactElectrode": "No electrode contact detected. Wear your device and follow its electrode instructions.",
+  "measurementCheckFit": "Check that your device fits securely and follow its measurement instructions.",
+  "measurementWaitPressure": "Measuring blood pressure. Keep your device in place and your arm still while you wait.",
+  "measurementWaitEcg": "Wear your device correctly and keep your finger on the ECG electrode.",
+  "measurementWaitHrv": "Keep your device in place and stay still while waiting for the HRV result.",
+  "measurementWaitElectrode": "Follow the device instructions and keep contact with the electrodes until the measurement ends.",
+  "measurementWaitStill": "Keep your device in place and stay still while waiting for the result.",
+  "finishMeasurementOnWatch": "End the measurement on your device.",
   "startMeasurement": "Start measurement",
-  "watchEndedMeasureAgain": "Ended on watch — measure again",
-  "watchMeasurementEnded": "I have ended it on my watch",
+  "watchEndedMeasureAgain": "Ended on device — measure again",
+  "watchMeasurementEnded": "I have ended it on my device",
   "viewMeasurementLater": "View later",
   "stoppingMeasurement": "Stopping…",
   "endMeasurement": "End measurement",
-  "deviceDataReadComplete": "Watch readings received. Online backup is checked separately.",
+  "deviceDataReadComplete": "Device readings received. Online backup is checked separately.",
   "measurementPercent": "Measurement progress: {percent}%",
-  "@measurementPercent": {"placeholders":{"percent":{"type":"int"}}},
+  "@measurementPercent": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
   "cloudHealthUploading": "Uploading saved records…",
   "cloudHealthLocalOnly": "Saved on this phone. Sign in to upload.",
   "cloudHealthPending": "Some records have not been uploaded. They remain saved on this phone.",
   "cloudHealthConfirmed": "The server has confirmed the uploaded records.",
-  "u19WristMeasurementHint": "Rest quietly for 5 minutes. Sit with feet flat and keep your wrist supported at heart level. Follow the watch instructions. Wrist readings are for reference; ask a clinician about a validated upper-arm monitor for medical decisions.",
+  "u19WristMeasurementHint": "Rest quietly for 5 minutes. Sit with feet flat and keep your wrist supported at heart level. Follow the device instructions. Wrist readings are for reference; ask a clinician about a validated upper-arm monitor for medical decisions.",
   "manageCare": "Manage",
   "batteryCharging": "Charging",
   "batteryNotCharging": "Not charging",
@@ -727,5 +835,24 @@
   "batteryUnknown": "Status unknown",
   "batteryLow": "Low battery",
   "ecgWaveformPreviewHint": "Waveform preview · scale unconfirmed",
-  "ecgWaveformLowSignalHint": "Low signal quality · waveform preview"
+  "ecgWaveformLowSignalHint": "Low signal quality · waveform preview",
+  "dataPrivacyTitle": "Data privacy",
+  "dataResidencyTitle": "Stored in the United States",
+  "dataResidencyBody": "Your account, device and synchronized wearable data stored in SayDian’s cloud is kept on servers physically located in the United States. If you use SayDian from another country, the data you choose to synchronize is transferred to the United States.",
+  "dataLocalTitle": "On your phone",
+  "dataLocalBody": "SayDian also keeps an encrypted local history on your phone for offline use and pending synchronization. Data that has not been confirmed by the server remains pending.",
+  "dataChoiceTitle": "Your choices",
+  "dataChoiceBody": "You can use device features with the permissions they need, decline optional permissions, and manage sharing in the app. To request deletion of your account and associated data, open Account → Delete account. See the Privacy Policy for retention and other rights.",
+  "dataThirdPartyTitle": "Optional services",
+  "dataThirdPartyBody": "Weather, notifications and other optional services may process the information needed for the feature under their own policies. The United States storage statement applies to SayDian’s cloud storage, not to your phone or a third party’s independent processing.",
+  "iosWellnessSafety": "SayDian on iOS displays activity and sleep information from compatible devices for everyday wellness. It does not provide medical measurements, diagnosis or treatment. Consult a qualified healthcare professional before making medical decisions.",
+  "smartRing": "Smart ring",
+  "ringStress": "Stress",
+  "ringGestures": "Gesture control",
+  "ringCallReminder": "Call reminders",
+  "ringConnectedSyncHint": "Device connected. Data will appear after synchronization.",
+  "ringDisconnecting": "Disconnecting",
+  "ringDisconnectHelp": "The app has disconnected. If the ring still appears connected in iPhone Bluetooth settings, forget that device there before scanning again.",
+  "deviceLabel": "Device",
+  "ringStatusReminder": "Status reminders"
 }

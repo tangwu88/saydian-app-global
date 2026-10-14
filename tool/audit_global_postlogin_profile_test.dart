@@ -145,7 +145,7 @@ void main() {
       controller.session = owner('b');
       upload.complete(
         response({
-          'url': 'https://app.saydian.cn$prefix/files/synthetic-avatar',
+          'url': 'https://app.saydian.com$prefix/files/synthetic-avatar',
         }),
       );
       expect(await saving, isTrue);

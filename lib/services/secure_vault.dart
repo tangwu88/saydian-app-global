@@ -237,6 +237,9 @@ class SecureSessionVault implements SessionVault {
     await _storage.write(key: _databaseKey, value: generated);
     return generated;
   }
+
+  /// Migration reads an existing source key without creating or replacing it.
+  Future<String?> existingDatabaseKey() => _storage.read(key: _databaseKey);
 }
 
 class MemorySessionVault implements SessionVault {

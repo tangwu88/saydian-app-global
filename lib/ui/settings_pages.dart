@@ -51,7 +51,7 @@ class SettingsPage extends StatelessWidget {
                           Text(
                             Localizations.localeOf(context).languageCode == 'zh'
                                 ? '登录后可保存健康数据、设备和订单信息'
-                                : 'Sign in to save your readings and watch.',
+                                : 'Sign in to save your readings and device.',
                             style: const TextStyle(
                               color: SaydianColors.muted,
                               fontSize: 13,
@@ -145,7 +145,7 @@ class SettingsPage extends StatelessWidget {
                 value: controller.connectedDevice == null
                     ? (Localizations.localeOf(context).languageCode == 'zh'
                           ? context.l10n.notConnected
-                          : 'No watch')
+                          : 'No device')
                     : context.l10n.connected,
                 color: SaydianColors.sky,
                 onTap: () => controller.selectTab(1),
@@ -1077,6 +1077,7 @@ class AccountSettingsPage extends StatelessWidget {
               ],
             ),
           ),
+          const DataPrivacyLink(),
           const SizedBox(height: 20),
           FilledButton(
             key: const Key('account-logout'),

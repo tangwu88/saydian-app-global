@@ -10,7 +10,7 @@ import 'package:saydian_app/services/network_audit.dart';
 import 'package:saydian_app/services/safe_resource_client.dart';
 
 void main() {
-  const root = 'https://app.saydian.cn';
+  const root = 'https://app.saydian.com';
   const file = '$root/global/api/saydian-app/v2/files/test/content';
 
   test('explicit client origin cannot bypass the production boundary', () {
@@ -21,7 +21,8 @@ void main() {
     });
     for (final url in [
       'https://app.saidian.cc',
-      'https://app.saydian.cn:444',
+      'https://app.saydian.com:444',
+      'https://app.saydian.cn',
       'http://127.0.0.1:8082',
       'https://other.example',
     ]) {
@@ -90,7 +91,7 @@ void main() {
       '/global/media-other/a.png',
       '/global/assets-other/a.png',
       '/api/saydian-app/v1/files/a.png',
-      '//app.saydian.cn/global/media/a.png',
+      '//app.saydian.com/global/media/a.png',
       '//app.saidian.cc/global/media/a.png',
       '/global/media/a.png#private',
       '/global/assets/%252e%252e/media/a.png',
@@ -128,9 +129,9 @@ void main() {
     'https://files.sd.cc/file',
     'https://cdn.example.com/file',
     '$root/api/saydian-app/v2/files/test/content',
-    'http://app.saydian.cn/global/media/a.png',
-    'https://app.saydian.cn:444/global/media/a.png',
-    'https://user:secret@app.saydian.cn/global/media/a.png',
+    'http://app.saydian.com/global/media/a.png',
+    'https://app.saydian.com:444/global/media/a.png',
+    'https://user:secret@app.saydian.com/global/media/a.png',
     '$file#private',
     '$root/global/api/saydian-app/v2/%252e%252e/a',
   ]) {
@@ -243,7 +244,7 @@ void main() {
     expect(event, isNot(contains('never-log-this')));
     expect(event, isNot(contains('/files/test')));
     expect(event, isNot(contains('malicious-token-value')));
-    expect(event, contains('app.saydian.cn'));
+    expect(event, contains('app.saydian.com'));
   });
 
   test(
@@ -261,7 +262,7 @@ void main() {
       );
       final event = NetworkAudit.recent.last;
       expect(event['outcome'], 'sending');
-      expect(event['host'], 'app.saydian.cn');
+      expect(event['host'], 'app.saydian.com');
       expect(jsonEncode(event), isNot(contains('private')));
       client.close();
     },
@@ -271,7 +272,7 @@ void main() {
     'formal origin rejects nonstandard ports and local product overrides',
     () {
       for (final url in [
-        'https://app.saydian.cn:444',
+        'https://app.saydian.com:444',
         'http://127.0.0.1:8082',
       ]) {
         expect(

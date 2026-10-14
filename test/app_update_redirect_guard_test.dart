@@ -7,7 +7,7 @@ import 'package:http/http.dart' as http;
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:saydian_app/services/app_update_service.dart';
 
-const _origin = 'https://app.saydian.cn';
+const _origin = 'https://app.saydian.com';
 const _path = '/global/down/files/Saydian-global.apk';
 final _bytes = <int>[0, 1, 2, 3, 255];
 
@@ -92,9 +92,9 @@ void main() {
   final unsafeTargets = <String, String>{
     'legacy host': 'https://app.saidian.cc$_path',
     'other host': 'https://untrusted.invalid$_path',
-    'HTTP downgrade': 'http://app.saydian.cn$_path',
-    'non-443 port': 'https://app.saydian.cn:8443$_path',
-    'userinfo': 'https://user:password@app.saydian.cn$_path',
+    'HTTP downgrade': 'http://app.saydian.com$_path',
+    'non-443 port': 'https://app.saydian.com:8443$_path',
+    'userinfo': 'https://user:password@app.saydian.com$_path',
     'domestic download path': '$_origin/down/files/Saydian.apk',
     'query': '$_origin$_path?target=legacy',
     'fragment': '$_origin$_path#legacy',

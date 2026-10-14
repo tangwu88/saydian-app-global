@@ -18,7 +18,7 @@ void emitGlobalJointQaRecord(Map<String, Object?> record) =>
 
 bool isApprovedGlobalJointQaEnvironment(Uri origin, String prefix) =>
     origin.scheme == 'https' &&
-    origin.host == 'app.saydian.cn' &&
+    origin.host == 'app.saydian.com' &&
     origin.port == 443 &&
     origin.userInfo.isEmpty &&
     !origin.hasQuery &&

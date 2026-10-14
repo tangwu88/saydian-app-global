@@ -1,3 +1,4 @@
+import 'data_privacy_page.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -94,6 +95,16 @@ class _GlobalLegalPageState extends State<GlobalLegalPage> {
       }
       final text = parsed.body?.text.trim() ?? '';
       if (text.isEmpty) throw const FormatException('Empty legal document');
+      // Never display a mislabeled Chinese document as the English agreement.
+      // The server must publish corrected, reviewed content with its real version.
+      if (_locale.startsWith('en') &&
+          RegExp(
+            r'[\u3400-\u9fff]',
+          ).hasMatch('${document['title'] ?? ''} $text')) {
+        throw const FormatException(
+          'English legal document contains untranslated content',
+        );
+      }
       setState(() {
         _title = document['title'] is String
             ? document['title'] as String
@@ -122,6 +133,10 @@ class _GlobalLegalPageState extends State<GlobalLegalPage> {
       appBar: AppBar(
         title: Text(_title?.trim().isNotEmpty == true ? _title! : title),
       ),
+      bottomNavigationBar:
+          widget.document == GlobalLegalDocumentType.privacyPolicy
+          ? const SafeArea(child: DataPrivacyLink())
+          : null,
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _text == null

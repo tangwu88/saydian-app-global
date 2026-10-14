@@ -563,6 +563,7 @@ class _HealthRow extends StatelessWidget {
       HealthMetric.bodyTemperature => Icons.thermostat_rounded,
       HealthMetric.ecg => Icons.monitor_heart_outlined,
       HealthMetric.hrv => Icons.show_chart_rounded,
+      HealthMetric.stress => Icons.self_improvement_rounded,
       HealthMetric.bodyComposition => Icons.accessibility_new_rounded,
       HealthMetric.bloodComposition => Icons.bloodtype_outlined,
       HealthMetric.steps => Icons.directions_walk_rounded,

@@ -60,7 +60,7 @@ NSBezierPath(roundedRect: NSRect(x: 52, y: 70, width: 700, height: 360), xRadius
 logo.draw(in: NSRect(x: 104, y: 262, width: 596, height: 115), from: .zero, operation: .sourceOver, fraction: 1)
 
 let eyebrow = NSAttributedString(
-    string: "SAYDIAN HEALTH",
+    string: "SayDian",
     attributes: [
         .font: NSFont.systemFont(ofSize: 18, weight: .semibold),
         .foregroundColor: blue,

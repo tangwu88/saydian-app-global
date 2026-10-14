@@ -7,6 +7,283 @@ import 'package:saydian_app/services/wearable_bridge.dart';
 import 'package:saydian_app/services/wearable_routing.dart';
 
 void main() {
+  test('all failed SDK scans preserve Bluetooth error guidance', () async {
+    final bridge = RoutedWearableBridge(
+      veepoo: _FakeWearableBridge(scanned: const [])
+        ..scanFailure = PlatformException(code: 'BLUETOOTH_OFF'),
+      yucheng: _FakeWearableBridge(scanned: const [])
+        ..scanFailure = MissingPluginException(),
+      preferenceStore: _MemoryTransportPreference(),
+    );
+    await expectLater(
+      bridge.scanDevices(),
+      throwsA(
+        isA<PlatformException>().having((e) => e.code, 'code', 'BLUETOOTH_OFF'),
+      ),
+    );
+  });
+  test(
+    'unavailable optional SDK does not discard a working ring scan',
+    () async {
+      final bridge = RoutedWearableBridge(
+        veepoo: _FakeWearableBridge(scanned: const [])
+          ..scanFailure = MissingPluginException(),
+        yucheng: _FakeWearableBridge(scanned: const [])
+          ..scanFailure = MissingPluginException(),
+        qring: _FakeWearableBridge(
+          scanned: const [DeviceInfo(id: 'ring', name: 'R21')],
+        ),
+        preferenceStore: _MemoryTransportPreference(),
+      );
+      expect((await bridge.scanDevices()).map((d) => d.id), ['qring:ring']);
+    },
+  );
+  test(
+    'disconnect also cancels a saved recovery target before native adoption',
+    () async {
+      final preferences = _MemoryTransportPreference()
+        ..value = WearableTransport.qring;
+      final qring = _FakeWearableBridge(scanned: const []);
+      final bridge = RoutedWearableBridge(
+        veepoo: _FakeWearableBridge(scanned: const []),
+        yucheng: _FakeWearableBridge(scanned: const []),
+        qring: qring,
+        preferenceStore: preferences,
+      );
+      await bridge.disconnect();
+      expect(preferences.value, isNull);
+      expect(qring.disconnectCalls, 0);
+    },
+  );
+  test(
+    'QRing failed cancellation retains its route but stops automatic recovery',
+    () async {
+      final qring = _FakeWearableBridge(
+        scanned: const [DeviceInfo(id: 'ring', name: 'R21 fixture')],
+      )..disconnectFailure = PlatformException(code: 'RECOVERY_PENDING');
+      final preferences = _MemoryTransportPreference();
+      final bridge = RoutedWearableBridge(
+        veepoo: _FakeWearableBridge(scanned: const []),
+        yucheng: _FakeWearableBridge(scanned: const []),
+        qring: qring,
+        preferenceStore: preferences,
+      );
+      await bridge.scanDevices();
+      await bridge.connect('qring:ring', profile: _profile);
+      await expectLater(bridge.disconnect(), throwsA(isA<PlatformException>()));
+      expect(preferences.value, isNull);
+      expect(qring.disconnectCalls, 1);
+      qring.disconnectFailure = null;
+      await bridge.disconnect();
+      expect(qring.disconnectCalls, 2);
+      expect(preferences.value, isNull);
+    },
+  );
+  test(
+    'watch and ring discovery selects the correct SDK and preserves watch routing',
+    () async {
+      final vep = _FakeWearableBridge(
+        scanned: const [
+          DeviceInfo(id: 'watch', name: 'SD-Watch-W9S'),
+          DeviceInfo(id: 'ring', name: 'R22'),
+        ],
+      );
+      final qring = _FakeWearableBridge(
+        scanned: const [
+          DeviceInfo(id: 'ring', name: 'R22'),
+          DeviceInfo(id: 'unknown', name: 'Other BLE accessory'),
+        ],
+      );
+      final coolwear = _FakeWearableBridge(
+        scanned: const [DeviceInfo(id: 'cool', name: 'HR05')],
+      );
+      final bridge = RoutedWearableBridge(
+        veepoo: vep,
+        yucheng: _FakeWearableBridge(scanned: const []),
+        qring: qring,
+        coolwear: coolwear,
+        preferenceStore: _MemoryTransportPreference(),
+      );
+      final devices = await bridge.scanDevices();
+      expect(
+        devices.map((device) => device.id),
+        unorderedEquals(['veepoo:watch', 'qring:ring', 'coolwear:cool']),
+      );
+      expect(
+        devices.singleWhere((device) => device.id == 'veepoo:watch').isRing,
+        isFalse,
+      );
+      expect(
+        devices.singleWhere((device) => device.id == 'qring:ring').isRing,
+        isTrue,
+      );
+      await bridge.connect('qring:ring', profile: _profile);
+      expect(qring.connectCalls, ['ring']);
+      expect(vep.connectCalls, isEmpty);
+      await bridge.connect('veepoo:watch', profile: _profile);
+      expect(vep.connectCalls, ['watch']);
+    },
+  );
+
+  test(
+    'confirmed ring keywords match anywhere while unrelated routing is preserved',
+    () {
+      expect(
+        ringTransportForName(' HR01-fixture '),
+        WearableTransport.coolwear,
+      );
+      expect(ringTransportForName('HR05'), WearableTransport.coolwear);
+      expect(ringTransportForName('HR05-other'), WearableTransport.coolwear);
+      for (final name in [
+        'K80',
+        'R7',
+        'r7pro',
+        'r7Ultra',
+        'R7Ultra-AB12',
+        ' R7Y ',
+        'HR05-AB12',
+        'K80_AB:CD:EF:12:34:56',
+        'K800',
+        'R70',
+        'R7Pro Max',
+        'R7Ultra Max',
+        'R7Ultra-other',
+        'K80-other',
+        'HR05X',
+        'custom-hr01-tail',
+        'watch-R7-variant',
+        'Q_HR01',
+        'R8-R7',
+      ]) {
+        expect(
+          ringTransportForName(name),
+          WearableTransport.coolwear,
+          reason: name,
+        );
+      }
+      for (final name in [
+        'R8',
+        'custom-r8-tail',
+        'R80',
+        'prefix-R21-other',
+        'custom-r22-tail',
+        'YC_R8',
+        'TK_R21',
+      ]) {
+        expect(
+          ringTransportForName(name),
+          WearableTransport.qring,
+          reason: name,
+        );
+      }
+      for (final name in ['LUCKRING', '', 'HR04', 'K79', 'R6', 'R9']) {
+        expect(ringTransportForName(name), isNull, reason: name);
+      }
+      expect(ringTransportForName('Q_fixture'), WearableTransport.qring);
+      expect(ringTransportForName('O_fixture'), WearableTransport.qring);
+      expect(ringTransportForName(' R21 '), WearableTransport.qring);
+      expect(ringTransportForName('YC fixture'), WearableTransport.yucheng);
+      expect(ringTransportForName('TK fixture'), WearableTransport.veepoo);
+      expect(ringTransportForName('SD-Watch-W9'), isNull);
+      expect(ringTransportForName('Unknown accessory'), isNull);
+    },
+  );
+
+  test(
+    'keyword broadcasts are deduplicated and connected by their ring SDK',
+    () async {
+      const routes = {
+        'Custom-R8-Plus': WearableTransport.qring,
+        'prefix-r21-tail': WearableTransport.qring,
+        'custom-R22-variant': WearableTransport.qring,
+        'SD-Watch-W9-R8': WearableTransport.qring,
+        'Custom-R7-Plus': WearableTransport.coolwear,
+        'prefix-k80-tail': WearableTransport.coolwear,
+        'Custom-HR01-variant': WearableTransport.coolwear,
+        'prefix-hr05-tail': WearableTransport.coolwear,
+        'SD-Watch-W9-R7': WearableTransport.coolwear,
+        'Q_HR01': WearableTransport.coolwear,
+      };
+      final devices = [
+        for (final name in routes.keys)
+          DeviceInfo.fromMap({'id': name, 'name': name}),
+      ];
+      final veepoo = _FakeWearableBridge(scanned: devices);
+      final yucheng = _FakeWearableBridge(scanned: devices);
+      final qring = _FakeWearableBridge(scanned: devices);
+      final coolwear = _FakeWearableBridge(scanned: devices);
+      final bridge = RoutedWearableBridge(
+        veepoo: veepoo,
+        yucheng: yucheng,
+        qring: qring,
+        coolwear: coolwear,
+        preferenceStore: _MemoryTransportPreference(),
+      );
+      final scanned = await bridge.scanDevices();
+      expect(scanned, hasLength(routes.length));
+      for (final entry in routes.entries) {
+        final device = scanned.singleWhere(
+          (device) => device.name == entry.key,
+        );
+        expect(device.id, '${entry.value.name}:${entry.key}');
+        expect(device.isRing, isTrue);
+        await bridge.connect(device.id, profile: _profile);
+        expect((await bridge.getCapabilities()).metrics, isEmpty);
+      }
+      expect(
+        qring.connectCalls,
+        routes.entries
+            .where((e) => e.value == WearableTransport.qring)
+            .map((e) => e.key),
+      );
+      expect(
+        coolwear.connectCalls,
+        routes.entries
+            .where((e) => e.value == WearableTransport.coolwear)
+            .map((e) => e.key),
+      );
+      expect(veepoo.connectCalls, isEmpty);
+      expect(yucheng.connectCalls, isEmpty);
+      await bridge.dispose();
+    },
+  );
+
+  test(
+    'LUCKRING names never route to a watch SDK or infer capabilities',
+    () async {
+      final devices = [
+        for (final name in [
+          'HR01',
+          'HR05',
+          'K80',
+          'R7',
+          'R7Pro',
+          'R7Ultra',
+          'R7Y',
+        ])
+          DeviceInfo(id: name, name: name),
+      ];
+      final veepoo = _FakeWearableBridge(scanned: devices);
+      final coolwear = _FakeWearableBridge(scanned: devices);
+      final bridge = RoutedWearableBridge(
+        veepoo: veepoo,
+        yucheng: _FakeWearableBridge(scanned: const []),
+        coolwear: coolwear,
+        preferenceStore: _MemoryTransportPreference(),
+      );
+      final scanned = await bridge.scanDevices();
+      expect(scanned, hasLength(devices.length));
+      expect(
+        scanned.every((device) => device.id.startsWith('coolwear:')),
+        isTrue,
+      );
+      await bridge.connect('coolwear:R7Pro', profile: _profile);
+      expect(coolwear.connectCalls, ['R7Pro']);
+      expect(veepoo.connectCalls, isEmpty);
+      expect((await bridge.getCapabilities()).metrics, isEmpty);
+    },
+  );
+
   test(
     'Urion health change notices keep their source and scoped device',
     () async {
@@ -432,12 +709,29 @@ class _FakeWearableBridge extends Fake
   final List<String> connectCalls = [];
   final List<HealthMetric> measurementCalls = [];
   int restoreCalls = 0;
+  int disconnectCalls = 0;
+  Object? disconnectFailure;
+  Object? scanFailure;
+
+  @override
+  Future<void> disconnect() async {
+    disconnectCalls++;
+    final failure = disconnectFailure;
+    if (failure != null) throw failure;
+  }
 
   @override
   Stream<WearableEvent> get events => _events.stream;
 
   @override
-  Future<List<DeviceInfo>> scanDevices() async => scanned;
+  Future<List<DeviceInfo>> scanDevices() async {
+    if (scanFailure case final error?) throw error;
+    return scanned;
+  }
+
+  @override
+  Future<DeviceCapabilities> getCapabilities() async =>
+      const DeviceCapabilities(metrics: {});
 
   void emitScan(DeviceInfo device) {
     _events.add(WearableEvent(type: 'scanDevice', payload: device.toJson()));

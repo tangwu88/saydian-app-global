@@ -58,7 +58,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get messageSendFailed => '전송하지 못했습니다. 네트워크를 확인한 후 다시 시도하세요.';
 
   @override
-  String get noWatchShopHint => '기기가 필요하신가요? Saydian 스토어를 둘러보세요.';
+  String get noWatchShopHint => '기기가 필요하신가요? SayDian 스토어를 둘러보세요.';
 
   @override
   String get notificationInAppHint => '돌봄 초대와 알림은 메시지에서 확인하세요.';
@@ -150,7 +150,7 @@ class AppLocalizationsKo extends AppLocalizations {
       '공식 계정이 아닌 곳에 인증 코드, 비밀번호 또는 전체 건강 기록을 보내지 마세요.';
 
   @override
-  String get brandHealthTitle => 'SAYDIAN Health';
+  String get brandHealthTitle => 'SayDian';
 
   @override
   String get accountAndSecurity => '계정 및 보안';
@@ -307,7 +307,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get ecgHealthReport => '심전도 건강 보고서';
 
   @override
-  String get brandedEcgReport => 'Saydian · 심전도 건강 보고서';
+  String get brandedEcgReport => 'SayDian · 심전도 건강 보고서';
 
   @override
   String get ecgReportSafety =>
@@ -554,7 +554,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get globalShopReadOnly => '상품을 둘러볼 수 있습니다. 이 지역에서는 아직 주문할 수 없습니다.';
 
   @override
-  String get appName => 'SAYDIAN Health';
+  String get appName => 'SayDian';
 
   @override
   String get searchingNearby => '주변 워치 검색 중';
@@ -1301,7 +1301,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get haveAccount => '이미 계정이 있으신가요?';
 
   @override
-  String get noAccount => 'Saydian이 처음이신가요?';
+  String get noAccount => 'SayDian이 처음이신가요?';
 
   @override
   String get showPassword => '비밀번호 표시';
@@ -1347,7 +1347,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get healthSafetyAdvice => '휴식 후 다시 측정하세요. 몸이 불편하면 의료진과 상담하세요.';
 
   @override
-  String get defaultUser => 'Saydian 사용자';
+  String get defaultUser => 'SayDian 사용자';
 
   @override
   String get dailyGreeting => '오늘도 건강한 하루 보내세요';
@@ -1461,7 +1461,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get connectionHelp => '연결 도움말';
 
   @override
-  String get searchNearbyWatch => '주변 Saydian 워치를 찾아 연결하세요';
+  String get searchNearbyWatch => '주변 SayDian 워치를 찾아 연결하세요';
 
   @override
   String get useWatch => '워치에서 조작해 주세요';
@@ -1512,7 +1512,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get customerService => '고객 지원';
 
   @override
-  String get aboutApp => 'Saydian 정보';
+  String get aboutApp => 'SayDian 정보';
 
   @override
   String get security => '계정 보안';
@@ -1557,7 +1557,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get gettingReady => '준비 중입니다…';
 
   @override
-  String get enableNotifications => 'Saydian 알림 켜기';
+  String get enableNotifications => 'SayDian 알림 켜기';
 
   @override
   String get notificationExplanation =>
@@ -2075,4 +2075,67 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get ecgWaveformLowSignalHint => '신호 품질 낮음 · 파형 미리보기';
+
+  @override
+  String get dataPrivacyTitle => '데이터 개인정보 보호';
+
+  @override
+  String get dataResidencyTitle => '미국 내 저장';
+
+  @override
+  String get dataResidencyBody =>
+      'SayDian 클라우드의 계정, 기기 및 동기화된 웨어러블 데이터는 미국 내 서버에 저장됩니다. 다른 국가에서 SayDian을 사용하면 동기화하기로 선택한 데이터가 미국으로 전송됩니다.';
+
+  @override
+  String get dataLocalTitle => '휴대폰 내 저장';
+
+  @override
+  String get dataLocalBody =>
+      'SayDian은 오프라인 이용과 동기화 대기를 위해 암호화된 기록을 휴대폰에도 보관합니다. 서버에서 확인되지 않은 데이터는 계속 대기 상태로 유지됩니다.';
+
+  @override
+  String get dataChoiceTitle => '사용자 선택';
+
+  @override
+  String get dataChoiceBody =>
+      '기능에 필요한 권한을 허용하거나 선택 권한을 거부하고 앱에서 공유를 관리할 수 있습니다. 계정 및 관련 데이터 삭제를 요청하려면 계정 → 계정 삭제를 여세요. 보관 기간과 기타 권리는 개인정보 처리방침을 확인하세요.';
+
+  @override
+  String get dataThirdPartyTitle => '선택 서비스';
+
+  @override
+  String get dataThirdPartyBody =>
+      '날씨, 알림 등 선택 서비스는 각자의 정책에 따라 필요한 정보를 처리할 수 있습니다. 미국 저장 안내는 SayDian 클라우드에 적용되며 휴대폰이나 제3자의 독립적인 처리에는 적용되지 않습니다.';
+
+  @override
+  String get iosWellnessSafety =>
+      'iOS용 SayDian은 일상적인 건강 관리를 위해 호환 기기의 활동 및 수면 정보를 표시합니다. 의료 측정, 진단 또는 치료를 제공하지 않습니다. 의료 결정을 내리기 전에 자격을 갖춘 의료 전문가와 상담하세요.';
+
+  @override
+  String get smartRing => '스마트 링';
+
+  @override
+  String get ringStress => '스트레스';
+
+  @override
+  String get ringGestures => '제스처 제어';
+
+  @override
+  String get ringCallReminder => '전화 알림';
+
+  @override
+  String get ringConnectedSyncHint => '기기가 연결되었습니다. 동기화 후 데이터가 표시됩니다.';
+
+  @override
+  String get ringDisconnecting => '연결 해제 중';
+
+  @override
+  String get ringDisconnectHelp =>
+      '앱 연결이 해제되었습니다. iPhone Bluetooth 설정에서 링이 계속 연결되어 있으면 해당 기기를 지운 후 다시 검색하세요.';
+
+  @override
+  String get deviceLabel => '기기';
+
+  @override
+  String get ringStatusReminder => '상태 알림';
 }

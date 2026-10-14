@@ -62,7 +62,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get noWatchShopHint =>
-      'Besoin d’un appareil ? Visitez la boutique Saydian.';
+      'Besoin d’un appareil ? Visitez la boutique SayDian.';
 
   @override
   String get notificationInAppHint =>
@@ -160,7 +160,7 @@ class AppLocalizationsFr extends AppLocalizations {
       'N’envoyez pas de codes de vérification, de mots de passe ou de dossiers de santé complets à des comptes non officiels.';
 
   @override
-  String get brandHealthTitle => 'SAYDIAN Health';
+  String get brandHealthTitle => 'SayDian';
 
   @override
   String get accountAndSecurity => 'Compte et sécurité';
@@ -336,7 +336,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get ecgHealthReport => 'Rapport de santé ECG';
 
   @override
-  String get brandedEcgReport => 'Saydian · Rapport de santé ECG';
+  String get brandedEcgReport => 'SayDian · Rapport de santé ECG';
 
   @override
   String get ecgReportSafety =>
@@ -611,7 +611,7 @@ class AppLocalizationsFr extends AppLocalizations {
       'Consultez les produits ici. Les commandes ne sont pas encore disponibles dans cette région.';
 
   @override
-  String get appName => 'SAYDIAN Health';
+  String get appName => 'SayDian';
 
   @override
   String get searchingNearby => 'Recherche de montres à proximité';
@@ -1379,7 +1379,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get haveAccount => 'Vous avez déjà un compte ?';
 
   @override
-  String get noAccount => 'Nouveau sur Saydian ?';
+  String get noAccount => 'Nouveau sur SayDian ?';
 
   @override
   String get showPassword => 'Afficher le mot de passe';
@@ -1427,7 +1427,7 @@ class AppLocalizationsFr extends AppLocalizations {
       'Reposez-vous puis mesurez à nouveau. En cas de malaise, consultez un professionnel de santé.';
 
   @override
-  String get defaultUser => 'Utilisateur Saydian';
+  String get defaultUser => 'Utilisateur SayDian';
 
   @override
   String get dailyGreeting => 'Prenez soin de vous aujourd’hui';
@@ -1545,7 +1545,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get searchNearbyWatch =>
-      'Recherchez et connectez une montre Saydian à proximité';
+      'Recherchez et connectez une montre SayDian à proximité';
 
   @override
   String get useWatch => 'Utilisez cette fonction sur votre montre';
@@ -1597,7 +1597,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get customerService => 'Assistance';
 
   @override
-  String get aboutApp => 'À propos de Saydian';
+  String get aboutApp => 'À propos de SayDian';
 
   @override
   String get security => 'Sécurité du compte';
@@ -1642,7 +1642,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get gettingReady => 'Préparation…';
 
   @override
-  String get enableNotifications => 'Activer les notifications Saydian';
+  String get enableNotifications => 'Activer les notifications SayDian';
 
   @override
   String get notificationExplanation =>
@@ -2182,4 +2182,68 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get ecgWaveformLowSignalHint => 'Signal de faible qualité · aperçu';
+
+  @override
+  String get dataPrivacyTitle => 'Confidentialité des données';
+
+  @override
+  String get dataResidencyTitle => 'Stockage aux États-Unis';
+
+  @override
+  String get dataResidencyBody =>
+      'Les données de compte, d’appareil et les données synchronisées de votre accessoire stockées dans le cloud SayDian sont conservées sur des serveurs situés aux États-Unis. Si vous utilisez SayDian depuis un autre pays, les données que vous choisissez de synchroniser sont transférées aux États-Unis.';
+
+  @override
+  String get dataLocalTitle => 'Sur votre téléphone';
+
+  @override
+  String get dataLocalBody =>
+      'SayDian conserve aussi un historique local chiffré pour l’accès hors ligne et la synchronisation en attente. Les données non confirmées par le serveur restent en attente.';
+
+  @override
+  String get dataChoiceTitle => 'Vos choix';
+
+  @override
+  String get dataChoiceBody =>
+      'Accordez les autorisations nécessaires aux fonctions choisies et gérez le partage dans l’app. Pour demander la suppression du compte et des données associées, ouvrez Compte → Supprimer le compte. Consultez la politique de confidentialité pour les durées de conservation et les autres droits.';
+
+  @override
+  String get dataThirdPartyTitle => 'Services facultatifs';
+
+  @override
+  String get dataThirdPartyBody =>
+      'La météo, les notifications et d’autres services facultatifs peuvent traiter les informations nécessaires selon leurs propres politiques. Le stockage aux États-Unis concerne le cloud SayDian, pas votre téléphone ni le traitement indépendant par des tiers.';
+
+  @override
+  String get iosWellnessSafety =>
+      'SayDian sur iOS présente l’activité et le sommeil d’appareils compatibles pour le bien-être quotidien. L’app ne fournit ni mesures médicales, ni diagnostic, ni traitement. Consultez un professionnel de santé qualifié avant toute décision médicale.';
+
+  @override
+  String get smartRing => 'Bague connectée';
+
+  @override
+  String get ringStress => 'Stress';
+
+  @override
+  String get ringGestures => 'Commandes gestuelles';
+
+  @override
+  String get ringCallReminder => 'Rappels d’appel';
+
+  @override
+  String get ringConnectedSyncHint =>
+      'Appareil connecté. Les données apparaîtront après synchronisation.';
+
+  @override
+  String get ringDisconnecting => 'Déconnexion';
+
+  @override
+  String get ringDisconnectHelp =>
+      'L’app est déconnectée. Si la bague reste connectée dans les réglages Bluetooth de l’iPhone, oubliez cet appareil avant de relancer la recherche.';
+
+  @override
+  String get deviceLabel => 'Appareil';
+
+  @override
+  String get ringStatusReminder => 'Rappels de statut';
 }

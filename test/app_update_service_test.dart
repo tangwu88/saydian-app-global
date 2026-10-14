@@ -153,7 +153,7 @@ void main() {
           (_) async => jsonResponse(
             backendRelease(
               androidType: 0,
-              android: 'https://app.saydian.cn/down',
+              android: 'https://app.saydian.com/down',
               force: 0,
               lowwer: 0,
             ),
@@ -164,7 +164,7 @@ void main() {
       final info = await service.check();
 
       expect(info.destinationType, AppUpdateDestinationType.androidStore);
-      expect(info.destinationUri, Uri.parse('https://app.saydian.cn/down'));
+      expect(info.destinationUri, Uri.parse('https://app.saydian.com/down'));
       expect(info.forceUpdate, isFalse);
     },
   );
@@ -180,7 +180,7 @@ void main() {
           (_) async => jsonResponse(
             backendRelease(
               androidType: 0,
-              android: 'http://app.saydian.cn/down',
+              android: 'http://app.saydian.com/down',
               force: 0,
               lowwer: 0,
             ),
@@ -882,7 +882,7 @@ void main() {
 
     expect(service.isConfigured, isTrue);
     expect((await service.check()).hasUpdate, isFalse);
-    expect(requestedUri.origin, 'https://app.saydian.cn');
+    expect(requestedUri.origin, 'https://app.saydian.com');
     expect(requestedUri.path, '/api/v1/site/version');
   });
 }

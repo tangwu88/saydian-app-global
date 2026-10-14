@@ -61,7 +61,7 @@ class _Harness {
   _Harness({this.holdProfile = true}) {
     api = GlobalSaydianApiClient(
       vault,
-      baseUri: Uri.parse('https://app.saydian.cn'),
+      baseUri: Uri.parse('https://app.saydian.com'),
       client: MockClient(_respond),
     );
     controller = AppController(vault, api, MemoryHealthStore(), wearable);
@@ -85,7 +85,7 @@ class _Harness {
   }
 
   Future<http.Response> _respond(http.Request request) async {
-    expectSync(request.url.origin, 'https://app.saydian.cn');
+    expectSync(request.url.origin, 'https://app.saydian.com');
     expectSync(request.url.path.startsWith(_prefix), isTrue);
     expectSync(request.followRedirects, isFalse);
     final path = request.url.path.substring(_prefix.length);

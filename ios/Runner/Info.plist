@@ -7,7 +7,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>SAYDIAN Health</string>
+	<string>SayDian</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -15,7 +15,7 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>SAYDIAN Health</string>
+	<string>SayDian</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
@@ -57,23 +57,27 @@
 		<string>alipayshare</string>
 	</array>
 	<key>NSBluetoothAlwaysUsageDescription</key>
-	<string>Connect to your watch and sync health data you choose to share.</string>
+	<string>Connect to your device and sync health data you choose to share.</string>
 	<key>NSBluetoothPeripheralUsageDescription</key>
-	<string>Connect to your watch and sync health data you choose to share.</string>
+	<string>Connect to your device and sync health data you choose to share.</string>
+	<key>NSHealthShareUsageDescription</key>
+	<string>SayDian does not read Apple Health data in this version. Activity and sleep records sync directly from your device.</string>
+	<key>NSHealthUpdateUsageDescription</key>
+	<string>SayDian does not write to Apple Health in this version. Device records are stored in your SayDian account and on this phone.</string>
 	<key>NSAppleMusicUsageDescription</key>
-	<string>Access your music library only when you choose music controls on a compatible watch.</string>
+	<string>Access your music library only when you choose music controls on a compatible device.</string>
 	<key>NSCameraUsageDescription</key>
-	<string>Take photos and set photo watch faces.</string>
+	<string>Take photos and set photo display faces.</string>
 	<key>NSContactsUsageDescription</key>
-	<string>Sync only the contacts you select to your watch.</string>
+	<string>Sync only the contacts you select to your device.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Use your city to sync local weather to your watch.</string>
+	<string>Use your city to sync local weather to your device.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Choose photos for your watch face.</string>
+	<string>Choose photos for your device display.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>Save photos taken with the camera remote.</string>
 	<key>NSSpeechRecognitionUsageDescription</key>
-	<string>Recognize spoken commands only when you choose a voice feature on a compatible watch.</string>
+	<string>Recognize spoken commands only when you choose a voice feature on a compatible device.</string>
 	<key>SaidianAlipayUrlScheme</key>
 	<string>$(SAIDIAN_ALIPAY_URL_SCHEME)</string>
 	<key>SaidianWechatAppId</key>

@@ -26,6 +26,10 @@ abstract interface class GlobalAccountApi {
   });
 }
 
+abstract interface class GlobalMigrationApi {
+  Future<Map<String, Object?>> getAccountMigrationStatus();
+}
+
 abstract interface class GlobalCareApi {
   Future<List<GlobalCareRelationship>> globalCareRelationships();
   Future<void> globalInviteCare(String identifier);
@@ -153,6 +157,7 @@ class GlobalSaydianApiClient extends SaydianApiClient
     with GlobalHealthApi
     implements
         GlobalAccountApi,
+        GlobalMigrationApi,
         GlobalCareApi,
         GlobalCareHealthApi,
         GlobalContentApi,
@@ -173,6 +178,11 @@ class GlobalSaydianApiClient extends SaydianApiClient
        );
 
   final String Function() _locale;
+
+  @override
+  Future<Map<String, Object?>> getAccountMigrationStatus() async => _data(
+    _decode(await _authorizedGet('/api/saydian-app/v2/auth/migration-status')),
+  );
 
   @override
   List<Map<String, Object?>> _list(Map<String, Object?> payload) {

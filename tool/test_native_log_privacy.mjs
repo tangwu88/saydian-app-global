@@ -76,3 +76,11 @@ test('release optimization removes direct Android Log calls from closed SDKs', (
     assert.match(releaseRules, new RegExp(`public static int ${level}\\(\\.\\.\\.\\);`));
   }
 });
+
+test('ring adapters do not log vendor exception messages or raw stack traces', () => {
+  for (const name of ['CoolWearRingBridge', 'QRingBridge']) {
+    const text = source(`android/app/src/main/java/cc/saidian/saydian_app/${name}.java`);
+    assert.doesNotMatch(text, /Log\.[vdiew]\([^;]*(?:,\s*error\s*\)|error\.getMessage\()/);
+    assert.doesNotMatch(text, /\.printStackTrace\(/);
+  }
+});

@@ -22,6 +22,7 @@ extension LocalizedModelLabels on AppLocalizations {
     HealthMetric.bodyTemperature => bodyTemperature,
     HealthMetric.ecg => ecg,
     HealthMetric.hrv => hrv,
+    HealthMetric.stress => ringStress,
     HealthMetric.bodyComposition => bodyComposition,
     HealthMetric.bloodComposition => bloodComposition,
   };
@@ -35,18 +36,24 @@ extension LocalizedModelLabels on AppLocalizations {
     return unit;
   }
 
-  String deviceFeatureName(DeviceFeature feature) => switch (feature) {
+  String deviceFeatureName(
+    DeviceFeature feature, {
+    bool coolWearRing = false,
+  }) => switch (feature) {
     DeviceFeature.watchFaces => watchFaces,
     DeviceFeature.photoWatchFace => photoWatchFace,
     DeviceFeature.findWatch => findWatch,
     DeviceFeature.camera => cameraRemote,
+    DeviceFeature.gestureControl => ringGestures,
+    DeviceFeature.callReminder => ringCallReminder,
     DeviceFeature.phoneCalls => phoneCalls,
     DeviceFeature.contacts => contacts,
     DeviceFeature.notifications => notifications,
     DeviceFeature.alarms => alarms,
     DeviceFeature.weather => weather,
     DeviceFeature.worldClock => worldClock,
-    DeviceFeature.healthReminders => healthReminders,
+    DeviceFeature.healthReminders =>
+      coolWearRing ? ringStatusReminder : healthReminders,
     DeviceFeature.healthMonitoring => healthMonitoring,
     DeviceFeature.healthAssessment => healthAssessment,
     DeviceFeature.screenDisplay => screenDisplay,

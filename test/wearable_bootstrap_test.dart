@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:saydian_app/domain/feature_models.dart';
 import 'package:saydian_app/domain/models.dart';
@@ -7,6 +9,49 @@ import 'package:saydian_app/services/wearable_bootstrap.dart';
 import 'package:saydian_app/services/wearable_bridge.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  test('iOS production discovery includes both ring transports', () async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+    const channel = MethodChannel('cc.saidian.ring/commands');
+    const qringChannel = MethodChannel('cc.saidian.ring/qring/commands');
+    final calls = <String>[];
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(channel, (call) async {
+          calls.add(call.method);
+          return [
+            {'id': 'fixture-uuid', 'name': 'R7Pro', 'model': 'R7Pro'},
+          ];
+        });
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(qringChannel, (call) async {
+          calls.add('qring:${call.method}');
+          return [
+            {'id': 'qring-fixture-uuid', 'name': 'R21', 'model': 'R21'},
+          ];
+        });
+    final bridge = createProductionWearableBridge(
+      veepoo: _FakeBridge(const []),
+      yucheng: _FakeBridge(const []),
+      urion: _FakeBridge(const []),
+    );
+    try {
+      final devices = await bridge.scanDevices();
+      expect(calls, unorderedEquals(['scanDevices', 'qring:scanDevices']));
+      expect(
+        devices.map((device) => device.id),
+        unorderedEquals(['coolwear:fixture-uuid', 'qring:qring-fixture-uuid']),
+      );
+      expect(devices.every((device) => device.isRing), isTrue);
+    } finally {
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(channel, null);
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(qringChannel, null);
+      debugDefaultTargetPlatformOverride = null;
+    }
+  });
+
   test(
     'production bridge routes W8 to Yucheng and VP watch to Veepoo',
     () async {

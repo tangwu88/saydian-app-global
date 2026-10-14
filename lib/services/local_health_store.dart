@@ -8,6 +8,7 @@ import 'package:sqflite_sqlcipher/sqflite.dart';
 
 import '../domain/models.dart';
 import 'global_storage_scope.dart';
+import 'global_migration_proof.dart';
 import 'notification_inbox.dart';
 import 'secure_vault.dart';
 
@@ -182,6 +183,111 @@ class EncryptedHealthStore implements HealthStore, HealthStoreRecoveryStatus {
     }
     return database;
   }
+
+  /// Import only a verified account. The old encrypted file/key remain intact.
+  Future<bool> importVerifiedOriginCache(
+    GlobalMigrationProof proof, {
+    required bool Function() canContinue,
+    Future<Database?> Function()? openSource,
+  }) => _enqueue(() async {
+    if (!globalEdition ||
+        storageNamespace == GlobalMigrationProof.sourceNamespace ||
+        _ownerId != proof.healthOwner ||
+        !canContinue()) {
+      return false;
+    }
+    final marker = 'us-origin-migration:${proof.batchId}';
+    final existing = await _db.query(
+      'metadata',
+      where: 'owner_id = ? AND key = ?',
+      whereArgs: [proof.healthOwner, marker],
+    );
+    if (existing.isNotEmpty) return true;
+    Database? source;
+    try {
+      if (openSource != null) {
+        source = await openSource();
+      } else {
+        final oldVault = SecureSessionVault.global(
+          storageNamespace: GlobalMigrationProof.sourceNamespace,
+        );
+        final oldSession = await oldVault.readSession();
+        final oldKey = await oldVault.existingDatabaseKey();
+        if (oldSession?.memberId != proof.accountId ||
+            oldKey == null ||
+            oldKey.length < 24 ||
+            !canContinue()) {
+          return false;
+        }
+        final oldFile = path.join(
+          (await getApplicationSupportDirectory()).path,
+          'saydian_global_health_${GlobalMigrationProof.sourceNamespace}_v1.db',
+        );
+        if (!await _fileOperations.exists(oldFile)) return false;
+        source = await openDatabase(
+          oldFile,
+          password: oldKey,
+          readOnly: true,
+          singleInstance: false,
+        );
+      }
+      if (source == null || !canContinue()) return false;
+      final health = await source.query(
+        'health_records',
+        where: 'owner_id = ?',
+        whereArgs: [proof.healthOwner],
+      );
+      final sports = await source.query(
+        'sport_records',
+        where: 'owner_id = ?',
+        whereArgs: [proof.healthOwner],
+      );
+      final warnings = await source.query(
+        'health_warning_alerts',
+        where: 'owner_id = ?',
+        whereArgs: [proof.healthOwner],
+      );
+      final inbox = await source.query(
+        'notification_inbox',
+        where: 'account_id = ?',
+        whereArgs: [proof.notificationOwner],
+      );
+      await _db.transaction((tx) async {
+        void checkOwner() {
+          if (!canContinue() || _ownerId != proof.healthOwner) {
+            throw StateError('Migration account changed');
+          }
+        }
+
+        checkOwner();
+        for (final entry in {
+          'health_records': health,
+          'sport_records': sports,
+          'health_warning_alerts': warnings,
+          'notification_inbox': inbox,
+        }.entries) {
+          for (final row in entry.value) {
+            checkOwner();
+            // A China acknowledgement never acknowledges a US upload.
+            await tx.insert(entry.key, {
+              ...row,
+              if (entry.key == 'health_records') 'synced': 0,
+            }, conflictAlgorithm: ConflictAlgorithm.ignore);
+          }
+        }
+        checkOwner();
+        await tx.insert('metadata', {
+          'owner_id': proof.healthOwner,
+          'key': marker,
+          'value': 'completed',
+        }, conflictAlgorithm: ConflictAlgorithm.ignore);
+        checkOwner();
+      });
+      return true;
+    } finally {
+      await source?.close();
+    }
+  });
 
   @override
   Future<void> initialize() async {

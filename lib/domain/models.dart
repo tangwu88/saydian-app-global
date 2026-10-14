@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'feature_models.dart';
+import 'ring_name_policy.dart';
 
 enum DeviceConnectionState {
   disconnected,
@@ -25,6 +26,7 @@ enum HealthMetric {
   bodyTemperature('body_temperature', '体温', '℃'),
   ecg('ecg', '心电', ''),
   hrv('hrv', 'HRV', 'ms'),
+  stress('stress', '压力', ''),
   bodyComposition('body_composition', '身体成分', ''),
   bloodComposition('blood_composition', '血液成分', '');
 
@@ -43,7 +45,7 @@ enum HealthMetric {
 enum MeasurementSource { wearable, manual, imported }
 
 enum MeasurementOrigin {
-  watchHistory('watch_history', '手表历史数据'),
+  watchHistory('watch_history', '设备历史数据'),
   appMeasurement('app_measurement', 'App 手动测量数据'),
   remoteMember('remote_member', '远程成员数据'),
   manualEntry('manual_entry', '人工录入数据'),
@@ -382,6 +384,8 @@ class DeviceInfo {
         .replaceAll(RegExp(r'[\u0000-\u001F\u007F\uFFFD]'), '')
         .trim()
         .replaceAll(RegExp(r'\s+'), ' ');
+    // Preserve the actual ring keyword before canonicalizing watch names.
+    if (RingNamePolicy.familyForName(cleaned) != null) return cleaned;
     final normalized = cleaned.toUpperCase().replaceAll(
       RegExp(r'[^A-Z0-9]'),
       '',
@@ -405,6 +409,14 @@ class DeviceInfo {
   };
 
   WearableSdkSource get sdkSource => WearableSdkSource.fromDeviceId(id);
+
+  bool get isRing =>
+      sdkSource == WearableSdkSource.coolwear ||
+      sdkSource == WearableSdkSource.qring ||
+      (sdkSource == WearableSdkSource.veepoo &&
+          RegExp(r'^(V|TK)', caseSensitive: false).hasMatch(name.trim())) ||
+      (sdkSource == WearableSdkSource.yucheng &&
+          name.trim().toUpperCase().startsWith('YC'));
 
   String get nativeId {
     final source = sdkSource;
@@ -450,16 +462,18 @@ class DeviceInfo {
     return null;
   }
 
-  String get identifierLabel {
+  String get identifierLabel => localizedIdentifierLabel(english: false);
+
+  String localizedIdentifierLabel({required bool english}) {
     final address = macAddress;
     if (address != null) return 'MAC · $address';
     final identifier = nativeId;
     if (RegExp(
       r'^[0-9A-Fa-f]{8}(?:-[0-9A-Fa-f]{4}){3}-[0-9A-Fa-f]{12}$',
     ).hasMatch(identifier)) {
-      return 'iOS 连接标识 · ${identifier.substring(0, 8)}…${identifier.substring(identifier.length - 8)}';
+      return '${english ? 'iOS ID' : 'iOS 连接标识'} · ${identifier.substring(0, 8)}…${identifier.substring(identifier.length - 8)}';
     }
-    return '设备标识 · $identifier';
+    return '${english ? 'Device ID' : '设备标识'} · $identifier';
   }
 }
 
@@ -467,6 +481,8 @@ enum WearableSdkSource {
   veepoo('Vep', 'Veepoo'),
   yucheng('Yuc', 'Yucheng'),
   urion('U19', 'Urion'),
+  coolwear('CoolWear', 'CoolWear'),
+  qring('QRing', 'QRing'),
   unknown('--', '未标识');
 
   const WearableSdkSource(this.shortLabel, this.fullLabel);
@@ -479,6 +495,8 @@ enum WearableSdkSource {
     if (normalized.startsWith('veepoo:')) return WearableSdkSource.veepoo;
     if (normalized.startsWith('yucheng:')) return WearableSdkSource.yucheng;
     if (normalized.startsWith('urion:')) return WearableSdkSource.urion;
+    if (normalized.startsWith('coolwear:')) return WearableSdkSource.coolwear;
+    if (normalized.startsWith('qring:')) return WearableSdkSource.qring;
     return WearableSdkSource.unknown;
   }
 }
@@ -704,6 +722,7 @@ class HealthRecord {
     this.aggregation,
     this.sourceModel = '',
     this.ecgArtifact,
+    this.sleepTimeline,
   }) : origin = origin ?? MeasurementOrigin.fromWire(null, source: source);
 
   final String id;
@@ -721,6 +740,9 @@ class HealthRecord {
   final List<num> samples;
   final HealthAggregation? aggregation;
   final HealthEcgArtifact? ecgArtifact;
+  // Optional SDK intervals retained in local JSON; API upload uses its own
+  // existing field allowlist. Never infer intervals from daily totals.
+  final Map<String, Object?>? sleepTimeline;
 
   /// Manufacturer-reported model captured with the record, when available.
   /// Bluetooth display names are not verified models and must not be copied.
@@ -770,6 +792,13 @@ class HealthRecord {
           : null,
       sourceModel: '${json['sourceModel'] ?? ''}'.trim(),
       ecgArtifact: HealthEcgArtifact.fromJson(json['ecgArtifact']),
+      sleepTimeline: json['sleepTimeline'] is Map
+          ? Map<String, Object?>.unmodifiable(
+              (json['sleepTimeline'] as Map).map(
+                (key, value) => MapEntry('$key', value),
+              ),
+            )
+          : null,
     );
   }
 
@@ -790,6 +819,8 @@ class HealthRecord {
     if (aggregation != null) 'aggregation': aggregation!.toJson(),
     if (sourceModel.trim().isNotEmpty) 'sourceModel': sourceModel.trim(),
     if (ecgArtifact != null) 'ecgArtifact': ecgArtifact!.toJson(),
+    if (metric == HealthMetric.sleep && sleepTimeline != null)
+      'sleepTimeline': sleepTimeline,
   };
 
   HealthRecord copyWith({
@@ -804,6 +835,7 @@ class HealthRecord {
     HealthAggregation? aggregation,
     String? sourceModel,
     HealthEcgArtifact? ecgArtifact,
+    Map<String, Object?>? sleepTimeline,
   }) => HealthRecord(
     id: id ?? this.id,
     metric: metric,
@@ -821,6 +853,7 @@ class HealthRecord {
     aggregation: aggregation ?? this.aggregation,
     sourceModel: sourceModel ?? this.sourceModel,
     ecgArtifact: ecgArtifact ?? this.ecgArtifact,
+    sleepTimeline: sleepTimeline ?? this.sleepTimeline,
   );
 
   String get displayValue {

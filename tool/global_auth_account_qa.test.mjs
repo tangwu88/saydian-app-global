@@ -7,7 +7,7 @@ import {test} from 'node:test';
 import {fileURLToPath} from 'node:url';
 import {privateRecordName, runGlobalAuthAccountQa, validatePrivateDirectory} from './global_auth_account_qa.mjs';
 
-const origin = 'https://app.saydian.cn';
+const origin = 'https://app.saydian.com';
 const prefix = '/global/api/saydian-app/v2';
 const secret = 'PRIVATE_FIXTURE_DO_NOT_LOG';
 const memberId = 'fixture-private-member-id';

@@ -8,12 +8,39 @@ class DevicePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final connected = controller.connectedDevice;
-    final visibleFeatures = controller.visibleDeviceFeatures;
+    final ringMode = connected?.isRing == true;
+    final visibleFeatures = controller.visibleDeviceFeatures
+        .where(
+          (feature) =>
+              !ringMode ||
+              !const {
+                DeviceFeature.watchFaces,
+                DeviceFeature.photoWatchFace,
+                DeviceFeature.screenDisplay,
+              }.contains(feature),
+        )
+        .toList();
     final watchFaceFeatures = const [
       DeviceFeature.watchFaces,
       DeviceFeature.photoWatchFace,
     ].where(visibleFeatures.contains).toList(growable: false);
-    final primaryFeatures = _primaryFeatures
+    final orderedFeatures = ringMode
+        ? [
+            DeviceFeature.gestureControl,
+            DeviceFeature.healthMonitoring,
+            DeviceFeature.notifications,
+            DeviceFeature.callReminder,
+            DeviceFeature.healthReminders,
+            ..._primaryFeatures.where(
+              (f) => !const {
+                DeviceFeature.healthMonitoring,
+                DeviceFeature.notifications,
+                DeviceFeature.healthReminders,
+              }.contains(f),
+            ),
+          ]
+        : _primaryFeatures;
+    final primaryFeatures = orderedFeatures
         .where(visibleFeatures.contains)
         .toList(growable: false);
     return DeviceDetailsRefresh(
@@ -49,11 +76,13 @@ class DevicePage extends StatelessWidget {
                           color: SaydianColors.ink,
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(
-                          Icons.watch_rounded,
-                          color: Colors.white,
-                          size: 34,
-                        ),
+                        child: ringMode
+                            ? const RingIllustration(size: 48)
+                            : const Icon(
+                                Icons.watch_rounded,
+                                color: Colors.white,
+                                size: 34,
+                              ),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -75,6 +104,7 @@ class DevicePage extends StatelessWidget {
                                 ),
                                 const SizedBox(width: 8),
                                 _BatteryBadge(
+                                  device: connected,
                                   battery: connected.effectiveBattery,
                                 ),
                               ],
@@ -137,12 +167,55 @@ class DevicePage extends StatelessWidget {
                       const SizedBox(width: 10),
                       Expanded(
                         child: OutlinedButton(
-                          onPressed: controller.disconnectDevice,
+                          onPressed: controller.isDeviceDisconnecting
+                              ? null
+                              : () async {
+                                  final qring =
+                                      connected.sdkSource ==
+                                      WearableSdkSource.qring;
+                                  try {
+                                    await controller.disconnectDevice();
+                                    if (!context.mounted ||
+                                        !qring ||
+                                        !controller.isIosWellnessEdition) {
+                                      return;
+                                    }
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          context.l10n.ringDisconnectHelp,
+                                        ),
+                                        duration: const Duration(seconds: 8),
+                                      ),
+                                    );
+                                  } catch (_) {
+                                    if (!context.mounted) return;
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          _safeUiError(
+                                            context,
+                                            controller.errorMessage,
+                                            _localeCopy(
+                                              context,
+                                              'The connection has not ended. Try again.',
+                                              '设备连接尚未结束，请重试',
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                },
                           style: OutlinedButton.styleFrom(
                             minimumSize: const Size.fromHeight(44),
                             padding: const EdgeInsets.symmetric(horizontal: 10),
                           ),
-                          child: Text(context.l10n.disconnect),
+                          child: Text(
+                            controller.isDeviceDisconnecting
+                                ? context.l10n.ringDisconnecting
+                                : context.l10n.disconnect,
+                          ),
                         ),
                       ),
                     ],
@@ -203,7 +276,7 @@ class DevicePage extends StatelessWidget {
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(
-                        Icons.watch_outlined,
+                        Icons.devices_other_outlined,
                         color: SaydianColors.ink,
                         size: 62,
                       ),
@@ -265,6 +338,7 @@ class DevicePage extends StatelessWidget {
               ),
             ),
           ),
+          const SizedBox(height: 12),
           if (connected != null &&
               controller.deviceCapabilityState ==
                   DeviceCapabilityState.loading) ...[
@@ -365,8 +439,10 @@ class DevicePage extends StatelessWidget {
             if (watchFaceFeatures.isEmpty && primaryFeatures.isEmpty) ...[
               _InlineNotice(
                 key: const Key('device-no-integrated-features'),
-                message: context.l10n.useWatch,
-                icon: Icons.watch_outlined,
+                message: ringMode
+                    ? context.l10n.ringConnectedSyncHint
+                    : context.l10n.useWatch,
+                icon: ringMode ? Icons.circle_outlined : Icons.watch_outlined,
                 color: SaydianColors.blue,
                 compact: true,
               ),
@@ -471,7 +547,12 @@ class DevicePage extends StatelessWidget {
                                     'zh'
                                 ? '脉搏分析'
                                 : 'Pulse insights')
-                          : context.l10n.deviceFeatureName(feature),
+                          : context.l10n.deviceFeatureName(
+                              feature,
+                              coolWearRing:
+                                  controller.connectedDevice?.sdkSource ==
+                                  WearableSdkSource.coolwear,
+                            ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(fontWeight: FontWeight.w800),
@@ -479,7 +560,7 @@ class DevicePage extends StatelessWidget {
                     if (!availability.isReady) ...[
                       const SizedBox(height: 3),
                       Text(
-                        availability.message,
+                        wearableDeviceText(controller, availability.message),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
@@ -527,6 +608,8 @@ class DevicePage extends StatelessWidget {
     DeviceFeature.photoWatchFace => Icons.photo_outlined,
     DeviceFeature.findWatch => Icons.notifications_active_outlined,
     DeviceFeature.camera => Icons.camera_alt_outlined,
+    DeviceFeature.gestureControl => Icons.touch_app_outlined,
+    DeviceFeature.callReminder => Icons.phone_in_talk_outlined,
     DeviceFeature.phoneCalls => Icons.call_outlined,
     DeviceFeature.contacts => Icons.contacts_outlined,
     DeviceFeature.notifications => Icons.notifications_none_rounded,
@@ -549,7 +632,8 @@ class DevicePage extends StatelessWidget {
 }
 
 class _BatteryBadge extends StatelessWidget {
-  const _BatteryBadge({required this.battery});
+  const _BatteryBadge({required this.battery, this.device});
+  final DeviceInfo? device;
 
   final DeviceBatteryInfo? battery;
 
@@ -571,11 +655,14 @@ class _BatteryBadge extends StatelessWidget {
         : chinese
         ? value.displayLabel
         : '${value.value}/${value.scale}';
+    final kind = device?.isRing == true
+        ? (chinese ? '戒指' : 'Ring')
+        : (chinese ? '设备' : 'Device');
     final semantics = value == null
-        ? (chinese ? '手表电量暂未读取' : 'Watch battery unavailable')
+        ? (chinese ? '$kind电量暂未读取' : '$kind battery unavailable')
         : chinese
-        ? '手表电量 $label，${value.chargeState.label}'
-        : 'Watch battery ${value.isPercent ? label : '${value.value} of ${value.scale} bars'}, ${_batteryChargeLabel(context, value.chargeState)}';
+        ? '$kind电量 $label，${value.chargeState.label}'
+        : '$kind battery ${value.isPercent ? label : '${value.value} of ${value.scale} bars'}, ${_batteryChargeLabel(context, value.chargeState)}';
     return Semantics(
       label: semantics,
       child: Row(
@@ -759,18 +846,29 @@ class _DeviceWatchFaceMarketStripState
         InkWell(
           borderRadius: BorderRadius.circular(10),
           onTap: _openMarket,
-          child: const Padding(
-            padding: EdgeInsets.symmetric(vertical: 4),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 4),
             child: Row(
               children: [
                 Expanded(
                   child: Text(
-                    '表盘市场',
-                    style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
+                    context.l10n.watchFaceShop,
+                    style: const TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                 ),
-                Text('查看更多', style: TextStyle(color: SaydianColors.muted)),
-                Icon(Icons.chevron_right_rounded, color: SaydianColors.muted),
+                Text(
+                  (Localizations.localeOf(context).languageCode == 'zh'
+                      ? '查看更多'
+                      : 'View all'),
+                  style: const TextStyle(color: SaydianColors.muted),
+                ),
+                const Icon(
+                  Icons.chevron_right_rounded,
+                  color: SaydianColors.muted,
+                ),
               ],
             ),
           ),
@@ -785,7 +883,13 @@ class _DeviceWatchFaceMarketStripState
                   child: InkWell(
                     borderRadius: BorderRadius.circular(16),
                     onTap: _openMarket,
-                    child: const Center(child: Text('进入表盘市场选择更多样式')),
+                    child: Center(
+                      child: Text(
+                        (Localizations.localeOf(context).languageCode == 'zh'
+                            ? '进入表盘市场选择更多样式'
+                            : 'Explore more faces'),
+                      ),
+                    ),
                   ),
                 )
               : ListView.separated(
@@ -1028,9 +1132,8 @@ class _DeviceSearchPageState extends State<DeviceSearchPage>
                                             15,
                                           ),
                                         ),
-                                        child: const Icon(
-                                          Icons.watch_rounded,
-                                          color: Colors.white,
+                                        child: WearableDeviceSymbol(
+                                          device: device,
                                           size: 29,
                                         ),
                                       ),
@@ -1059,7 +1162,13 @@ class _DeviceSearchPageState extends State<DeviceSearchPage>
                                             ),
                                             const SizedBox(height: 5),
                                             Text(
-                                              device.identifierLabel,
+                                              device.localizedIdentifierLabel(
+                                                english:
+                                                    Localizations.localeOf(
+                                                      context,
+                                                    ).languageCode !=
+                                                    'zh',
+                                              ),
                                               maxLines: 1,
                                               overflow: TextOverflow.ellipsis,
                                               style: const TextStyle(
@@ -1129,8 +1238,8 @@ class _DeviceSearchPageState extends State<DeviceSearchPage>
                                           controller.deviceState ==
                                               DeviceConnectionState
                                                   .authenticating
-                                      ? '正在连接；如手表弹出确认，请在 12 秒内确认，并保持手表靠近手机…'
-                                      : '正在${_deviceStateLabel(controller.deviceState)}，请保持手表靠近手机…'
+                                      ? '正在连接设备，请保持设备靠近手机；如出现配对确认提示，请按提示确认…'
+                                      : '正在${_deviceStateLabel(controller.deviceState)}，请保持${controller.deviceKindLabel}靠近手机…'
                                 : controller.deviceState ==
                                       DeviceConnectionState.syncing
                                 ? context.l10n.readingData
@@ -1153,7 +1262,7 @@ class _DeviceSearchPageState extends State<DeviceSearchPage>
                         onPressed: connecting ? null : _openShop,
                         icon: const Icon(Icons.shopping_bag_outlined),
                         label: Text(
-                          context.l10n.noWatchShopHint,
+                          context.l10n.shop,
                           style: TextStyle(fontWeight: FontWeight.w800),
                         ),
                       ),
@@ -1218,7 +1327,7 @@ class _DeviceSearchEmpty extends StatelessWidget {
                 ? Icons.location_off_outlined
                 : issue != null
                 ? Icons.settings_outlined
-                : Icons.watch_off_outlined,
+                : Icons.devices_other_outlined,
             color: SaydianColors.blue,
             size: 76,
           ),
@@ -1321,45 +1430,52 @@ class _DeviceInfoPageState extends State<DeviceInfoPage> {
                 Card(
                   child: Column(
                     children: [
-                      ListTile(
-                        title: Text(context.l10n.deviceName),
-                        trailing: Text(device?.name ?? '--'),
+                      _DeviceInfoValueTile(
+                        title: context.l10n.deviceName,
+                        value: device?.name ?? '--',
+                      ),
+                      const Divider(indent: 16),
+                      _DeviceInfoValueTile(
+                        title: context.l10n.deviceModel,
+                        value: device?.displayModel ?? '--',
+                      ),
+                      const Divider(indent: 16),
+                      _DeviceInfoValueTile(
+                        title: context.l10n.connectionStatus,
+                        value: device == null
+                            ? context.l10n.notConnected
+                            : context.l10n.connected,
+                      ),
+                      const Divider(indent: 16),
+                      _DeviceInfoValueTile(
+                        title: context.l10n.firmwareVersion,
+                        value: device?.firmwareVersion ?? '--',
                       ),
                       const Divider(indent: 16),
                       ListTile(
-                        title: Text(context.l10n.deviceModel),
-                        trailing: Text(device?.displayModel ?? '--'),
-                      ),
-                      const Divider(indent: 16),
-                      ListTile(
-                        title: Text(context.l10n.connectionStatus),
-                        trailing: Text(
-                          device == null
-                              ? context.l10n.notConnected
-                              : context.l10n.connected,
+                        title: Text(
+                          wearableDeviceText(
+                            widget.controller,
+                            context.l10n.watchBattery,
+                          ),
                         ),
-                      ),
-                      const Divider(indent: 16),
-                      ListTile(
-                        title: Text(context.l10n.firmwareVersion),
-                        trailing: Text(device?.firmwareVersion ?? '--'),
-                      ),
-                      const Divider(indent: 16),
-                      ListTile(
-                        title: Text(context.l10n.watchBattery),
                         subtitle: battery?.updatedAt == null
                             ? null
                             : Text(
                                 '${Localizations.localeOf(context).languageCode == 'zh' ? '更新于' : 'Updated'} ${DateFormat.yMMMd(context.l10n.localeName).add_jm().format(battery!.updatedAt!.toLocal())}',
                               ),
-                        trailing: _BatteryBadge(battery: battery),
+                        trailing: _BatteryBadge(
+                          battery: battery,
+                          device: device,
+                        ),
                       ),
                       if (battery != null) ...[
                         const Divider(indent: 16),
-                        ListTile(
-                          title: Text(context.l10n.chargingStatus),
-                          trailing: Text(
-                            _batteryChargeLabel(context, battery.chargeState),
+                        _DeviceInfoValueTile(
+                          title: context.l10n.chargingStatus,
+                          value: _batteryChargeLabel(
+                            context,
+                            battery.chargeState,
                           ),
                         ),
                       ],
@@ -1395,6 +1511,17 @@ class _DeviceInfoPageState extends State<DeviceInfoPage> {
       ),
     );
   }
+}
+
+class _DeviceInfoValueTile extends StatelessWidget {
+  const _DeviceInfoValueTile({required this.title, required this.value});
+
+  final String title;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) =>
+      ListTile(title: Text(title), subtitle: SelectableText(value));
 }
 
 class _ConnectionBadge extends StatelessWidget {

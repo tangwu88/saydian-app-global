@@ -43,7 +43,7 @@
   "addSupportContact": "添加客服",
   "contactPreparationHint": "联系前请准备设备型号和问题发生时间",
   "supportPrivacyWarning": "请勿向非官方账号发送验证码、密码或完整健康记录。",
-  "brandHealthTitle": "SAYDIAN Health",
+  "brandHealthTitle": "SayDian",
   "accountAndSecurity": "账号与安全",
   "cityNameLabel": "城市名称",
   "cityNameExample": "例如：深圳",
@@ -158,26 +158,74 @@
   "watchCalories": "手表热量",
   "connectForWorkout": "请先在设备页连接手表，运动模式将由手表记录。",
   "latestVersion": "当前已是最新版本 V{version}",
-  "@latestVersion": {"placeholders":{"version":{"type":"String"}}},
+  "@latestVersion": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
   "workoutPaused": "{mode}已暂停",
-  "@workoutPaused": {"placeholders":{"mode":{"type":"String"}}},
+  "@workoutPaused": {
+    "placeholders": {
+      "mode": {
+        "type": "String"
+      }
+    }
+  },
   "workoutInProgress": "{mode}进行中",
-  "@workoutInProgress": {"placeholders":{"mode":{"type":"String"}}},
+  "@workoutInProgress": {
+    "placeholders": {
+      "mode": {
+        "type": "String"
+      }
+    }
+  },
   "workoutReady": "准备开始{mode}",
-  "@workoutReady": {"placeholders":{"mode":{"type":"String"}}},
+  "@workoutReady": {
+    "placeholders": {
+      "mode": {
+        "type": "String"
+      }
+    }
+  },
   "startWorkout": "开始{mode}",
-  "@startWorkout": {"placeholders":{"mode":{"type":"String"}}},
+  "@startWorkout": {
+    "placeholders": {
+      "mode": {
+        "type": "String"
+      }
+    }
+  },
   "finishOtherWorkout": "请先结束{mode}",
-  "@finishOtherWorkout": {"placeholders":{"mode":{"type":"String"}}},
+  "@finishOtherWorkout": {
+    "placeholders": {
+      "mode": {
+        "type": "String"
+      }
+    }
+  },
   "workoutDetails": "{mode}详情",
-  "@workoutDetails": {"placeholders":{"mode":{"type":"String"}}},
+  "@workoutDetails": {
+    "placeholders": {
+      "mode": {
+        "type": "String"
+      }
+    }
+  },
   "stepCount": "{count} 步",
-  "@stepCount": {"placeholders":{"count":{"type":"int"}}},
+  "@stepCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "@@locale": "zh",
   "globalShopPricePending": "价格待确认",
   "globalShopLoadMore": "加载更多",
   "globalShopReadOnly": "可浏览商品，当前地区暂未开放下单。",
-  "appName": "SAYDIAN Health",
+  "appName": "SayDian",
   "searchingNearby": "正在搜索附近手表",
   "noDevices": "未发现设备",
   "selectWatch": "请核对名称和信号强度，再选择手表",
@@ -636,7 +684,13 @@
   "shareProduct": "分享商品",
   "customerReviews": "用户评价",
   "stockCount": "库存 {count} 件",
-  "@stockCount": {"placeholders":{"count":{"type":"int"}}},
+  "@stockCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "measurementContactEcg": "未检测到电极接触，请正确佩戴手表并将手指持续贴在心电电极上",
   "measurementContactElectrode": "未检测到正确接触，请佩戴手表并按手表提示接触电极",
   "measurementCheckFit": "未检测到正确佩戴，请将手表贴合手腕后继续测量",
@@ -654,7 +708,13 @@
   "endMeasurement": "结束测量",
   "deviceDataReadComplete": "已读取手表数据，云端上传结果请查看同步状态",
   "measurementPercent": "测量进度 {percent}%",
-  "@measurementPercent": {"placeholders":{"percent":{"type":"int"}}},
+  "@measurementPercent": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
   "cloudHealthUploading": "正在上传已保存的记录…",
   "cloudHealthLocalOnly": "数据仅保存在本机，登录后可上传",
   "cloudHealthPending": "部分记录暂未上传，已保存在本机",
@@ -667,5 +727,24 @@
   "batteryUnknown": "状态未知",
   "batteryLow": "电量低",
   "ecgWaveformPreviewHint": "波形预览 · 刻度待确认",
-  "ecgWaveformLowSignalHint": "信号质量较低 · 波形预览"
+  "ecgWaveformLowSignalHint": "信号质量较低 · 波形预览",
+  "dataPrivacyTitle": "数据隐私",
+  "dataResidencyTitle": "数据存储在美国",
+  "dataResidencyBody": "SayDian 云端保存的账号、设备及同步的穿戴设备数据，均存储在美国境内的服务器。如果您在其他国家或地区使用 SayDian，您选择同步的数据将传输至美国。",
+  "dataLocalTitle": "手机本地存储",
+  "dataLocalBody": "SayDian 也会在手机上保留加密的本地历史数据，用于离线查看及等待同步。尚未获得服务器确认的数据仍标记为待同步。",
+  "dataChoiceTitle": "您的选择",
+  "dataChoiceBody": "您可以按功能需要授予权限、拒绝可选权限，并在应用内管理共享。如需申请删除账号及关联数据，请打开“账号 → 注销账号”。保留期限及其他权利请查看隐私政策。",
+  "dataThirdPartyTitle": "可选服务",
+  "dataThirdPartyBody": "天气、通知等可选服务可能根据各自的隐私政策处理所需信息。美国存储声明适用于 SayDian 云端存储，不涵盖手机本地存储或第三方独立的数据处理。",
+  "iosWellnessSafety": "iOS 版 SayDian 展示兼容设备的活动与睡眠信息，用于日常健康生活管理，不提供医学测量、诊断或治疗。作出医疗决定前，请咨询合格的医疗专业人员。",
+  "smartRing": "智能戒指",
+  "ringStress": "压力",
+  "ringGestures": "手势控制",
+  "ringCallReminder": "来电提醒",
+  "ringConnectedSyncHint": "设备已连接，数据将在同步后显示。",
+  "ringDisconnecting": "正在断开",
+  "ringDisconnectHelp": "App 连接已断开。若戒指在 iPhone 蓝牙设置中仍显示已连接，请先在系统设置中忽略该设备，再重新搜索。",
+  "deviceLabel": "设备",
+  "ringStatusReminder": "状态提醒"
 }
