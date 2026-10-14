@@ -47,6 +47,16 @@ class GlobalLocaleController extends ChangeNotifier {
     'ja': '日本語',
     'ko': '한국어',
   };
+  static const englishNames = {
+    'en': 'English',
+    'zh-Hans': 'Chinese (Simplified)',
+    'zh-Hant': 'Chinese (Traditional)',
+    'de': 'German',
+    'fr': 'French',
+    'es': 'Spanish',
+    'ja': 'Japanese',
+    'ko': 'Korean',
+  };
 
   final GlobalLocaleStore _store;
   Locale _locale;
@@ -187,7 +197,9 @@ Future<void> showGlobalLanguagePicker(BuildContext context) async {
               ListTile(
                 key: ValueKey('global-language-${locale.toLanguageTag()}'),
                 title: Text(
-                  GlobalLocaleController.names[locale.toLanguageTag()]!,
+                  (controller.locale.languageCode == 'en'
+                      ? GlobalLocaleController.englishNames
+                      : GlobalLocaleController.names)[locale.toLanguageTag()]!,
                 ),
                 trailing: locale == controller.locale
                     ? const Icon(Icons.check)

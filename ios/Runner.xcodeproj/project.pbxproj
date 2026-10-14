@@ -7,24 +7,31 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		A19000000000000000000001 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = A19000000000000000000002 /* InfoPlist.strings */; };
+		0486046F016C5B3ED9688ECF /* QCCentralManager.m in Sources */ = {isa = PBXBuildFile; fileRef = BF95F95CC730254763B15073 /* QCCentralManager.m */; };
 		1498D2341E8E89220040F4C2 /* GeneratedPluginRegistrant.m in Sources */ = {isa = PBXBuildFile; fileRef = 1498D2331E8E89220040F4C2 /* GeneratedPluginRegistrant.m */; };
 		331C808B294A63AB00263BE5 /* RunnerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 331C807B294A618700263BE5 /* RunnerTests.swift */; };
+		35BCDE94AC369CF18AEADECF /* BluetoothLibrary.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0F5C12D0CA0BEF6507523A8A /* BluetoothLibrary.framework */; };
 		3B3967161E833CAA004F5970 /* AppFrameworkInfo.plist in Resources */ = {isa = PBXBuildFile; fileRef = 3B3967151E833CAA004F5970 /* AppFrameworkInfo.plist */; };
 		3FF346A09F7ABDD2CAC43E21 /* Pods_Runner.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F56025AD7DDDAE3BF5401FED /* Pods_Runner.framework */; };
+		64090F06796BD36747271034 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = CF081EB3CD30B8A28BDEB95E /* PrivacyInfo.xcprivacy */; };
 		6E4417E4618239F58CC2682A /* Pods_RunnerTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 732AFA1D0A1C4B49958A4162 /* Pods_RunnerTests.framework */; };
 		74858FAF1ED2DC5600515810 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74858FAE1ED2DC5600515810 /* AppDelegate.swift */; };
-		A19000000000000000000031 /* UrionGattTransport.swift in Sources */ = {isa = PBXBuildFile; fileRef = A19000000000000000000032 /* UrionGattTransport.swift */; };
 		7884E8682EC3CC0700C636F2 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7884E8672EC3CC0400C636F2 /* SceneDelegate.swift */; };
 		97C146FC1CF9000F007C117D /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FA1CF9000F007C117D /* Main.storyboard */; };
 		97C146FE1CF9000F007C117D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FD1CF9000F007C117D /* Assets.xcassets */; };
 		97C147011CF9000F007C117D /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FF1CF9000F007C117D /* LaunchScreen.storyboard */; };
+		98C9DFFDE02AD312B8F08EA3 /* BluetoothLibrary.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 0F5C12D0CA0BEF6507523A8A /* BluetoothLibrary.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		A13000012608130000000001 /* WearablePayloadMapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = A13000012608130000000002 /* WearablePayloadMapper.swift */; };
+		A19000000000000000000001 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = A19000000000000000000002 /* InfoPlist.strings */; };
+		A19000000000000000000031 /* UrionGattTransport.swift in Sources */ = {isa = PBXBuildFile; fileRef = A19000000000000000000032 /* UrionGattTransport.swift */; };
+		B92FD2C36668C91D77C23C8D /* CoolWearWearableBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = F9F233C7AFBDAC32693DCBF1 /* CoolWearWearableBridge.m */; };
+		C01FAA3FAE090125A302DB81 /* QCBandSDK.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E5D4EBB765A37F3CC40600A8 /* QCBandSDK.framework */; };
 		F00000000000000000000001 /* VeepooBleSDK.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F00000000000000000000010 /* VeepooBleSDK.framework */; };
 		F00000000000000000000002 /* ABParTool.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F00000000000000000000011 /* ABParTool.framework */; };
 		F00000000000000000000003 /* ABParTool.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = F00000000000000000000011 /* ABParTool.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		F00000000000000000000005 /* GRDFUSDK.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F00000000000000000000013 /* GRDFUSDK.framework */; };
 		F00000000000000000000006 /* GRDFUSDK.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = F00000000000000000000013 /* GRDFUSDK.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		F7EE71D221FAFEA90311613E /* QRingWearableBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 5A5C8D63614A16B2C97CF28A /* QRingWearableBridge.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -46,6 +53,7 @@
 			files = (
 				F00000000000000000000003 /* ABParTool.framework in Embed Frameworks */,
 				F00000000000000000000006 /* GRDFUSDK.framework in Embed Frameworks */,
+				98C9DFFDE02AD312B8F08EA3 /* BluetoothLibrary.framework in Embed Frameworks */,
 			);
 			name = "Embed Frameworks";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -53,28 +61,28 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		A19000000000000000000010 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
-		A19000000000000000000011 /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/InfoPlist.strings"; sourceTree = "<group>"; };
-		A19000000000000000000012 /* zh-Hant */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hant"; path = "zh-Hant.lproj/InfoPlist.strings"; sourceTree = "<group>"; };
-		A19000000000000000000013 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/InfoPlist.strings; sourceTree = "<group>"; };
-		A19000000000000000000014 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/InfoPlist.strings; sourceTree = "<group>"; };
-		A19000000000000000000015 /* es */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = es; path = es.lproj/InfoPlist.strings; sourceTree = "<group>"; };
-		A19000000000000000000016 /* ja */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ja; path = ja.lproj/InfoPlist.strings; sourceTree = "<group>"; };
-		A19000000000000000000017 /* ko */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ko; path = ko.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		0D0506702C1AF271866CDF19 /* Pods-Runner.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.release.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.release.xcconfig"; sourceTree = "<group>"; };
+		0F5C12D0CA0BEF6507523A8A /* BluetoothLibrary.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = BluetoothLibrary.framework; sourceTree = "<group>"; };
 		1498D2321E8E86230040F4C2 /* GeneratedPluginRegistrant.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = GeneratedPluginRegistrant.h; sourceTree = "<group>"; };
 		1498D2331E8E89220040F4C2 /* GeneratedPluginRegistrant.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GeneratedPluginRegistrant.m; sourceTree = "<group>"; };
+		15474661361E667B7A6FDF4C /* QCCentralManager.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = QCCentralManager.h; sourceTree = "<group>"; };
+		25C9C504F79A9C414E77065C /* CoolWearWearableBridge.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = CoolWearWearableBridge.h; sourceTree = "<group>"; };
+		2DEBF08DDAC632A1F4055A32 /* CoolWearMonitoring.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = CoolWearMonitoring.h; sourceTree = "<group>"; };
+		30D2EE770C250CDD57D2E2DA /* CoolWearReminders.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = CoolWearReminders.h; sourceTree = "<group>"; };
 		331C807B294A618700263BE5 /* RunnerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunnerTests.swift; sourceTree = "<group>"; };
 		331C8081294A63A400263BE5 /* RunnerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RunnerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		3B3967151E833CAA004F5970 /* AppFrameworkInfo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = AppFrameworkInfo.plist; path = Flutter/AppFrameworkInfo.plist; sourceTree = "<group>"; };
+		41985E2EC147BF952ED3F258 /* QRingGesturePolicy.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = QRingGesturePolicy.h; sourceTree = "<group>"; };
+		4390C143A593A74A1E29D0F9 /* QRingCameraPolicy.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = QRingCameraPolicy.h; sourceTree = "<group>"; };
 		4B84943AF05417234192C03E /* Pods-RunnerTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RunnerTests.release.xcconfig"; path = "Target Support Files/Pods-RunnerTests/Pods-RunnerTests.release.xcconfig"; sourceTree = "<group>"; };
+		5A5C8D63614A16B2C97CF28A /* QRingWearableBridge.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = QRingWearableBridge.m; sourceTree = "<group>"; };
 		6890BBDEAA5CC1DABA09A2EC /* Pods-RunnerTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RunnerTests.debug.xcconfig"; path = "Target Support Files/Pods-RunnerTests/Pods-RunnerTests.debug.xcconfig"; sourceTree = "<group>"; };
 		732AFA1D0A1C4B49958A4162 /* Pods_RunnerTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_RunnerTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		74858FAD1ED2DC5600515810 /* Runner-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Runner-Bridging-Header.h"; sourceTree = "<group>"; };
 		74858FAE1ED2DC5600515810 /* AppDelegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
-		A19000000000000000000032 /* UrionGattTransport.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UrionGattTransport.swift; sourceTree = "<group>"; };
 		7884E8672EC3CC0400C636F2 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
 		7AFA3C8E1D35360C0083082E /* Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = Release.xcconfig; path = Flutter/Release.xcconfig; sourceTree = "<group>"; };
+		8544BED0ADFA24D84A48725E /* CNRingDeviceSettingsPolicy.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = CNRingDeviceSettingsPolicy.h; sourceTree = "<group>"; };
 		884048AA17B9A7FDF38D949C /* Pods-Runner.profile.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.profile.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.profile.xcconfig"; sourceTree = "<group>"; };
 		95CE15EAF874EAEEEA7CCDD5 /* Pods-Runner.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.debug.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.debug.xcconfig"; sourceTree = "<group>"; };
 		9740EEB21CF90195004384FC /* Debug.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = Debug.xcconfig; path = Flutter/Debug.xcconfig; sourceTree = "<group>"; };
@@ -86,7 +94,26 @@
 		97C147021CF9000F007C117D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		A13000012608130000000002 /* WearablePayloadMapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WearablePayloadMapper.swift; sourceTree = "<group>"; };
 		A13000012608130000000003 /* Runner.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Runner.entitlements; sourceTree = "<group>"; };
+		A166A3F7B9C500720975CFF2 /* RingNamePolicy.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = RingNamePolicy.h; sourceTree = "<group>"; };
+		A19000000000000000000010 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		A19000000000000000000011 /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/InfoPlist.strings"; sourceTree = "<group>"; };
+		A19000000000000000000012 /* zh-Hant */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hant"; path = "zh-Hant.lproj/InfoPlist.strings"; sourceTree = "<group>"; };
+		A19000000000000000000013 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		A19000000000000000000014 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		A19000000000000000000015 /* es */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = es; path = es.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		A19000000000000000000016 /* ja */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ja; path = ja.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		A19000000000000000000017 /* ko */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ko; path = ko.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		A19000000000000000000032 /* UrionGattTransport.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UrionGattTransport.swift; sourceTree = "<group>"; };
+		A514EB8E312871BA576662FE /* QRingWearableBridge.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = QRingWearableBridge.h; sourceTree = "<group>"; };
 		AFEDCFAABBD6359F64DE7A0D /* Pods-RunnerTests.profile.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RunnerTests.profile.xcconfig"; path = "Target Support Files/Pods-RunnerTests/Pods-RunnerTests.profile.xcconfig"; sourceTree = "<group>"; };
+		B2BAE21584899EB88E6F09FE /* CoolWearPolicy.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = CoolWearPolicy.h; sourceTree = "<group>"; };
+		BF95F95CC730254763B15073 /* QCCentralManager.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = QCCentralManager.m; sourceTree = "<group>"; };
+		C42B41F4AA62CB95D0175C44 /* CoolWearControls.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = CoolWearControls.h; sourceTree = "<group>"; };
+		C83C82F7F5A3366B6C973FCE /* CNActivitySleepPolicy.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = CNActivitySleepPolicy.h; sourceTree = "<group>"; };
+		CEDB1E370426BA0DA860F993 /* CoolWearHistory.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = CoolWearHistory.h; sourceTree = "<group>"; };
+		CF081EB3CD30B8A28BDEB95E /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		E5D4EBB765A37F3CC40600A8 /* QCBandSDK.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = QCBandSDK.framework; sourceTree = "<group>"; };
+		EA59BD0332663920A85073C8 /* CoolWearRecovery.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = CoolWearRecovery.h; sourceTree = "<group>"; };
 		F00000000000000000000010 /* VeepooBleSDK.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = VeepooBleSDK.framework; sourceTree = "<group>"; };
 		F00000000000000000000011 /* ABParTool.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = ABParTool.framework; sourceTree = "<group>"; };
 		F00000000000000000000012 /* DFUnits.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = DFUnits.framework; sourceTree = "<group>"; };
@@ -95,6 +122,9 @@
 		F00000000000000000000015 /* JLDialUnit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = JLDialUnit.framework; sourceTree = "<group>"; };
 		F00000000000000000000016 /* ZipZap.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = ZipZap.framework; sourceTree = "<group>"; };
 		F56025AD7DDDAE3BF5401FED /* Pods_Runner.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Runner.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		F5FB43E312E7D7FC887D9C16 /* QRingRecordMapping.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = QRingRecordMapping.h; sourceTree = "<group>"; };
+		F677D59C9533278C028A33A4 /* QRingConnectionPolicy.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = QRingConnectionPolicy.h; sourceTree = "<group>"; };
+		F9F233C7AFBDAC32693DCBF1 /* CoolWearWearableBridge.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = CoolWearWearableBridge.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -114,6 +144,8 @@
 				F00000000000000000000002 /* ABParTool.framework in Frameworks */,
 				F00000000000000000000005 /* GRDFUSDK.framework in Frameworks */,
 				3FF346A09F7ABDD2CAC43E21 /* Pods_Runner.framework in Frameworks */,
+				C01FAA3FAE090125A302DB81 /* QCBandSDK.framework in Frameworks */,
+				35BCDE94AC369CF18AEADECF /* BluetoothLibrary.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -177,6 +209,26 @@
 				A13000012608130000000002 /* WearablePayloadMapper.swift */,
 				7884E8672EC3CC0400C636F2 /* SceneDelegate.swift */,
 				74858FAD1ED2DC5600515810 /* Runner-Bridging-Header.h */,
+				C42B41F4AA62CB95D0175C44 /* CoolWearControls.h */,
+				CEDB1E370426BA0DA860F993 /* CoolWearHistory.h */,
+				2DEBF08DDAC632A1F4055A32 /* CoolWearMonitoring.h */,
+				B2BAE21584899EB88E6F09FE /* CoolWearPolicy.h */,
+				EA59BD0332663920A85073C8 /* CoolWearRecovery.h */,
+				30D2EE770C250CDD57D2E2DA /* CoolWearReminders.h */,
+				25C9C504F79A9C414E77065C /* CoolWearWearableBridge.h */,
+				F9F233C7AFBDAC32693DCBF1 /* CoolWearWearableBridge.m */,
+				4390C143A593A74A1E29D0F9 /* QRingCameraPolicy.h */,
+				F677D59C9533278C028A33A4 /* QRingConnectionPolicy.h */,
+				41985E2EC147BF952ED3F258 /* QRingGesturePolicy.h */,
+				F5FB43E312E7D7FC887D9C16 /* QRingRecordMapping.h */,
+				A514EB8E312871BA576662FE /* QRingWearableBridge.h */,
+				5A5C8D63614A16B2C97CF28A /* QRingWearableBridge.m */,
+				15474661361E667B7A6FDF4C /* QCCentralManager.h */,
+				BF95F95CC730254763B15073 /* QCCentralManager.m */,
+				A166A3F7B9C500720975CFF2 /* RingNamePolicy.h */,
+				C83C82F7F5A3366B6C973FCE /* CNActivitySleepPolicy.h */,
+				8544BED0ADFA24D84A48725E /* CNRingDeviceSettingsPolicy.h */,
+				CF081EB3CD30B8A28BDEB95E /* PrivacyInfo.xcprivacy */,
 			);
 			path = Runner;
 			sourceTree = "<group>";
@@ -214,6 +266,8 @@
 				F00000000000000000000014 /* JL_BLEKit.framework */,
 				F00000000000000000000015 /* JLDialUnit.framework */,
 				F00000000000000000000016 /* ZipZap.framework */,
+				E5D4EBB765A37F3CC40600A8 /* QCBandSDK.framework */,
+				0F5C12D0CA0BEF6507523A8A /* BluetoothLibrary.framework */,
 			);
 			path = Vendor;
 			sourceTree = "<group>";
@@ -260,8 +314,6 @@
 			dependencies = (
 			);
 			name = Runner;
-			packageProductDependencies = (
-			);
 			productName = Runner;
 			productReference = 97C146EE1CF9000F007C117D /* Runner.app */;
 			productType = "com.apple.product-type.application";
@@ -307,8 +359,6 @@
 				Base,
 			);
 			mainGroup = 97C146E51CF9000F007C117D;
-			packageReferences = (
-			);
 			productRefGroup = 97C146EF1CF9000F007C117D /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -336,28 +386,13 @@
 				3B3967161E833CAA004F5970 /* AppFrameworkInfo.plist in Resources */,
 				97C146FE1CF9000F007C117D /* Assets.xcassets in Resources */,
 				97C146FC1CF9000F007C117D /* Main.storyboard in Resources */,
+				64090F06796BD36747271034 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
-		A13000012608290000000020 /* Validate Release Configuration */ = {
-			isa = PBXShellScriptBuildPhase;
-			alwaysOutOfDate = 1;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-			);
-			name = "Validate Release Configuration";
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "/bin/sh \"$SRCROOT/../scripts/release/validate_xcode_release.sh\"";
-			showEnvVarsInLog = 0;
-		};
 		038D018F0491074CA4D2218E /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
@@ -467,6 +502,22 @@
 			shellPath = /bin/sh;
 			shellScript = "/bin/sh \"$FLUTTER_ROOT/packages/flutter_tools/bin/xcode_backend.sh\" build";
 		};
+		A13000012608290000000020 /* Validate Release Configuration */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Validate Release Configuration";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "/bin/sh \"$SRCROOT/../scripts/release/validate_xcode_release.sh\"";
+			showEnvVarsInLog = 0;
+		};
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -487,6 +538,9 @@
 				A13000012608130000000001 /* WearablePayloadMapper.swift in Sources */,
 				1498D2341E8E89220040F4C2 /* GeneratedPluginRegistrant.m in Sources */,
 				7884E8682EC3CC0700C636F2 /* SceneDelegate.swift in Sources */,
+				B92FD2C36668C91D77C23C8D /* CoolWearWearableBridge.m in Sources */,
+				F7EE71D221FAFEA90311613E /* QRingWearableBridge.m in Sources */,
+				0486046F016C5B3ED9688ECF /* QCCentralManager.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -501,12 +555,6 @@
 /* End PBXTargetDependency section */
 
 /* Begin PBXVariantGroup section */
-		A19000000000000000000002 /* InfoPlist.strings */ = {
-			isa = PBXVariantGroup;
-			children = (A19000000000000000000010, A19000000000000000000011, A19000000000000000000012, A19000000000000000000013, A19000000000000000000014, A19000000000000000000015, A19000000000000000000016, A19000000000000000000017, );
-			name = InfoPlist.strings;
-			sourceTree = "<group>";
-		};
 		97C146FA1CF9000F007C117D /* Main.storyboard */ = {
 			isa = PBXVariantGroup;
 			children = (
@@ -521,6 +569,21 @@
 				97C147001CF9000F007C117D /* Base */,
 			);
 			name = LaunchScreen.storyboard;
+			sourceTree = "<group>";
+		};
+		A19000000000000000000002 /* InfoPlist.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				A19000000000000000000010 /* en */,
+				A19000000000000000000011 /* zh-Hans */,
+				A19000000000000000000012 /* zh-Hant */,
+				A19000000000000000000013 /* de */,
+				A19000000000000000000014 /* fr */,
+				A19000000000000000000015 /* es */,
+				A19000000000000000000016 /* ja */,
+				A19000000000000000000017 /* ko */,
+			);
+			name = InfoPlist.strings;
 			sourceTree = "<group>";
 		};
 /* End PBXVariantGroup section */
@@ -599,6 +662,11 @@
 					JL_BLEKit.framework,
 					JLDialUnit.framework,
 					ZipZap.framework,
+					QCCentralManager.m,
+					QRingWearableBridge.m,
+					CoolWearWearableBridge.m,
+					QCBandSDK.framework,
+					BluetoothLibrary.framework,
 				);
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -819,6 +887,11 @@
 					JL_BLEKit.framework,
 					JLDialUnit.framework,
 					ZipZap.framework,
+					QCCentralManager.m,
+					QRingWearableBridge.m,
+					CoolWearWearableBridge.m,
+					QCBandSDK.framework,
+					BluetoothLibrary.framework,
 				);
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -851,8 +924,8 @@
 				APS_ENVIRONMENT = production;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "$(SAIDIAN_CODE_SIGN_IDENTITY)";
 				CODE_SIGN_ENTITLEMENTS = Runner/RunnerAppStore.entitlements;
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "$(SAIDIAN_CODE_SIGN_IDENTITY)";
 				CODE_SIGN_STYLE = Manual;
 				CURRENT_PROJECT_VERSION = "$(FLUTTER_BUILD_NUMBER)";
 				DEVELOPMENT_TEAM = "$(SAIDIAN_DEVELOPMENT_TEAM)";
@@ -865,12 +938,17 @@
 					JL_BLEKit.framework,
 					JLDialUnit.framework,
 					ZipZap.framework,
+					QCCentralManager.m,
+					QRingWearableBridge.m,
+					CoolWearWearableBridge.m,
+					QCBandSDK.framework,
+					BluetoothLibrary.framework,
 				);
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/Runner/Vendor",
 				);
-				INFOPLIST_FILE = Runner/Info-AppStore.plist;
+				INFOPLIST_FILE = "Runner/Info-AppStore.plist";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -924,7 +1002,6 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
-
 	};
 	rootObject = 97C146E61CF9000F007C117D /* Project object */;
 }

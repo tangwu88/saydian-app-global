@@ -11,7 +11,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:saydian_app/services/app_update_service.dart';
 import 'package:saydian_app/services/network_audit.dart';
 
-const _origin = 'https://app.saydian.cn';
+const _origin = 'https://app.saydian.com';
 const _path = '/global/down/files/Saydian-audit-private-path.apk';
 const _requestId = '00000000-0000-4000-8000-000000000001';
 const _secret = 'private-value-never-log';
@@ -80,7 +80,7 @@ void main() {
     expect(encoded, isNot(contains('content-body')));
     expect(encoded, isNot(contains('authorization')));
     for (final event in audit) {
-      expect(event['host'], 'app.saydian.cn');
+      expect(event['host'], 'app.saydian.com');
       expect(
         event.keys,
         everyElement(

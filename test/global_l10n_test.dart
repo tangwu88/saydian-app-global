@@ -44,6 +44,32 @@ Widget localizedHost(GlobalLocaleController controller) => GlobalLocaleScope(
 );
 
 void main() {
+  test('English device copy has no Chinese or watch-only wording', () {
+    final catalog =
+        jsonDecode(File('lib/l10n/app_en.arb').readAsStringSync())
+            as Map<String, dynamic>;
+    for (final entry in catalog.entries) {
+      if (entry.key.startsWith('@') || entry.value is! String) continue;
+      expect(
+        RegExp(r'[\u3400-\u9fff]').hasMatch(entry.value as String),
+        isFalse,
+        reason: entry.key,
+      );
+      expect(
+        RegExp(
+          r'\bwatch(?:es)?\b',
+          caseSensitive: false,
+        ).hasMatch(entry.value as String),
+        isFalse,
+        reason: entry.key,
+      );
+    }
+    final l = lookupAppLocalizations(const Locale('en'));
+    expect(l.device, 'Device');
+    expect(l.connectWatch, 'Connect a device');
+    expect(l.syncData, 'Sync device');
+  });
+
   test(
     'wellness disclaimer requires doctor advice before medical decisions',
     () {
@@ -207,6 +233,10 @@ void main() {
       expect(find.text('Sign in'), findsOneWidget);
       await tester.tap(find.byKey(const Key('global-language-button')));
       await tester.pumpAndSettle();
+      expect(find.text('Chinese (Simplified)'), findsOneWidget);
+      expect(find.text('Japanese'), findsOneWidget);
+      expect(find.text('简体中文'), findsNothing);
+      expect(find.text('日本語'), findsNothing);
       await tester.tap(find.byKey(const ValueKey('global-language-ja')));
       await tester.pumpAndSettle();
       expect(find.text('ログイン'), findsOneWidget);

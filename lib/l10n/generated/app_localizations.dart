@@ -137,7 +137,7 @@ abstract class AppLocalizations {
   /// No description provided for @scanPermissionHint.
   ///
   /// In en, this message translates to:
-  /// **'Allow the required permissions in Settings, then return to find your watch.'**
+  /// **'Allow the required permissions in Settings, then return to find your device.'**
   String get scanPermissionHint;
 
   /// No description provided for @loginProtectionTitle.
@@ -155,7 +155,7 @@ abstract class AppLocalizations {
   /// No description provided for @workoutStartOnWatch.
   ///
   /// In en, this message translates to:
-  /// **'This watch cannot start workouts from the app. Start the workout directly on your watch.'**
+  /// **'This device cannot start workouts from the app. Start the workout directly on your device.'**
   String get workoutStartOnWatch;
 
   /// No description provided for @finishWorkoutConfirm.
@@ -167,7 +167,7 @@ abstract class AppLocalizations {
   /// No description provided for @finishLeaveWorkoutHint.
   ///
   /// In en, this message translates to:
-  /// **'Before leaving, the watch workout will stop and the recorded duration and route will be saved.'**
+  /// **'Before leaving, the device workout will stop and the recorded duration and route will be saved.'**
   String get finishLeaveWorkoutHint;
 
   /// No description provided for @finishAndLeave.
@@ -179,7 +179,7 @@ abstract class AppLocalizations {
   /// No description provided for @workoutRouteMissing.
   ///
   /// In en, this message translates to:
-  /// **'No phone-recorded route is available for this session. The watch workout data is still saved.'**
+  /// **'No phone-recorded route is available for this session. The device workout data is still saved.'**
   String get workoutRouteMissing;
 
   /// No description provided for @workoutDuration.
@@ -191,7 +191,7 @@ abstract class AppLocalizations {
   /// No description provided for @workoutWatchHeartRate.
   ///
   /// In en, this message translates to:
-  /// **'Watch heart rate'**
+  /// **'Device heart rate'**
   String get workoutWatchHeartRate;
 
   /// No description provided for @messageSendFailed.
@@ -203,7 +203,7 @@ abstract class AppLocalizations {
   /// No description provided for @noWatchShopHint.
   ///
   /// In en, this message translates to:
-  /// **'Need a device? Visit the Saydian store.'**
+  /// **'Need a device? Visit the SayDian store.'**
   String get noWatchShopHint;
 
   /// No description provided for @notificationInAppHint.
@@ -377,7 +377,7 @@ abstract class AppLocalizations {
   /// No description provided for @brandHealthTitle.
   ///
   /// In en, this message translates to:
-  /// **'SAYDIAN Health'**
+  /// **'SayDian'**
   String get brandHealthTitle;
 
   /// No description provided for @accountAndSecurity.
@@ -443,7 +443,7 @@ abstract class AppLocalizations {
   /// No description provided for @reportInsufficientDataHint.
   ///
   /// In en, this message translates to:
-  /// **'No payment order is created when data is insufficient. Wear your watch as usual, sync its data, then try again.'**
+  /// **'No payment order is created when data is insufficient. Wear your device as usual, sync its data, then try again.'**
   String get reportInsufficientDataHint;
 
   /// No description provided for @waitingPaymentConfirmation.
@@ -491,13 +491,13 @@ abstract class AppLocalizations {
   /// No description provided for @calibrateOnWatchHint.
   ///
   /// In en, this message translates to:
-  /// **'Follow the instructions on your watch to complete calibration.'**
+  /// **'Follow the instructions on your device to complete calibration.'**
   String get calibrateOnWatchHint;
 
   /// No description provided for @spotCheckCuffHint.
   ///
   /// In en, this message translates to:
-  /// **'This is a resting spot check for reference only. For a more accurate reading, use the watch’s pump-and-cuff measurement.'**
+  /// **'This is a resting spot check for reference only. For a more accurate reading, use the device’s pump-and-cuff measurement.'**
   String get spotCheckCuffHint;
 
   /// No description provided for @setHealthUpperLimits.
@@ -569,7 +569,7 @@ abstract class AppLocalizations {
   /// No description provided for @watchHealthReference.
   ///
   /// In en, this message translates to:
-  /// **'Watch measurements are for everyday wellness reference.'**
+  /// **'Device measurements are for everyday wellness reference.'**
   String get watchHealthReference;
 
   /// No description provided for @calibrationReferenceHint.
@@ -593,7 +593,7 @@ abstract class AppLocalizations {
   /// No description provided for @calibrationDisabledHint.
   ///
   /// In en, this message translates to:
-  /// **'Turning this off restores the watch’s general measurement mode.'**
+  /// **'Turning this off restores the device’s general measurement mode.'**
   String get calibrationDisabledHint;
 
   /// No description provided for @diastolicLowerLabel.
@@ -653,7 +653,7 @@ abstract class AppLocalizations {
   /// No description provided for @riskIndicatorsMissing.
   ///
   /// In en, this message translates to:
-  /// **'The watch did not return risk indicators for this measurement.'**
+  /// **'The device did not return risk indicators for this measurement.'**
   String get riskIndicatorsMissing;
 
   /// No description provided for @riskAnalysisTitle.
@@ -665,7 +665,7 @@ abstract class AppLocalizations {
   /// No description provided for @watchAlgorithmReference.
   ///
   /// In en, this message translates to:
-  /// **'The values below come from the watch’s algorithm and are for health trend reference only.'**
+  /// **'The values below come from the device’s algorithm and are for health trend reference only.'**
   String get watchAlgorithmReference;
 
   /// No description provided for @ecgHealthReport.
@@ -677,25 +677,25 @@ abstract class AppLocalizations {
   /// No description provided for @brandedEcgReport.
   ///
   /// In en, this message translates to:
-  /// **'Saydian · ECG health report'**
+  /// **'SayDian · ECG health report'**
   String get brandedEcgReport;
 
   /// No description provided for @ecgReportSafety.
   ///
   /// In en, this message translates to:
-  /// **'Note: this report uses watch measurement data. It is for wellness reference only and cannot replace a doctor’s diagnosis.'**
+  /// **'Note: this report uses device measurement data. It is for wellness reference only and cannot replace a doctor’s diagnosis.'**
   String get ecgReportSafety;
 
   /// No description provided for @installedWatchFaces.
   ///
   /// In en, this message translates to:
-  /// **'Installed watch faces'**
+  /// **'Installed faces'**
   String get installedWatchFaces;
 
   /// No description provided for @switchInstalledWatchFace.
   ///
   /// In en, this message translates to:
-  /// **'Switch between watch faces already on your watch.'**
+  /// **'Switch between faces already on your device.'**
   String get switchInstalledWatchFace;
 
   /// No description provided for @useSelectedWatchFace.
@@ -713,7 +713,7 @@ abstract class AppLocalizations {
   /// No description provided for @photoWatchFaceHint.
   ///
   /// In en, this message translates to:
-  /// **'Choose a clear photo, check the preview, then send it to your watch.'**
+  /// **'Choose a clear photo, check the preview, then send it to your device.'**
   String get photoWatchFaceHint;
 
   /// No description provided for @timeDisplayPosition.
@@ -725,13 +725,13 @@ abstract class AppLocalizations {
   /// No description provided for @transferSetWatchFace.
   ///
   /// In en, this message translates to:
-  /// **'Send and set as watch face'**
+  /// **'Send to device'**
   String get transferSetWatchFace;
 
   /// No description provided for @watchTransferKeepNear.
   ///
   /// In en, this message translates to:
-  /// **'Keep the watch near your phone during transfer and stay on this page.'**
+  /// **'Keep the device near your phone during transfer and stay on this page.'**
   String get watchTransferKeepNear;
 
   /// No description provided for @callMediaAudio.
@@ -749,25 +749,25 @@ abstract class AppLocalizations {
   /// No description provided for @sosContactHint.
   ///
   /// In en, this message translates to:
-  /// **'When SOS is triggered on the watch, it will first contact the person selected here. Choose a family member you contact regularly.'**
+  /// **'When SOS is triggered on the device, it will first contact the person selected here. Choose a family member you contact regularly.'**
   String get sosContactHint;
 
   /// No description provided for @noHealthAssessments.
   ///
   /// In en, this message translates to:
-  /// **'No configurable health assessments are available on this watch.'**
+  /// **'No configurable health assessments are available on this device.'**
   String get noHealthAssessments;
 
   /// No description provided for @modelFeaturesVary.
   ///
   /// In en, this message translates to:
-  /// **'Supported features vary by model. Refer to the features shown on your watch.'**
+  /// **'Supported features vary by model. Refer to the features shown on your device.'**
   String get modelFeaturesVary;
 
   /// No description provided for @assessmentEnabledHint.
   ///
   /// In en, this message translates to:
-  /// **'When enabled, the watch provides daily trend information.'**
+  /// **'When enabled, the device provides daily trend information.'**
   String get assessmentEnabledHint;
 
   /// No description provided for @assessmentSafety.
@@ -779,19 +779,19 @@ abstract class AppLocalizations {
   /// No description provided for @autoMonitorIntervalHint.
   ///
   /// In en, this message translates to:
-  /// **'When enabled, the watch measures automatically at its configured interval.'**
+  /// **'When enabled, the device measures automatically at its configured interval.'**
   String get autoMonitorIntervalHint;
 
   /// No description provided for @watchHeartRateAlert.
   ///
   /// In en, this message translates to:
-  /// **'Watch heart rate alert'**
+  /// **'Device heart rate alert'**
   String get watchHeartRateAlert;
 
   /// No description provided for @sustainedLimitWatchAlert.
   ///
   /// In en, this message translates to:
-  /// **'The watch alerts you if the value stays above the limit.'**
+  /// **'The device alerts you if the value stays above the limit.'**
   String get sustainedLimitWatchAlert;
 
   /// No description provided for @ecgWaveformTitle.
@@ -809,13 +809,13 @@ abstract class AppLocalizations {
   /// No description provided for @ecgElectrodeHint.
   ///
   /// In en, this message translates to:
-  /// **'Heart rate and HRV results remain available. Keep touching the watch electrode throughout your next measurement.'**
+  /// **'Heart rate and HRV results remain available. Keep touching the device electrode throughout your next measurement.'**
   String get ecgElectrodeHint;
 
   /// No description provided for @screenAutoTimeHint.
   ///
   /// In en, this message translates to:
-  /// **'The watch adjusts automatically based on the time.'**
+  /// **'The device adjusts automatically based on the time.'**
   String get screenAutoTimeHint;
 
   /// No description provided for @raiseWristScreenHint.
@@ -833,7 +833,7 @@ abstract class AppLocalizations {
   /// No description provided for @watchThresholdHint.
   ///
   /// In en, this message translates to:
-  /// **'The watch alerts you when the limit is reached.'**
+  /// **'The device alerts you when the limit is reached.'**
   String get watchThresholdHint;
 
   /// No description provided for @watchMeasurementSafety.
@@ -875,13 +875,13 @@ abstract class AppLocalizations {
   /// No description provided for @watchFaceDownloadHint.
   ///
   /// In en, this message translates to:
-  /// **'Keep your watch nearby until transfer finishes.'**
+  /// **'Keep your device nearby until transfer finishes.'**
   String get watchFaceDownloadHint;
 
   /// No description provided for @refreshWatchFaces.
   ///
   /// In en, this message translates to:
-  /// **'Refresh watch faces'**
+  /// **'Refresh faces'**
   String get refreshWatchFaces;
 
   /// No description provided for @openTestFlight.
@@ -1031,13 +1031,13 @@ abstract class AppLocalizations {
   /// No description provided for @watchDistance.
   ///
   /// In en, this message translates to:
-  /// **'Watch distance'**
+  /// **'Device distance'**
   String get watchDistance;
 
   /// No description provided for @watchSteps.
   ///
   /// In en, this message translates to:
-  /// **'Watch steps'**
+  /// **'Device steps'**
   String get watchSteps;
 
   /// No description provided for @liveHeartRate.
@@ -1049,13 +1049,13 @@ abstract class AppLocalizations {
   /// No description provided for @watchCalories.
   ///
   /// In en, this message translates to:
-  /// **'Watch calories'**
+  /// **'Device calories'**
   String get watchCalories;
 
   /// No description provided for @connectForWorkout.
   ///
   /// In en, this message translates to:
-  /// **'Connect your watch on the Device page first. Your watch will record the workout.'**
+  /// **'Connect your device on the Device page first. Your device will record the workout.'**
   String get connectForWorkout;
 
   /// No description provided for @latestVersion.
@@ -1127,13 +1127,13 @@ abstract class AppLocalizations {
   /// No description provided for @appName.
   ///
   /// In en, this message translates to:
-  /// **'SAYDIAN Health'**
+  /// **'SayDian'**
   String get appName;
 
   /// No description provided for @searchingNearby.
   ///
   /// In en, this message translates to:
-  /// **'Searching for nearby watches'**
+  /// **'Searching for nearby devices'**
   String get searchingNearby;
 
   /// No description provided for @noDevices.
@@ -1145,7 +1145,7 @@ abstract class AppLocalizations {
   /// No description provided for @selectWatch.
   ///
   /// In en, this message translates to:
-  /// **'Check the name and signal, then select your watch'**
+  /// **'Check the name and signal, then select your device'**
   String get selectWatch;
 
   /// No description provided for @searchingHint.
@@ -1157,13 +1157,13 @@ abstract class AppLocalizations {
   /// No description provided for @activateWatch.
   ///
   /// In en, this message translates to:
-  /// **'Charge your watch to activate it, then place it near your phone'**
+  /// **'Charge your device to activate it, then place it near your phone'**
   String get activateWatch;
 
   /// No description provided for @checkWatchConnection.
   ///
   /// In en, this message translates to:
-  /// **'If the watch is connected in this phone\'s Bluetooth settings or on another phone, disconnect it and search again'**
+  /// **'If the device is connected in this phone\'s Bluetooth settings or on another phone, disconnect it and search again'**
   String get checkWatchConnection;
 
   /// No description provided for @running.
@@ -1583,7 +1583,7 @@ abstract class AppLocalizations {
   /// No description provided for @useWatchFace.
   ///
   /// In en, this message translates to:
-  /// **'Use this watch face?'**
+  /// **'Use this face?'**
   String get useWatchFace;
 
   /// No description provided for @downloadAndUse.
@@ -1595,7 +1595,7 @@ abstract class AppLocalizations {
   /// No description provided for @watchFaceFailed.
   ///
   /// In en, this message translates to:
-  /// **'Could not set the watch face'**
+  /// **'Could not set the face'**
   String get watchFaceFailed;
 
   /// No description provided for @statusNormal.
@@ -1775,7 +1775,7 @@ abstract class AppLocalizations {
   /// No description provided for @watchFaceShop.
   ///
   /// In en, this message translates to:
-  /// **'Watch face store'**
+  /// **'Face gallery'**
   String get watchFaceShop;
 
   /// No description provided for @selectCity.
@@ -1853,7 +1853,7 @@ abstract class AppLocalizations {
   /// No description provided for @searchRecovery.
   ///
   /// In en, this message translates to:
-  /// **'Keep the watch close. If it is connected in system Bluetooth or on another phone, disconnect it first, then try again.'**
+  /// **'Keep the device close. If it is connected in system Bluetooth or on another phone, disconnect it first, then try again.'**
   String get searchRecovery;
 
   /// No description provided for @deviceName.
@@ -1883,7 +1883,7 @@ abstract class AppLocalizations {
   /// No description provided for @watchBattery.
   ///
   /// In en, this message translates to:
-  /// **'Watch battery'**
+  /// **'Device battery'**
   String get watchBattery;
 
   /// No description provided for @chargingStatus.
@@ -2009,7 +2009,7 @@ abstract class AppLocalizations {
   /// No description provided for @connectWatchToUse.
   ///
   /// In en, this message translates to:
-  /// **'Connect a watch to use this feature'**
+  /// **'Connect a device to use this feature'**
   String get connectWatchToUse;
 
   /// No description provided for @selectPhoto.
@@ -2057,7 +2057,7 @@ abstract class AppLocalizations {
   /// No description provided for @monitoringHint.
   ///
   /// In en, this message translates to:
-  /// **'Available health monitoring settings appear after connecting your watch.'**
+  /// **'Available health monitoring settings appear after connecting your device.'**
   String get monitoringHint;
 
   /// No description provided for @previewUnavailable.
@@ -2087,7 +2087,7 @@ abstract class AppLocalizations {
   /// No description provided for @photoWatchFace.
   ///
   /// In en, this message translates to:
-  /// **'Photo watch face'**
+  /// **'Photo face'**
   String get photoWatchFace;
 
   /// No description provided for @cameraRemote.
@@ -2207,13 +2207,13 @@ abstract class AppLocalizations {
   /// No description provided for @connectionInstructions.
   ///
   /// In en, this message translates to:
-  /// **'1. Turn on Bluetooth and allow nearby device access.\n2. Keep your watch charged and near your phone.\n3. Tap Search for watches and select your watch.\n4. Confirm on the watch if prompted.'**
+  /// **'1. Turn on Bluetooth and allow nearby device access.\n2. Keep your device charged and near your phone.\n3. Tap Search for devices and select your device.\n4. Confirm on the device if prompted.'**
   String get connectionInstructions;
 
   /// No description provided for @syncNearbyHint.
   ///
   /// In en, this message translates to:
-  /// **'Keep your watch nearby while syncing.'**
+  /// **'Keep your device nearby while syncing.'**
   String get syncNearbyHint;
 
   /// No description provided for @invalidCode.
@@ -2249,19 +2249,19 @@ abstract class AppLocalizations {
   /// No description provided for @addSmartDevice.
   ///
   /// In en, this message translates to:
-  /// **'Connect a watch'**
+  /// **'Connect a device'**
   String get addSmartDevice;
 
   /// No description provided for @watchNearbyHint.
   ///
   /// In en, this message translates to:
-  /// **'Turn on Bluetooth and keep your watch nearby'**
+  /// **'Turn on Bluetooth and keep your device nearby'**
   String get watchNearbyHint;
 
   /// No description provided for @startSearch.
   ///
   /// In en, this message translates to:
-  /// **'Search for watches'**
+  /// **'Search for devices'**
   String get startSearch;
 
   /// No description provided for @readingData.
@@ -2273,31 +2273,31 @@ abstract class AppLocalizations {
   /// No description provided for @readingCapabilities.
   ///
   /// In en, this message translates to:
-  /// **'Checking watch features…'**
+  /// **'Checking device features…'**
   String get readingCapabilities;
 
   /// No description provided for @capabilitiesHint.
   ///
   /// In en, this message translates to:
-  /// **'Keep your watch nearby.'**
+  /// **'Keep your device nearby.'**
   String get capabilitiesHint;
 
   /// No description provided for @capabilitiesFailed.
   ///
   /// In en, this message translates to:
-  /// **'Could not read this watch’s features'**
+  /// **'Could not read this device’s features'**
   String get capabilitiesFailed;
 
   /// No description provided for @keepWatchNear.
   ///
   /// In en, this message translates to:
-  /// **'Keep your watch near your phone and try again'**
+  /// **'Keep your device near your phone and try again'**
   String get keepWatchNear;
 
   /// No description provided for @personalizeWatch.
   ///
   /// In en, this message translates to:
-  /// **'Watch faces & style'**
+  /// **'Display & style'**
   String get personalizeWatch;
 
   /// No description provided for @signInCloudHint.
@@ -2585,7 +2585,7 @@ abstract class AppLocalizations {
   /// No description provided for @noAccount.
   ///
   /// In en, this message translates to:
-  /// **'New to Saydian?'**
+  /// **'New to SayDian?'**
   String get noAccount;
 
   /// No description provided for @showPassword.
@@ -2627,7 +2627,7 @@ abstract class AppLocalizations {
   /// No description provided for @device.
   ///
   /// In en, this message translates to:
-  /// **'Watch'**
+  /// **'Device'**
   String get device;
 
   /// No description provided for @profile.
@@ -2675,7 +2675,7 @@ abstract class AppLocalizations {
   /// No description provided for @defaultUser.
   ///
   /// In en, this message translates to:
-  /// **'Saydian user'**
+  /// **'SayDian user'**
   String get defaultUser;
 
   /// No description provided for @dailyGreeting.
@@ -2735,25 +2735,25 @@ abstract class AppLocalizations {
   /// No description provided for @connectWatch.
   ///
   /// In en, this message translates to:
-  /// **'Connect a watch'**
+  /// **'Connect a device'**
   String get connectWatch;
 
   /// No description provided for @addDevice.
   ///
   /// In en, this message translates to:
-  /// **'Connect a watch'**
+  /// **'Connect a device'**
   String get addDevice;
 
   /// No description provided for @connectWatchForData.
   ///
   /// In en, this message translates to:
-  /// **'Connect your watch to view supported health data'**
+  /// **'Connect your device to view supported health data'**
   String get connectWatchForData;
 
   /// No description provided for @connectingWatch.
   ///
   /// In en, this message translates to:
-  /// **'Connecting to your watch…'**
+  /// **'Connecting to your device…'**
   String get connectingWatch;
 
   /// No description provided for @noHealthData.
@@ -2849,7 +2849,7 @@ abstract class AppLocalizations {
   /// No description provided for @syncData.
   ///
   /// In en, this message translates to:
-  /// **'Sync watch'**
+  /// **'Sync device'**
   String get syncData;
 
   /// No description provided for @syncComplete.
@@ -2861,7 +2861,7 @@ abstract class AppLocalizations {
   /// No description provided for @syncFailedTryAgain.
   ///
   /// In en, this message translates to:
-  /// **'Could not sync. Keep your watch nearby and try again.'**
+  /// **'Could not sync. Keep your device nearby and try again.'**
   String get syncFailedTryAgain;
 
   /// No description provided for @disconnect.
@@ -2873,25 +2873,25 @@ abstract class AppLocalizations {
   /// No description provided for @findWatch.
   ///
   /// In en, this message translates to:
-  /// **'Find my watch'**
+  /// **'Find my device'**
   String get findWatch;
 
   /// No description provided for @watchFaces.
   ///
   /// In en, this message translates to:
-  /// **'Watch faces'**
+  /// **'Faces'**
   String get watchFaces;
 
   /// No description provided for @deviceFeatures.
   ///
   /// In en, this message translates to:
-  /// **'Watch controls'**
+  /// **'Device controls'**
   String get deviceFeatures;
 
   /// No description provided for @aboutDevice.
   ///
   /// In en, this message translates to:
-  /// **'About this watch'**
+  /// **'About this device'**
   String get aboutDevice;
 
   /// No description provided for @connectionHelp.
@@ -2903,13 +2903,13 @@ abstract class AppLocalizations {
   /// No description provided for @searchNearbyWatch.
   ///
   /// In en, this message translates to:
-  /// **'Search for a nearby watch'**
+  /// **'Search for a nearby device'**
   String get searchNearbyWatch;
 
   /// No description provided for @useWatch.
   ///
   /// In en, this message translates to:
-  /// **'Please use this feature on your watch'**
+  /// **'Please use this feature on your device'**
   String get useWatch;
 
   /// No description provided for @myOrders.
@@ -3005,7 +3005,7 @@ abstract class AppLocalizations {
   /// No description provided for @aboutApp.
   ///
   /// In en, this message translates to:
-  /// **'About SAYDIAN Health'**
+  /// **'About SayDian'**
   String get aboutApp;
 
   /// No description provided for @security.
@@ -3095,7 +3095,7 @@ abstract class AppLocalizations {
   /// No description provided for @enableNotifications.
   ///
   /// In en, this message translates to:
-  /// **'Enable Saydian notifications'**
+  /// **'Enable SayDian notifications'**
   String get enableNotifications;
 
   /// No description provided for @notificationExplanation.
@@ -3881,55 +3881,55 @@ abstract class AppLocalizations {
   /// No description provided for @measurementContactEcg.
   ///
   /// In en, this message translates to:
-  /// **'No electrode contact detected. Wear your watch correctly and keep your finger on the ECG electrode.'**
+  /// **'No electrode contact detected. Wear your device correctly and keep your finger on the ECG electrode.'**
   String get measurementContactEcg;
 
   /// No description provided for @measurementContactElectrode.
   ///
   /// In en, this message translates to:
-  /// **'No electrode contact detected. Wear your watch and follow its electrode instructions.'**
+  /// **'No electrode contact detected. Wear your device and follow its electrode instructions.'**
   String get measurementContactElectrode;
 
   /// No description provided for @measurementCheckFit.
   ///
   /// In en, this message translates to:
-  /// **'Check that your watch fits snugly against your wrist.'**
+  /// **'Check that your device fits securely and follow its measurement instructions.'**
   String get measurementCheckFit;
 
   /// No description provided for @measurementWaitPressure.
   ///
   /// In en, this message translates to:
-  /// **'Measuring blood pressure. Keep your watch in place and your arm still while you wait.'**
+  /// **'Measuring blood pressure. Keep your device in place and your arm still while you wait.'**
   String get measurementWaitPressure;
 
   /// No description provided for @measurementWaitEcg.
   ///
   /// In en, this message translates to:
-  /// **'Wear your watch correctly and keep your finger on the ECG electrode.'**
+  /// **'Wear your device correctly and keep your finger on the ECG electrode.'**
   String get measurementWaitEcg;
 
   /// No description provided for @measurementWaitHrv.
   ///
   /// In en, this message translates to:
-  /// **'Keep your watch against your wrist and stay still while waiting for the HRV result.'**
+  /// **'Keep your device in place and stay still while waiting for the HRV result.'**
   String get measurementWaitHrv;
 
   /// No description provided for @measurementWaitElectrode.
   ///
   /// In en, this message translates to:
-  /// **'Follow the watch instructions and keep contact with the electrodes until the measurement ends.'**
+  /// **'Follow the device instructions and keep contact with the electrodes until the measurement ends.'**
   String get measurementWaitElectrode;
 
   /// No description provided for @measurementWaitStill.
   ///
   /// In en, this message translates to:
-  /// **'Keep your watch in place and stay still while waiting for the result.'**
+  /// **'Keep your device in place and stay still while waiting for the result.'**
   String get measurementWaitStill;
 
   /// No description provided for @finishMeasurementOnWatch.
   ///
   /// In en, this message translates to:
-  /// **'End the measurement on your watch.'**
+  /// **'End the measurement on your device.'**
   String get finishMeasurementOnWatch;
 
   /// No description provided for @startMeasurement.
@@ -3941,13 +3941,13 @@ abstract class AppLocalizations {
   /// No description provided for @watchEndedMeasureAgain.
   ///
   /// In en, this message translates to:
-  /// **'Ended on watch — measure again'**
+  /// **'Ended on device — measure again'**
   String get watchEndedMeasureAgain;
 
   /// No description provided for @watchMeasurementEnded.
   ///
   /// In en, this message translates to:
-  /// **'I have ended it on my watch'**
+  /// **'I have ended it on my device'**
   String get watchMeasurementEnded;
 
   /// No description provided for @viewMeasurementLater.
@@ -3971,7 +3971,7 @@ abstract class AppLocalizations {
   /// No description provided for @deviceDataReadComplete.
   ///
   /// In en, this message translates to:
-  /// **'Watch readings received. Online backup is checked separately.'**
+  /// **'Device readings received. Online backup is checked separately.'**
   String get deviceDataReadComplete;
 
   /// No description provided for @measurementPercent.
@@ -4007,7 +4007,7 @@ abstract class AppLocalizations {
   /// No description provided for @u19WristMeasurementHint.
   ///
   /// In en, this message translates to:
-  /// **'Rest quietly for 5 minutes. Sit with feet flat and keep your wrist supported at heart level. Follow the watch instructions. Wrist readings are for reference; ask a clinician about a validated upper-arm monitor for medical decisions.'**
+  /// **'Rest quietly for 5 minutes. Sit with feet flat and keep your wrist supported at heart level. Follow the device instructions. Wrist readings are for reference; ask a clinician about a validated upper-arm monitor for medical decisions.'**
   String get u19WristMeasurementHint;
 
   /// No description provided for @manageCare.
@@ -4057,6 +4057,120 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Low signal quality · waveform preview'**
   String get ecgWaveformLowSignalHint;
+
+  /// No description provided for @dataPrivacyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Data privacy'**
+  String get dataPrivacyTitle;
+
+  /// No description provided for @dataResidencyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Stored in the United States'**
+  String get dataResidencyTitle;
+
+  /// No description provided for @dataResidencyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Your account, device and synchronized wearable data stored in SayDian’s cloud is kept on servers physically located in the United States. If you use SayDian from another country, the data you choose to synchronize is transferred to the United States.'**
+  String get dataResidencyBody;
+
+  /// No description provided for @dataLocalTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'On your phone'**
+  String get dataLocalTitle;
+
+  /// No description provided for @dataLocalBody.
+  ///
+  /// In en, this message translates to:
+  /// **'SayDian also keeps an encrypted local history on your phone for offline use and pending synchronization. Data that has not been confirmed by the server remains pending.'**
+  String get dataLocalBody;
+
+  /// No description provided for @dataChoiceTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your choices'**
+  String get dataChoiceTitle;
+
+  /// No description provided for @dataChoiceBody.
+  ///
+  /// In en, this message translates to:
+  /// **'You can use device features with the permissions they need, decline optional permissions, and manage sharing in the app. To request deletion of your account and associated data, open Account → Delete account. See the Privacy Policy for retention and other rights.'**
+  String get dataChoiceBody;
+
+  /// No description provided for @dataThirdPartyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional services'**
+  String get dataThirdPartyTitle;
+
+  /// No description provided for @dataThirdPartyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Weather, notifications and other optional services may process the information needed for the feature under their own policies. The United States storage statement applies to SayDian’s cloud storage, not to your phone or a third party’s independent processing.'**
+  String get dataThirdPartyBody;
+
+  /// No description provided for @iosWellnessSafety.
+  ///
+  /// In en, this message translates to:
+  /// **'SayDian on iOS displays activity and sleep information from compatible devices for everyday wellness. It does not provide medical measurements, diagnosis or treatment. Consult a qualified healthcare professional before making medical decisions.'**
+  String get iosWellnessSafety;
+
+  /// No description provided for @smartRing.
+  ///
+  /// In en, this message translates to:
+  /// **'Smart ring'**
+  String get smartRing;
+
+  /// No description provided for @ringStress.
+  ///
+  /// In en, this message translates to:
+  /// **'Stress'**
+  String get ringStress;
+
+  /// No description provided for @ringGestures.
+  ///
+  /// In en, this message translates to:
+  /// **'Gesture control'**
+  String get ringGestures;
+
+  /// No description provided for @ringCallReminder.
+  ///
+  /// In en, this message translates to:
+  /// **'Call reminders'**
+  String get ringCallReminder;
+
+  /// No description provided for @ringConnectedSyncHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Device connected. Data will appear after synchronization.'**
+  String get ringConnectedSyncHint;
+
+  /// No description provided for @ringDisconnecting.
+  ///
+  /// In en, this message translates to:
+  /// **'Disconnecting'**
+  String get ringDisconnecting;
+
+  /// No description provided for @ringDisconnectHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'The app has disconnected. If the ring still appears connected in iPhone Bluetooth settings, forget that device there before scanning again.'**
+  String get ringDisconnectHelp;
+
+  /// No description provided for @deviceLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Device'**
+  String get deviceLabel;
+
+  /// No description provided for @ringStatusReminder.
+  ///
+  /// In en, this message translates to:
+  /// **'Status reminders'**
+  String get ringStatusReminder;
 }
 
 class _AppLocalizationsDelegate

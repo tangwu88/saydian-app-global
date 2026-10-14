@@ -1,0 +1,36 @@
+NAME
+SayDian
+
+SHORT DESCRIPTION
+Connect your devices and view activity, sleep and wellness records.
+
+FULL DESCRIPTION
+SayDian connects compatible devices, including supported smart rings and watches, to help you view your everyday activity, sleep and wellness records.
+
+CONNECT YOUR DEVICE
+Search for a compatible Bluetooth device, connect, check its status and synchronize the records it provides. Supported integrations include LuckRing and QRing. Features depend on the specific device model, firmware and operating system; not every device provides every reading or control.
+
+EXPLORE YOUR RECORDS
+Review available activity and sleep history. Supported Android devices may also provide heart rate, blood oxygen, temperature, blood pressure, ECG or HRV records. SayDian displays the information supplied by your device and does not create missing measurements. Device controls, reminders and display-face options appear only when supported.
+
+MANAGE YOUR ACCOUNT
+Update your profile, access help and feedback, and manage optional family-care sharing. Care sharing requires the participating accounts and their permission. It is not an emergency monitoring service. You can sign in and access account and support pages without a device; device-generated records require compatible hardware.
+
+ENGLISH BY DEFAULT
+The app starts in English, with clear device labels designed for both rings and watches. Additional interface languages can be selected in Settings.
+
+PRIVACY AND CHOICE
+SayDian stores all first-party service data on servers in the United States and keeps an encrypted health-data cache on your phone. Optional services and permissions are described in the Privacy Policy. Current-location weather sends rounded coordinates to the international weather service. Bluetooth is used for connection and sync. Camera, photos, location and selected-contact access are requested only for the features that need them. This Google Play release has remote push notifications disabled; optional phone-to-device notification forwarding is controlled separately.
+
+You can request account deletion from Profile > Account settings or through the public account-deletion page.
+
+WELLNESS INFORMATION
+SayDian is intended for general wellness and fitness. It is not a medical device and does not diagnose, treat, cure or prevent any medical condition. Device readings and educational content are not a substitute for professional medical advice. Consult a qualified healthcare professional before making medical decisions, and seek appropriate care if you feel unwell. Do not use SayDian for emergencies.
+
+Support: https://app.saydian.cn/global/support
+Privacy: https://app.saydian.cn/global/privacy-policy
+Terms: https://app.saydian.cn/global/terms
+Account deletion: https://app.saydian.cn/global/account-deletion
+
+RELEASE NOTES
+Welcome to SayDian. Connect compatible devices, including supported LuckRing and QRing models, and view available activity, sleep and wellness records. English is the default language. Updated privacy information explains United States server storage. Features vary by device. Remote push notifications are disabled in this release.

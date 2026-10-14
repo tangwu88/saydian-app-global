@@ -10,6 +10,9 @@ import '../services/device_watch_face_market_service.dart';
 import '../services/user_message.dart';
 import 'app_theme.dart';
 
+String _faceCopy(BuildContext context, String zh, String en) =>
+    Localizations.localeOf(context).languageCode == 'zh' ? zh : en;
+
 class WatchFaceLoadRequestGate {
   int _generation = 0;
 
@@ -108,7 +111,11 @@ class _DeviceWatchFaceMarketPageState extends State<DeviceWatchFaceMarketPage> {
       _pageCount = 1;
       _total = 0;
       _showingCache = false;
-      _error = '连接设备已变化，请返回表盘中心重新读取规格';
+      _error = _faceCopy(
+        context,
+        '连接设备已变化，请返回表盘中心重新读取规格',
+        "The device changed. Reopen the face gallery.",
+      );
     });
   }
 
@@ -129,7 +136,13 @@ class _DeviceWatchFaceMarketPageState extends State<DeviceWatchFaceMarketPage> {
   Future<void> _load({bool reset = false}) async {
     if (_loading && !reset) return;
     if (!widget.profile.matchesDevice(widget.controller.connectedDevice?.id)) {
-      setState(() => _error = '连接设备已变化，请返回表盘中心重新读取规格');
+      setState(
+        () => _error = _faceCopy(
+          context,
+          '连接设备已变化，请返回表盘中心重新读取规格',
+          "The device changed. Reopen the face gallery.",
+        ),
+      );
       return;
     }
     final generation = _loadGate.begin();
@@ -167,13 +180,23 @@ class _DeviceWatchFaceMarketPageState extends State<DeviceWatchFaceMarketPage> {
         setState(
           () => _error = userFacingMessage(
             error.message,
-            fallback: '表盘暂时无法加载，请重试',
+            fallback: _faceCopy(
+              context,
+              '表盘暂时无法加载，请重试',
+              "Could not load faces. Try again.",
+            ),
           ),
         );
       }
     } catch (_) {
       if (_isCurrentLoad(generation, requestedDeviceId, requestedFingerprint)) {
-        setState(() => _error = '表盘商城加载失败，请稍后重试');
+        setState(
+          () => _error = _faceCopy(
+            context,
+            '表盘商城加载失败，请稍后重试',
+            "Could not load the face gallery. Try again.",
+          ),
+        );
       }
     } finally {
       if (_isCurrentLoad(generation, requestedDeviceId, requestedFingerprint)) {
@@ -240,13 +263,20 @@ class _DeviceWatchFaceMarketPageState extends State<DeviceWatchFaceMarketPage> {
     });
     try {
       final latestProfileData = await widget.controller.readWatchFaceProfile();
+      if (!mounted) return;
       final latestProfile = DeviceWatchFaceMarketProfile.fromMap(
         latestProfileData,
       );
       if (latestProfile.profileFingerprint !=
               widget.profile.profileFingerprint ||
           !latestProfile.matchesDevice(widget.controller.connectedDevice?.id)) {
-        throw const DeviceWatchFaceMarketException('连接设备或表盘规格已变化，请返回后重新进入商城');
+        throw DeviceWatchFaceMarketException(
+          _faceCopy(
+            context,
+            '连接设备或表盘规格已变化，请返回后重新进入商城',
+            "The device or display specifications changed. Reopen the gallery.",
+          ),
+        );
       }
       late final String filePath;
       late final int fileLength;
@@ -255,14 +285,27 @@ class _DeviceWatchFaceMarketPageState extends State<DeviceWatchFaceMarketPage> {
         if (!widget.controller.usesNativeWatchFaceMarket ||
             item.dialShape != latestProfile.dialShape ||
             item.binProtocol != latestProfile.binProtocol) {
-          throw const DeviceWatchFaceMarketException('连接设备或表盘规格已变化，请重新进入商城');
+          throw DeviceWatchFaceMarketException(
+            _faceCopy(
+              context,
+              '连接设备或表盘规格已变化，请重新进入商城',
+              "The device or display specifications changed. Reopen the gallery.",
+            ),
+          );
         }
         final download = await widget.controller.downloadNativeWatchFace(
           nativeCatalogId,
         );
+        if (!mounted) return;
         if (download.catalogId != nativeCatalogId ||
             download.fileLength > latestProfile.maxFileLength) {
-          throw const DeviceWatchFaceMarketException('表盘文件与当前手表规格不匹配');
+          throw DeviceWatchFaceMarketException(
+            _faceCopy(
+              context,
+              '表盘文件与当前手表规格不匹配',
+              "This face does not match your device display.",
+            ),
+          );
         }
         filePath = download.filePath;
         fileLength = download.fileLength;
@@ -298,8 +341,19 @@ class _DeviceWatchFaceMarketPageState extends State<DeviceWatchFaceMarketPage> {
           });
       if (!mounted) return;
       final resultMessage = saved
-          ? '表盘已传送并设置完成'
-          : widget.controller.errorMessage ?? '表盘设置失败，请稍后重试';
+          ? _faceCopy(
+              context,
+              '表盘已传送并设置完成',
+              "Face sent and set on your device.",
+            )
+          : userFacingMessage(
+              widget.controller.errorMessage,
+              fallback: _faceCopy(
+                context,
+                '表盘设置失败，请稍后重试',
+                'Could not set the face. Try again.',
+              ),
+            );
       setState(() {
         _installError = saved ? null : resultMessage;
         _lastFailedInstall = saved ? null : item;
@@ -316,7 +370,11 @@ class _DeviceWatchFaceMarketPageState extends State<DeviceWatchFaceMarketPage> {
       if (mounted) {
         final message = userFacingMessage(
           error.message,
-          fallback: '表盘设置失败，请重试',
+          fallback: _faceCopy(
+            context,
+            '表盘设置失败，请重试',
+            "Could not set the face. Try again.",
+          ),
         );
         setState(() {
           _installError = message;
@@ -328,14 +386,18 @@ class _DeviceWatchFaceMarketPageState extends State<DeviceWatchFaceMarketPage> {
       }
     } catch (_) {
       if (mounted) {
-        const message = '表盘设置失败，请稍后重试';
+        final message = _faceCopy(
+          context,
+          '表盘设置失败，请稍后重试',
+          "Could not set the face. Try again.",
+        );
         setState(() {
           _installError = message;
           _lastFailedInstall = item;
         });
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(const SnackBar(content: Text(message)));
+        ).showSnackBar(SnackBar(content: Text(message)));
       }
     } finally {
       if (mounted) setState(() => _installing = null);
@@ -360,8 +422,16 @@ class _DeviceWatchFaceMarketPageState extends State<DeviceWatchFaceMarketPage> {
                     Expanded(
                       child: Text(
                         widget.profile.deviceLabel.isEmpty
-                            ? '适配当前手表'
-                            : '为 ${widget.profile.deviceLabel} 精选',
+                            ? _faceCopy(
+                                context,
+                                '适配当前手表',
+                                "For your connected device",
+                              )
+                            : _faceCopy(
+                                context,
+                                '为 ${widget.profile.deviceLabel} 精选',
+                                'For ${widget.profile.deviceLabel}',
+                              ),
                         style: const TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.w800,
@@ -370,7 +440,7 @@ class _DeviceWatchFaceMarketPageState extends State<DeviceWatchFaceMarketPage> {
                     ),
                     if (_total > 0)
                       Text(
-                        '共 $_total 款',
+                        _faceCopy(context, '共 $_total 款', '$_total faces'),
                         style: const TextStyle(color: SaydianColors.muted),
                       ),
                   ],
@@ -378,11 +448,15 @@ class _DeviceWatchFaceMarketPageState extends State<DeviceWatchFaceMarketPage> {
               ),
             ),
             if (_showingCache)
-              const SliverToBoxAdapter(
+              SliverToBoxAdapter(
                 child: Padding(
                   padding: EdgeInsets.fromLTRB(16, 8, 16, 4),
                   child: Text(
-                    '当前展示离线缓存；安装前会重新验证已连接手表。',
+                    _faceCopy(
+                      context,
+                      '当前展示离线缓存；安装前会重新验证已连接手表。',
+                      "Showing saved results. Device compatibility will be checked before installation.",
+                    ),
                     style: TextStyle(color: SaydianColors.orange),
                   ),
                 ),
@@ -418,7 +492,16 @@ class _DeviceWatchFaceMarketPageState extends State<DeviceWatchFaceMarketPage> {
                                   style: TextStyle(fontWeight: FontWeight.w800),
                                 ),
                                 const SizedBox(height: 4),
-                                Text(message),
+                                Text(
+                                  userFacingMessage(
+                                    message,
+                                    fallback: _faceCopy(
+                                      context,
+                                      '表盘设置失败，请重试',
+                                      'Could not set the face. Try again.',
+                                    ),
+                                  ),
+                                ),
                               ],
                             ),
                           ),
@@ -449,7 +532,15 @@ class _DeviceWatchFaceMarketPageState extends State<DeviceWatchFaceMarketPage> {
                       children: [
                         const Icon(Icons.watch_outlined, size: 58),
                         const SizedBox(height: 14),
-                        Text(_error ?? '暂无可用表盘', textAlign: TextAlign.center),
+                        Text(
+                          _error ??
+                              _faceCopy(
+                                context,
+                                '暂无可用表盘',
+                                "No faces available",
+                              ),
+                          textAlign: TextAlign.center,
+                        ),
                         const SizedBox(height: 14),
                         FilledButton(
                           onPressed: _loading ? null : () => _load(reset: true),
@@ -520,8 +611,16 @@ class _DeviceWatchFaceMarketPageState extends State<DeviceWatchFaceMarketPage> {
                                     const SizedBox(height: 5),
                                     Text(
                                       _downloadProgress < 1
-                                          ? '正在下载'
-                                          : '正在传送到手表',
+                                          ? _faceCopy(
+                                              context,
+                                              '正在下载',
+                                              "Downloading…",
+                                            )
+                                          : _faceCopy(
+                                              context,
+                                              '正在传送到手表',
+                                              "Sending to device…",
+                                            ),
                                       textAlign: TextAlign.center,
                                       style: const TextStyle(fontSize: 13),
                                     ),
@@ -549,11 +648,15 @@ class _DeviceWatchFaceMarketPageState extends State<DeviceWatchFaceMarketPage> {
                   child: _page < _pageCount
                       ? OutlinedButton(
                           onPressed: _loading ? null : _load,
-                          child: Text(_loading ? '加载中…' : '加载更多'),
-                        )
-                      : const Center(
                           child: Text(
-                            '已经到底了',
+                            _loading
+                                ? _faceCopy(context, '加载中…', "Loading…")
+                                : _faceCopy(context, '加载更多', "Load more"),
+                          ),
+                        )
+                      : Center(
+                          child: Text(
+                            _faceCopy(context, '已经到底了', "All faces shown"),
                             style: TextStyle(color: SaydianColors.muted),
                           ),
                         ),
@@ -573,7 +676,12 @@ class _DeviceWatchFaceMarketPageState extends State<DeviceWatchFaceMarketPage> {
         !RegExp(r'[\s\u4e00-\u9fff]').hasMatch(raw) &&
         RegExp(r'[A-Za-z]').hasMatch(raw) &&
         RegExp(r'\d').hasMatch(raw);
-    return raw.isEmpty || isProtocolCode ? '精选表盘 ${index + 1}' : raw;
+    return raw.isEmpty ||
+            isProtocolCode ||
+            (Localizations.localeOf(context).languageCode == 'en' &&
+                RegExp(r'[\u3400-\u9fff]').hasMatch(raw))
+        ? _faceCopy(context, '精选表盘 ${index + 1}', 'Face ${index + 1}')
+        : raw;
   }
 }
 
@@ -660,11 +768,11 @@ class _WatchFaceMarketPreviewState extends State<_WatchFaceMarketPreview> {
   Widget build(BuildContext context) {
     if (_file case final file?) return Image.file(file, fit: BoxFit.cover);
     if (_loading) return const Center(child: CircularProgressIndicator());
-    return const ColoredBox(
+    return ColoredBox(
       color: SaydianColors.brandRedSoft,
       child: Center(
         child: Text(
-          '预览暂不可用',
+          _faceCopy(context, '预览暂不可用', "Preview unavailable"),
           textAlign: TextAlign.center,
           style: TextStyle(color: SaydianColors.muted),
         ),

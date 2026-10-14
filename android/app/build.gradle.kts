@@ -57,6 +57,11 @@ fun releaseModeFlag(name: String): Boolean {
 
 val productionReleaseRequested = releaseModeFlag("SAIDIAN_PRODUCTION_RELEASE")
 val qaReleaseAllowed = releaseModeFlag("SAIDIAN_ALLOW_QA_RELEASE")
+val remotePushDisabled = releaseModeFlag("SAIDIAN_DISABLE_REMOTE_PUSH")
+val dartDefines = providers.gradleProperty("dart-defines").orNull.orEmpty()
+    .split(',').mapNotNull { encoded ->
+        runCatching { String(Base64.getDecoder().decode(encoded), Charsets.UTF_8) }.getOrNull()
+    }
 val playStoreDartDefine =
     providers.gradleProperty("dart-defines").orNull.orEmpty()
         .split(',')
@@ -257,13 +262,27 @@ val verifySaidianReleaseMode by tasks.registering {
             logger.warn("QA RELEASE - NOT FOR DISTRIBUTION; debug signing and disabled push are expected.")
             return@doLast
         }
-        if (jpushAppKey.isEmpty() || jpushChannel != "production") {
-            throw GradleException(
-                "Production release requires JPUSH_APP_KEY and JPUSH_CHANNEL=production",
-            )
-        }
-        if (jpushVendorChannels.isEmpty()) {
-            throw GradleException("Production release requires an explicit JPUSH_VENDOR_CHANNELS decision")
+        if (playStoreDartDefine) {
+            // The international Play launch is explicitly remote-push-free.
+            // Its manifest removes the SDK's automatic entry points as well.
+            if (!remotePushDisabled || jpushAppKey.isNotEmpty() ||
+                jpushVendorChannels != "none" ||
+                dartDefines.any { it.startsWith("JPUSH_APP_KEY=") && it != "JPUSH_APP_KEY=" }
+            ) {
+                throw GradleException(
+                    "Play production requires SAIDIAN_DISABLE_REMOTE_PUSH=true, " +
+                        "JPUSH_VENDOR_CHANNELS=none and no native or Dart JPush key",
+                )
+            }
+        } else {
+            if (remotePushDisabled || jpushAppKey.isEmpty() || jpushChannel != "production") {
+                throw GradleException(
+                    "Sideload production requires JPUSH_APP_KEY and JPUSH_CHANNEL=production",
+                )
+            }
+            if (jpushVendorChannels.isEmpty()) {
+                throw GradleException("Production release requires an explicit JPUSH_VENDOR_CHANNELS decision")
+            }
         }
         if (!apiBaseUrl.startsWith("https://")) {
             throw GradleException("Production release requires an HTTPS SAYDIAN_API_BASE_URL")
@@ -336,7 +355,32 @@ flutter {
     source = "../.."
 }
 
+// QRing embeds BBPro 1.9.4 while Yucheng requires 1.6.1. Relocate only
+// QRing's Java BBPro core classes/references; preserve all DSP/JNI names.
+val sdkToolClasses = layout.buildDirectory.dir("sdk-tools/classes")
+val asmTools = fileTree("${gradle.gradleHomeDir}/lib") {
+    include("asm-*.jar", "asm-commons-*.jar")
+}
+val compileSdkIsolation by tasks.registering(JavaCompile::class) {
+    source(rootProject.file("sdk-tools/IsolateQRing.java"))
+    classpath = asmTools
+    destinationDirectory.set(sdkToolClasses)
+    sourceCompatibility = "17"
+    targetCompatibility = "17"
+}
+val isolatedQRing = layout.buildDirectory.file("sdk-tools/qring-isolated.aar")
+val isolateQRingSdk by tasks.registering(JavaExec::class) {
+    dependsOn(compileSdkIsolation)
+    classpath = files(sdkToolClasses) + asmTools
+    mainClass.set("IsolateQRing")
+    inputs.file(file("libs/qring_sdk_1.0.0.76.aar"))
+    outputs.file(isolatedQRing)
+    args(file("libs/qring_sdk_1.0.0.76.aar").absolutePath, isolatedQRing.get().asFile.absolutePath)
+}
+
 dependencies {
+    implementation(files(isolatedQRing).builtBy(isolateQRingSdk))
+    implementation(files("libs/coolwear_bluesdk-release.aar"))
     implementation("com.tencent.mm.opensdk:wechat-sdk-android:6.8.40")
     implementation("com.alipay.sdk:alipaysdk-android:15.8.42")
     if (hasCompleteVeepooSdk) {

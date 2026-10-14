@@ -4,7 +4,7 @@ import {test} from 'node:test';
 import {fileURLToPath} from 'node:url';
 import {legalSmokePath, runGlobalAuthSmoke} from './global_auth_smoke.mjs';
 
-const origin = 'https://app.saydian.cn';
+const origin = 'https://app.saydian.com';
 const prefix = '/global/api/saydian-app/v2';
 const canonical = '/api/saydian-app/v2';
 const id = '12345678-1234-1234-1234-123456789abc';
@@ -70,7 +70,7 @@ test('accepts canonical and already isolated legal paths with exact single mappi
 for (const attack of [
   `https://old.saydian.test${legalPath('user_agreement')}`,
   `${origin}${legalPath('user_agreement')}`,
-  `//app.saydian.cn${legalPath('user_agreement')}`,
+  `//app.saydian.com${legalPath('user_agreement')}`,
   `/global/api/saydian-app/v2/content/legal/../user_agreement?version=${version}&locale=en`,
   `/global/api/saydian-app/v2/content/legal/%2e%2e/user_agreement?version=${version}&locale=en`,
   `/global/api/saydian-app/v2/content/legal/%252e%252e/user_agreement?version=${version}&locale=en`,

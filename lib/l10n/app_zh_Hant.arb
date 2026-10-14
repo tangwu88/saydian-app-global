@@ -14,7 +14,7 @@
   "workoutDuration": "運動時間",
   "workoutWatchHeartRate": "手錶心率",
   "messageSendFailed": "傳送失敗，請檢查網路後重試",
-  "noWatchShopHint": "沒有裝置？前往 Saydian 商城看看",
+  "noWatchShopHint": "沒有裝置？前往 SayDian 商城看看",
   "notificationInAppHint": "關愛邀請和預警可在訊息中查看。",
   "healthAlertSafetyHint": "健康預警用於及時提醒，不作為醫療診斷；如有明顯不適，請及時就醫。",
   "afterSalesService": "售後服務",
@@ -43,7 +43,7 @@
   "addSupportContact": "新增客服聯絡方式",
   "contactPreparationHint": "聯絡前請準備裝置型號和問題發生時間",
   "supportPrivacyWarning": "請勿向非官方帳號傳送驗證碼、密碼或完整健康記錄。",
-  "brandHealthTitle": "SAYDIAN Health",
+  "brandHealthTitle": "SayDian",
   "accountAndSecurity": "帳號與安全",
   "cityNameLabel": "城市名稱",
   "cityNameExample": "例如：倫敦",
@@ -93,7 +93,7 @@
   "riskAnalysisTitle": "風險分析",
   "watchAlgorithmReference": "以下數值來自手錶演算法，僅供健康趨勢參考。",
   "ecgHealthReport": "心電健康報告",
-  "brandedEcgReport": "Saydian · 心電健康報告",
+  "brandedEcgReport": "SayDian · 心電健康報告",
   "ecgReportSafety": "說明：本報告由手錶測量資料產生，僅供健康管理參考，不能替代醫師診斷。",
   "installedWatchFaces": "已安裝錶面",
   "switchInstalledWatchFace": "可切換手錶內已有錶面",
@@ -158,26 +158,74 @@
   "watchCalories": "手錶熱量",
   "connectForWorkout": "請先在裝置頁連接手錶，運動模式將由手錶記錄。",
   "latestVersion": "目前已是最新版本 V{version}",
-  "@latestVersion": {"placeholders":{"version":{"type":"String"}}},
+  "@latestVersion": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
   "workoutPaused": "{mode}已暫停",
-  "@workoutPaused": {"placeholders":{"mode":{"type":"String"}}},
+  "@workoutPaused": {
+    "placeholders": {
+      "mode": {
+        "type": "String"
+      }
+    }
+  },
   "workoutInProgress": "{mode}進行中",
-  "@workoutInProgress": {"placeholders":{"mode":{"type":"String"}}},
+  "@workoutInProgress": {
+    "placeholders": {
+      "mode": {
+        "type": "String"
+      }
+    }
+  },
   "workoutReady": "準備開始{mode}",
-  "@workoutReady": {"placeholders":{"mode":{"type":"String"}}},
+  "@workoutReady": {
+    "placeholders": {
+      "mode": {
+        "type": "String"
+      }
+    }
+  },
   "startWorkout": "開始{mode}",
-  "@startWorkout": {"placeholders":{"mode":{"type":"String"}}},
+  "@startWorkout": {
+    "placeholders": {
+      "mode": {
+        "type": "String"
+      }
+    }
+  },
   "finishOtherWorkout": "請先結束{mode}",
-  "@finishOtherWorkout": {"placeholders":{"mode":{"type":"String"}}},
+  "@finishOtherWorkout": {
+    "placeholders": {
+      "mode": {
+        "type": "String"
+      }
+    }
+  },
   "workoutDetails": "{mode}詳情",
-  "@workoutDetails": {"placeholders":{"mode":{"type":"String"}}},
+  "@workoutDetails": {
+    "placeholders": {
+      "mode": {
+        "type": "String"
+      }
+    }
+  },
   "stepCount": "{count} 步",
-  "@stepCount": {"placeholders":{"count":{"type":"int"}}},
+  "@stepCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "@@locale": "zh_Hant",
   "globalShopPricePending": "價格待確認",
   "globalShopLoadMore": "載入更多",
   "globalShopReadOnly": "可瀏覽商品，目前地區暫未開放下單。",
-  "appName": "SAYDIAN Health",
+  "appName": "SayDian",
   "searchingNearby": "正在搜尋附近手錶",
   "noDevices": "未發現裝置",
   "selectWatch": "請核對名稱和訊號強度，再選擇手錶",
@@ -435,7 +483,7 @@
   "workoutsAndRecords": "運動與記錄",
   "healthDisclaimer": "裝置讀數僅供健康參考，非診斷或治療。作出任何醫療決定前，請先諮詢醫生。如有不適，請就醫。",
   "healthSafetyAdvice": "請休息後再測；如有明顯不適，請及時諮詢醫護人員。",
-  "defaultUser": "Saydian使用者",
+  "defaultUser": "SayDian使用者",
   "dailyGreeting": "今天也要保持好狀態",
   "messages": "訊息",
   "aiAssistant": "AI健康管家",
@@ -444,7 +492,7 @@
   "remoteCare": "遠端關愛",
   "healthLibrary": "健康百科",
   "healthAlerts": "健康預警",
-  "shop": "Saydian商城",
+  "shop": "SayDian商城",
   "connectWatch": "連接手錶",
   "addDevice": "新增裝置",
   "connectWatchForData": "連接手錶後可查看支援的健康資料",
@@ -473,7 +521,7 @@
   "deviceFeatures": "裝置功能",
   "aboutDevice": "關於裝置",
   "connectionHelp": "連接說明",
-  "searchNearbyWatch": "搜尋並連接附近的Saydian手錶",
+  "searchNearbyWatch": "搜尋並連接附近的SayDian手錶",
   "useWatch": "請在手錶上操作",
   "myOrders": "我的訂單",
   "all": "全部",
@@ -505,7 +553,7 @@
   "updateStore": "前往應用程式商店更新",
   "downloadAndInstall": "安全下載並安裝",
   "gettingReady": "正在為你準備…",
-  "enableNotifications": "開啟Saydian訊息通知",
+  "enableNotifications": "開啟SayDian訊息通知",
   "notificationExplanation": "用於提醒新的健康預警和關愛邀請。鎖定畫面不顯示具體健康數值，可隨時在系統設定中關閉。",
   "notNow": "暫不開啟",
   "enable": "開啟",
@@ -636,7 +684,13 @@
   "shareProduct": "分享商品",
   "customerReviews": "用戶評價",
   "stockCount": "庫存 {count} 件",
-  "@stockCount": {"placeholders":{"count":{"type":"int"}}},
+  "@stockCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "measurementContactEcg": "未偵測到電極接觸，請正確佩戴手錶並將手指持續貼在心電電極上",
   "measurementContactElectrode": "未偵測到正確接觸，請佩戴手錶並依手錶提示接觸電極",
   "measurementCheckFit": "未偵測到正確佩戴，請將手錶貼合手腕後繼續測量",
@@ -654,7 +708,13 @@
   "endMeasurement": "結束測量",
   "deviceDataReadComplete": "已讀取手錶資料，雲端上傳結果請查看同步狀態",
   "measurementPercent": "測量進度 {percent}%",
-  "@measurementPercent": {"placeholders":{"percent":{"type":"int"}}},
+  "@measurementPercent": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
   "cloudHealthUploading": "正在上傳已儲存的記錄…",
   "cloudHealthLocalOnly": "資料僅儲存在本機，登入後可上傳",
   "cloudHealthPending": "部分記錄暫未上傳，已儲存在本機",
@@ -667,5 +727,24 @@
   "batteryUnknown": "狀態未知",
   "batteryLow": "電量低",
   "ecgWaveformPreviewHint": "波形預覽 · 刻度待確認",
-  "ecgWaveformLowSignalHint": "訊號品質較低 · 波形預覽"
+  "ecgWaveformLowSignalHint": "訊號品質較低 · 波形預覽",
+  "dataPrivacyTitle": "資料隱私",
+  "dataResidencyTitle": "資料儲存在美國",
+  "dataResidencyBody": "SayDian 雲端保存的帳號、裝置及同步的穿戴裝置資料，均儲存在美國境內的伺服器。如果您在其他國家或地區使用 SayDian，您選擇同步的資料將傳輸至美國。",
+  "dataLocalTitle": "手機本機儲存",
+  "dataLocalBody": "SayDian 也會在手機上保留加密的本機歷史資料，用於離線查看及等待同步。尚未獲得伺服器確認的資料仍標記為待同步。",
+  "dataChoiceTitle": "您的選擇",
+  "dataChoiceBody": "您可依功能需要授予權限、拒絕可選權限，並在應用程式內管理分享。如需申請刪除帳號及關聯資料，請開啟「帳號 → 刪除帳號」。保留期限及其他權利請查看隱私政策。",
+  "dataThirdPartyTitle": "可選服務",
+  "dataThirdPartyBody": "天氣、通知等可選服務可能根據各自的隱私政策處理所需資訊。美國儲存聲明適用於 SayDian 雲端儲存，不涵蓋手機本機儲存或第三方獨立的資料處理。",
+  "iosWellnessSafety": "iOS 版 SayDian 顯示相容裝置的活動與睡眠資訊，用於日常健康生活管理，不提供醫學測量、診斷或治療。作出醫療決定前，請諮詢合格的醫療專業人員。",
+  "smartRing": "智慧戒指",
+  "ringStress": "壓力",
+  "ringGestures": "手勢控制",
+  "ringCallReminder": "來電提醒",
+  "ringConnectedSyncHint": "裝置已連線，資料將在同步後顯示。",
+  "ringDisconnecting": "正在中斷連線",
+  "ringDisconnectHelp": "App 已中斷連線。若戒指在 iPhone 藍牙設定中仍顯示已連線，請先在系統設定中忘記此裝置，再重新搜尋。",
+  "deviceLabel": "裝置",
+  "ringStatusReminder": "狀態提醒"
 }

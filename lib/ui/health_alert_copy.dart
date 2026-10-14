@@ -31,7 +31,7 @@ String healthAlertMessage(BuildContext context, HealthWarningAlert alert) {
 String healthAlertOrigin(BuildContext context, MeasurementOrigin origin) {
   if (!_isEnglishUi(context)) return origin.label;
   return switch (origin) {
-    MeasurementOrigin.watchHistory => 'Watch',
+    MeasurementOrigin.watchHistory => 'Device',
     MeasurementOrigin.appMeasurement => 'App',
     MeasurementOrigin.remoteMember => 'Shared',
     MeasurementOrigin.manualEntry => 'Manual',

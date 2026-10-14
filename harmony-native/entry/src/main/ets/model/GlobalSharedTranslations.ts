@@ -1,6 +1,6 @@
 /* Shared semantic UI translations, mirrored from lib/l10n/app_*.arb.\n * Dynamic user/server content is never a translation source. */
 export const SHARED_TRANSLATIONS: Record<string, string[]> = {
-  "appName": ["Saydian","Saydian","Saydian","Saydian","Saydian","Saydian","Saydian","Saydian"],
+  "appName": ["SayDian","SayDian","SayDian","SayDian","SayDian","SayDian","SayDian","SayDian"],
   "distance": ["Distance","距离","距離","Entfernung","Distance","Distancia","距離","거리"],
   "calories": ["Calories","热量","熱量","Kalorien","Calories","Calorías","消費カロリー","칼로리"],
   "healthProfile": ["Health profile","健康档案","健康檔案","Gesundheitsprofil","Profil de santé","Perfil de salud","健康プロフィール","건강 프로필"],

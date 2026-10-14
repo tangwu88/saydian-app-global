@@ -67,7 +67,7 @@ require_value SAIDIAN_CODE_SIGN_IDENTITY "${SAIDIAN_CODE_SIGN_IDENTITY:-}"
 require_value SAIDIAN_PROVISIONING_PROFILE_SPECIFIER \
   "${SAIDIAN_PROVISIONING_PROFILE_SPECIFIER:-}"
 case "${SAYDIAN_API_BASE_URL:-}" in
-  https://app.saydian.cn|https://app.saydian.cn/) ;;
+  https://app.saydian.com|https://app.saydian.com/) ;;
   *)
     echo "error: Production iOS Release requires the approved global API origin." >&2
     exit 1
@@ -80,7 +80,7 @@ if [ -n "${JPUSH_APP_KEY:-}" ]; then
 fi
 
 case "${SAYDIAN_UPDATE_MANIFEST_URL:-}" in
-  ""|https://app.saydian.cn/global/*) ;;
+  ""|https://app.saydian.com/global/*) ;;
   *)
     echo "error: Optional update manifest must remain under the global service." >&2
     exit 1

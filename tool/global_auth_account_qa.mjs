@@ -6,7 +6,7 @@ import {fileURLToPath, pathToFileURL} from 'node:url';
 import {promisify} from 'node:util';
 import {legalSmokePath, runGlobalAuthSmoke} from './global_auth_smoke.mjs';
 
-const origin = 'https://app.saydian.cn';
+const origin = 'https://app.saydian.com';
 const base = `${origin}/global/api/saydian-app/v2`;
 const repository = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 export const privateRecordName = 'global-auth-account-qa.jsonl';

@@ -1,3 +1,5 @@
+import 'data_privacy_page.dart';
+import 'device_symbol.dart';
 import 'device_details_refresh.dart';
 import 'widgets/safe_network_image.dart';
 import 'dart:async';
@@ -40,6 +42,7 @@ part 'health_pages.dart';
 part 'sport_pages.dart';
 part 'article_pages.dart';
 part 'device_pages.dart';
+part 'ring_pages.dart';
 part 'notification_pages.dart';
 part 'care_pages.dart';
 part 'settings_pages.dart';

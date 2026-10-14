@@ -14,7 +14,7 @@
   "workoutDuration": "Duración del entrenamiento",
   "workoutWatchHeartRate": "Frecuencia cardíaca del reloj",
   "messageSendFailed": "No se pudo enviar. Comprueba tu conexión e inténtalo de nuevo.",
-  "noWatchShopHint": "¿Necesitas un dispositivo? Visita la tienda Saydian.",
+  "noWatchShopHint": "¿Necesitas un dispositivo? Visita la tienda SayDian.",
   "notificationInAppHint": "Las invitaciones y alertas están en Mensajes.",
   "healthAlertSafetyHint": "Las alertas de salud ofrecen avisos oportunos, no diagnósticos médicos. Si sientes un malestar importante, busca atención médica pronto.",
   "afterSalesService": "Servicio posventa",
@@ -43,7 +43,7 @@
   "addSupportContact": "Añadir contacto de asistencia",
   "contactPreparationHint": "Ten a mano el modelo del dispositivo y la hora del problema antes de contactar con asistencia.",
   "supportPrivacyWarning": "No envíes códigos de verificación, contraseñas ni registros de salud completos a cuentas no oficiales.",
-  "brandHealthTitle": "SAYDIAN Health",
+  "brandHealthTitle": "SayDian",
   "accountAndSecurity": "Cuenta y seguridad",
   "cityNameLabel": "Nombre de la ciudad",
   "cityNameExample": "Por ejemplo: Madrid",
@@ -93,7 +93,7 @@
   "riskAnalysisTitle": "Análisis de riesgos",
   "watchAlgorithmReference": "Los valores siguientes proceden del algoritmo del reloj y solo sirven de referencia para tendencias de salud.",
   "ecgHealthReport": "Informe de salud ECG",
-  "brandedEcgReport": "Saydian · Informe de salud ECG",
+  "brandedEcgReport": "SayDian · Informe de salud ECG",
   "ecgReportSafety": "Nota: este informe usa datos medidos por el reloj. Es solo una referencia para el bienestar y no sustituye el diagnóstico de un médico.",
   "installedWatchFaces": "Esferas instaladas",
   "switchInstalledWatchFace": "Cambia entre las esferas que ya están en tu reloj.",
@@ -158,26 +158,74 @@
   "watchCalories": "Calorías del reloj",
   "connectForWorkout": "Primero conecta tu reloj en la página Dispositivo. El reloj registrará el entrenamiento.",
   "latestVersion": "Ya tienes la última versión: V{version}",
-  "@latestVersion": {"placeholders":{"version":{"type":"String"}}},
+  "@latestVersion": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
   "workoutPaused": "{mode} en pausa",
-  "@workoutPaused": {"placeholders":{"mode":{"type":"String"}}},
+  "@workoutPaused": {
+    "placeholders": {
+      "mode": {
+        "type": "String"
+      }
+    }
+  },
   "workoutInProgress": "{mode} en curso",
-  "@workoutInProgress": {"placeholders":{"mode":{"type":"String"}}},
+  "@workoutInProgress": {
+    "placeholders": {
+      "mode": {
+        "type": "String"
+      }
+    }
+  },
   "workoutReady": "Listo para empezar: {mode}",
-  "@workoutReady": {"placeholders":{"mode":{"type":"String"}}},
+  "@workoutReady": {
+    "placeholders": {
+      "mode": {
+        "type": "String"
+      }
+    }
+  },
   "startWorkout": "Empezar: {mode}",
-  "@startWorkout": {"placeholders":{"mode":{"type":"String"}}},
+  "@startWorkout": {
+    "placeholders": {
+      "mode": {
+        "type": "String"
+      }
+    }
+  },
   "finishOtherWorkout": "Primero termina: {mode}",
-  "@finishOtherWorkout": {"placeholders":{"mode":{"type":"String"}}},
+  "@finishOtherWorkout": {
+    "placeholders": {
+      "mode": {
+        "type": "String"
+      }
+    }
+  },
   "workoutDetails": "Detalles de {mode}",
-  "@workoutDetails": {"placeholders":{"mode":{"type":"String"}}},
+  "@workoutDetails": {
+    "placeholders": {
+      "mode": {
+        "type": "String"
+      }
+    }
+  },
   "stepCount": "{count} pasos",
-  "@stepCount": {"placeholders":{"count":{"type":"int"}}},
+  "@stepCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "@@locale": "es",
   "globalShopPricePending": "Precio por confirmar",
   "globalShopLoadMore": "Cargar más",
   "globalShopReadOnly": "Aquí puede consultar los productos. Los pedidos aún no están disponibles en esta región.",
-  "appName": "SAYDIAN Health",
+  "appName": "SayDian",
   "searchingNearby": "Buscando relojes cercanos",
   "noDevices": "No se encontraron dispositivos",
   "selectWatch": "Comprueba el nombre y la señal y selecciona tu reloj",
@@ -420,7 +468,7 @@
   "accountCreated": "Tu cuenta está lista",
   "passwordReset": "Contraseña actualizada",
   "haveAccount": "¿Ya tienes una cuenta?",
-  "noAccount": "¿Es tu primera vez en Saydian?",
+  "noAccount": "¿Es tu primera vez en SayDian?",
   "showPassword": "Mostrar contraseña",
   "hidePassword": "Ocultar contraseña",
   "selectCountry": "Selecciona país o región",
@@ -435,7 +483,7 @@
   "workoutsAndRecords": "Actividad y registros",
   "healthDisclaimer": "Las lecturas del dispositivo son solo una referencia de bienestar general, no sirven para diagnosticar ni tratar. Consulta a un médico antes de tomar cualquier decisión médica. Si te encuentras mal, busca atención médica.",
   "healthSafetyAdvice": "Descansa y vuelve a medir. Si te encuentras mal, consulta a un profesional sanitario.",
-  "defaultUser": "Usuario de Saydian",
+  "defaultUser": "Usuario de SayDian",
   "dailyGreeting": "Cuídate hoy",
   "messages": "Mensajes",
   "aiAssistant": "Asistente de bienestar con IA",
@@ -473,7 +521,7 @@
   "deviceFeatures": "Funciones del dispositivo",
   "aboutDevice": "Acerca del dispositivo",
   "connectionHelp": "Ayuda de conexión",
-  "searchNearbyWatch": "Busca y conecta un reloj Saydian cercano",
+  "searchNearbyWatch": "Busca y conecta un reloj SayDian cercano",
   "useWatch": "Usa esta función en el reloj",
   "myOrders": "Mis pedidos",
   "all": "Todo",
@@ -490,7 +538,7 @@
   "permissions": "Permisos",
   "feedback": "Comentarios",
   "customerService": "Atención al cliente",
-  "aboutApp": "Acerca de Saydian",
+  "aboutApp": "Acerca de SayDian",
   "security": "Seguridad de la cuenta",
   "goToSettings": "Abrir ajustes",
   "close": "Cerrar",
@@ -505,7 +553,7 @@
   "updateStore": "Actualizar en la tienda de aplicaciones",
   "downloadAndInstall": "Descargar e instalar de forma segura",
   "gettingReady": "Preparando todo…",
-  "enableNotifications": "Activar notificaciones de Saydian",
+  "enableNotifications": "Activar notificaciones de SayDian",
   "notificationExplanation": "Recibe alertas de salud e invitaciones. Los valores de salud no se muestran en la pantalla bloqueada. Puedes desactivar las notificaciones en los ajustes.",
   "notNow": "Ahora no",
   "enable": "Activar",
@@ -636,7 +684,13 @@
   "shareProduct": "Compartir producto",
   "customerReviews": "Reseñas de clientes",
   "stockCount": "{count} en stock",
-  "@stockCount": {"placeholders":{"count":{"type":"int"}}},
+  "@stockCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "measurementContactEcg": "No se detecta contacto con el electrodo. Coloque bien el reloj y mantenga el dedo en el electrodo de ECG.",
   "measurementContactElectrode": "No se detecta contacto con el electrodo. Siga las instrucciones del reloj.",
   "measurementCheckFit": "Compruebe que el reloj quede bien ajustado a la muñeca.",
@@ -654,7 +708,13 @@
   "endMeasurement": "Finalizar medición",
   "deviceDataReadComplete": "Datos del reloj leídos. La subida a la nube se confirma por separado.",
   "measurementPercent": "Progreso de la medición: {percent}%",
-  "@measurementPercent": {"placeholders":{"percent":{"type":"int"}}},
+  "@measurementPercent": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
   "cloudHealthUploading": "Subiendo los registros guardados…",
   "cloudHealthLocalOnly": "Guardados en este teléfono. Inicie sesión para subirlos.",
   "cloudHealthPending": "Algunos registros aún no se han subido. Siguen guardados en este teléfono.",
@@ -667,5 +727,24 @@
   "batteryUnknown": "Estado desconocido",
   "batteryLow": "Batería baja",
   "ecgWaveformPreviewHint": "Vista previa de onda · escala sin confirmar",
-  "ecgWaveformLowSignalHint": "Señal de baja calidad · vista previa"
+  "ecgWaveformLowSignalHint": "Señal de baja calidad · vista previa",
+  "dataPrivacyTitle": "Privacidad de los datos",
+  "dataResidencyTitle": "Almacenamiento en Estados Unidos",
+  "dataResidencyBody": "Los datos de cuenta, dispositivo y datos sincronizados del wearable guardados en la nube de SayDian se almacenan en servidores ubicados en Estados Unidos. Si usa SayDian desde otro país, los datos que decida sincronizar se transferirán a Estados Unidos.",
+  "dataLocalTitle": "En su teléfono",
+  "dataLocalBody": "SayDian también conserva un historial local cifrado para uso sin conexión y sincronización pendiente. Los datos no confirmados por el servidor permanecen pendientes.",
+  "dataChoiceTitle": "Sus opciones",
+  "dataChoiceBody": "Conceda los permisos necesarios para cada función y gestione el uso compartido en la app. Para solicitar la eliminación de su cuenta y datos asociados, abra Cuenta → Eliminar cuenta. Consulte la política de privacidad para los plazos de conservación y otros derechos.",
+  "dataThirdPartyTitle": "Servicios opcionales",
+  "dataThirdPartyBody": "El tiempo, las notificaciones y otros servicios opcionales pueden procesar la información necesaria según sus propias políticas. El almacenamiento en Estados Unidos se refiere a la nube de SayDian, no al teléfono ni al procesamiento independiente de terceros.",
+  "iosWellnessSafety": "SayDian en iOS muestra actividad y sueño de dispositivos compatibles para el bienestar diario. No ofrece mediciones médicas, diagnósticos ni tratamientos. Consulte a un profesional sanitario cualificado antes de tomar decisiones médicas.",
+  "smartRing": "Anillo inteligente",
+  "ringStress": "Estrés",
+  "ringGestures": "Control por gestos",
+  "ringCallReminder": "Avisos de llamadas",
+  "ringConnectedSyncHint": "Dispositivo conectado. Los datos aparecerán tras la sincronización.",
+  "ringDisconnecting": "Desconectando",
+  "ringDisconnectHelp": "La app se ha desconectado. Si el anillo sigue conectado en los ajustes Bluetooth del iPhone, olvide ese dispositivo antes de buscar de nuevo.",
+  "deviceLabel": "Dispositivo",
+  "ringStatusReminder": "Recordatorios de estado"
 }

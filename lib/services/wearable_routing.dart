@@ -8,10 +8,33 @@ import 'package:flutter/services.dart';
 import '../domain/feature_models.dart';
 import '../domain/models.dart';
 import '../domain/ios_wellness_policy.dart';
+import '../domain/ring_name_policy.dart';
 import 'global_storage_scope.dart';
+import 'global_saved_device_migration.dart';
 import 'wearable_bridge.dart';
 
-enum WearableTransport { veepoo, yucheng, urion }
+enum WearableTransport { veepoo, yucheng, urion, coolwear, qring }
+
+WearableTransport? ringTransportForName(String name) {
+  final family = RingNamePolicy.familyForName(name);
+  if (family == RingNameFamily.luckring) {
+    return WearableTransport.coolwear;
+  }
+  if (family == RingNameFamily.qring) {
+    return WearableTransport.qring;
+  }
+  final n = name.trim().toUpperCase();
+  if (n.startsWith("YC")) return WearableTransport.yucheng;
+  if (n.startsWith("TK") || n.startsWith("V")) return WearableTransport.veepoo;
+  return null;
+}
+
+bool _acceptTransportName(WearableTransport transport, String name) {
+  final ring = ringTransportForName(name);
+  if (ring != null) return ring == transport;
+  return transport != WearableTransport.coolwear &&
+      transport != WearableTransport.qring;
+}
 
 class YuchengDeviceClassifier {
   const YuchengDeviceClassifier._();
@@ -95,6 +118,8 @@ class RoutedWearableBridge
     required WearableBridge veepoo,
     required WearableBridge yucheng,
     WearableBridge? urion,
+    WearableBridge? coolwear,
+    WearableBridge? qring,
     WearableTransportPreferenceStore? preferenceStore,
     this.restoreOnlyBoundDevice = false,
     this.recoveryOperationTimeout = const Duration(seconds: 30),
@@ -103,6 +128,8 @@ class RoutedWearableBridge
          WearableTransport.veepoo: veepoo,
          WearableTransport.yucheng: yucheng,
          WearableTransport.urion: ?urion,
+         WearableTransport.coolwear: ?coolwear,
+         WearableTransport.qring: ?qring,
        },
        _preferenceStore =
            preferenceStore ?? const SecureWearableTransportPreferenceStore() {
@@ -130,7 +157,7 @@ class RoutedWearableBridge
   WearableBridge get _activeBridge {
     final transport = _activeTransport;
     if (transport == null) {
-      throw PlatformException(code: 'NOT_CONNECTED', message: '请先连接手表');
+      throw PlatformException(code: 'NOT_CONNECTED', message: '请先连接设备');
     }
     return _sources[transport]!;
   }
@@ -141,38 +168,37 @@ class RoutedWearableBridge
   @override
   Future<List<DeviceInfo>> scanDevices() async {
     _scanned.clear();
-    final results = await Future.wait([
-      _sources[WearableTransport.veepoo]!.scanDevices(),
-      _sources[WearableTransport.yucheng]!.scanDevices(),
-      if (_sources[WearableTransport.urion] case final urion?)
-        urion.scanDevices(),
-    ]);
-    // Live scan callbacks may have populated this table before the three
-    // scanners complete. Rebuild it from the cross-transport selection so a
-    // stale SDK entry cannot remain next to the verified Urion candidate.
+    final failures = <WearableTransport, (Object, StackTrace)>{};
+    final batches = await Future.wait(
+      _sources.entries.map((entry) async {
+        try {
+          return MapEntry(entry.key, await entry.value.scanDevices());
+        } catch (error, stack) {
+          failures[entry.key] = (error, stack);
+          return MapEntry(entry.key, const <DeviceInfo>[]);
+        }
+      }),
+    );
+    // An unavailable optional SDK must not prevent another SDK from scanning.
+    // When every SDK fails, retain the cause so permission/Bluetooth guidance
+    // is shown instead of a misleading empty-device result.
+    if (failures.length == _sources.length) {
+      final failure = failures.values.firstWhere(
+        (value) => value.$1 is PlatformException,
+        orElse: () => failures.values.first,
+      );
+      Error.throwWithStackTrace(failure.$1, failure.$2);
+    }
+    // Rebuild from the completed cross-transport scan to remove stale callbacks.
     _scanned.clear();
-    final candidates =
-        <RoutedDevice>[
-          ...results[0].map(
-            (device) =>
-                RoutedDevice.fromDevice(WearableTransport.veepoo, device),
-          ),
-          ...results[1].map(
-            (device) =>
-                RoutedDevice.fromDevice(WearableTransport.yucheng, device),
-          ),
-          if (results.length > 2)
-            ...results[2].map(
-              (device) =>
-                  RoutedDevice.fromDevice(WearableTransport.urion, device),
-            ),
-        ].where((candidate) {
-          // Yucheng-family devices must use Yucheng. The two native SDKs expose
-          // different identifiers for the same watch, so filtering here avoids a
-          // duplicate Veepoo entry even when identifier-based grouping cannot.
-          return candidate.transport != WearableTransport.veepoo ||
-              !YuchengDeviceClassifier.matches(candidate.display.name);
-        }).toList();
+    final candidates = <RoutedDevice>[
+      for (final batch in batches)
+        for (final device in batch.value)
+          if (_acceptTransportName(batch.key, device.name) &&
+              !(batch.key == WearableTransport.veepoo &&
+                  YuchengDeviceClassifier.matches(device.name)))
+            RoutedDevice.fromDevice(batch.key, device),
+    ];
     final grouped = <String, List<RoutedDevice>>{};
     for (final candidate in candidates) {
       grouped
@@ -194,6 +220,9 @@ class RoutedWearableBridge
   RoutedDevice? _selectDevice(List<RoutedDevice> candidates) {
     for (final candidate in candidates) {
       if (candidate.transport == WearableTransport.urion) return candidate;
+    }
+    for (final candidate in candidates) {
+      if (candidate.display.isRing) return candidate;
     }
     final hasYuchengModel = candidates.any(
       (candidate) => YuchengDeviceClassifier.matches(candidate.display.name),
@@ -247,7 +276,7 @@ class RoutedWearableBridge
         YuchengDeviceClassifier.matches(device.display.name)) {
       throw PlatformException(
         code: 'YUCHENG_DISCOVERY_MISMATCH',
-        message: '当前手表暂时无法连接，请重新扫描后重试',
+        message: '当前设备暂时无法连接，请重新扫描后重试',
       );
     }
     _requireRecoverySourceAvailable(device.transport);
@@ -285,29 +314,28 @@ class RoutedWearableBridge
 
   @override
   Future<void> disconnect() async {
-    final disconnectGeneration = ++_connectionGeneration;
+    ++_connectionGeneration;
     final transport = _activeTransport;
-    if (transport == null) return;
     final connectionOwner = _activeConnectionGeneration;
+    // Persist the user's intent to stop automatic recovery, including when
+    // native cancellation later times out. Keep the live channel for retry.
     try {
-      final pending = _pendingRecoveryWork[transport];
-      if (pending == null) {
-        await _sources[transport]!.disconnect();
-      } else {
-        await pending.timeout(recoveryOperationTimeout);
-      }
-    } finally {
-      if (_activeConnectionGeneration == connectionOwner) {
-        _activeTransport = null;
-        _activeConnectionGeneration = null;
-      }
-      if (disconnectGeneration == _connectionGeneration) {
-        try {
-          await _preferenceStore.clear();
-        } catch (_) {
-          // The explicit disconnect has already completed.
-        }
-      }
+      await _preferenceStore.clear();
+    } catch (_) {
+      // Native cancellation is still required if local storage is unavailable.
+    }
+    if (transport == null) return;
+    final pending = _pendingRecoveryWork[transport];
+    if (pending == null) {
+      await _sources[transport]!.disconnect();
+    } else {
+      await pending.timeout(recoveryOperationTimeout);
+    }
+    // Retain the owner on failure so an explicit retry still
+    // reaches the same native channel instead of reporting a no-op success.
+    if (_activeConnectionGeneration == connectionOwner) {
+      _activeTransport = null;
+      _activeConnectionGeneration = null;
     }
   }
 
@@ -387,7 +415,16 @@ class RoutedWearableBridge
         break;
       }
     }
-    if (target == null) return null;
+    if (target == null && source is WearableBoundDeviceLookupBridge) {
+      target = await (source as WearableBoundDeviceLookupBridge)
+          .lookupPreviouslyBoundDevice(saved.nativeIdentifier)
+          .timeout(recoveryOperationTimeout);
+      if (generation != _connectionGeneration) return null;
+      if (target?.id != saved.nativeIdentifier) return null;
+    }
+    if (target == null || !_acceptTransportName(saved.transport, target.name)) {
+      return null;
+    }
     final routed = RoutedDevice.fromDevice(saved.transport, target);
     if (saved.transport == WearableTransport.veepoo &&
         YuchengDeviceClassifier.matches(target.name)) {
@@ -465,7 +502,7 @@ class RoutedWearableBridge
     if (_pendingRecoveryWork.containsKey(transport)) {
       throw PlatformException(
         code: 'RECOVERY_PENDING',
-        message: '手表正在恢复连接，请稍后重试',
+        message: '设备正在恢复连接，请稍后重试',
       );
     }
   }
@@ -500,7 +537,7 @@ class RoutedWearableBridge
         bridge is! WearableNativeWatchFaceBridge) {
       throw PlatformException(
         code: 'WATCH_FACE_MARKET_UNSUPPORTED',
-        message: '当前手表暂不支持在线表盘',
+        message: '当前设备暂不支持在线表盘',
       );
     }
     return bridge as WearableNativeWatchFaceBridge;
@@ -535,6 +572,10 @@ class RoutedWearableBridge
     return result;
   }
 
+  void _requireDeviceSettings() {
+    _requirePhysiology();
+  }
+
   @override
   Future<DeviceCapabilities> getCapabilities() async => IosWellnessPolicy
       .current
@@ -556,7 +597,9 @@ class RoutedWearableBridge
   }
 
   void _requireFeature(DeviceFeature feature) {
-    if (!IosWellnessPolicy.current.allowsFeature(feature)) _requirePhysiology();
+    if (!IosWellnessPolicy.current.allowsFeature(feature)) {
+      _requirePhysiology();
+    }
   }
 
   @override
@@ -583,7 +626,7 @@ class RoutedWearableBridge
     if (bridge is! WearableSportPauseBridge) {
       throw PlatformException(
         code: 'SPORT_PAUSE_UNSUPPORTED',
-        message: '当前手表不支持暂停运动',
+        message: '当前设备不支持暂停运动',
       );
     }
     return (bridge as WearableSportPauseBridge).pauseSport();
@@ -595,7 +638,7 @@ class RoutedWearableBridge
     if (bridge is! WearableSportPauseBridge) {
       throw PlatformException(
         code: 'SPORT_PAUSE_UNSUPPORTED',
-        message: '当前手表不支持暂停运动',
+        message: '当前设备不支持暂停运动',
       );
     }
     return (bridge as WearableSportPauseBridge).resumeSport();
@@ -615,13 +658,15 @@ class RoutedWearableBridge
 
   @override
   Future<void> setAutoMeasureSetting(String type, bool enabled) async {
-    _requirePhysiology();
+    _requireDeviceSettings();
     await _activeBridge.setAutoMeasureSetting(type, enabled);
   }
 
   @override
   Future<Map<String, AutoMeasureIntervalSetting>> readAutoMeasureIntervals() {
-    if (IosWellnessPolicy.current.enabled) return Future.value({});
+    if (IosWellnessPolicy.current.enabled) {
+      return Future.value({});
+    }
     final bridge = _activeBridge;
     if (bridge is! WearableAutoMeasureIntervalBridge) return Future.value({});
     return (bridge as WearableAutoMeasureIntervalBridge)
@@ -630,12 +675,12 @@ class RoutedWearableBridge
 
   @override
   Future<void> setAutoMeasureInterval(String type, int minutes) {
-    _requirePhysiology();
+    _requireDeviceSettings();
     final bridge = _activeBridge;
     if (bridge is! WearableAutoMeasureIntervalBridge) {
       throw PlatformException(
         code: 'AUTO_MEASURE_INTERVAL_UNSUPPORTED',
-        message: '当前手表不支持调整监测间隔',
+        message: '当前设备不支持调整监测间隔',
       );
     }
     return (bridge as WearableAutoMeasureIntervalBridge).setAutoMeasureInterval(
@@ -731,6 +776,7 @@ class RoutedWearableBridge
     }
     if (event.type == 'scanDevice') {
       final device = DeviceInfo.fromMap(event.payload);
+      if (!_acceptTransportName(transport, device.name)) return;
       // Both Android SDKs can report the same W8-family watch while scanning.
       // W8 devices are owned by Yucheng, so never expose the Veepoo discovery
       // event to the controller (the completed scan is filtered the same way).
@@ -831,8 +877,10 @@ class SecureWearableTransportPreferenceStore
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
 
   Future<Map<String, Object?>?> _readValue() async {
-    final value = await _storage.read(key: _key);
-    if (value == null) return null;
+    final value =
+        await _storage.read(key: _key) ??
+        (await readMigratedDevicePreferences(storageNamespace))?['binding'];
+    if (value is! String) return null;
     try {
       final decoded = jsonDecode(value);
       return decoded is Map<String, Object?> ? decoded : null;
@@ -879,5 +927,8 @@ class SecureWearableTransportPreferenceStore
   );
 
   @override
-  Future<void> clear() => _storage.delete(key: _key);
+  Future<void> clear() async {
+    await _storage.delete(key: _key);
+    await _storage.delete(key: migratedDeviceKey(storageNamespace));
+  }
 }

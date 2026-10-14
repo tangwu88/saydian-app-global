@@ -78,3 +78,9 @@ google-services.json
 # Local reference material; keep it on this machine, not in source control.
 /相关信息.txt
 /veepooSDK接入文档.pdf
+
+# Owner-supplied ring SDKs, kept byte-identical to the domestic reference.
+!/android/app/libs/coolwear_bluesdk-release.aar
+!/android/app/libs/qring_sdk_1.0.0.76.aar
+!/ios/Runner/Vendor/BluetoothLibrary.framework/
+!/ios/Runner/Vendor/QCBandSDK.framework/

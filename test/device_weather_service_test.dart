@@ -193,16 +193,16 @@ void main() {
       expect(
         client.allows(
           Uri.parse(
-            'https://app.saydian.cn/global/api/saydian-app/v2/support/weather?lat=1&lon=2',
+            'https://app.saydian.com/global/api/saydian-app/v2/support/weather?lat=1&lon=2',
           ),
         ),
         isTrue,
       );
       for (final url in [
-        'https://app.saydian.cn/global/api/saydian-app/v2/auth/login',
-        'https://app.saydian.cn/global/api/saydian-app/v2/support/weather/other',
-        'https://app.saydian.cn.attacker.example/global/api/saydian-app/v2/support/weather',
-        'https://app.saydian.cn/global/api/saydian-app/v2/support/%2e%2e/weather',
+        'https://app.saydian.com/global/api/saydian-app/v2/auth/login',
+        'https://app.saydian.com/global/api/saydian-app/v2/support/weather/other',
+        'https://app.saydian.com.attacker.example/global/api/saydian-app/v2/support/weather',
+        'https://app.saydian.com/global/api/saydian-app/v2/support/%2e%2e/weather',
       ]) {
         expect(client.allows(Uri.parse(url)), isFalse);
       }

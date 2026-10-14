@@ -194,6 +194,38 @@ abstract interface class WearableConnectionRecoveryBridge {
   Future<DeviceInfo?> restoreConnection({required WearableUserProfile profile});
 }
 
+/// Optional lookup for one device previously bound in this App environment.
+/// A native adapter must verify the exact identifier against its trusted OS
+/// bond before returning it; the normal vendor handshake still follows.
+abstract interface class WearableBoundDeviceLookupBridge {
+  Future<DeviceInfo?> lookupPreviouslyBoundDevice(String nativeIdentifier);
+}
+
+/// Optional, user-initiated recovery for rings that remain in the Android
+/// system bond list but no longer advertise.
+///
+/// This API must never be called by automatic restore. Native adapters may
+/// return only OS-bonded devices with an accepted vendor name. A returned
+/// device is still untrusted until the user selects it and the normal vendor
+/// SDK connection and capability handshake succeeds.
+abstract interface class WearableBondedDeviceSelectionBridge {
+  Future<List<DeviceInfo>> listBondedDevicesForSelection();
+}
+
+/// Optional, user-initiated recovery for the exact device identifier that this
+/// App saved after a successful vendor handshake.
+///
+/// Unlike [WearableBoundDeviceLookupBridge], this path may prepare a device
+/// that is no longer present in the Android bond list or BLE scan. It must only
+/// be called from an explicit selection UI. The normal vendor connection and
+/// capability handshake still decides whether the device is trusted.
+abstract interface class WearableRememberedDeviceSelectionBridge {
+  Future<DeviceInfo?> prepareRememberedDeviceForSelection(
+    String nativeIdentifier, {
+    String? knownName,
+  });
+}
+
 class WearableSdkNotConfigured implements Exception {
   const WearableSdkNotConfigured([this.message = '此功能暂时无法使用，请稍后再试']);
 
@@ -324,7 +356,7 @@ class MethodChannelWearableBridge
     if (result['resolved'] != true) {
       throw PlatformException(
         code: 'CAPABILITIES_UNAVAILABLE',
-        message: '暂时无法读取此手表的功能',
+        message: '暂时无法读取此设备的功能',
       );
     }
     return DeviceCapabilities.fromMap(result);

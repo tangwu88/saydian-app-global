@@ -40,7 +40,7 @@ void main() {
     for (final invalid in [
       '',
       '../other',
-      'https://app.saydian.cn',
+      'https://app.saydian.com',
       'A' * 64,
     ]) {
       expect(

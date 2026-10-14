@@ -14,7 +14,7 @@
   "workoutDuration": "운동 시간",
   "workoutWatchHeartRate": "워치 심박수",
   "messageSendFailed": "전송하지 못했습니다. 네트워크를 확인한 후 다시 시도하세요.",
-  "noWatchShopHint": "기기가 필요하신가요? Saydian 스토어를 둘러보세요.",
+  "noWatchShopHint": "기기가 필요하신가요? SayDian 스토어를 둘러보세요.",
   "notificationInAppHint": "돌봄 초대와 알림은 메시지에서 확인하세요.",
   "healthAlertSafetyHint": "건강 알림은 신속한 안내를 위한 것이며 의학적 진단이 아닙니다. 뚜렷한 불편함이 느껴지면 신속히 진료를 받으세요.",
   "afterSalesService": "구매 후 서비스",
@@ -43,7 +43,7 @@
   "addSupportContact": "고객 지원 연락처 추가",
   "contactPreparationHint": "문의 전에 기기 모델과 문제가 발생한 시간을 준비해 주세요.",
   "supportPrivacyWarning": "공식 계정이 아닌 곳에 인증 코드, 비밀번호 또는 전체 건강 기록을 보내지 마세요.",
-  "brandHealthTitle": "SAYDIAN Health",
+  "brandHealthTitle": "SayDian",
   "accountAndSecurity": "계정 및 보안",
   "cityNameLabel": "도시 이름",
   "cityNameExample": "예: 서울",
@@ -93,7 +93,7 @@
   "riskAnalysisTitle": "위험 분석",
   "watchAlgorithmReference": "아래 수치는 워치 알고리즘에서 산출되었으며 건강 추세 참고용입니다.",
   "ecgHealthReport": "심전도 건강 보고서",
-  "brandedEcgReport": "Saydian · 심전도 건강 보고서",
+  "brandedEcgReport": "SayDian · 심전도 건강 보고서",
   "ecgReportSafety": "안내: 이 보고서는 워치 측정 데이터를 바탕으로 작성되었습니다. 건강 관리 참고용이며 의사의 진단을 대신할 수 없습니다.",
   "installedWatchFaces": "설치된 워치 페이스",
   "switchInstalledWatchFace": "워치에 이미 설치된 페이스로 변경할 수 있습니다.",
@@ -158,26 +158,74 @@
   "watchCalories": "워치 칼로리",
   "connectForWorkout": "먼저 기기 화면에서 워치를 연결하세요. 워치가 운동을 기록합니다.",
   "latestVersion": "최신 버전 V{version}을 사용하고 있습니다",
-  "@latestVersion": {"placeholders":{"version":{"type":"String"}}},
+  "@latestVersion": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
   "workoutPaused": "{mode} 일시 정지됨",
-  "@workoutPaused": {"placeholders":{"mode":{"type":"String"}}},
+  "@workoutPaused": {
+    "placeholders": {
+      "mode": {
+        "type": "String"
+      }
+    }
+  },
   "workoutInProgress": "{mode} 진행 중",
-  "@workoutInProgress": {"placeholders":{"mode":{"type":"String"}}},
+  "@workoutInProgress": {
+    "placeholders": {
+      "mode": {
+        "type": "String"
+      }
+    }
+  },
   "workoutReady": "{mode} 시작 준비",
-  "@workoutReady": {"placeholders":{"mode":{"type":"String"}}},
+  "@workoutReady": {
+    "placeholders": {
+      "mode": {
+        "type": "String"
+      }
+    }
+  },
   "startWorkout": "{mode} 시작",
-  "@startWorkout": {"placeholders":{"mode":{"type":"String"}}},
+  "@startWorkout": {
+    "placeholders": {
+      "mode": {
+        "type": "String"
+      }
+    }
+  },
   "finishOtherWorkout": "먼저 {mode}을(를) 종료하세요",
-  "@finishOtherWorkout": {"placeholders":{"mode":{"type":"String"}}},
+  "@finishOtherWorkout": {
+    "placeholders": {
+      "mode": {
+        "type": "String"
+      }
+    }
+  },
   "workoutDetails": "{mode} 상세",
-  "@workoutDetails": {"placeholders":{"mode":{"type":"String"}}},
+  "@workoutDetails": {
+    "placeholders": {
+      "mode": {
+        "type": "String"
+      }
+    }
+  },
   "stepCount": "{count} 걸음",
-  "@stepCount": {"placeholders":{"count":{"type":"int"}}},
+  "@stepCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "@@locale": "ko",
   "globalShopPricePending": "가격 확인 중",
   "globalShopLoadMore": "더 보기",
   "globalShopReadOnly": "상품을 둘러볼 수 있습니다. 이 지역에서는 아직 주문할 수 없습니다.",
-  "appName": "SAYDIAN Health",
+  "appName": "SayDian",
   "searchingNearby": "주변 워치 검색 중",
   "noDevices": "기기를 찾지 못했습니다",
   "selectWatch": "이름과 신호 세기를 확인한 후 워치를 선택하세요",
@@ -420,7 +468,7 @@
   "accountCreated": "계정이 생성되었습니다",
   "passwordReset": "비밀번호가 변경되었습니다",
   "haveAccount": "이미 계정이 있으신가요?",
-  "noAccount": "Saydian이 처음이신가요?",
+  "noAccount": "SayDian이 처음이신가요?",
   "showPassword": "비밀번호 표시",
   "hidePassword": "비밀번호 숨기기",
   "selectCountry": "국가 또는 지역 선택",
@@ -435,7 +483,7 @@
   "workoutsAndRecords": "운동 및 기록",
   "healthDisclaimer": "웨어러블 측정값은 일상적인 건강 관리 참고용이며 진단이나 치료에 사용할 수 없습니다. 의료 관련 결정을 내리기 전에 반드시 의사와 상담하세요. 몸이 불편하면 진료를 받으세요.",
   "healthSafetyAdvice": "휴식 후 다시 측정하세요. 몸이 불편하면 의료진과 상담하세요.",
-  "defaultUser": "Saydian 사용자",
+  "defaultUser": "SayDian 사용자",
   "dailyGreeting": "오늘도 건강한 하루 보내세요",
   "messages": "메시지",
   "aiAssistant": "AI 건강 도우미",
@@ -473,7 +521,7 @@
   "deviceFeatures": "기기 기능",
   "aboutDevice": "기기 정보",
   "connectionHelp": "연결 도움말",
-  "searchNearbyWatch": "주변 Saydian 워치를 찾아 연결하세요",
+  "searchNearbyWatch": "주변 SayDian 워치를 찾아 연결하세요",
   "useWatch": "워치에서 조작해 주세요",
   "myOrders": "내 주문",
   "all": "전체",
@@ -490,7 +538,7 @@
   "permissions": "권한 관리",
   "feedback": "의견 보내기",
   "customerService": "고객 지원",
-  "aboutApp": "Saydian 정보",
+  "aboutApp": "SayDian 정보",
   "security": "계정 보안",
   "goToSettings": "설정 열기",
   "close": "닫기",
@@ -505,7 +553,7 @@
   "updateStore": "앱 스토어에서 업데이트",
   "downloadAndInstall": "안전하게 다운로드 및 설치",
   "gettingReady": "준비 중입니다…",
-  "enableNotifications": "Saydian 알림 켜기",
+  "enableNotifications": "SayDian 알림 켜기",
   "notificationExplanation": "건강 알림과 돌봄 초대를 받습니다. 잠금 화면에는 건강 수치가 표시되지 않으며 시스템 설정에서 알림을 끌 수 있습니다.",
   "notNow": "나중에",
   "enable": "켜기",
@@ -636,7 +684,13 @@
   "shareProduct": "상품 공유",
   "customerReviews": "고객 리뷰",
   "stockCount": "재고 {count}개",
-  "@stockCount": {"placeholders":{"count":{"type":"int"}}},
+  "@stockCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "measurementContactEcg": "전극 접촉이 감지되지 않았습니다. 시계를 올바르게 착용하고 심전도 전극에 손가락을 대 주세요.",
   "measurementContactElectrode": "전극 접촉이 감지되지 않았습니다. 시계의 안내에 따라 전극에 접촉해 주세요.",
   "measurementCheckFit": "시계가 손목에 잘 밀착되어 있는지 확인해 주세요.",
@@ -654,7 +708,13 @@
   "endMeasurement": "측정 종료",
   "deviceDataReadComplete": "시계 데이터를 읽었습니다. 클라우드 업로드 결과는 동기화 상태에서 확인해 주세요.",
   "measurementPercent": "측정 진행률: {percent}%",
-  "@measurementPercent": {"placeholders":{"percent":{"type":"int"}}},
+  "@measurementPercent": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
   "cloudHealthUploading": "저장된 기록을 업로드하고 있습니다…",
   "cloudHealthLocalOnly": "이 휴대폰에 저장되었습니다. 업로드하려면 로그인해 주세요.",
   "cloudHealthPending": "아직 업로드되지 않은 기록이 있습니다. 이 휴대폰에 저장되어 있습니다.",
@@ -667,5 +727,24 @@
   "batteryUnknown": "상태 알 수 없음",
   "batteryLow": "배터리 부족",
   "ecgWaveformPreviewHint": "파형 미리보기 · 눈금 미확인",
-  "ecgWaveformLowSignalHint": "신호 품질 낮음 · 파형 미리보기"
+  "ecgWaveformLowSignalHint": "신호 품질 낮음 · 파형 미리보기",
+  "dataPrivacyTitle": "데이터 개인정보 보호",
+  "dataResidencyTitle": "미국 내 저장",
+  "dataResidencyBody": "SayDian 클라우드의 계정, 기기 및 동기화된 웨어러블 데이터는 미국 내 서버에 저장됩니다. 다른 국가에서 SayDian을 사용하면 동기화하기로 선택한 데이터가 미국으로 전송됩니다.",
+  "dataLocalTitle": "휴대폰 내 저장",
+  "dataLocalBody": "SayDian은 오프라인 이용과 동기화 대기를 위해 암호화된 기록을 휴대폰에도 보관합니다. 서버에서 확인되지 않은 데이터는 계속 대기 상태로 유지됩니다.",
+  "dataChoiceTitle": "사용자 선택",
+  "dataChoiceBody": "기능에 필요한 권한을 허용하거나 선택 권한을 거부하고 앱에서 공유를 관리할 수 있습니다. 계정 및 관련 데이터 삭제를 요청하려면 계정 → 계정 삭제를 여세요. 보관 기간과 기타 권리는 개인정보 처리방침을 확인하세요.",
+  "dataThirdPartyTitle": "선택 서비스",
+  "dataThirdPartyBody": "날씨, 알림 등 선택 서비스는 각자의 정책에 따라 필요한 정보를 처리할 수 있습니다. 미국 저장 안내는 SayDian 클라우드에 적용되며 휴대폰이나 제3자의 독립적인 처리에는 적용되지 않습니다.",
+  "iosWellnessSafety": "iOS용 SayDian은 일상적인 건강 관리를 위해 호환 기기의 활동 및 수면 정보를 표시합니다. 의료 측정, 진단 또는 치료를 제공하지 않습니다. 의료 결정을 내리기 전에 자격을 갖춘 의료 전문가와 상담하세요.",
+  "smartRing": "스마트 링",
+  "ringStress": "스트레스",
+  "ringGestures": "제스처 제어",
+  "ringCallReminder": "전화 알림",
+  "ringConnectedSyncHint": "기기가 연결되었습니다. 동기화 후 데이터가 표시됩니다.",
+  "ringDisconnecting": "연결 해제 중",
+  "ringDisconnectHelp": "앱 연결이 해제되었습니다. iPhone Bluetooth 설정에서 링이 계속 연결되어 있으면 해당 기기를 지운 후 다시 검색하세요.",
+  "deviceLabel": "기기",
+  "ringStatusReminder": "상태 알림"
 }

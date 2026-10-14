@@ -189,6 +189,8 @@ void main() {
     'wrong document version',
     'wrong type',
     'wrong locale',
+    'Chinese body labeled English',
+    'Chinese title labeled English',
     'not reviewed',
     'server unavailable',
     'capabilities unavailable',
@@ -235,6 +237,10 @@ void main() {
                 data['documentType'] = 'user_agreement';
               case 'wrong locale':
                 data['locale'] = 'de';
+              case 'Chinese body labeled English':
+                data['contentHtml'] = '<p>中文隐私政策</p>';
+              case 'Chinese title labeled English':
+                data['title'] = '隐私政策';
               case 'not reviewed':
                 data['reviewed'] = false;
             }
@@ -365,8 +371,8 @@ void main() {
 
   for (final path in [
     'https://app.saidian.cc/api/saydian-app/v2/content/legal/privacy_policy?version=v&locale=en',
-    'https://app.saydian.cn$_prefix/content/legal/privacy_policy?version=v&locale=en',
-    '//app.saydian.cn$_prefix/content/legal/privacy_policy?version=v&locale=en',
+    'https://app.saydian.com$_prefix/content/legal/privacy_policy?version=v&locale=en',
+    '//app.saydian.com$_prefix/content/legal/privacy_policy?version=v&locale=en',
     '/api/v1/articles/3',
     '$_prefix/content/articles/3?version=v&locale=en',
     '$_prefix/content/legal/../../members/me?version=v&locale=en',

@@ -777,11 +777,7 @@ class _HealthReportDetailPageState extends State<HealthReportDetailPage> {
       final date = DateFormat('yyyyMMdd').format(DateTime.now());
       final result = await SharePlus.instance.share(
         ShareParams(
-          subject: _reportCopy(
-            context,
-            'SAYDIAN Health report',
-            'Saydian赛电健康报告',
-          ),
+          subject: _reportCopy(context, 'SayDian report', 'Saydian赛电健康报告'),
           text: _reportCopy(
             context,
             'My SAYDIAN wellness report',
@@ -1022,12 +1018,12 @@ class _ProfileOverview extends StatelessWidget {
                   profile.devices.isEmpty
                       ? _reportCopy(
                           context,
-                          'No watch linked. Saved readings remain available.',
+                          'No device linked. Saved readings remain available.',
                           '暂未绑定手表，已保存的有效记录仍会保留',
                         )
                       : _reportCopy(
                           context,
-                          '${profile.devices.length} linked watch${profile.devices.length == 1 ? '' : 'es'}',
+                          '${profile.devices.length} linked device${profile.devices.length == 1 ? '' : 's'}',
                           '已绑定 ${profile.devices.length} 台设备：${profile.devices.map((device) => device.displayName.isEmpty ? device.model : device.displayName).where((name) => name.isNotEmpty).join('、')}',
                         ),
                   style: const TextStyle(

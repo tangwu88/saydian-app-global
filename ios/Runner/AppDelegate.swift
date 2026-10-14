@@ -835,6 +835,10 @@ struct IOSWechatAuthState {
   private var wearableAdapter: WearableAdapter?
   private var methodChannel: FlutterMethodChannel?
   private var eventChannel: FlutterEventChannel?
+  #if !targetEnvironment(simulator)
+  private var coolwearWearableBridge: CoolWearWearableBridge?
+  private var qringWearableBridge: QRingWearableBridge?
+  #endif
   private let urionTransport = UrionGattTransport()
   private var urionMethods: FlutterMethodChannel?
   private var urionEvents: FlutterEventChannel?
@@ -906,6 +910,11 @@ struct IOSWechatAuthState {
     )
     urionEvents.setStreamHandler(urionTransport)
     self.urionEvents = urionEvents
+
+    #if !targetEnvironment(simulator)
+    coolwearWearableBridge = CoolWearWearableBridge(messenger: registrar.messenger())
+    qringWearableBridge = QRingWearableBridge(messenger: registrar.messenger())
+    #endif
 
     let payments = FlutterMethodChannel(
       name: "cc.saidian/app_payments",

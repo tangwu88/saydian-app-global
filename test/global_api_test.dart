@@ -89,13 +89,13 @@ void main() {
         return ok({
           'id': '11111111-1111-4111-8111-111111111111',
           'url':
-              'https://app.saydian.cn/api/saydian-app/v2/files/11111111-1111-4111-8111-111111111111',
+              'https://app.saydian.com/api/saydian-app/v2/files/11111111-1111-4111-8111-111111111111',
         });
       }),
     );
     expect(
       await api.uploadProfileImage(image.path),
-      'https://app.saydian.cn/global/api/saydian-app/v2/files/11111111-1111-4111-8111-111111111111',
+      'https://app.saydian.com/global/api/saydian-app/v2/files/11111111-1111-4111-8111-111111111111',
     );
   });
 
@@ -109,13 +109,13 @@ void main() {
             'nickname': 'Synthetic',
             'gender': 'male',
             'avatarUrl':
-                'https://app.saydian.cn/api/saydian-app/v2/files/11111111-1111-4111-8111-111111111111',
+                'https://app.saydian.com/api/saydian-app/v2/files/11111111-1111-4111-8111-111111111111',
           }),
         ),
       );
       expect(
         (await api.getMemberProfile())['head_portrait'],
-        'https://app.saydian.cn/global/api/saydian-app/v2/files/11111111-1111-4111-8111-111111111111',
+        'https://app.saydian.com/global/api/saydian-app/v2/files/11111111-1111-4111-8111-111111111111',
       );
     },
   );
@@ -124,11 +124,11 @@ void main() {
     'profile avatar normalization rejects foreign and malformed resources',
     () async {
       for (final avatar in const [
-        'https://app.saydian.cn/api/saydian-app/v2/files/not-an-id',
+        'https://app.saydian.com/api/saydian-app/v2/files/not-an-id',
         'https://foreign.invalid/api/saydian-app/v2/files/11111111-1111-4111-8111-111111111111',
-        'http://app.saydian.cn/api/saydian-app/v2/files/11111111-1111-4111-8111-111111111111',
-        'https://app.saydian.cn/api/saydian-app/v2/files/11111111-1111-4111-8111-111111111111?token=private',
-        'https://app.saydian.cn/api/saydian-app/v2/files/../files/11111111-1111-4111-8111-111111111111',
+        'http://app.saydian.com/api/saydian-app/v2/files/11111111-1111-4111-8111-111111111111',
+        'https://app.saydian.com/api/saydian-app/v2/files/11111111-1111-4111-8111-111111111111?token=private',
+        'https://app.saydian.com/api/saydian-app/v2/files/../files/11111111-1111-4111-8111-111111111111',
       ]) {
         final api = GlobalSaydianApiClient(
           MemorySessionVault()..session = session(),
@@ -286,16 +286,16 @@ void main() {
           origin,
           '/global/api/saydian-app/v2/auth/capabilities?locale=de',
         ).toString(),
-        'https://app.saydian.cn/global/api/saydian-app/v2/auth/capabilities?locale=de',
+        'https://app.saydian.com/global/api/saydian-app/v2/auth/capabilities?locale=de',
       );
       expect(
         GlobalEnvironment.media('/global/api/saydian-app/v2/files/avatar.jpg'),
-        'https://app.saydian.cn/global/api/saydian-app/v2/files/avatar.jpg',
+        'https://app.saydian.com/global/api/saydian-app/v2/files/avatar.jpg',
       );
       expect(GlobalEnvironment.media('/files/avatar.jpg'), '');
       expect(GlobalEnvironment.media('https://app.saidian.cc/avatar.jpg'), '');
       expect(
-        GlobalEnvironment.media('https://app.saydian.cn/down/domestic.apk'),
+        GlobalEnvironment.media('https://app.saydian.com/down/domestic.apk'),
         '',
       );
       expect(

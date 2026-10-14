@@ -8,6 +8,7 @@ import '../domain/ecg_waveform.dart';
 import '../domain/models.dart';
 import '../domain/ios_wellness_policy.dart';
 import 'global_storage_scope.dart';
+import 'global_saved_device_migration.dart';
 import 'wearable_bridge.dart';
 import 'wearable_routing.dart';
 import 'yucheng_payload_mapper.dart';
@@ -1241,12 +1242,21 @@ class SecureYuchengSavedDeviceStore implements YuchengSavedDeviceStore {
 
   @override
   Future<YuchengSavedDevice?> read() async {
-    final identifier = (await _storage.read(key: _identifierKey))?.trim() ?? '';
-    final name = (await _storage.read(key: _nameKey))?.trim() ?? '';
+    final migrated = await readMigratedDevicePreferences(storageNamespace);
+    final identifier =
+        (await _storage.read(key: _identifierKey) ??
+                migrated?['yucIdentifier'] as String?)
+            ?.trim() ??
+        '';
+    final name =
+        (await _storage.read(key: _nameKey) ?? migrated?['yucName'] as String?)
+            ?.trim() ??
+        '';
     if (identifier.isEmpty || name.isEmpty) return null;
-    final hardwareAddress = (await _storage.read(
-      key: _hardwareAddressKey,
-    ))?.trim();
+    final hardwareAddress =
+        (await _storage.read(key: _hardwareAddressKey) ??
+                migrated?['yucHardwareAddress'] as String?)
+            ?.trim();
     return YuchengSavedDevice(
       identifier: identifier,
       name: name,
@@ -1271,5 +1281,6 @@ class SecureYuchengSavedDeviceStore implements YuchengSavedDeviceStore {
     _storage.delete(key: _identifierKey),
     _storage.delete(key: _nameKey),
     _storage.delete(key: _hardwareAddressKey),
+    _storage.delete(key: migratedDeviceKey(storageNamespace)),
   ]).then((_) {});
 }

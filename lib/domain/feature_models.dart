@@ -30,8 +30,10 @@ class FeatureAvailability {
 enum DeviceFeature {
   watchFaces('watch_faces', '表盘中心'),
   photoWatchFace('photo_watch_face', '照片表盘'),
-  findWatch('find_watch', '查找手表'),
+  findWatch('find_watch', '查找设备'),
   camera('camera', '相机遥控'),
+  gestureControl('gesture_control', '手势控制'),
+  callReminder('call_reminder', '来电提醒'),
   phoneCalls('phone_calls', '电话'),
   contacts('contacts', '常用联系人'),
   notifications('notifications', '消息通知'),
@@ -42,7 +44,7 @@ enum DeviceFeature {
   healthMonitoring('health_monitoring', '健康监测'),
   healthAssessment('health_assessment', '辅助评估'),
   screenDisplay('screen_display', '屏幕显示'),
-  basicSettings('basic_settings', '手表基础设置');
+  basicSettings('basic_settings', '设备基础设置');
 
   const DeviceFeature(this.wireName, this.label);
 

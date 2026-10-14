@@ -75,7 +75,7 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
     expect(
-      find.text('Could not sync. Keep your watch nearby and try again.'),
+      find.text('Could not sync. Keep your device nearby and try again.'),
       findsOneWidget,
     );
     expect(find.textContaining('设备已连接'), findsNothing);
@@ -102,7 +102,7 @@ void main() {
           ..memberProfile = const {
             'nickname': 'Profile Name',
             'head_portrait':
-                'https://app.saydian.cn/global/api/saydian-app/v2/files/11111111-1111-4111-8111-111111111111',
+                'https://app.saydian.com/global/api/saydian-app/v2/files/11111111-1111-4111-8111-111111111111',
           };
     addTearDown(controller.dispose);
 
@@ -159,13 +159,13 @@ void main() {
       (tester.widget<SafeNetworkImage>(avatarImage).image
               as SafeNetworkImageProvider)
           .url,
-      'https://app.saydian.cn/global/api/saydian-app/v2/files/11111111-1111-4111-8111-111111111111',
+      'https://app.saydian.com/global/api/saydian-app/v2/files/11111111-1111-4111-8111-111111111111',
     );
 
     controller.memberProfile = const {
       'nickname': 'Updated Profile Name',
       'head_portrait':
-          'https://app.saydian.cn/global/api/saydian-app/v2/files/22222222-2222-4222-8222-222222222222',
+          'https://app.saydian.com/global/api/saydian-app/v2/files/22222222-2222-4222-8222-222222222222',
     };
     controller.notifyListeners();
     await tester.pump();
@@ -176,7 +176,7 @@ void main() {
       (tester.widget<SafeNetworkImage>(avatarImage).image
               as SafeNetworkImageProvider)
           .url,
-      'https://app.saydian.cn/global/api/saydian-app/v2/files/22222222-2222-4222-8222-222222222222',
+      'https://app.saydian.com/global/api/saydian-app/v2/files/22222222-2222-4222-8222-222222222222',
     );
   });
 
@@ -435,13 +435,13 @@ void main() {
         .destinations
         .cast<NavigationDestination>()
         .map((destination) => destination.label);
-    expect(destinations, ['Health', 'Watch', 'Profile']);
+    expect(destinations, ['Health', 'Device', 'Profile']);
     expect(find.text('Temp.'), findsOneWidget);
     controller.selectTab(2);
     await tester.pump();
     expect(find.text('Guest mode'), findsOneWidget);
-    expect(find.text('No watch'), findsOneWidget);
-    expect(find.text('Connect a watch'), findsOneWidget);
+    expect(find.text('No device'), findsOneWidget);
+    expect(find.text('Connect a device'), findsOneWidget);
     await tester.drag(find.byKey(const Key('my-page')), const Offset(0, -500));
     await tester.pumpAndSettle();
     expect(find.text('Settings & support'), findsOneWidget);

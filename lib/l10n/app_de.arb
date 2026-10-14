@@ -14,7 +14,7 @@
   "workoutDuration": "Trainingsdauer",
   "workoutWatchHeartRate": "Herzfrequenz der Uhr",
   "messageSendFailed": "Senden fehlgeschlagen. Prüfen Sie Ihre Verbindung und versuchen Sie es erneut.",
-  "noWatchShopHint": "Noch kein Gerät? Besuchen Sie den Saydian-Shop.",
+  "noWatchShopHint": "Noch kein Gerät? Besuchen Sie den SayDian-Shop.",
   "notificationInAppHint": "Einladungen und Hinweise stehen unter Nachrichten.",
   "healthAlertSafetyHint": "Gesundheitswarnungen dienen der rechtzeitigen Information, nicht der medizinischen Diagnose. Suchen Sie bei deutlichen Beschwerden umgehend medizinische Hilfe.",
   "afterSalesService": "Kundendienst nach dem Kauf",
@@ -43,7 +43,7 @@
   "addSupportContact": "Supportkontakt hinzufügen",
   "contactPreparationHint": "Halten Sie vor der Kontaktaufnahme das Gerätemodell und den Zeitpunkt des Problems bereit.",
   "supportPrivacyWarning": "Senden Sie keine Bestätigungscodes, Passwörter oder vollständigen Gesundheitsaufzeichnungen an inoffizielle Konten.",
-  "brandHealthTitle": "SAYDIAN Health",
+  "brandHealthTitle": "SayDian",
   "accountAndSecurity": "Konto und Sicherheit",
   "cityNameLabel": "Stadtname",
   "cityNameExample": "Zum Beispiel: Berlin",
@@ -93,7 +93,7 @@
   "riskAnalysisTitle": "Risikoanalyse",
   "watchAlgorithmReference": "Die folgenden Werte stammen aus dem Algorithmus der Uhr und dienen nur zur Orientierung bei Gesundheitstrends.",
   "ecgHealthReport": "EKG-Gesundheitsbericht",
-  "brandedEcgReport": "Saydian · EKG-Gesundheitsbericht",
+  "brandedEcgReport": "SayDian · EKG-Gesundheitsbericht",
   "ecgReportSafety": "Hinweis: Dieser Bericht basiert auf Messdaten der Uhr. Er dient nur zur Gesundheitsorientierung und ersetzt keine ärztliche Diagnose.",
   "installedWatchFaces": "Installierte Zifferblätter",
   "switchInstalledWatchFace": "Wechseln Sie zwischen den bereits auf Ihrer Uhr vorhandenen Zifferblättern.",
@@ -158,26 +158,74 @@
   "watchCalories": "Kalorien der Uhr",
   "connectForWorkout": "Verbinden Sie zuerst Ihre Uhr auf der Geräteseite. Ihre Uhr zeichnet das Training auf.",
   "latestVersion": "Sie verwenden die neueste Version: V{version}",
-  "@latestVersion": {"placeholders":{"version":{"type":"String"}}},
+  "@latestVersion": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
   "workoutPaused": "{mode} pausiert",
-  "@workoutPaused": {"placeholders":{"mode":{"type":"String"}}},
+  "@workoutPaused": {
+    "placeholders": {
+      "mode": {
+        "type": "String"
+      }
+    }
+  },
   "workoutInProgress": "{mode} läuft",
-  "@workoutInProgress": {"placeholders":{"mode":{"type":"String"}}},
+  "@workoutInProgress": {
+    "placeholders": {
+      "mode": {
+        "type": "String"
+      }
+    }
+  },
   "workoutReady": "Bereit für {mode}",
-  "@workoutReady": {"placeholders":{"mode":{"type":"String"}}},
+  "@workoutReady": {
+    "placeholders": {
+      "mode": {
+        "type": "String"
+      }
+    }
+  },
   "startWorkout": "{mode} starten",
-  "@startWorkout": {"placeholders":{"mode":{"type":"String"}}},
+  "@startWorkout": {
+    "placeholders": {
+      "mode": {
+        "type": "String"
+      }
+    }
+  },
   "finishOtherWorkout": "Beenden Sie zuerst {mode}",
-  "@finishOtherWorkout": {"placeholders":{"mode":{"type":"String"}}},
+  "@finishOtherWorkout": {
+    "placeholders": {
+      "mode": {
+        "type": "String"
+      }
+    }
+  },
   "workoutDetails": "Details zu {mode}",
-  "@workoutDetails": {"placeholders":{"mode":{"type":"String"}}},
+  "@workoutDetails": {
+    "placeholders": {
+      "mode": {
+        "type": "String"
+      }
+    }
+  },
   "stepCount": "{count} Schritte",
-  "@stepCount": {"placeholders":{"count":{"type":"int"}}},
+  "@stepCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "@@locale": "de",
   "globalShopPricePending": "Preis noch nicht bestätigt",
   "globalShopLoadMore": "Mehr laden",
   "globalShopReadOnly": "Hier können Sie Produkte ansehen. Bestellungen sind in dieser Region noch nicht möglich.",
-  "appName": "SAYDIAN Health",
+  "appName": "SayDian",
   "searchingNearby": "Uhren in der Nähe werden gesucht",
   "noDevices": "Keine Geräte gefunden",
   "selectWatch": "Name und Signal prüfen, dann die Uhr auswählen",
@@ -420,7 +468,7 @@
   "accountCreated": "Ihr Konto ist bereit",
   "passwordReset": "Passwort aktualisiert",
   "haveAccount": "Bereits ein Konto?",
-  "noAccount": "Neu bei Saydian?",
+  "noAccount": "Neu bei SayDian?",
   "showPassword": "Passwort anzeigen",
   "hidePassword": "Passwort ausblenden",
   "selectCountry": "Land oder Region auswählen",
@@ -435,7 +483,7 @@
   "workoutsAndRecords": "Training und Verlauf",
   "healthDisclaimer": "Wearable-Messwerte dienen nur der allgemeinen Gesundheitsorientierung, nicht der Diagnose oder Behandlung. Konsultieren Sie einen Arzt, bevor Sie medizinische Entscheidungen treffen. Suchen Sie bei Beschwerden medizinische Hilfe.",
   "healthSafetyAdvice": "Ruhen Sie sich aus und messen Sie erneut. Holen Sie bei Beschwerden ärztlichen Rat ein.",
-  "defaultUser": "Saydian-Nutzer",
+  "defaultUser": "SayDian-Nutzer",
   "dailyGreeting": "Achten Sie heute auf sich",
   "messages": "Nachrichten",
   "aiAssistant": "KI-Gesundheitsassistent",
@@ -473,7 +521,7 @@
   "deviceFeatures": "Gerätefunktionen",
   "aboutDevice": "Über das Gerät",
   "connectionHelp": "Hilfe zur Verbindung",
-  "searchNearbyWatch": "Saydian-Uhr in der Nähe suchen und verbinden",
+  "searchNearbyWatch": "SayDian-Uhr in der Nähe suchen und verbinden",
   "useWatch": "Bitte diese Funktion auf der Uhr verwenden",
   "myOrders": "Meine Bestellungen",
   "all": "Alle",
@@ -490,7 +538,7 @@
   "permissions": "Berechtigungen",
   "feedback": "Feedback",
   "customerService": "Kundenservice",
-  "aboutApp": "Über Saydian",
+  "aboutApp": "Über SayDian",
   "security": "Kontosicherheit",
   "goToSettings": "Einstellungen öffnen",
   "close": "Schließen",
@@ -505,7 +553,7 @@
   "updateStore": "Im App-Store aktualisieren",
   "downloadAndInstall": "Sicher herunterladen und installieren",
   "gettingReady": "Wird vorbereitet…",
-  "enableNotifications": "Saydian-Mitteilungen aktivieren",
+  "enableNotifications": "SayDian-Mitteilungen aktivieren",
   "notificationExplanation": "Erhalten Sie Gesundheitshinweise und Einladungen. Gesundheitswerte erscheinen nicht auf dem Sperrbildschirm. Mitteilungen lassen sich in den Systemeinstellungen deaktivieren.",
   "notNow": "Nicht jetzt",
   "enable": "Aktivieren",
@@ -636,7 +684,13 @@
   "shareProduct": "Produkt teilen",
   "customerReviews": "Kundenbewertungen",
   "stockCount": "{count} auf Lager",
-  "@stockCount": {"placeholders":{"count":{"type":"int"}}},
+  "@stockCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "measurementContactEcg": "Kein Elektrodenkontakt erkannt. Tragen Sie die Uhr richtig und halten Sie den Finger auf der EKG-Elektrode.",
   "measurementContactElectrode": "Kein Elektrodenkontakt erkannt. Folgen Sie den Hinweisen auf der Uhr.",
   "measurementCheckFit": "Prüfen Sie, ob die Uhr gut am Handgelenk anliegt.",
@@ -654,7 +708,13 @@
   "endMeasurement": "Messung beenden",
   "deviceDataReadComplete": "Uhrdaten gelesen. Der Cloud-Upload wird separat bestätigt.",
   "measurementPercent": "Messfortschritt: {percent}%",
-  "@measurementPercent": {"placeholders":{"percent":{"type":"int"}}},
+  "@measurementPercent": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
   "cloudHealthUploading": "Gespeicherte Daten werden hochgeladen…",
   "cloudHealthLocalOnly": "Auf diesem Telefon gespeichert. Zum Hochladen anmelden.",
   "cloudHealthPending": "Einige Daten wurden noch nicht hochgeladen. Sie bleiben auf diesem Telefon gespeichert.",
@@ -667,5 +727,24 @@
   "batteryUnknown": "Status unbekannt",
   "batteryLow": "Akku schwach",
   "ecgWaveformPreviewHint": "Kurvenvorschau · Skalierung unbestätigt",
-  "ecgWaveformLowSignalHint": "Geringe Signalqualität · Kurvenvorschau"
+  "ecgWaveformLowSignalHint": "Geringe Signalqualität · Kurvenvorschau",
+  "dataPrivacyTitle": "Datenschutz",
+  "dataResidencyTitle": "Speicherung in den USA",
+  "dataResidencyBody": "Konto-, Geräte- und synchronisierte Wearable-Daten in der SayDian-Cloud werden auf Servern in den USA gespeichert. Bei Nutzung aus einem anderen Land werden die zur Synchronisierung ausgewählten Daten in die USA übertragen.",
+  "dataLocalTitle": "Auf Ihrem Telefon",
+  "dataLocalBody": "SayDian speichert außerdem einen verschlüsselten lokalen Verlauf für die Offline-Nutzung und ausstehende Synchronisierung. Vom Server noch nicht bestätigte Daten bleiben ausstehend.",
+  "dataChoiceTitle": "Ihre Möglichkeiten",
+  "dataChoiceBody": "Erteilen Sie nur die für eine Funktion benötigten Berechtigungen und verwalten Sie Freigaben in der App. Die Löschung Ihres Kontos und zugehöriger Daten können Sie unter Konto → Konto löschen beantragen. Aufbewahrungsfristen und weitere Rechte finden Sie in der Datenschutzerklärung.",
+  "dataThirdPartyTitle": "Optionale Dienste",
+  "dataThirdPartyBody": "Wetter, Benachrichtigungen und andere optionale Dienste können erforderliche Daten nach ihren eigenen Datenschutzregeln verarbeiten. Die Speicherung in den USA bezieht sich auf die SayDian-Cloud, nicht auf Ihr Telefon oder die eigenständige Verarbeitung durch Dritte.",
+  "iosWellnessSafety": "SayDian für iOS zeigt Aktivitäts- und Schlafdaten kompatibler Geräte für das tägliche Wohlbefinden. Die App bietet keine medizinischen Messungen, Diagnosen oder Behandlungen. Holen Sie vor medizinischen Entscheidungen fachkundigen ärztlichen Rat ein.",
+  "smartRing": "Smarter Ring",
+  "ringStress": "Stress",
+  "ringGestures": "Gestensteuerung",
+  "ringCallReminder": "Anruferinnerungen",
+  "ringConnectedSyncHint": "Gerät verbunden. Daten erscheinen nach der Synchronisierung.",
+  "ringDisconnecting": "Verbindung wird getrennt",
+  "ringDisconnectHelp": "Die App hat die Verbindung getrennt. Falls der Ring in den Bluetooth-Einstellungen des iPhone noch verbunden ist, ignorieren Sie dort das Gerät vor einer erneuten Suche.",
+  "deviceLabel": "Gerät",
+  "ringStatusReminder": "Statuserinnerungen"
 }

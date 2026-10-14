@@ -20,6 +20,7 @@ import 'package:saydian_app/services/local_health_store.dart';
 import 'package:saydian_app/services/secure_vault.dart';
 import 'package:saydian_app/services/wearable_bridge.dart';
 import 'package:saydian_app/ui/app_theme.dart';
+import 'package:saydian_app/ui/data_privacy_page.dart';
 import 'package:saydian_app/ui/pages.dart';
 import 'package:saydian_app/ui/prototype_pages.dart' hide AfterSalesPage;
 import 'package:saydian_app/ui/shop_pages.dart' as shop;
@@ -48,7 +49,13 @@ void main() {
         HttpOverrides.global = null;
         addTearDown(() => HttpOverrides.global = previous);
       }
-      debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+      const referencePlatform = String.fromEnvironment(
+        'IOS_REFERENCE_PLATFORM',
+        defaultValue: 'ios',
+      );
+      debugDefaultTargetPlatformOverride = referencePlatform == 'android'
+          ? TargetPlatform.android
+          : TargetPlatform.iOS;
       addTearDown(() => debugDefaultTargetPlatformOverride = null);
       await tester.runAsync(() async {
         // System font is loaded for this local capture, not copied into the repo.
@@ -138,7 +145,7 @@ void main() {
               refreshToken: '',
               expiresAt: DateTime(2030),
               memberId: 'visual-fixture',
-              displayName: 'SAYDIAN User',
+              displayName: 'SayDian User',
             );
       addTearDown(globalController.dispose);
       final localeController = GlobalLocaleController(
@@ -147,6 +154,10 @@ void main() {
       addTearDown(localeController.dispose);
       final pages = <String, Widget>{
         'global-dashboard': AppShell(controller: globalController),
+        'global-device': AppShell(controller: globalController),
+        'global-privacy': const DataPrivacyPage(),
+        'global-profile': ProfileEditPage(controller: globalController),
+        'global-about': AboutSaydianPage(controller: globalController),
         'account': AccountSettingsPage(controller: controller),
         'profile': ProfileEditPage(controller: controller),
         'units': UnitSettingsPage(controller: controller),
@@ -243,7 +254,11 @@ void main() {
       );
       final layoutFailures = <String>[];
       for (final page in pages.entries) {
-        if (pageFilter.isNotEmpty && page.key != pageFilter) continue;
+        if (pageFilter.isNotEmpty &&
+            page.key != pageFilter &&
+            !(pageFilter == 'global' && page.key.startsWith('global-'))) {
+          continue;
+        }
         if (page.key == 'watchfaces') {
           // Explicit offline installed-dial fixture, no live transport or pictures.
           controller.connectedDevice = const DeviceInfo(
@@ -255,6 +270,9 @@ void main() {
             features: {DeviceFeature.watchFaces},
             integratedFeatures: {DeviceFeature.watchFaces},
           );
+        }
+        if (page.key == 'global-device') {
+          globalController.selectTab(1);
         }
         final key = GlobalKey();
         final theme = buildSaydianTheme();

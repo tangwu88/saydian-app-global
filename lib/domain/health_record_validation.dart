@@ -9,7 +9,18 @@ import 'models.dart';
 bool hasSaneWearableTransportValues(HealthRecord record) {
   if (record.source != MeasurementSource.wearable) return true;
 
+  if (record.deviceId.toLowerCase().startsWith('qring:') &&
+      record.rawVersion < 2 &&
+      const {
+        HealthMetric.steps,
+        HealthMetric.distance,
+        HealthMetric.calories,
+      }.contains(record.metric)) {
+    return false;
+  }
   return switch (record.metric) {
+    HealthMetric.sleep => _inRange(record.values['value'], 0, 24),
+    HealthMetric.stress => _inRange(record.values['value'], 0, 100),
     HealthMetric.heartRate => _inRange(record.values['value'], 20, 300),
     HealthMetric.bloodOxygen => _inRange(record.values['value'], 2, 100),
     HealthMetric.bloodPressure => _hasSaneBloodPressure(record.values),

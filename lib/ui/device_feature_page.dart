@@ -17,11 +17,80 @@ class DeviceFeaturePage extends StatefulWidget {
 class _DeviceFeaturePageState extends State<DeviceFeaturePage>
     with WidgetsBindingObserver {
   String _watchText(String zh, String en) =>
-      Localizations.localeOf(context).languageCode == 'zh' ? zh : en;
+      Localizations.localeOf(context).languageCode == 'zh'
+      ? zh.replaceAll('手表', widget.controller.deviceKindLabel)
+      : en;
+
+  String _visibleMessage(String? message, String fallback) {
+    final value = message?.trim() ?? '';
+    if (value.isEmpty ||
+        (Localizations.localeOf(context).languageCode == 'en' &&
+            RegExp(r'[\u3400-\u9fff]').hasMatch(value))) {
+      return fallback;
+    }
+    return value;
+  }
+
+  // Translate SDK-generated display labels only; preserve protocol fields on writes.
+  String _nativeLabel(Object? raw, String fallback) {
+    final value = raw?.toString().trim() ?? '';
+    if (Localizations.localeOf(context).languageCode == 'zh') {
+      return value.isEmpty ? fallback : value;
+    }
+    const labels = <String, String>{
+      '久坐提醒': 'Move reminder',
+      '喝水提醒': 'Hydration reminder',
+      '远眺提醒': 'Eye break reminder',
+      '运动提醒': 'Activity reminder',
+      '服药提醒': 'Medication reminder',
+      '阅读提醒': 'Reading reminder',
+      '外出提醒': 'Go out reminder',
+      '洗手提醒': 'Handwashing reminder',
+      '健康提醒': 'Wellness reminder',
+      '闹钟': 'Alarm',
+      '血糖趋势评估': 'Glucose trends',
+      '血糖辅助评估': 'Glucose trends',
+      '血压趋势评估': 'Blood pressure trends',
+      '血氧趋势评估': 'Blood oxygen trends',
+      '体温趋势评估': 'Temperature trends',
+      '心率变异性评估': 'HRV trends',
+      '压力评估': 'Stress insights',
+      '活动强度评估': 'Activity intensity',
+      '血液成分评估': 'Blood composition insights',
+      '血液成分辅助评估': 'Blood composition insights',
+      '身体成分评估': 'Body composition insights',
+      '身体成分辅助评估': 'Body composition insights',
+      '综合健康评估': 'Wellness insights',
+      '情绪评估': 'Mood insights',
+      '疲劳评估': 'Fatigue insights',
+      '跌倒提醒': 'Fall reminder',
+      '皮肤状态评估': 'Skin insights',
+      '健康辅助功能': 'Wellness feature',
+      '已安装市场表盘': 'Downloaded face',
+      '照片表盘': 'Photo face',
+      '手表内置': 'Built in',
+      '设备市场表盘位': 'Downloaded face slot',
+      '可用照片表盘位': 'Photo face slot',
+      '北京': 'Beijing',
+      '上海': 'Shanghai',
+      '香港': 'Hong Kong',
+      '东京': 'Tokyo',
+      '伦敦': 'London',
+      '巴黎': 'Paris',
+      '纽约': 'New York',
+      '洛杉矶': 'Los Angeles',
+      '悉尼': 'Sydney',
+    };
+    if (labels.containsKey(value)) return labels[value]!;
+    final face = RegExp(r'^(?:内置|系统)表盘\s*(\d+)$').firstMatch(value);
+    if (face != null) return 'Built-in face ${face.group(1)}';
+    return _visibleMessage(value, fallback);
+  }
 
   static const _nativeMethods = MethodChannel('cc.saidian/wearable_methods');
   DeviceScreenSettings? _screen;
   Map<String, Object?> _featureData = const {};
+  Object? _featureRevision;
   bool _pulseRequested = false;
   bool _finding = false;
   Timer? _findResetTimer;
@@ -47,6 +116,7 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
   @override
   void initState() {
     super.initState();
+    _featureRevision = widget.controller.wearableSettingsRevision;
     WidgetsBinding.instance.addObserver(this);
     _cameraShutterGate = CameraRemoteShutterGate(
       initialSequence: widget.controller.cameraShutterSequence,
@@ -65,7 +135,8 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
         unawaited(widget.controller.refreshDeviceSettings());
       } else if (widget.feature == DeviceFeature.camera) {
         unawaited(_initializeCamera());
-      } else if (widget.feature != DeviceFeature.findWatch) {
+      } else if (widget.feature != DeviceFeature.findWatch &&
+          widget.feature != DeviceFeature.gestureControl) {
         unawaited(_loadFeature());
       }
     });
@@ -114,6 +185,11 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
 
   void _handleControllerEvent() {
     if (!mounted) return;
+    final revision = widget.controller.wearableSettingsRevision;
+    if (revision != _featureRevision) {
+      _featureRevision = revision;
+      setState(() => _featureData = const {});
+    }
     if (widget.feature == DeviceFeature.findWatch &&
         !widget.controller.availabilityFor(widget.feature).isReady &&
         _finding) {
@@ -127,7 +203,14 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
           currentSequence: widget.controller.cameraShutterSequence,
         );
         if (_camera != null || _cameraRemoteStarted || _cameraInitializing) {
-          unawaited(_suspendCamera(message: '手表已断开，请重新连接后使用'));
+          unawaited(
+            _suspendCamera(
+              message: _watchText(
+                '${widget.controller.deviceKindLabel}已断开，请重新连接后使用',
+                'Device disconnected. Reconnect to continue.',
+              ),
+            ),
+          );
         }
         return;
       }
@@ -161,8 +244,12 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
   }
 
   Future<void> _loadFeature() async {
+    final revision = widget.controller.wearableSettingsRevision;
     final value = await widget.controller.readDeviceFeature(widget.feature);
-    if (mounted && value.isNotEmpty) {
+    if (!mounted || revision != widget.controller.wearableSettingsRevision) {
+      return;
+    }
+    if (value.isNotEmpty || widget.controller.hasRingDeviceSettings) {
       setState(() {
         _featureData = value;
         if (widget.feature == DeviceFeature.healthAssessment &&
@@ -260,24 +347,33 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
     String successMessage, {
     bool reload = true,
   }) async {
-    final saved = await widget.controller.writeDeviceFeature(
-      widget.feature,
-      values,
-    );
-    if (!mounted) return saved;
+    final revision = widget.controller.wearableSettingsRevision;
+    final saved = await widget.controller.writeDeviceFeature(widget.feature, {
+      ...values,
+      if (_featureData['snapshotRevision'] is String)
+        'snapshotRevision': _featureData['snapshotRevision'],
+    });
+    if (!mounted || revision != widget.controller.wearableSettingsRevision) {
+      return false;
+    }
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
           saved
               ? successMessage
               : _watchText(
-                  widget.controller.errorMessage ?? '保存失败，请稍后重试',
+                  _visibleMessage(
+                    widget.controller.errorMessage,
+                    _watchText('保存失败，请稍后重试', 'Could not save. Try again.'),
+                  ),
                   'Could not save this setting. Try again.',
                 ),
         ),
       ),
     );
-    if (saved && reload) await _loadFeature();
+    if (reload && (saved || widget.controller.hasRingDeviceSettings)) {
+      await _loadFeature();
+    }
     return saved;
   }
 
@@ -299,14 +395,25 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
         if (!status.isGranted) {
           setState(() {
             _cameraMessage = status.isPermanentlyDenied
-                ? '相机权限已关闭，请在系统设置中开启'
-                : '允许相机权限后使用';
+                ? _watchText(
+                    '相机权限已关闭，请在系统设置中开启',
+                    "Camera access is off. Enable it in Settings.",
+                  )
+                : _watchText(
+                    '允许相机权限后使用',
+                    "Allow camera access to use this feature.",
+                  );
           });
           return;
         }
       } on PlatformException {
         if (!mounted) return;
-        setState(() => _cameraMessage = '无法读取相机权限，请稍后重试');
+        setState(
+          () => _cameraMessage = _watchText(
+            '无法读取相机权限，请稍后重试',
+            "Could not check camera access. Try again.",
+          ),
+        );
         return;
       } finally {
         _cameraPermissionRequesting = false;
@@ -320,7 +427,14 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
     try {
       final cameras = await availableCameras();
       if (cameras.isEmpty) {
-        if (mounted) setState(() => _cameraMessage = '手机没有可用的相机');
+        if (mounted) {
+          setState(
+            () => _cameraMessage = _watchText(
+              '手机没有可用的相机',
+              "No camera is available on this phone.",
+            ),
+          );
+        }
         return;
       }
       final selected = cameras.firstWhere(
@@ -357,8 +471,17 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
       setState(() {
         _cameraRemoteStarted = started;
         _cameraMessage = started
-            ? '可点击手机按钮，也可在手表上点击拍照'
-            : widget.controller.errorMessage ?? '手表相机遥控暂时无法开启';
+            ? _watchText(
+                '可点击手机按钮，也可在${widget.controller.deviceKindLabel}上点击拍照',
+                'Use the shutter on your phone or connected device.',
+              )
+            : _visibleMessage(
+                widget.controller.errorMessage,
+                _watchText(
+                  '${widget.controller.deviceKindLabel}相机遥控暂时无法开启',
+                  'Could not start the device camera remote.',
+                ),
+              );
       });
       if (started) {
         _cameraShutterGate.arm(
@@ -374,11 +497,24 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
       if (!mounted) return;
       setState(() {
         _cameraMessage = error.code == 'CameraAccessDenied'
-            ? '允许相机权限后使用'
-            : '手机相机暂时无法使用，请稍后重试';
+            ? _watchText(
+                '允许相机权限后使用',
+                "Allow camera access to use this feature.",
+              )
+            : _watchText(
+                '手机相机暂时无法使用，请稍后重试',
+                "The phone camera is unavailable. Try again.",
+              );
       });
     } catch (_) {
-      if (mounted) setState(() => _cameraMessage = '手机相机暂时无法使用，请稍后重试');
+      if (mounted) {
+        setState(
+          () => _cameraMessage = _watchText(
+            '手机相机暂时无法使用，请稍后重试',
+            "The phone camera is unavailable. Try again.",
+          ),
+        );
+      }
     } finally {
       if (generation == _cameraGeneration) _cameraInitializing = false;
     }
@@ -393,7 +529,7 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
     await _initializeCamera();
   }
 
-  Future<void> _suspendCamera({String message = '返回 App 后将重新打开相机'}) async {
+  Future<void> _suspendCamera({String? message}) async {
     if (widget.feature != DeviceFeature.camera) return;
     final generation = ++_cameraGeneration;
     _cameraInitializing = false;
@@ -406,7 +542,14 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
     );
     camera?.removeListener(_handleCameraState);
     if (mounted) {
-      setState(() => _cameraMessage = message);
+      setState(
+        () => _cameraMessage =
+            message ??
+            _watchText(
+              '返回 App 后将重新打开相机',
+              'Return to the app to reopen the camera.',
+            ),
+      );
     }
     if (shouldStopRemote) {
       await _stopCameraRemoteIgnoringErrors();
@@ -422,7 +565,14 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
       currentSequence: widget.controller.cameraShutterSequence,
     );
     if (!widget.controller.availabilityFor(widget.feature).isReady) {
-      if (mounted) setState(() => _cameraMessage = '手表已断开，请重新连接后使用');
+      if (mounted) {
+        setState(
+          () => _cameraMessage = _watchText(
+            '${widget.controller.deviceKindLabel}已断开，请重新连接后使用',
+            'Device disconnected. Reconnect to continue.',
+          ),
+        );
+      }
       return;
     }
     await _initializeCamera();
@@ -441,7 +591,7 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
       );
     } catch (_) {
       // The foreground gate still prevents background callbacks from taking a
-      // photo when the watch command cannot be stopped immediately.
+      // photo when the device command cannot be stopped immediately.
     }
   }
 
@@ -450,8 +600,14 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
     if (!mounted || camera == null || !camera.value.hasError) return;
     final description = camera.value.errorDescription?.trim() ?? '';
     final message = description.toLowerCase().contains('disabled')
-        ? '相机已被系统策略停用，请在系统设置中开启相机后重试'
-        : '手机相机暂时无法使用，请检查相机权限或系统设置';
+        ? _watchText(
+            '相机已被系统策略停用，请在系统设置中开启相机后重试',
+            "Camera access is restricted. Check your system settings.",
+          )
+        : _watchText(
+            '手机相机暂时无法使用，请检查相机权限或系统设置',
+            "The camera is unavailable. Check camera access in Settings.",
+          );
     if (_cameraMessage == message) return;
     final shouldStopRemote = _cameraRemoteStarted;
     setState(() {
@@ -493,16 +649,32 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
       if (mounted) {
         setState(() {
           _lastPhoto = photo;
-          _cameraMessage = '照片已保存到手机相册';
+          _cameraMessage = _watchText(
+            '照片已保存到手机相册',
+            "Photo saved to your phone.",
+          );
         });
       }
-    } on CameraException catch (error) {
+    } on CameraException {
       if (mounted) {
-        setState(() => _cameraMessage = '拍照失败（${error.code}），请稍后重试');
+        setState(
+          () => _cameraMessage = _watchText(
+            '拍照失败，请稍后重试',
+            'Could not take the photo. Try again.',
+          ),
+        );
       }
     } on PlatformException catch (error) {
       if (mounted) {
-        setState(() => _cameraMessage = error.message ?? '照片保存失败，请检查相册权限后重试');
+        setState(
+          () => _cameraMessage = _visibleMessage(
+            error.message,
+            _watchText(
+              '照片保存失败，请检查相册权限后重试',
+              "Could not save the photo. Check photo access and try again.",
+            ),
+          ),
+        );
       }
     } finally {
       if (mounted) setState(() => _takingPhoto = false);
@@ -534,22 +706,19 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
       SnackBar(
         content: Text(
           success
-              ? (isOneShot
+              ? (next
                     ? _watchText(
-                        '已发送查找指令，请留意手表振动',
-                        'Find request sent. Watch for a vibration.',
+                        '查找指令已发送，请留意设备反馈',
+                        'Find request sent. Check your device for feedback.',
                       )
-                    : (next
-                          ? _watchText(
-                              '手表正在响铃或振动',
-                              'Your watch is ringing or vibrating.',
-                            )
-                          : _watchText('已停止查找', 'Find watch stopped.')))
-              : widget.controller.errorMessage ??
-                    _watchText(
-                      '暂时无法查找手表',
-                      'Unable to find your watch right now.',
-                    ),
+                    : _watchText('停止查找指令已发送', 'Stop finding request sent.'))
+              : _visibleMessage(
+                  widget.controller.errorMessage,
+                  _watchText(
+                    '暂时无法查找设备',
+                    'Unable to find your device right now.',
+                  ),
+                ),
         ),
       ),
     );
@@ -571,7 +740,14 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
                       widget.controller.connectedDevice?.sdkSource ==
                           WearableSdkSource.urion
                   ? _watchText('脉搏分析', 'Pulse insights')
-                  : context.l10n.deviceFeatureName(widget.feature),
+                  : context.l10n
+                        .deviceFeatureName(
+                          widget.feature,
+                          coolWearRing:
+                              widget.controller.connectedDevice?.sdkSource ==
+                              WearableSdkSource.coolwear,
+                        )
+                        .replaceAll('手表', widget.controller.deviceKindLabel),
             ),
           ),
           body: ListView(
@@ -579,12 +755,19 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
             children: [
               if (!availability.isReady)
                 FeatureStateCard(
-                  message: availability.message,
-                  detail: _deviceFeatureDescription(context, widget.feature),
+                  message: availability.message.replaceAll(
+                    '手表',
+                    widget.controller.deviceKindLabel,
+                  ),
+                  detail: _deviceFeatureDescription(
+                    context,
+                    widget.feature,
+                  ).replaceAll('手表', widget.controller.deviceKindLabel),
                   icon: _deviceFeatureIcon(widget.feature),
                 )
               else if (widget.feature == DeviceFeature.findWatch)
                 _FindWatchPanel(
+                  device: widget.controller.connectedDevice,
                   finding: _finding,
                   busy: busy,
                   supportsStop:
@@ -625,9 +808,13 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
     DeviceFeature.watchFaces => _buildWatchFacesPanel(busy),
     DeviceFeature.photoWatchFace => _buildPhotoWatchFacePanel(busy),
     DeviceFeature.camera => _buildCameraPanel(),
+    DeviceFeature.gestureControl => RingGestureControlPanel(
+      controller: widget.controller,
+    ),
     DeviceFeature.phoneCalls => _buildPhoneCallsPanel(busy),
     DeviceFeature.contacts => _buildContactsPanel(busy),
     DeviceFeature.notifications => _buildNotificationsPanel(busy),
+    DeviceFeature.callReminder => _buildRingReminderSwitch(busy, call: true),
     DeviceFeature.alarms => _buildAlarmsPanel(busy),
     DeviceFeature.weather => _buildWeatherPanel(busy),
     DeviceFeature.worldClock => _buildWorldClocksPanel(busy),
@@ -635,8 +822,14 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
     DeviceFeature.healthAssessment => _buildHealthAssessmentPanel(busy),
     DeviceFeature.healthMonitoring => _buildHealthMonitoringPanel(),
     _ => FeatureStateCard(
-      message: context.l10n.useWatch,
-      detail: _deviceFeatureDescription(context, widget.feature),
+      message: context.l10n.useWatch.replaceAll(
+        '手表',
+        widget.controller.deviceKindLabel,
+      ),
+      detail: _deviceFeatureDescription(
+        context,
+        widget.feature,
+      ).replaceAll('手表', widget.controller.deviceKindLabel),
       icon: _deviceFeatureIcon(widget.feature),
     ),
   };
@@ -655,18 +848,20 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
           saved
               ? key == 'syncTime'
                     ? _watchText(
-                        '时间和语言请求已发送，请在手表上核对；语言可能保持不变。',
-                        'Time and language request sent. Check the watch; its language may stay the same.',
+                        '时间和语言请求已发送，请在设备上核对；语言可能保持不变。',
+                        'Time and language request sent. Check the device; its language may stay the same.',
                       )
                     : _watchText(
-                        '已保存并从手表确认',
-                        'Saved and confirmed by your watch.',
+                        '已保存并从设备确认',
+                        'Saved and confirmed by your device.',
                       )
-              : widget.controller.errorMessage ??
-                    _watchText(
-                      '设置未生效，请重试',
-                      'The setting did not take effect. Try again.',
-                    ),
+              : _visibleMessage(
+                  widget.controller.errorMessage,
+                  _watchText(
+                    '设置未生效，请重试',
+                    'The setting did not take effect. Try again.',
+                  ),
+                ),
         ),
       ),
     );
@@ -676,11 +871,11 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
     final language = await showDialog<String>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: Text(_watchText('时间与手表语言', 'Time & watch language')),
+        title: Text(_watchText('时间与设备语言', 'Time & device language')),
         content: Text(
           _watchText(
-            '选择希望手表显示的语言，并发送手机当前时间。部分手表可能不会切换语言，请发送后核对手表。',
-            'Choose the language you want on the watch and send your phone’s current time. Some watches may not change language; check the display afterward.',
+            '选择希望设备显示的语言，并发送手机当前时间。部分设备可能不会切换语言，请发送后核对设备。',
+            'Choose the language you want on the device and send your phone’s current time. Some devices may not change language; check the display afterward.',
           ),
         ),
         actions: [
@@ -690,7 +885,7 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
           ),
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop('zh'),
-            child: const Text('中文'),
+            child: Text(_watchText('中文', "Chinese")),
           ),
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop('en'),
@@ -745,7 +940,7 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
 
   Widget _buildBasicSettingsPanel(bool busy) {
     if (_featureData.isEmpty) {
-      return _loadingCard(busy, _watchText('手表设置', 'watch settings'));
+      return _loadingCard(busy, _watchText('设备设置', 'device settings'));
     }
     final is24Hour = _featureData['is24Hour'] == true;
     return Column(
@@ -756,8 +951,8 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
             title: Text(_watchText('时间与语言', 'Time & language')),
             subtitle: Text(
               _watchText(
-                '同步手机时间，并选择手表语言',
-                'Sync your phone’s time and request a watch language',
+                '同步手机时间，并选择设备语言',
+                'Sync your phone’s time and request a device language',
               ),
             ),
             trailing: const Icon(Icons.chevron_right_rounded),
@@ -861,8 +1056,8 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
         ? _watchText('正在读取$label', 'Loading $label…')
         : _watchText('暂时未读取到$label', 'Could not load $label'),
     detail: _watchText(
-      '请保持手表靠近手机后重试。',
-      'Keep your watch nearby and try again.',
+      '请保持设备靠近手机后重试。',
+      'Keep your device nearby and try again.',
     ),
     icon: _deviceFeatureIcon(widget.feature),
     actionLabel: busy ? null : context.l10n.retry,
@@ -910,10 +1105,10 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
           ),
           const SizedBox(height: 12),
         ],
-        const Align(
+        Align(
           alignment: Alignment.centerLeft,
           child: Text(
-            '手表中的表盘',
+            _watchText('设备中的表盘', "Installed faces"),
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
           ),
         ),
@@ -921,17 +1116,24 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
         if (busy && progress != null && progress > 0) ...[
           LinearProgressIndicator(value: progress.clamp(0, 100) / 100),
           const SizedBox(height: 10),
-          Text('正在读取表盘 $progress%'),
+          Text(_watchText('正在读取表盘 $progress%', 'Reading faces: $progress%')),
           const SizedBox(height: 12),
         ],
         if (noLocalData)
-          _loadingCard(busy, '手表中的表盘')
+          _loadingCard(busy, _watchText('设备中的表盘', "Installed faces"))
         else
           Card(
             child: faces.isEmpty
-                ? const Padding(
+                ? Padding(
                     padding: EdgeInsets.all(24),
-                    child: Center(child: Text('手表中暂未读取到可切换的表盘')),
+                    child: Center(
+                      child: Text(
+                        _watchText(
+                          '设备中暂未读取到可切换的表盘',
+                          "No available faces were returned by the device.",
+                        ),
+                      ),
+                    ),
                   )
                 : Column(
                     children: [
@@ -939,11 +1141,19 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
                         ListTile(
                           minLeadingWidth: 64,
                           leading: _WatchFaceThumbnail(face: faces[index]),
-                          title: Text('${faces[index]['name'] ?? '手表表盘'}'),
+                          title: Text(
+                            _nativeLabel(
+                              faces[index]['name'],
+                              _watchText('设备表盘', 'Face ${index + 1}'),
+                            ),
+                          ),
                           subtitle: Text(
                             faces[index]['isCurrent'] == true
-                                ? '当前使用'
-                                : '${faces[index]['status'] ?? '手表表盘'}',
+                                ? _watchText('当前使用', "In use")
+                                : _nativeLabel(
+                                    faces[index]['status'],
+                                    _watchText('设备表盘', 'Device face'),
+                                  ),
                           ),
                           trailing: faces[index]['isCurrent'] == true
                               ? const Icon(
@@ -987,7 +1197,12 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
       final profileData = await widget.controller.readWatchFaceProfile();
       final profile = DeviceWatchFaceMarketProfile.fromMap(profileData);
       if (!profile.matchesDevice(widget.controller.connectedDevice?.id)) {
-        throw const DeviceWatchFaceMarketException('连接设备已变化，请重新进入表盘中心');
+        throw DeviceWatchFaceMarketException(
+          _watchText(
+            '连接设备已变化，请重新进入表盘中心',
+            'The connected device changed. Reopen the face gallery.',
+          ),
+        );
       }
       if (!mounted) return;
       await Navigator.of(context).push(
@@ -1000,9 +1215,19 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
       );
     } on DeviceWatchFaceMarketException catch (error) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(error.message)));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              _visibleMessage(
+                error.message,
+                _watchText(
+                  '操作失败，请重试',
+                  'Could not complete this action. Try again.',
+                ),
+              ),
+            ),
+          ),
+        );
       }
     } finally {
       if (mounted) setState(() => _openingWatchFaceMarket = false);
@@ -1015,7 +1240,7 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
       'id': '${face['id'] ?? ''}',
       'type': '${face['type'] ?? ''}',
       'index': (face['index'] as num?)?.toInt() ?? 0,
-    }, '表盘已切换');
+    }, _watchText('表盘已切换', "Face changed"));
   }
 
   Widget _buildPhotoWatchFacePanel(bool busy) {
@@ -1044,7 +1269,7 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
                           borderRadius: BorderRadius.circular(22),
                         ),
                         child: _dialPhoto == null
-                            ? const Column(
+                            ? Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Icon(
@@ -1054,8 +1279,11 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
                                   ),
                                   SizedBox(height: 8),
                                   Text(
-                                    '点击选择照片',
+                                    _watchText('点击选择照片', "Choose photo"),
+                                    textAlign: TextAlign.center,
                                     style: TextStyle(
+                                      fontSize: 13,
+                                      height: 1.2,
                                       fontWeight: FontWeight.w800,
                                     ),
                                   ),
@@ -1091,7 +1319,11 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
                           OutlinedButton.icon(
                             onPressed: busy ? null : _pickDialPhoto,
                             icon: const Icon(Icons.photo_library_outlined),
-                            label: Text(_dialPhoto == null ? '选择照片' : '更换照片'),
+                            label: Text(
+                              _dialPhoto == null
+                                  ? _watchText('选择照片', "Choose photo")
+                                  : _watchText('更换照片', "Change photo"),
+                            ),
                           ),
                         ],
                       ),
@@ -1106,25 +1338,53 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
                   Padding(
                     padding: const EdgeInsets.all(12),
                     child: Text(
-                      progress > 0 ? '正在传送到手表 $progress%' : '正在准备照片表盘',
+                      progress > 0
+                          ? _watchText(
+                              '正在传送到设备 $progress%',
+                              'Sending to device: $progress%',
+                            )
+                          : _watchText('正在准备照片表盘', "Preparing photo face…"),
                     ),
                   ),
                 ],
                 const SizedBox(height: 16),
                 DropdownButtonFormField<int>(
                   initialValue: _dialTimePosition,
+                  isExpanded: true,
+                  itemHeight: null,
                   decoration: InputDecoration(
                     labelText: context.l10n.timeDisplayPosition,
                     prefixIcon: Icon(Icons.schedule_outlined),
                   ),
-                  items: const [
-                    DropdownMenuItem(value: 0, child: Text('顶部居中')),
-                    DropdownMenuItem(value: 1, child: Text('画面中央')),
-                    DropdownMenuItem(value: 2, child: Text('底部居中')),
-                    DropdownMenuItem(value: 3, child: Text('左上角')),
-                    DropdownMenuItem(value: 4, child: Text('右上角')),
-                    DropdownMenuItem(value: 5, child: Text('左下角')),
-                    DropdownMenuItem(value: 6, child: Text('右下角')),
+                  items: [
+                    DropdownMenuItem(
+                      value: 0,
+                      child: Text(_watchText('顶部居中', "Top center")),
+                    ),
+                    DropdownMenuItem(
+                      value: 1,
+                      child: Text(_watchText('画面中央', "Center")),
+                    ),
+                    DropdownMenuItem(
+                      value: 2,
+                      child: Text(_watchText('底部居中', "Bottom center")),
+                    ),
+                    DropdownMenuItem(
+                      value: 3,
+                      child: Text(_watchText('左上角', "Top left")),
+                    ),
+                    DropdownMenuItem(
+                      value: 4,
+                      child: Text(_watchText('右上角', "Top right")),
+                    ),
+                    DropdownMenuItem(
+                      value: 5,
+                      child: Text(_watchText('左下角', "Bottom left")),
+                    ),
+                    DropdownMenuItem(
+                      value: 6,
+                      child: Text(_watchText('右下角', "Bottom right")),
+                    ),
                   ],
                   onChanged: busy
                       ? null
@@ -1167,9 +1427,13 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
       if (photo != null && mounted) setState(() => _dialPhoto = photo);
     } catch (_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('允许照片权限后使用')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            _watchText('允许照片权限后使用', "Allow photo access to use this feature."),
+          ),
+        ),
+      );
     }
   }
 
@@ -1182,7 +1446,7 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
         'imagePath': photo.path,
         'timePosition': _dialTimePosition,
       },
-      '照片表盘已设置',
+      _watchText('照片表盘已设置', "Photo face set"),
       reload: false,
     );
   }
@@ -1245,7 +1509,10 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
                               vertical: 7,
                             ),
                             child: Text(
-                              _cameraMessage ?? '正在打开相机',
+                              _visibleMessage(
+                                _cameraMessage,
+                                _watchText('正在打开相机', "Opening camera…"),
+                              ),
                               textAlign: TextAlign.center,
                               style: const TextStyle(color: Colors.white),
                             ),
@@ -1254,7 +1521,10 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
                         const SizedBox(height: 12),
                         Semantics(
                           button: true,
-                          label: '拍照并保存到手机',
+                          label: _watchText(
+                            '拍照并保存到手机',
+                            "Take a photo and save it to your phone",
+                          ),
                           child: SizedBox(
                             width: 68,
                             height: 68,
@@ -1304,14 +1574,21 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
             padding: const EdgeInsets.all(18),
             child: Column(
               children: [
-                const Row(
+                Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.watch_rounded, color: SaydianColors.brandRed),
-                    SizedBox(width: 8),
+                    WearableDeviceSymbol(
+                      device: widget.controller.connectedDevice,
+                      size: 24,
+                      color: SaydianColors.brandRed,
+                    ),
+                    const SizedBox(width: 8),
                     Flexible(
                       child: Text(
-                        '可点击手机快门，也可按手表拍照键；照片会保存到手机相册。',
+                        _watchText(
+                          '可点击手机快门，也可按${widget.controller.deviceKindLabel}拍照键；照片会保存到手机相册。',
+                          'Use your phone shutter or the camera control on your device. Photos are saved to your phone.',
+                        ),
                         textAlign: TextAlign.center,
                         style: TextStyle(color: SaydianColors.muted),
                       ),
@@ -1332,7 +1609,9 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
                           : Icons.refresh_rounded,
                     ),
                     label: Text(
-                      _cameraPermissionPermanentlyDenied ? '前往系统设置' : '重新打开相机',
+                      _cameraPermissionPermanentlyDenied
+                          ? _watchText('前往系统设置', "Open Settings")
+                          : _watchText('重新打开相机', "Reopen camera"),
                     ),
                   ),
                 ],
@@ -1357,11 +1636,13 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
   }
 
   Widget _buildPhoneCallsPanel(bool busy) {
-    if (_featureData.isEmpty) return _loadingCard(busy, '通话设置');
+    if (_featureData.isEmpty) {
+      return _loadingCard(busy, _watchText('通话设置', "Call settings"));
+    }
     final status = switch (_featureData['connectionStatus']) {
-      'connected' => '通话连接已建立',
-      'broadcasting' => '等待手机配对',
-      _ => '通话连接未建立',
+      'connected' => _watchText('通话连接已建立', "Calls connected"),
+      'broadcasting' => _watchText('等待手机配对', "Waiting for phone pairing"),
+      _ => _watchText('通话连接未建立', "Calls not connected"),
     };
     return Card(
       child: Column(
@@ -1370,11 +1651,16 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
             leading: const Icon(Icons.bluetooth_audio_rounded),
             title: Text(status),
             subtitle: Text(
-              _featureData['paired'] == true ? '手机已保存配对信息' : '请在手机蓝牙设置中完成配对',
+              _featureData['paired'] == true
+                  ? _watchText('手机已保存配对信息', "Pairing saved on your phone")
+                  : _watchText(
+                      '请在手机蓝牙设置中完成配对',
+                      "Complete pairing in your phone's Bluetooth settings.",
+                    ),
             ),
             trailing: IconButton(
               onPressed: busy ? null : _loadFeature,
-              tooltip: '刷新',
+              tooltip: _watchText('刷新', "Refresh"),
               icon: const Icon(Icons.refresh_rounded),
             ),
           ),
@@ -1387,7 +1673,9 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
             ),
             title: Text(context.l10n.callMediaAudio),
             subtitle: Text(
-              _featureData['audioEnabled'] == true ? '手表媒体声音已连接' : '媒体声音尚未连接',
+              _featureData['audioEnabled'] == true
+                  ? _watchText('设备媒体声音已连接', "Device audio connected")
+                  : _watchText('媒体声音尚未连接', "Device audio not connected"),
             ),
           ),
           Padding(
@@ -1398,14 +1686,18 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
                 onPressed:
                     busy || _featureData['connectionStatus'] == 'connected'
                     ? null
-                    : () => _saveFeature(const {
-                        'enabled': true,
-                      }, '已发送通话连接请求，请按系统提示完成配对'),
+                    : () => _saveFeature(
+                        const {'enabled': true},
+                        _watchText(
+                          '已发送通话连接请求，请按系统提示完成配对',
+                          "Pairing requested. Follow the system prompts.",
+                        ),
+                      ),
                 icon: const Icon(Icons.bluetooth_connected_rounded),
                 label: Text(
                   _featureData['connectionStatus'] == 'connected'
-                      ? '通话连接已建立'
-                      : '建立通话连接',
+                      ? _watchText('通话连接已建立', "Calls connected")
+                      : _watchText('建立通话连接', "Connect calls"),
                 ),
               ),
             ),
@@ -1423,32 +1715,98 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
     bool supported = true,
   }) => SwitchListTile(
     title: Text(title),
-    subtitle: Text(supported ? subtitle : '当前手表不支持此项'),
+    subtitle: Text(
+      supported
+          ? subtitle
+          : _watchText('当前设备不支持此项', "Not supported by this device"),
+    ),
     value: _featureData[keyName] == true,
     onChanged: busy || !supported
         ? null
-        : (value) =>
-              _saveFeature({..._featureData, keyName: value}, '$title已保存'),
+        : (value) => _saveFeature({
+            ..._featureData,
+            keyName: value,
+          }, _watchText('$title已保存', '$title saved')),
   );
 
   Widget _buildNotificationsPanel(bool busy) {
-    if (_featureData.isEmpty) return _loadingCard(busy, '消息通知设置');
+    if (const {
+      'device',
+      'connection',
+    }.contains(_featureData['reminderStyle'])) {
+      return _buildRingReminderSwitch(busy, call: false);
+    }
+    if (_featureData.isEmpty) {
+      return _loadingCard(busy, _watchText('消息通知设置', "Notification settings"));
+    }
     final supported =
         (_featureData['supportedKeys'] as List?)
             ?.map((value) => '$value')
             .toSet() ??
         const <String>{};
     final entries = <(String, String, String)>[
-      ('incomingCall', '来电提醒', '有电话时在手表提醒'),
-      ('sms', '短信', '在手表显示短信提醒'),
-      ('wechat', '微信', '在手表显示微信消息提醒'),
-      ('qq', 'QQ', '在手表显示 QQ 消息提醒'),
-      ('whatsapp', 'WhatsApp', '在手表显示 WhatsApp 消息提醒'),
-      ('dingtalk', '钉钉', '在手表显示钉钉消息提醒'),
-      ('wecom', '企业微信', '在手表显示企业微信消息提醒'),
-      ('tiktok', '抖音', '在手表显示抖音消息提醒'),
-      ('telegram', 'Telegram', '在手表显示 Telegram 消息提醒'),
-      ('otherApps', '其他应用', '接收其他已允许应用的消息提醒'),
+      (
+        'incomingCall',
+        '来电提醒',
+        _watchText('有电话时在设备提醒', "Notify on your device when a call arrives"),
+      ),
+      (
+        'sms',
+        _watchText('短信', "SMS"),
+        _watchText(
+          '在设备显示短信提醒',
+          "Show text message notifications on your device",
+        ),
+      ),
+      (
+        'wechat',
+        _watchText('微信', "WeChat"),
+        _watchText('在设备显示微信消息提醒', "Show WeChat notifications on your device"),
+      ),
+      (
+        'qq',
+        'QQ',
+        _watchText('在设备显示 QQ 消息提醒', "Show QQ notifications on your device"),
+      ),
+      (
+        'whatsapp',
+        'WhatsApp',
+        _watchText(
+          '在设备显示 WhatsApp 消息提醒',
+          "Show WhatsApp notifications on your device",
+        ),
+      ),
+      (
+        'dingtalk',
+        _watchText('钉钉', "DingTalk"),
+        _watchText('在设备显示钉钉消息提醒', "Show DingTalk notifications on your device"),
+      ),
+      (
+        'wecom',
+        _watchText('企业微信', "WeCom"),
+        _watchText('在设备显示企业微信消息提醒', "Show WeCom notifications on your device"),
+      ),
+      (
+        'tiktok',
+        _watchText('抖音', "Douyin"),
+        _watchText('在设备显示抖音消息提醒', "Show Douyin notifications on your device"),
+      ),
+      (
+        'telegram',
+        'Telegram',
+        _watchText(
+          '在设备显示 Telegram 消息提醒',
+          "Show Telegram notifications on your device",
+        ),
+      ),
+      (
+        'otherApps',
+        _watchText('其他应用', "Other apps"),
+        _watchText(
+          '接收其他已允许应用的消息提醒',
+          "Receive notifications from other allowed apps",
+        ),
+      ),
     ];
     final visibleEntries = entries
         .where((entry) => supported.contains(entry.$1))
@@ -1462,15 +1820,33 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
               access ? Icons.verified_user_rounded : Icons.security_rounded,
               color: access ? SaydianColors.green : SaydianColors.orange,
             ),
-            title: Text(access ? '手机通知权限已允许' : '还需允许手机通知权限'),
-            subtitle: Text(access ? '已开启的应用消息可以发送到手表' : '允许后，手表才能显示手机收到的应用消息'),
+            title: Text(
+              access
+                  ? _watchText('手机通知权限已允许', "Notification access allowed")
+                  : _watchText('还需允许手机通知权限', "Notification access needed"),
+            ),
+            subtitle: Text(
+              access
+                  ? _watchText(
+                      '已开启的应用消息可以发送到设备',
+                      "Notifications from enabled apps can be sent to your device.",
+                    )
+                  : _watchText(
+                      '允许后，设备才能显示手机收到的应用消息',
+                      "Allow access to show your phone's notifications on your device.",
+                    ),
+            ),
             trailing: TextButton(
               onPressed: busy
                   ? null
                   : access
                   ? _loadFeature
                   : _openNotificationSettings,
-              child: Text(access ? '重新检查' : '去设置'),
+              child: Text(
+                access
+                    ? _watchText('重新检查', "Check again")
+                    : _watchText('去设置', "Settings"),
+              ),
             ),
           ),
         ),
@@ -1497,18 +1873,131 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
     );
   }
 
+  Widget _buildRingReminderSwitch(bool busy, {required bool call}) {
+    final key = call ? 'incomingCall' : 'enabled';
+    final title = call
+        ? _watchText('来电提醒', 'Call reminders')
+        : _watchText('消息提醒', 'Message reminders');
+    final connectionOnly = _featureData['reminderStyle'] == 'connection';
+    final known = _featureData[key] is bool;
+    if (!known && !connectionOnly) return _loadingCard(busy, title);
+    final authorized = _featureData['systemNotificationAuthorized'] == true;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Card(
+          child: !known
+              ? Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text(
+                        _watchText(
+                          '当前提醒状态未知，请选择是否开启。',
+                          'Reminder state is unknown. Choose whether to enable it.',
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      for (final enabled in [true, false])
+                        TextButton(
+                          onPressed: busy
+                              ? null
+                              : () => _saveFeature(
+                                  {'enabled': enabled},
+                                  _watchText(
+                                    '设备已确认提醒指令',
+                                    'Reminder command confirmed by the device.',
+                                  ),
+                                ),
+                          child: Text(
+                            enabled
+                                ? _watchText('开启提醒', 'Enable reminders')
+                                : _watchText('关闭提醒', 'Disable reminders'),
+                          ),
+                        ),
+                    ],
+                  ),
+                )
+              : SwitchListTile(
+                  title: Text(title),
+                  subtitle: Text(
+                    _watchText(
+                      '由设备通过其支持的振动或指示灯提醒',
+                      'The device uses its supported vibration or indicator light.',
+                    ),
+                  ),
+                  value: _featureData[key] == true,
+                  onChanged: busy
+                      ? null
+                      : (value) => _saveFeature(
+                          {..._featureData, key: value},
+                          connectionOnly
+                              ? _watchText(
+                                  '设备已确认提醒指令',
+                                  'Reminder command confirmed by the device.',
+                                )
+                              : _watchText(
+                                  '设备提醒设置已确认',
+                                  'Reminder settings confirmed by the device.',
+                                ),
+                        ),
+                ),
+        ),
+        const SizedBox(height: 12),
+        if (connectionOnly) ...[
+          Text(
+            _watchText(
+              '此设备未提供当前状态读取。仅显示本次连接内已确认的指令。',
+              'This device cannot read back its current state. Only commands confirmed during this connection are shown.',
+            ),
+          ),
+          const SizedBox(height: 8),
+        ],
+        Text(
+          authorized
+              ? _watchText(
+                  '系统蓝牙通知授权已允许',
+                  'Bluetooth notification sharing is allowed.',
+                )
+              : _watchText(
+                  '系统蓝牙通知授权尚未允许',
+                  'Bluetooth notification sharing is not allowed.',
+                ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          _watchText(
+            '请在手机设置 → 蓝牙 → 当前设备中允许共享系统通知。实际提醒还受应用通知权限和勿扰设置影响。',
+            'Allow system notification sharing under Settings → Bluetooth → this device. App notification permissions and Do Not Disturb also affect delivery.',
+          ),
+          style: TextStyle(color: SaydianColors.muted, fontSize: 12),
+        ),
+      ],
+    );
+  }
+
   Future<void> _openNotificationSettings() async {
     final opened = await widget.controller.triggerDeviceAction(
       DeviceFeature.notifications,
     );
     if (!mounted || opened) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(widget.controller.errorMessage ?? '无法打开系统设置')),
+      SnackBar(
+        content: Text(
+          _visibleMessage(
+            widget.controller.errorMessage,
+            _watchText('无法打开系统设置', "Could not open Settings."),
+          ),
+        ),
+      ),
     );
   }
 
   Widget _buildWeatherPanel(bool busy) {
-    if (_featureData.isEmpty) return _loadingCard(busy, '天气设置');
+    if (_featureData.isEmpty) {
+      return _loadingCard(busy, _watchText('天气设置', "Weather settings"));
+    }
     final city = '${_featureData['city'] ?? ''}'.trim();
     final updatedAt = (_featureData['updatedAt'] as num?)?.toInt() ?? 0;
     return Column(
@@ -1518,15 +2007,20 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
             children: [
               _featureSwitch(
                 keyName: 'enabled',
-                title: '在手表显示天气',
-                subtitle: '开启后可在手表查看天气信息',
+                title: _watchText('在设备显示天气', "Show weather on device"),
+                subtitle: _watchText(
+                  '开启后可在设备查看天气信息',
+                  "Enable to see weather information on your device",
+                ),
                 busy: busy || _weatherRefreshing,
               ),
               const Divider(indent: 56),
               SwitchListTile(
                 title: Text(context.l10n.useCelsius),
                 subtitle: Text(
-                  _featureData['useCelsius'] == true ? '温度显示为 ℃' : '温度显示为 ℉',
+                  _featureData['useCelsius'] == true
+                      ? _watchText('温度显示为 ℃', "Temperature in °C")
+                      : _watchText('温度显示为 ℉', "Temperature in °F"),
                 ),
                 value: _featureData['useCelsius'] == true,
                 onChanged: busy || _weatherRefreshing
@@ -1534,7 +2028,7 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
                     : (value) => _saveFeature({
                         ..._featureData,
                         'useCelsius': value,
-                      }, '温度单位已保存'),
+                      }, _watchText('温度单位已保存', "Temperature unit saved")),
               ),
               if (city.isNotEmpty) ...[
                 const Divider(indent: 56),
@@ -1543,8 +2037,11 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
                   title: Text(city),
                   subtitle: Text(
                     updatedAt > 0
-                        ? '上次更新 ${_weatherTimeLabel(updatedAt)}'
-                        : '已同步到手表',
+                        ? _watchText(
+                            '上次更新 ${_weatherTimeLabel(updatedAt)}',
+                            'Updated ${_weatherTimeLabel(updatedAt)}',
+                          )
+                        : _watchText('已同步到设备', "Synced to device"),
                   ),
                 ),
               ],
@@ -1567,7 +2064,11 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
                                 ),
                               )
                             : const Icon(Icons.cloud_sync_outlined),
-                        label: Text(_weatherRefreshing ? '正在更新天气' : '更新当前位置天气'),
+                        label: Text(
+                          _weatherRefreshing
+                              ? _watchText('正在更新天气', "Updating weather…")
+                              : _watchText('更新当前位置天气', "Update local weather"),
+                        ),
                       ),
                     ),
                     const SizedBox(height: 10),
@@ -1590,7 +2091,13 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
         if (_weatherMessage != null) ...[
           const SizedBox(height: 10),
           Text(
-            _weatherMessage!,
+            _visibleMessage(
+              _weatherMessage,
+              _watchText(
+                '天气更新失败，请稍后重试',
+                'Could not update weather. Try again.',
+              ),
+            ),
             textAlign: TextAlign.center,
             style: const TextStyle(color: SaydianColors.muted, fontSize: 14),
           ),
@@ -1620,11 +2127,18 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
       final values = forecast.toFeatureValues(
         useCelsius: _featureData['useCelsius'] != false,
       );
-      final saved = await _saveFeature(values, '天气已同步到手表', reload: false);
+      final saved = await _saveFeature(
+        values,
+        _watchText('天气已同步到设备', "Weather synced to device"),
+        reload: false,
+      );
       if (saved && mounted) {
         setState(() {
           _featureData = {..._featureData, ...values};
-          _weatherMessage = '${forecast.city}天气已更新';
+          _weatherMessage = _watchText(
+            '${forecast.city}天气已更新',
+            'Weather updated for ${forecast.city}',
+          );
         });
       }
     } on DeviceWeatherException catch (error) {
@@ -1633,9 +2147,17 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
       if (error.openSettings) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(error.message),
+            content: Text(
+              _visibleMessage(
+                error.message,
+                _watchText(
+                  '操作失败，请重试',
+                  'Could not complete this action. Try again.',
+                ),
+              ),
+            ),
             action: SnackBarAction(
-              label: '去设置',
+              label: _watchText('去设置', "Settings"),
               onPressed: () {
                 if (error.locationSettings) {
                   unawaited(Geolocator.openLocationSettings());
@@ -1648,7 +2170,14 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
         );
       }
     } catch (_) {
-      if (mounted) setState(() => _weatherMessage = '天气更新失败，请稍后重试');
+      if (mounted) {
+        setState(
+          () => _weatherMessage = _watchText(
+            '天气更新失败，请稍后重试',
+            "Could not update weather. Try again.",
+          ),
+        );
+      }
     } finally {
       if (mounted) setState(() => _weatherRefreshing = false);
     }
@@ -1656,21 +2185,25 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
 
   String _weatherTimeLabel(int milliseconds) {
     final value = DateTime.fromMillisecondsSinceEpoch(milliseconds);
-    return '${value.month}月${value.day}日 '
-        '${value.hour.toString().padLeft(2, '0')}:'
-        '${value.minute.toString().padLeft(2, '0')}';
+    return DateFormat.MMMd(context.l10n.localeName).add_jm().format(value);
   }
 
   Widget _buildAlarmsPanel(bool busy) {
-    if (_featureData.isEmpty) return _loadingCard(busy, '闹钟');
+    if (_featureData.isEmpty) {
+      return _loadingCard(busy, _watchText('闹钟', "Alarm"));
+    }
     final alarms = _items;
     return Column(
       children: [
         Card(
           child: alarms.isEmpty
-              ? const Padding(
+              ? Padding(
                   padding: EdgeInsets.all(24),
-                  child: Center(child: Text('手表中还没有闹钟')),
+                  child: Center(
+                    child: Text(
+                      _watchText('设备中还没有闹钟', "No alarms on this device"),
+                    ),
+                  ),
                 )
               : Column(
                   children: [
@@ -1698,7 +2231,8 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
     final hour = (alarm['hour'] as num?)?.toInt() ?? 0;
     final minute = (alarm['minute'] as num?)?.toInt() ?? 0;
     final enabled = alarm['enabled'] == true;
-    final label = alarm['label']?.toString().trim() ?? '';
+    final rawLabel = alarm['label']?.toString().trim() ?? '';
+    final label = rawLabel == '闹钟' ? _watchText('闹钟', 'Alarm') : rawLabel;
     final repeatLabel = _repeatDaysLabel(alarm['repeatDays']);
     return ListTile(
       onTap: busy ? null : () => _showAlarmEditor(alarm),
@@ -1715,15 +2249,16 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
             value: enabled,
             onChanged: busy
                 ? null
-                : (value) => _saveFeature({
-                    ...alarm,
-                    'operation': 'update',
-                    'enabled': value,
-                  }, value ? '闹钟已开启' : '闹钟已关闭'),
+                : (value) => _saveFeature(
+                    {...alarm, 'operation': 'update', 'enabled': value},
+                    value
+                        ? _watchText('闹钟已开启', "Alarm enabled")
+                        : _watchText('闹钟已关闭', "Alarm disabled"),
+                  ),
           ),
           IconButton(
             onPressed: busy ? null : () => _deleteAlarm(alarm),
-            tooltip: '删除',
+            tooltip: _watchText('删除', "Delete"),
             icon: const Icon(Icons.delete_outline_rounded),
           ),
         ],
@@ -1732,6 +2267,7 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
   }
 
   Future<void> _showAlarmEditor([Map<String, Object?>? alarm]) async {
+    final supportsNames = _featureData['supportsNames'] != false;
     var time = TimeOfDay(
       hour: (alarm?['hour'] as num?)?.toInt() ?? 8,
       minute: (alarm?['minute'] as num?)?.toInt() ?? 0,
@@ -1743,12 +2279,16 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
             .toSet() ??
         <int>{1, 2, 3, 4, 5, 6, 7};
     var enabled = alarm?['enabled'] != false;
-    var label = alarm?['label']?.toString().trim() ?? '闹钟';
+    var label = alarm?['label']?.toString().trim() ?? _watchText('闹钟', "Alarm");
     final values = await showDialog<Map<String, Object?>>(
       context: context,
       builder: (dialogContext) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
-          title: Text(alarm == null ? '添加闹钟' : '编辑闹钟'),
+          title: Text(
+            alarm == null
+                ? _watchText('添加闹钟', "Add alarm")
+                : _watchText('编辑闹钟', "Edit alarm"),
+          ),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -1773,15 +2313,16 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
                   value: enabled,
                   onChanged: (value) => setDialogState(() => enabled = value),
                 ),
-                TextFormField(
-                  initialValue: label,
-                  maxLength: 20,
-                  decoration: InputDecoration(
-                    labelText: context.l10n.reminderName,
-                    hintText: '例如：吃药、起床',
+                if (supportsNames)
+                  TextFormField(
+                    initialValue: label,
+                    maxLength: 20,
+                    decoration: InputDecoration(
+                      labelText: context.l10n.reminderName,
+                      hintText: _watchText('例如：吃药、起床', "For example: Wake up"),
+                    ),
+                    onChanged: (value) => label = value.trim(),
                   ),
-                  onChanged: (value) => label = value.trim(),
-                ),
                 const SizedBox(height: 8),
                 Text(context.l10n.repeat),
                 const SizedBox(height: 8),
@@ -1791,7 +2332,15 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
                     for (var day = 1; day <= 7; day++)
                       FilterChip(
                         label: Text(
-                          const ['一', '二', '三', '四', '五', '六', '日'][day - 1],
+                          [
+                            _watchText('一', "M"),
+                            _watchText('二', "T"),
+                            _watchText('三', "W"),
+                            _watchText('四', "T"),
+                            _watchText('五', "F"),
+                            _watchText('六', "S"),
+                            _watchText('日', "S"),
+                          ][day - 1],
                         ),
                         selected: repeatDays.contains(day),
                         onSelected: (selected) => setDialogState(() {
@@ -1819,7 +2368,9 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
                 'hour': time.hour,
                 'minute': time.minute,
                 'enabled': enabled,
-                'label': label.isEmpty ? '闹钟' : label,
+                'label': supportsNames
+                    ? (label.isEmpty ? _watchText('闹钟', "Alarm") : label)
+                    : '',
                 'repeatDays': repeatDays.toList()..sort(),
               }),
               child: Text(context.l10n.save),
@@ -1828,29 +2379,49 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
         ),
       ),
     );
-    if (values != null) await _saveFeature(values, '闹钟已保存');
+    if (values != null) {
+      await _saveFeature(values, _watchText('闹钟已保存', "Alarm saved"));
+    }
   }
 
   Future<void> _deleteAlarm(Map<String, Object?> alarm) async {
-    final confirmed = await _confirm('删除闹钟', '确定删除这个闹钟吗？');
+    final confirmed = await _confirm(
+      _watchText('删除闹钟', "Delete alarm"),
+      _watchText('确定删除这个闹钟吗？', "Delete this alarm?"),
+    );
     if (!confirmed) return;
-    await _saveFeature({...alarm, 'operation': 'delete'}, '闹钟已删除');
+    await _saveFeature({
+      ...alarm,
+      'operation': 'delete',
+    }, _watchText('闹钟已删除', "Alarm deleted"));
   }
 
   String _repeatDaysLabel(Object? raw) {
     final days =
         (raw as List?)?.whereType<num>().map((day) => day.toInt()).toSet() ??
         {};
-    if (days.isEmpty) return '仅一次';
-    if (days.length == 7) return '每天';
-    if (days.length == 5 && days.containsAll([1, 2, 3, 4, 5])) return '工作日';
-    const labels = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+    if (days.isEmpty) return _watchText('仅一次', "Once");
+    if (days.length == 7) return _watchText('每天', "Every day");
+    if (days.length == 5 && days.containsAll([1, 2, 3, 4, 5])) {
+      return _watchText('工作日', "Weekdays");
+    }
+    final labels = [
+      _watchText('周一', "Mon"),
+      _watchText('周二', "Tue"),
+      _watchText('周三', "Wed"),
+      _watchText('周四', "Thu"),
+      _watchText('周五', "Fri"),
+      _watchText('周六', "Sat"),
+      _watchText('周日', "Sun"),
+    ];
     final sorted = days.toList()..sort();
     return sorted.map((day) => labels[day - 1]).join('、');
   }
 
   Widget _buildContactsPanel(bool busy) {
-    if (_featureData.isEmpty) return _loadingCard(busy, '联系人');
+    if (_featureData.isEmpty) {
+      return _loadingCard(busy, _watchText('联系人', "Contacts"));
+    }
     final contacts = _items;
     Map<String, Object?>? emergency;
     for (final contact in contacts) {
@@ -1875,23 +2446,37 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
             ),
             subtitle: Text(
               emergency == null
-                  ? '尚未设置，手表触发 SOS 时将无法快速联系家人'
+                  ? _watchText(
+                      '尚未设置，设备触发 SOS 时将无法快速联系家人',
+                      "No SOS contact set. Add a contact to use this device feature.",
+                    )
                   : '${emergency['name'] ?? ''}  ${emergency['phone'] ?? ''}',
             ),
             trailing: TextButton(
               onPressed: busy || contacts.isEmpty
                   ? null
                   : () => _selectEmergencyContact(contacts),
-              child: Text(emergency == null ? '立即设置' : '更换'),
+              child: Text(
+                emergency == null
+                    ? _watchText('立即设置', "Set up")
+                    : _watchText('更换', "Change"),
+              ),
             ),
           ),
         ),
         const SizedBox(height: 12),
         Card(
           child: contacts.isEmpty
-              ? const Padding(
+              ? Padding(
                   padding: EdgeInsets.all(24),
-                  child: Center(child: Text('手表中还没有常用联系人')),
+                  child: Center(
+                    child: Text(
+                      _watchText(
+                        '设备中还没有常用联系人',
+                        "No saved contacts on this device",
+                      ),
+                    ),
+                  ),
                 )
               : Column(
                   children: [
@@ -1936,7 +2521,7 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
                           onPressed: busy
                               ? null
                               : () => _deleteContact(contacts[index]),
-                          tooltip: '删除',
+                          tooltip: _watchText('删除', "Delete"),
                           icon: const Icon(Icons.delete_outline_rounded),
                         ),
                       ),
@@ -1954,7 +2539,11 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
                 ? null
                 : _showContactEditor,
             icon: const Icon(Icons.person_add_alt_1_rounded),
-            label: Text(contacts.length >= 10 ? '联系人已满' : '添加联系人'),
+            label: Text(
+              contacts.length >= 10
+                  ? _watchText('联系人已满', "Contact limit reached")
+                  : _watchText('添加联系人', "Add contact"),
+            ),
           ),
         ),
       ],
@@ -1966,22 +2555,31 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
       context: context,
       builder: (_) => const _ContactEditorDialog(),
     );
-    if (values != null) await _saveFeature(values, '联系人已添加');
+    if (values != null) {
+      await _saveFeature(values, _watchText('联系人已添加', "Contact added"));
+    }
   }
 
   Future<void> _deleteContact(Map<String, Object?> contact) async {
-    final confirmed = await _confirm('删除联系人', '确定从手表删除这个联系人吗？');
+    final confirmed = await _confirm(
+      _watchText('删除联系人', "Delete contact"),
+      _watchText('确定从设备删除这个联系人吗？', "Delete this contact from the device?"),
+    );
     if (!confirmed) return;
-    await _saveFeature({...contact, 'operation': 'delete'}, '联系人已删除');
+    await _saveFeature({
+      ...contact,
+      'operation': 'delete',
+    }, _watchText('联系人已删除', "Contact deleted"));
   }
 
   Future<void> _toggleEmergencyContact(Map<String, Object?> contact) async {
     final enabled = contact['isEmergency'] != true;
-    await _saveFeature({
-      ...contact,
-      'operation': 'emergency',
-      'isEmergency': enabled,
-    }, enabled ? '已设为紧急联系人' : '已取消紧急联系人');
+    await _saveFeature(
+      {...contact, 'operation': 'emergency', 'isEmergency': enabled},
+      enabled
+          ? _watchText('已设为紧急联系人', "Emergency contact set")
+          : _watchText('已取消紧急联系人', "Emergency contact removed"),
+    );
   }
 
   Future<void> _editU19DynamicPressure() async {
@@ -2006,8 +2604,8 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
             children: [
               Text(
                 _watchText(
-                  '开启后手表会按间隔自动充气。请确认手表佩戴合适，并按个人需要谨慎设置。',
-                  'The watch will inflate on a schedule. Check the fit and choose intervals carefully.',
+                  '开启后设备会按间隔自动充气。请确认设备佩戴合适，并按个人需要谨慎设置。',
+                  'The device will inflate on a schedule. Check the fit and choose intervals carefully.',
                 ),
               ),
               const SizedBox(height: 16),
@@ -2067,8 +2665,8 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
               ],
               Text(
                 _watchText(
-                  '测量计划只供日常记录；如有不适请在手表上停止并取下表带。',
-                  'For personal tracking only. If uncomfortable, stop on the watch and remove the band.',
+                  '测量计划只供日常记录；如有不适请停止测量并取下设备。',
+                  'For personal tracking only. If uncomfortable, stop on the device and remove the band.',
                 ),
                 style: const TextStyle(fontSize: 13, height: 1.4),
               ),
@@ -2097,14 +2695,14 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
     final confirmed = await _confirm(
       _watchText('确认开启定时充气？', 'Enable scheduled inflation?'),
       _watchText(
-        '手表可能在白天和夜间反复充气。确定要启用吗？',
-        'Your watch may inflate repeatedly, including at night. Continue?',
+        '设备可能在白天和夜间反复充气。确定要启用吗？',
+        'Your device may inflate repeatedly, including at night. Continue?',
       ),
     );
     if (!confirmed || !mounted) return;
     await _saveFeature({
       'dynamicBloodPressure': selected,
-    }, _watchText('已从手表确认设置', 'Confirmed by your watch'));
+    }, _watchText('已从设备确认设置', 'Confirmed by your device'));
   }
 
   Widget _buildU19MonitoringPanel(bool busy) {
@@ -2141,7 +2739,10 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
                   subtitle: Text(
                     plan['enabled'] == true
                         ? _watchText(
-                            '已开启 · ${plan['startHour']}:00 起 · 白天 ${plan['dayIntervalMinutes']} 分钟 / 夜间 ${plan['nightIntervalMinutes']} 分钟',
+                            _watchText(
+                              '已开启 · ${plan['startHour']}:00 起 · 白天 ${plan['dayIntervalMinutes']} 分钟 / 夜间 ${plan['nightIntervalMinutes']} 分钟',
+                              'On · from ${plan['startHour']}:00 · day: ${plan['dayIntervalMinutes']} min / night: ${plan['nightIntervalMinutes']} min',
+                            ),
                             'On · from ${_watchHour(context, plan['startHour'])} · day ${plan['dayIntervalMinutes']} min / night ${plan['nightIntervalMinutes']} min',
                           )
                         : _watchText('已关闭', 'Off'),
@@ -2182,7 +2783,7 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
         OutlinedButton.icon(
           onPressed: busy ? null : _loadFeature,
           icon: const Icon(Icons.refresh_rounded),
-          label: Text(_watchText('从手表刷新', 'Refresh from watch')),
+          label: Text(_watchText('从设备刷新', 'Refresh from device')),
         ),
       ],
     );
@@ -2192,14 +2793,14 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
     final confirmed = await _confirm(
       _watchText('开始脉搏分析？', 'Start pulse reading?'),
       _watchText(
-        '请保持手表贴合手腕。测量由手表完成，结果仅供日常参考。',
-        'Keep the watch snug. Results are for personal wellness tracking, not diagnosis.',
+        '请按设备说明正确佩戴。测量由设备完成，结果仅供日常参考。',
+        'Keep the device snug. Results are for personal wellness tracking, not diagnosis.',
       ),
     );
     if (!confirmed || !mounted) return;
     final started = await _saveFeature(
       {'operation': 'start'},
-      _watchText('手表已开始测量', 'Reading started on your watch'),
+      _watchText('设备已开始测量', 'Reading started on your device'),
       reload: false,
     );
     if (mounted && started) setState(() => _pulseRequested = true);
@@ -2218,7 +2819,7 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    _watchText('手表脉搏指标', 'Watch pulse indices'),
+                    _watchText('设备脉搏指标', 'Device pulse indices'),
                     style: const TextStyle(
                       fontSize: 17,
                       fontWeight: FontWeight.w700,
@@ -2245,8 +2846,8 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
                   const SizedBox(height: 8),
                   Text(
                     _watchText(
-                      '以上为手表提供的指数，不用于疾病诊断。',
-                      'Watch-provided wellness indices, not a diagnosis.',
+                      '以上为设备提供的指数，不用于疾病诊断。',
+                      'Device-provided wellness indices, not a diagnosis.',
                     ),
                     style: const TextStyle(fontSize: 12, height: 1.4),
                   ),
@@ -2267,18 +2868,18 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
               children: [
                 Text(
                   _watchText(
-                    '等待手表完成测量；需要中止时请在手表上操作。',
-                    'Waiting for the watch. To stop, use the watch controls.',
+                    '等待设备完成测量；需要中止时请在设备上操作。',
+                    'Waiting for the device. To stop, use the device controls.',
                   ),
                 ),
                 TextButton(
                   key: const Key('u19-pulse-ended-on-watch'),
                   onPressed: () async {
                     final ended = await _confirm(
-                      _watchText('手表已结束测量？', 'Finished on your watch?'),
+                      _watchText('设备已结束测量？', 'Finished on your device?'),
                       _watchText(
-                        '请先在手表上结束测量。确认后可以重新开始；此操作不会向手表发送停止指令。',
-                        'End the reading on your watch first. This only clears the wait in the app.',
+                        '请先在设备上结束测量。确认后可以重新开始；此操作不会向设备发送停止指令。',
+                        'End the reading on your device first. This only clears the wait in the app.',
                       ),
                     );
                     if (ended && mounted) {
@@ -2291,7 +2892,7 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
                       }
                     }
                   },
-                  child: Text(_watchText('我已在手表上结束', 'Finished on watch')),
+                  child: Text(_watchText('我已在设备上结束', 'Finished on device')),
                 ),
               ],
             ),
@@ -2309,7 +2910,7 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
         TextButton.icon(
           onPressed: busy ? null : _loadFeature,
           icon: const Icon(Icons.refresh_rounded),
-          label: Text(_watchText('读取手表记录', 'Read watch history')),
+          label: Text(_watchText('读取设备记录', 'Read device history')),
         ),
       ],
     );
@@ -2322,9 +2923,16 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
         .where((contact) => contact['supportsEmergency'] == true)
         .toList(growable: false);
     if (supported.isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('当前手表不支持设置 SOS 联系人')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            _watchText(
+              '当前设备不支持设置 SOS 联系人',
+              "This device does not support an SOS contact.",
+            ),
+          ),
+        ),
+      );
       return;
     }
     Map<String, Object?>? picked = supported.firstWhere(
@@ -2426,27 +3034,45 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
   }
 
   String _contactInitial(Map<String, Object?> contact) {
-    final name = '${contact['name'] ?? '联'}'.trim();
-    return name.isEmpty ? '联' : name.substring(0, 1);
+    final name = '${contact['name'] ?? _watchText('联', "C")}'.trim();
+    return name.isEmpty ? _watchText('联', "C") : name.substring(0, 1);
   }
 
   Widget _buildWorldClocksPanel(bool busy) {
-    if (_featureData.isEmpty) return _loadingCard(busy, '世界时钟');
+    if (_featureData.isEmpty) {
+      return _loadingCard(busy, _watchText('世界时钟', "World clock"));
+    }
     final clocks = _items;
     return Column(
       children: [
         Card(
           child: clocks.isEmpty
-              ? const Padding(
+              ? Padding(
                   padding: EdgeInsets.all(24),
-                  child: Center(child: Text('手表中还没有世界时钟')),
+                  child: Center(
+                    child: Text(
+                      _watchText(
+                        '设备中还没有世界时钟',
+                        "No world clocks on this device",
+                      ),
+                    ),
+                  ),
                 )
               : Column(
                   children: [
                     for (var index = 0; index < clocks.length; index++) ...[
                       ListTile(
                         leading: const Icon(Icons.public_rounded),
-                        title: Text('${clocks[index]['city'] ?? ''}'),
+                        title: Text(
+                          _nativeLabel(
+                            clocks[index]['city'],
+                            _utcLabel(
+                              (clocks[index]['utcOffsetMinutes'] as num?)
+                                      ?.toInt() ??
+                                  0,
+                            ),
+                          ),
+                        ),
                         subtitle: Text(
                           _utcLabel(
                             (clocks[index]['utcOffsetMinutes'] as num?)
@@ -2458,7 +3084,7 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
                           onPressed: busy
                               ? null
                               : () => _deleteWorldClock(clocks[index]),
-                          tooltip: '删除',
+                          tooltip: _watchText('删除', "Delete"),
                           icon: const Icon(Icons.delete_outline_rounded),
                         ),
                       ),
@@ -2475,7 +3101,11 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
                 ? null
                 : _showWorldClockEditor,
             icon: const Icon(Icons.add_rounded),
-            label: Text(clocks.length >= 10 ? '世界时钟已满' : '添加城市'),
+            label: Text(
+              clocks.length >= 10
+                  ? _watchText('世界时钟已满', "World clock limit reached")
+                  : _watchText('添加城市', "Add city"),
+            ),
           ),
         ),
       ],
@@ -2483,16 +3113,16 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
   }
 
   Future<void> _showWorldClockEditor() async {
-    const cities = <(String, int)>[
-      ('北京', 480),
-      ('东京', 540),
-      ('新加坡', 480),
-      ('迪拜', 240),
-      ('伦敦', 0),
-      ('巴黎', 60),
-      ('纽约', -300),
-      ('洛杉矶', -480),
-      ('悉尼', 600),
+    final cities = <(String, int)>[
+      (_watchText('北京', "Beijing"), 480),
+      (_watchText('东京', "Tokyo"), 540),
+      (_watchText('新加坡', "Singapore"), 480),
+      (_watchText('迪拜', "Dubai"), 240),
+      (_watchText('伦敦', "London"), 0),
+      (_watchText('巴黎', "Paris"), 60),
+      (_watchText('纽约', "New York"), -300),
+      (_watchText('洛杉矶', "Los Angeles"), -480),
+      (_watchText('悉尼', "Sydney"), 600),
     ];
     var selected = cities.first;
     final values = await showDialog<Map<String, Object?>>(
@@ -2532,13 +3162,21 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
         ),
       ),
     );
-    if (values != null) await _saveFeature(values, '世界时钟已添加');
+    if (values != null) {
+      await _saveFeature(values, _watchText('世界时钟已添加', "World clock added"));
+    }
   }
 
   Future<void> _deleteWorldClock(Map<String, Object?> clock) async {
-    final confirmed = await _confirm('删除世界时钟', '确定从手表删除这个城市吗？');
+    final confirmed = await _confirm(
+      _watchText('删除世界时钟', "Delete world clock"),
+      _watchText('确定从设备删除这个城市吗？', "Delete this city from the device?"),
+    );
     if (!confirmed) return;
-    await _saveFeature({...clock, 'operation': 'delete'}, '世界时钟已删除');
+    await _saveFeature({
+      ...clock,
+      'operation': 'delete',
+    }, _watchText('世界时钟已删除', "World clock deleted"));
   }
 
   String _utcLabel(int minutes) {
@@ -2548,13 +3186,22 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
   }
 
   Widget _buildHealthRemindersPanel(bool busy) {
-    if (_featureData.isEmpty) return _loadingCard(busy, '健康提醒');
+    if (_featureData.isEmpty) {
+      return _loadingCard(busy, _watchText('健康提醒', "Wellness reminder"));
+    }
     final reminders = _items;
     return Card(
       child: reminders.isEmpty
-          ? const Padding(
+          ? Padding(
               padding: EdgeInsets.all(24),
-              child: Center(child: Text('当前手表没有可设置的健康提醒')),
+              child: Center(
+                child: Text(
+                  _watchText(
+                    '当前设备没有可设置的健康提醒',
+                    "No configurable wellness reminders on this device",
+                  ),
+                ),
+              ),
             )
           : Column(
               children: [
@@ -2564,20 +3211,27 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
                         ? null
                         : () => _showReminderEditor(reminders[index]),
                     leading: const Icon(Icons.event_available_outlined),
-                    title: Text('${reminders[index]['label'] ?? '健康提醒'}'),
+                    title: Text(
+                      _nativeLabel(
+                        reminders[index]['label'],
+                        _watchText('健康提醒', 'Wellness reminder'),
+                      ),
+                    ),
                     subtitle: Text(
                       '${_minutesLabel((reminders[index]['startMinutes'] as num?)?.toInt() ?? 0)}–'
-                      '${_minutesLabel((reminders[index]['endMinutes'] as num?)?.toInt() ?? 0)}，'
-                      '每 ${(reminders[index]['intervalMinutes'] as num?)?.toInt() ?? 60} 分钟',
+                      '${_minutesLabel((reminders[index]['endMinutes'] as num?)?.toInt() ?? 0)}'
+                      '${reminders[index]['intervalMinutes'] is num ? _watchText('，每 ${reminders[index]['intervalMinutes']} 分钟', ', every ${reminders[index]['intervalMinutes']} min') : ''}',
                     ),
                     trailing: Switch(
                       value: reminders[index]['enabled'] == true,
                       onChanged: busy
                           ? null
-                          : (value) => _saveFeature({
-                              ...reminders[index],
-                              'enabled': value,
-                            }, value ? '提醒已开启' : '提醒已关闭'),
+                          : (value) => _saveFeature(
+                              {...reminders[index], 'enabled': value},
+                              value
+                                  ? _watchText('提醒已开启', "Reminder enabled")
+                                  : _watchText('提醒已关闭', "Reminder disabled"),
+                            ),
                     ),
                   ),
                   if (index != reminders.length - 1) const Divider(indent: 56),
@@ -2590,27 +3244,40 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
   Future<void> _showReminderEditor(Map<String, Object?> reminder) async {
     var startMinutes = (reminder['startMinutes'] as num?)?.toInt() ?? 480;
     var endMinutes = (reminder['endMinutes'] as num?)?.toInt() ?? 1320;
+    final deviceReminder = _featureData['reminderStyle'] == 'device';
+    final hasInterval = !deviceReminder || reminder['intervalMinutes'] is num;
     final reportedInterval =
         (reminder['intervalMinutes'] as num?)?.toInt() ?? 60;
     var interval = reportedInterval >= 15 && reportedInterval <= 240
         ? reportedInterval
         : 60;
-    final intervalOptions = <int>{
-      15,
-      30,
-      45,
-      60,
-      90,
-      120,
-      180,
-      240,
-      interval,
-    }.toList(growable: false)..sort();
+    final intervalOptions = deviceReminder
+        ? (reminder['supportedIntervals'] as List? ?? const [])
+              .whereType<int>()
+              .toList(growable: false)
+        : <int>{
+            15,
+            30,
+            45,
+            60,
+            90,
+            120,
+            180,
+            240,
+            interval,
+          }.toList(growable: false);
+    intervalOptions.sort();
     final values = await showDialog<Map<String, Object?>>(
       context: context,
       builder: (dialogContext) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
-          title: Text('${reminder['label'] ?? '健康提醒'}'),
+          title: Text(
+            _nativeLabel(
+              reminder['label'],
+              _watchText('健康提醒', 'Wellness reminder'),
+            ),
+          ),
+          scrollable: true,
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -2641,33 +3308,40 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
                   final time = await showTimePicker(
                     context: dialogContext,
                     initialTime: TimeOfDay(
-                      hour: endMinutes ~/ 60,
+                      hour: (endMinutes ~/ 60) % 24,
                       minute: endMinutes % 60,
                     ),
                   );
                   if (time != null) {
+                    final minutes = time.hour * 60 + time.minute;
                     setDialogState(
-                      () => endMinutes = time.hour * 60 + time.minute,
+                      () => endMinutes =
+                          deviceReminder && endMinutes == 1440 && minutes == 0
+                          ? 1440
+                          : minutes,
                     );
                   }
                 },
               ),
-              DropdownButtonFormField<int>(
-                initialValue: interval,
-                decoration: InputDecoration(
-                  labelText: context.l10n.reminderInterval,
+              if (hasInterval)
+                DropdownButtonFormField<int>(
+                  initialValue: interval,
+                  decoration: InputDecoration(
+                    labelText: context.l10n.reminderInterval,
+                  ),
+                  items: intervalOptions
+                      .map(
+                        (minutes) => DropdownMenuItem(
+                          value: minutes,
+                          child: Text(
+                            _watchText('$minutes 分钟', '$minutes min'),
+                          ),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: (value) =>
+                      setDialogState(() => interval = value ?? interval),
                 ),
-                items: intervalOptions
-                    .map(
-                      (minutes) => DropdownMenuItem(
-                        value: minutes,
-                        child: Text('$minutes 分钟'),
-                      ),
-                    )
-                    .toList(),
-                onChanged: (value) =>
-                    setDialogState(() => interval = value ?? interval),
-              ),
             ],
           ),
           actions: [
@@ -2680,7 +3354,7 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
                 ...reminder,
                 'startMinutes': startMinutes,
                 'endMinutes': endMinutes,
-                'intervalMinutes': interval,
+                if (hasInterval) 'intervalMinutes': interval,
               }),
               child: Text(context.l10n.save),
             ),
@@ -2688,11 +3362,18 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
         ),
       ),
     );
-    if (values != null) await _saveFeature(values, '健康提醒已保存');
+    if (values != null) {
+      await _saveFeature(values, _watchText('健康提醒已保存', "Reminder saved"));
+    }
   }
 
   Widget _buildHealthAssessmentPanel(bool busy) {
-    if (_featureData.isEmpty) return _loadingCard(busy, '辅助评估设置');
+    if (_featureData.isEmpty) {
+      return _loadingCard(
+        busy,
+        _watchText('辅助评估设置', "Wellness insight settings"),
+      );
+    }
     final items = _items;
     if (items.isEmpty) {
       return FeatureStateCard(
@@ -2709,15 +3390,22 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
               for (var index = 0; index < items.length; index++) ...[
                 SwitchListTile(
                   secondary: const Icon(Icons.health_and_safety_outlined),
-                  title: Text('${items[index]['label'] ?? '健康辅助功能'}'),
+                  title: Text(
+                    _nativeLabel(
+                      items[index]['label'],
+                      _watchText('健康辅助功能', 'Wellness feature'),
+                    ),
+                  ),
                   subtitle: Text(context.l10n.assessmentEnabledHint),
                   value: items[index]['enabled'] == true,
                   onChanged: busy
                       ? null
-                      : (value) => _saveFeature({
-                          ...items[index],
-                          'enabled': value,
-                        }, value ? '已开启' : '已关闭'),
+                      : (value) => _saveFeature(
+                          {...items[index], 'enabled': value},
+                          value
+                              ? _watchText('已开启', 'Enabled')
+                              : _watchText('已关闭', 'Disabled'),
+                        ),
                 ),
                 if (index != items.length - 1) const Divider(indent: 56),
               ],
@@ -2739,17 +3427,20 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
     final warningSupported = widget.controller.heartRateWarningSupported;
     if (settings.isEmpty && !warningSupported) {
       return FeatureStateCard(
-        message: widget.controller.deviceSettingsStatus,
+        message: _visibleMessage(
+          widget.controller.deviceSettingsStatus,
+          context.l10n.readAgain,
+        ),
         icon: Icons.monitor_heart_outlined,
-        actionLabel: '重新读取',
+        actionLabel: _watchText('重新读取', "Read again"),
         onAction: widget.controller.refreshDeviceSettings,
       );
     }
-    const labels = <String, String>{
-      'heartRate': '心率自动检测',
-      'bloodPressure': '血压自动检测',
-      'bloodGlucose': '血糖自动检测',
-      'bodyTemperature': '体温自动检测',
+    final labels = <String, String>{
+      'heartRate': _watchText('心率自动检测', "Automatic heart rate"),
+      'bloodPressure': _watchText('血压自动检测', "Automatic blood pressure"),
+      'bloodGlucose': _watchText('血糖自动检测', "Automatic blood glucose"),
+      'bodyTemperature': _watchText('体温自动检测', "Automatic temperature"),
     };
     final entries = settings.entries.toList(growable: false);
     return Column(
@@ -2801,7 +3492,7 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
         OutlinedButton.icon(
           onPressed: widget.controller.refreshDeviceSettings,
           icon: const Icon(Icons.refresh_rounded),
-          label: Text(widget.controller.deviceSettingsStatus),
+          label: Text(context.l10n.readAgain),
         ),
       ],
     );
@@ -2839,7 +3530,7 @@ class _WatchFaceThumbnail extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final source = _imageSource;
-    final fallback = _fallback;
+    final fallback = _fallback(context);
     Widget image = fallback;
     if (source != null) {
       final uri = Uri.tryParse(source);
@@ -2863,8 +3554,8 @@ class _WatchFaceThumbnail extends StatelessWidget {
     return Semantics(
       image: true,
       label: source == null
-          ? '${face['name'] ?? '表盘'}预览暂不可用'
-          : '${face['name'] ?? '表盘'}缩略图',
+          ? _usText(context, 'Face preview unavailable', '表盘预览暂不可用')
+          : _usText(context, 'Face thumbnail', '表盘缩略图'),
       child: Container(
         width: 62,
         height: 62,
@@ -2883,12 +3574,12 @@ class _WatchFaceThumbnail extends StatelessWidget {
     return DeviceWatchFaceMarketService.findUsablePreviewReference(face);
   }
 
-  Widget get _fallback {
+  Widget _fallback(BuildContext context) {
     return ColoredBox(
       color: const Color(0xFFF1F3F5),
       child: Center(
         child: Text(
-          '预览\n暂不可用',
+          _usText(context, 'Preview\nunavailable', '预览\n暂不可用'),
           textAlign: TextAlign.center,
           style: const TextStyle(
             color: SaydianColors.muted,
@@ -2903,12 +3594,14 @@ class _WatchFaceThumbnail extends StatelessWidget {
 
 class _FindWatchPanel extends StatelessWidget {
   const _FindWatchPanel({
+    this.device,
     required this.finding,
     required this.busy,
     required this.supportsStop,
     required this.onPressed,
   });
 
+  final DeviceInfo? device;
   final bool finding;
   final bool busy;
   final bool supportsStop;
@@ -2922,26 +3615,26 @@ class _FindWatchPanel extends StatelessWidget {
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
-            Icon(
-              finding
-                  ? Icons.notifications_active_rounded
-                  : Icons.watch_rounded,
-              size: 68,
-              color: finding ? SaydianColors.orange : SaydianColors.ink,
-            ),
+            finding
+                ? const Icon(
+                    Icons.notifications_active_rounded,
+                    size: 68,
+                    color: SaydianColors.orange,
+                  )
+                : WearableDeviceSymbol(
+                    device: device,
+                    size: 68,
+                    color: SaydianColors.ink,
+                  ),
             const SizedBox(height: 14),
             Text(
               finding
-                  ? (supportsStop
-                        ? (english
-                              ? 'Listen or feel for your nearby watch.'
-                              : '请留意附近响铃或振动的手表')
-                        : (english
-                              ? 'Find request sent. Watch for a vibration.'
-                              : '查找指令已发送，请留意手表振动'))
+                  ? (english
+                        ? 'Find request sent. Check your device for feedback.'
+                        : '查找指令已发送，请留意设备反馈')
                   : (english
-                        ? 'Make your watch ring or vibrate to find it.'
-                        : '让手表响铃或振动，帮助你快速找到它'),
+                        ? 'Send a find request to your nearby device and check for its supported sound, vibration or light feedback.'
+                        : '向附近的设备发送查找指令，请留意设备支持的响铃、振动或指示灯反馈'),
               textAlign: TextAlign.center,
               style: const TextStyle(height: 1.5),
             ),
@@ -2957,7 +3650,11 @@ class _FindWatchPanel extends StatelessWidget {
                       ? (supportsStop
                             ? (english ? 'Stop finding' : '停止查找')
                             : (english ? 'Finding…' : '正在查找'))
-                      : (english ? 'Find my watch' : '开始查找'),
+                      : (english
+                            ? (device?.isRing == true
+                                  ? 'Find my ring'
+                                  : 'Find my device')
+                            : '开始查找'),
                 ),
               ),
             ),
@@ -2989,12 +3686,12 @@ class _ScreenSettingsPanel extends StatelessWidget {
     if (value == null) {
       return FeatureStateCard(
         message: busy
-            ? _usText(context, 'Loading display settings…', '正在读取手表设置')
+            ? _usText(context, 'Loading display settings…', '正在读取设备设置')
             : _usText(context, 'Could not load display settings', '暂时未读取到屏幕设置'),
         detail: _usText(
           context,
-          'Keep your watch nearby and try again.',
-          '请保持手表靠近手机后重试。',
+          'Keep your device nearby and try again.',
+          '请保持设备靠近手机后重试。',
         ),
         icon: Icons.brightness_6_outlined,
         actionLabel: busy ? null : context.l10n.retry,

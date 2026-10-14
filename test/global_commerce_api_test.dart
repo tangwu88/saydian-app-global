@@ -26,7 +26,7 @@ void main() {
         locale: () => 'de',
         client: MockClient((request) async {
           calls.add(request.url);
-          expect(request.url.host, 'app.saydian.cn');
+          expect(request.url.host, 'app.saydian.com');
           expect(
             request.url.path,
             startsWith('${GlobalEnvironment.apiPrefix}/commerce/'),
@@ -120,7 +120,7 @@ void main() {
       final api = GlobalSaydianApiClient(
         vault,
         client: MockClient((request) async {
-          expect(request.url.host, 'app.saydian.cn');
+          expect(request.url.host, 'app.saydian.com');
           expect(request.url.path, startsWith(GlobalEnvironment.apiPrefix));
           expect(
             request.headers['Authorization'],

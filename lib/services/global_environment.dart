@@ -4,7 +4,7 @@ import 'package:crypto/crypto.dart';
 
 /// First-party App V2 endpoints. Paths never fall back to legacy API routes.
 abstract final class GlobalEnvironment {
-  static const origin = 'https://app.saydian.cn';
+  static const origin = 'https://app.saydian.com';
   static const apiPrefix = '/global/api/saydian-app/v2';
   static const canonicalApiPrefix = '/api/saydian-app/v2';
   static String get storageNamespace => sha256
@@ -66,7 +66,7 @@ abstract final class GlobalEnvironment {
         uri.hasPort;
     final production =
         uri.scheme == 'https' &&
-        uri.host == 'app.saydian.cn' &&
+        uri.host == 'app.saydian.com' &&
         uri.port == 443;
     if ((!production && !localDebug) ||
         uri.userInfo.isNotEmpty ||

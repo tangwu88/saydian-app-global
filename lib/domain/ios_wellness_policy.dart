@@ -3,7 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'feature_models.dart';
 import 'models.dart';
 
-/// Permanent iOS product scope, independent of account, SDK and server flags.
+/// iOS activity/sleep scope, independent of account, device and server flags.
 /// Projections are views/transport payloads; never rewrite historical storage.
 class IosWellnessPolicy {
   const IosWellnessPolicy({required this.enabled});
@@ -89,6 +89,10 @@ class IosWellnessPolicy {
       rawVersion: record.rawVersion,
       aggregation: record.aggregation,
       sourceModel: record.sourceModel,
+      sleepTimeline:
+          record.metric == HealthMetric.sleep && record.sleepTimeline != null
+          ? projectSleepTimeline(record.sleepTimeline!)
+          : null,
     );
   }
 
@@ -113,6 +117,58 @@ class IosWellnessPolicy {
       supportsWatchFaces: capabilities.supportsWatchFaces,
       supportsOta: capabilities.supportsOta,
     );
+  }
+
+  Map<String, Object?> projectSleepTimeline(Map<String, Object?> timeline) {
+    if (!enabled) return timeline;
+    Map<String, Object?> keep(Map source, Set<String> keys) => {
+      for (final key in keys)
+        if (source.containsKey(key)) key: source[key],
+    };
+    final result = keep(timeline, {
+      'deviceId',
+      'sdkDate',
+      'recordDate',
+      'timezone',
+      'source',
+      'readAt',
+      'revision',
+      'sessions',
+      'rawSummary',
+    });
+    if (timeline['rawSummary'] case final Map summary) {
+      result['rawSummary'] = keep(summary, {
+        'totalSeconds',
+        'deepSeconds',
+        'lightSeconds',
+        'awakeSeconds',
+        'remSeconds',
+        'napSeconds',
+        'reportedTotalMinutes',
+        'wakeCount',
+      });
+    }
+    if (timeline['sessions'] case final List sessions) {
+      result['sessions'] = [
+        for (final session in sessions)
+          if (session is Map)
+            {
+              ...keep(session, {'id', 'kind', 'startAt', 'endAt'}),
+              'segments': session['segments'] is List
+                  ? [
+                      for (final segment in session['segments'] as List)
+                        if (segment is Map)
+                          keep(segment, {'stage', 'startAt', 'endAt'})
+                        else
+                          segment,
+                    ]
+                  : session['segments'],
+            }
+          else
+            session,
+      ];
+    }
+    return Map.unmodifiable(result);
   }
 
   SportRecord projectSport(SportRecord record) {

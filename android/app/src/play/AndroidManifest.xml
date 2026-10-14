@@ -9,4 +9,27 @@
     <uses-permission
         android:name="android.permission.SCHEDULE_EXACT_ALARM"
         tools:node="remove" />
+    <uses-permission
+        android:name="android.permission.USE_EXACT_ALARM"
+        tools:node="remove" />
+    <!-- This Play release has no remote push. Removing InitProvider is
+         essential: an empty Dart key alone does not stop native auto-start. -->
+    <application>
+        <receiver android:name="com.jiguang.jpush.JPushEventReceiver" tools:node="remove" />
+        <service android:name="com.jiguang.jpush.JPushCustomService" tools:node="remove" />
+        <activity android:name="cn.jpush.android.ui.PopWinActivity" tools:node="remove" />
+        <activity android:name="cn.jpush.android.ui.PushActivity" tools:node="remove" />
+        <activity android:name="cn.jpush.android.service.JNotifyActivity" tools:node="remove" />
+        <activity android:name="cn.android.service.JTransitActivity" tools:node="remove" />
+        <service android:name="cn.jpush.android.service.PushService" tools:node="remove" />
+        <receiver android:name="cn.jpush.android.service.PushReceiver" tools:node="remove" />
+        <receiver android:name="cn.jpush.android.service.AlarmReceiver" tools:node="remove" />
+        <receiver android:name="cn.jpush.android.service.SchedulerReceiver" tools:node="remove" />
+        <receiver android:name="cn.jpush.android.asus.AsusPushMessageReceiver" tools:node="remove" />
+        <provider android:name="cn.jpush.android.service.DataProvider" tools:node="remove" />
+        <provider android:name="cn.jpush.android.service.InitProvider" tools:node="remove" />
+        <meta-data android:name="JPUSH_CHANNEL" tools:node="remove" />
+        <meta-data android:name="JPUSH_APPKEY" tools:node="remove" />
+        <meta-data android:name="JPUSH_MD5" tools:node="remove" />
+    </application>
 </manifest>

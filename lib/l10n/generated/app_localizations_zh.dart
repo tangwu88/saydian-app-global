@@ -142,7 +142,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get supportPrivacyWarning => '请勿向非官方账号发送验证码、密码或完整健康记录。';
 
   @override
-  String get brandHealthTitle => 'SAYDIAN Health';
+  String get brandHealthTitle => 'SayDian';
 
   @override
   String get accountAndSecurity => '账号与安全';
@@ -533,7 +533,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get globalShopReadOnly => '可浏览商品，当前地区暂未开放下单。';
 
   @override
-  String get appName => 'SAYDIAN Health';
+  String get appName => 'SayDian';
 
   @override
   String get searchingNearby => '正在搜索附近手表';
@@ -2036,6 +2036,69 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get ecgWaveformLowSignalHint => '信号质量较低 · 波形预览';
+
+  @override
+  String get dataPrivacyTitle => '数据隐私';
+
+  @override
+  String get dataResidencyTitle => '数据存储在美国';
+
+  @override
+  String get dataResidencyBody =>
+      'SayDian 云端保存的账号、设备及同步的穿戴设备数据，均存储在美国境内的服务器。如果您在其他国家或地区使用 SayDian，您选择同步的数据将传输至美国。';
+
+  @override
+  String get dataLocalTitle => '手机本地存储';
+
+  @override
+  String get dataLocalBody =>
+      'SayDian 也会在手机上保留加密的本地历史数据，用于离线查看及等待同步。尚未获得服务器确认的数据仍标记为待同步。';
+
+  @override
+  String get dataChoiceTitle => '您的选择';
+
+  @override
+  String get dataChoiceBody =>
+      '您可以按功能需要授予权限、拒绝可选权限，并在应用内管理共享。如需申请删除账号及关联数据，请打开“账号 → 注销账号”。保留期限及其他权利请查看隐私政策。';
+
+  @override
+  String get dataThirdPartyTitle => '可选服务';
+
+  @override
+  String get dataThirdPartyBody =>
+      '天气、通知等可选服务可能根据各自的隐私政策处理所需信息。美国存储声明适用于 SayDian 云端存储，不涵盖手机本地存储或第三方独立的数据处理。';
+
+  @override
+  String get iosWellnessSafety =>
+      'iOS 版 SayDian 展示兼容设备的活动与睡眠信息，用于日常健康生活管理，不提供医学测量、诊断或治疗。作出医疗决定前，请咨询合格的医疗专业人员。';
+
+  @override
+  String get smartRing => '智能戒指';
+
+  @override
+  String get ringStress => '压力';
+
+  @override
+  String get ringGestures => '手势控制';
+
+  @override
+  String get ringCallReminder => '来电提醒';
+
+  @override
+  String get ringConnectedSyncHint => '设备已连接，数据将在同步后显示。';
+
+  @override
+  String get ringDisconnecting => '正在断开';
+
+  @override
+  String get ringDisconnectHelp =>
+      'App 连接已断开。若戒指在 iPhone 蓝牙设置中仍显示已连接，请先在系统设置中忽略该设备，再重新搜索。';
+
+  @override
+  String get deviceLabel => '设备';
+
+  @override
+  String get ringStatusReminder => '状态提醒';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hans`).
@@ -2176,7 +2239,7 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
   String get supportPrivacyWarning => '请勿向非官方账号发送验证码、密码或完整健康记录。';
 
   @override
-  String get brandHealthTitle => 'SAYDIAN Health';
+  String get brandHealthTitle => 'SayDian';
 
   @override
   String get accountAndSecurity => '账号与安全';
@@ -2567,7 +2630,7 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
   String get globalShopReadOnly => '可浏览商品，当前地区暂未开放下单。';
 
   @override
-  String get appName => 'SAYDIAN Health';
+  String get appName => 'SayDian';
 
   @override
   String get searchingNearby => '正在搜索附近手表';
@@ -4070,6 +4133,69 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
 
   @override
   String get ecgWaveformLowSignalHint => '信号质量较低 · 波形预览';
+
+  @override
+  String get dataPrivacyTitle => '数据隐私';
+
+  @override
+  String get dataResidencyTitle => '数据存储在美国';
+
+  @override
+  String get dataResidencyBody =>
+      'SayDian 云端保存的账号、设备及同步的穿戴设备数据，均存储在美国境内的服务器。如果您在其他国家或地区使用 SayDian，您选择同步的数据将传输至美国。';
+
+  @override
+  String get dataLocalTitle => '手机本地存储';
+
+  @override
+  String get dataLocalBody =>
+      'SayDian 也会在手机上保留加密的本地历史数据，用于离线查看及等待同步。尚未获得服务器确认的数据仍标记为待同步。';
+
+  @override
+  String get dataChoiceTitle => '您的选择';
+
+  @override
+  String get dataChoiceBody =>
+      '您可以按功能需要授予权限、拒绝可选权限，并在应用内管理共享。如需申请删除账号及关联数据，请打开“账号 → 注销账号”。保留期限及其他权利请查看隐私政策。';
+
+  @override
+  String get dataThirdPartyTitle => '可选服务';
+
+  @override
+  String get dataThirdPartyBody =>
+      '天气、通知等可选服务可能根据各自的隐私政策处理所需信息。美国存储声明适用于 SayDian 云端存储，不涵盖手机本地存储或第三方独立的数据处理。';
+
+  @override
+  String get iosWellnessSafety =>
+      'iOS 版 SayDian 展示兼容设备的活动与睡眠信息，用于日常健康生活管理，不提供医学测量、诊断或治疗。作出医疗决定前，请咨询合格的医疗专业人员。';
+
+  @override
+  String get smartRing => '智能戒指';
+
+  @override
+  String get ringStress => '压力';
+
+  @override
+  String get ringGestures => '手势控制';
+
+  @override
+  String get ringCallReminder => '来电提醒';
+
+  @override
+  String get ringConnectedSyncHint => '设备已连接，数据将在同步后显示。';
+
+  @override
+  String get ringDisconnecting => '正在断开';
+
+  @override
+  String get ringDisconnectHelp =>
+      'App 连接已断开。若戒指在 iPhone 蓝牙设置中仍显示已连接，请先在系统设置中忽略该设备，再重新搜索。';
+
+  @override
+  String get deviceLabel => '设备';
+
+  @override
+  String get ringStatusReminder => '状态提醒';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hant`).
@@ -4123,7 +4249,7 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get messageSendFailed => '傳送失敗，請檢查網路後重試';
 
   @override
-  String get noWatchShopHint => '沒有裝置？前往 Saydian 商城看看';
+  String get noWatchShopHint => '沒有裝置？前往 SayDian 商城看看';
 
   @override
   String get notificationInAppHint => '關愛邀請和預警可在訊息中查看。';
@@ -4210,7 +4336,7 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get supportPrivacyWarning => '請勿向非官方帳號傳送驗證碼、密碼或完整健康記錄。';
 
   @override
-  String get brandHealthTitle => 'SAYDIAN Health';
+  String get brandHealthTitle => 'SayDian';
 
   @override
   String get accountAndSecurity => '帳號與安全';
@@ -4360,7 +4486,7 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get ecgHealthReport => '心電健康報告';
 
   @override
-  String get brandedEcgReport => 'Saydian · 心電健康報告';
+  String get brandedEcgReport => 'SayDian · 心電健康報告';
 
   @override
   String get ecgReportSafety => '說明：本報告由手錶測量資料產生，僅供健康管理參考，不能替代醫師診斷。';
@@ -4601,7 +4727,7 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get globalShopReadOnly => '可瀏覽商品，目前地區暫未開放下單。';
 
   @override
-  String get appName => 'SAYDIAN Health';
+  String get appName => 'SayDian';
 
   @override
   String get searchingNearby => '正在搜尋附近手錶';
@@ -5390,7 +5516,7 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get healthSafetyAdvice => '請休息後再測；如有明顯不適，請及時諮詢醫護人員。';
 
   @override
-  String get defaultUser => 'Saydian使用者';
+  String get defaultUser => 'SayDian使用者';
 
   @override
   String get dailyGreeting => '今天也要保持好狀態';
@@ -5417,7 +5543,7 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get healthAlerts => '健康預警';
 
   @override
-  String get shop => 'Saydian商城';
+  String get shop => 'SayDian商城';
 
   @override
   String get connectWatch => '連接手錶';
@@ -5504,7 +5630,7 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get connectionHelp => '連接說明';
 
   @override
-  String get searchNearbyWatch => '搜尋並連接附近的Saydian手錶';
+  String get searchNearbyWatch => '搜尋並連接附近的SayDian手錶';
 
   @override
   String get useWatch => '請在手錶上操作';
@@ -5600,7 +5726,7 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get gettingReady => '正在為你準備…';
 
   @override
-  String get enableNotifications => '開啟Saydian訊息通知';
+  String get enableNotifications => '開啟SayDian訊息通知';
 
   @override
   String get notificationExplanation =>
@@ -6104,4 +6230,67 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get ecgWaveformLowSignalHint => '訊號品質較低 · 波形預覽';
+
+  @override
+  String get dataPrivacyTitle => '資料隱私';
+
+  @override
+  String get dataResidencyTitle => '資料儲存在美國';
+
+  @override
+  String get dataResidencyBody =>
+      'SayDian 雲端保存的帳號、裝置及同步的穿戴裝置資料，均儲存在美國境內的伺服器。如果您在其他國家或地區使用 SayDian，您選擇同步的資料將傳輸至美國。';
+
+  @override
+  String get dataLocalTitle => '手機本機儲存';
+
+  @override
+  String get dataLocalBody =>
+      'SayDian 也會在手機上保留加密的本機歷史資料，用於離線查看及等待同步。尚未獲得伺服器確認的資料仍標記為待同步。';
+
+  @override
+  String get dataChoiceTitle => '您的選擇';
+
+  @override
+  String get dataChoiceBody =>
+      '您可依功能需要授予權限、拒絕可選權限，並在應用程式內管理分享。如需申請刪除帳號及關聯資料，請開啟「帳號 → 刪除帳號」。保留期限及其他權利請查看隱私政策。';
+
+  @override
+  String get dataThirdPartyTitle => '可選服務';
+
+  @override
+  String get dataThirdPartyBody =>
+      '天氣、通知等可選服務可能根據各自的隱私政策處理所需資訊。美國儲存聲明適用於 SayDian 雲端儲存，不涵蓋手機本機儲存或第三方獨立的資料處理。';
+
+  @override
+  String get iosWellnessSafety =>
+      'iOS 版 SayDian 顯示相容裝置的活動與睡眠資訊，用於日常健康生活管理，不提供醫學測量、診斷或治療。作出醫療決定前，請諮詢合格的醫療專業人員。';
+
+  @override
+  String get smartRing => '智慧戒指';
+
+  @override
+  String get ringStress => '壓力';
+
+  @override
+  String get ringGestures => '手勢控制';
+
+  @override
+  String get ringCallReminder => '來電提醒';
+
+  @override
+  String get ringConnectedSyncHint => '裝置已連線，資料將在同步後顯示。';
+
+  @override
+  String get ringDisconnecting => '正在中斷連線';
+
+  @override
+  String get ringDisconnectHelp =>
+      'App 已中斷連線。若戒指在 iPhone 藍牙設定中仍顯示已連線，請先在系統設定中忘記此裝置，再重新搜尋。';
+
+  @override
+  String get deviceLabel => '裝置';
+
+  @override
+  String get ringStatusReminder => '狀態提醒';
 }

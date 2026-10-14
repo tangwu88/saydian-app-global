@@ -226,6 +226,8 @@ internal object WearableRecordTimezone {
 }
 
 class MainActivity : FlutterActivity() {
+    private var coolWearBridge: CoolWearRingBridge? = null
+    private var qringBridge: QRingBridge? = null
     private val mainHandler = Handler(Looper.getMainLooper())
     private val weatherLocation by lazy { WeatherLocationProvider(applicationContext) }
     private lateinit var adapter: VeepooWearableAdapter
@@ -249,6 +251,8 @@ class MainActivity : FlutterActivity() {
         if (!::adapter.isInitialized) adapter = VeepooWearableAdapter(applicationContext)
         if (!::urion.isInitialized) urion = UrionGattTransport(applicationContext)
         super.configureFlutterEngine(flutterEngine)
+        coolWearBridge = CoolWearRingBridge(this, flutterEngine.dartExecutor.binaryMessenger)
+        qringBridge = QRingBridge(this, flutterEngine.dartExecutor.binaryMessenger)
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "saydian/weather_location")
             .setMethodCallHandler { call, result ->
                 if (call.method == "currentNetworkLocation") weatherLocation.current(result)
@@ -782,6 +786,10 @@ class MainActivity : FlutterActivity() {
         weatherLocation.close()
         if (::adapter.isInitialized) adapter.close(preserveConnection = true)
         if (::urion.isInitialized) urion.close()
+        coolWearBridge?.dispose()
+        coolWearBridge = null
+        qringBridge?.dispose()
+        qringBridge = null
         super.onDestroy()
     }
 
