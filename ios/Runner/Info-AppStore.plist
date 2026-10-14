@@ -41,7 +41,7 @@
 	<key>NSContactsUsageDescription</key>
 	<string>Sync only the contacts you select to your device.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Use your city to sync local weather to your device.</string>
+	<string>Use your location for local weather and outdoor workout routes while the app is open.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Choose photos for your device display.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>

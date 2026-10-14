@@ -43,6 +43,12 @@ post_install do |installer|
     flutter_additional_ios_build_settings(target)
     target.build_configurations.each do |config|
       config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '13.0'
+      # Weather and workout routes use location while the app is open.
+      if target.name == 'geolocator_apple'
+        definitions = Array(config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] || '$(inherited)')
+        config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] =
+          (definitions + ['BYPASS_PERMISSION_LOCATION_ALWAYS=1']).uniq
+      end
     end
   end
 
