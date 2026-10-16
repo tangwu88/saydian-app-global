@@ -34,3 +34,12 @@
 ## 验收边界
 
 本轮目标是 Debug 安装和附加、VM service / 热重载。完整双时区测试、Android、Profile/Release、XCTest、两戒指活动/睡眠和美国同步不在本次重新验收范围；不得把工具连接当作这些流程通过。Debug 必须保持 Mac 调试进程与 USB 连接，不能当作脱离调试器的独立启动稳定性证明。
+
+## 用户“继续”后的真机观察
+
+- 接续基线 `a57365e8b0bc0c818f471d1cce4a2afb97119cd3`，工作树干净；`git fetch --prune origin`、`git pull --ff-only` 成功。独立记录分支 `codex/ios-debug-observations-20261016`；不修改运行时代码或重建。
+- 实时设备仍connected，Flutter进程存活；VM getVM/getIsolate成功，main pauseEvent=Resume。通过官方Flutter inspector只读取当前widget类名，包含 `GlobalAuthPage`，仍停留在登录/注册页；不输出文本框值、密码、成员数据或健康值。临时inspector object group读取后dispose，不改变产品状态。
+- 实际网络审计共有13个响应：200共10次、500两次、404一次；所有请求均GET、host均 `app.saydian.com`。`e189a4489bdb` 对应 `/global/api/saydian-app/v2/auth/capabilities`，最初两次500，之后7次200；不把后续成功当作500根因已修复。
+- 更新检查 `/global/api/saydian-app/v2/support/app-update` 曾返回404。只读服务端实现显示，独立产品更新配置未公开时故意返回NotFound，App已有英文不可用提示并保持隔离；未发布未经核对的清单、安装包或商店状态，不回退国内。当前没有实际服务端响应正文，因此“配置未发布”仍是与代码一致的解释，不声称已核对数据库配置。
+- 从Mac补充HTTP验证未成功：Python urllib公开能力GET读取超时；curl正常域名能力/更新请求各12秒超时、HTTP000；使用 `--resolve app.saydian.com:443:47.85.43.52` 保留证书校验的美国直连复测也各12秒超时。系统DNS当前返回 `198.18.0.77`，不是部署配置的47.85.43.52；不擅自改Mac代理/DNS、服务器或TLS。不能用这次桌面网络失败断言美国服务已宕机，真机此前多次200也不能证明当前所有接口正常。
+- 启动日志仍无异常、断连或Application finished；无LuckRing/QRing连接、POST登录或健康上传证据。未启动测量、伪造ACK、自动换账号或使用商店审核账号承接用户戒指数据。已请用户在手机登录美国账号，再逐个连接两戒指、同步活动/睡眠；密码只在手机输入。待用户操作后再验收真实连接、服务器确认和历史显示。
