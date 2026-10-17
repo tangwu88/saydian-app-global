@@ -17,6 +17,7 @@ import 'package:saydian_app/services/secure_vault.dart';
 import 'package:saydian_app/services/wearable_bootstrap.dart';
 
 import 'ios_store_empty_state_test.dart' as empty_state;
+import 'support/health_sync_readback.dart';
 
 /// Uses only the existing phone session and production bridge. No credentials,
 /// sensor values, record IDs or health screenshots are emitted to the log.
@@ -212,16 +213,10 @@ Future<Set<String>> _cloudIds(
       for (var page = 0; page < 50; page++) {
         final session = await vault.readSession();
         expect(session?.accountKey == owner, isTrue, reason: 'Session changed');
-        final uri =
-            Uri.parse(
-              'https://app.saydian.cn/global/api/saydian-app/v2/health/records',
-            ).replace(
-              queryParameters: {
-                'metric': metric.wireName,
-                'limit': '200',
-                'before': ?cursor,
-              },
-            );
+        final uri = healthSyncReadbackUri(
+          metric: metric.wireName,
+          before: cursor,
+        );
         final response = await client
             .get(
               uri,
