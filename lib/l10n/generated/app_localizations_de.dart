@@ -10,7 +10,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get iosActivitySleepScope =>
-      'Diese iOS-Version unterstützt nur Aktivität und Schlaf. Physiologische Messungen, medizinische Risikobewertungen und KI-Analysen sind nicht verfügbar. Bereits gespeicherte Daten bleiben erhalten.';
+      'Diese iOS-Version synchronisiert und teilt Aktivitäts- und Schlafdaten. Unterstützte Urion-Geräte können zusätzlich Blutdruck, Herzfrequenz und Sauerstoffwerte lokal auf diesem Telefon anzeigen. Medizinische Risikobewertungen und KI-Analysen sind nicht verfügbar. Gespeicherte Daten bleiben erhalten.';
 
   @override
   String get scanLocationTitle => 'Standort einschalten';
@@ -2214,7 +2214,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get iosWellnessSafety =>
-      'SayDian für iOS zeigt Aktivitäts- und Schlafdaten kompatibler Geräte für das tägliche Wohlbefinden. Die App bietet keine medizinischen Messungen, Diagnosen oder Behandlungen. Holen Sie vor medizinischen Entscheidungen fachkundigen ärztlichen Rat ein.';
+      'Gerätewerte dienen als Orientierung im Alltag, nicht zur Diagnose oder Behandlung. Unterstützte Urion-Sensordaten bleiben auf diesem Telefon; Cloud-Synchronisierung und Freigabe umfassen Aktivität und Schlaf. Fragen Sie vor medizinischen Entscheidungen qualifiziertes medizinisches Fachpersonal.';
 
   @override
   String get smartRing => 'Smarter Ring';

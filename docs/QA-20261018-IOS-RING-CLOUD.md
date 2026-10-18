@@ -139,3 +139,36 @@ Gradle wrapper 原锁定 9.1.0 不在缓存，正常从官方分发站下载；�
 用户随后要求“先更新本地代码到最新”，本轮先停止安装/闭环后续流程，保存 R12 最小修复和真实测试边界，再同步当前跟踪分支。
 重新 fetch 并核对所有 origin heads；已配置远端仍以 `c030bba` 为最新日期提交，当前跟踪分支没有新增内容。`origin/main` 为历史 `ada5df2`，不能按分支名将旧代码合并成最新。
 保留全部本地改动为 checkpoint 后再执行 ff-only pull；不强推、不重置、不覆盖手机。另一台 1019 的源码/分支尚未出现在已配置远端，需该电脑推送真实修改后再同步。
+
+## 新分支到达后：同步 1020 再提交 Git
+
+用户最新要求“更新同步后，再提交GIT”。起始本地 `5255c1e`、工作树干净；当前 tracking 仍为同名 `origin/codex/global-update-20261018`。
+新 fetch 确实新增 `origin/codex/u19s-local-health-ios-20261017 / 26bc11a`，产品提交 `33058b6`、版本 `1.0.1+1020`。此前远端无此分支的判断保留为历史快照，不再作为当前阻断。
+先执行当前分支 ff-only pull（Already up to date），再读取对方完整发布、U19S、XR及1020记录；共同基线为 `7aa515c`，两边各两个提交，不把老 main 当新代码。
+保留 `codex/checkpoint-r12-before-1020-20261018` 指向 5255c1e，再以 `git merge --no-ff --no-commit` 合入新分支，提交保留双方历史。
+
+修改原因：同步真实1019/1020来源并保留本地R12修复；影响仅已发布的远端产品输入、既有QA和交接记录，不增加新的设备功能或网络协议。
+出现三处文本冲突：CURRENT-HANDOFF、CHANGE-TEST-LOG均为同位置追加，保留两边；健康QA回读的固定.com地址与本地环境helper冲突，保留helper及对方全部XR场景和真实ACK/回读/去重断言。
+未经用户要求不再次安装手机、重建发行包、重新上传1020、撤回1018审核或改变服务器；原始资质、健康库、签名和发布产物保持不动。
+合并后格式、静态、双时区全量、原生策略及发布工具的实际结果随后追加；先前1018编译结果、另一电脑1020上传记录不是本次新真机/构建验收。
+
+只读比对此前保存在运行时内存的手机1019源码快照：101个本App Dart script中100个与合并后完全相同，唯一不同为本轮R12 `ring_name_policy.dart`，无缺失文件。
+这是源码映射证据，不是手机已更新或原生二进制一致性证明；没有导出/重写手机源码、数据库或Keychain。
+相对新远端分支，lib/ios/android/assets/pubspec/lock范围仅增加本地三处R12策略和Android测试，其他产品文件及版本1.0.1+1020逐对象保留。
+已上传的1020包不包含本轮R12修复，不能复用其签名/上传回执冒充当前合并构建；今后真正构建分发必须核对Apple占用并采用新构建号，本次不改号或上传。
+
+### 合并后的本机检查与提交边界
+
+- `dart format integration_test/ios_wellness_sync_qa_test.dart` 1文件 / 0改动；提交前对其及R12两份Dart文件执行 `--output=none --set-exit-if-changed`，3文件 / 0改动。
+  `git diff --check` 与 `git diff --cached --check` 通过，三份冲突文件均无残留标记、unmerged paths为空。
+- `flutter analyze --no-pub` 零问题 / 5.7秒。
+  `TZ=UTC flutter test --no-pub --reporter expanded` **1114/1114 / 44秒**；Asia/Shanghai 同命令 **1114/1114 / 61秒**。
+- 八份 `test/native/*.m` 以 `xcrun clang -fobjc-arc -framework Foundation` 分别编译执行，全通过；新增R12仍为24断言。
+  合并后的 `WearablePayloadMapper.swift` + `test/native/ios_wellness_policy_main.swift` 以swiftc编译及真执行通过，包含对方Urion本机范围约束。
+- `python3 -m unittest discover -s scripts/release -p 'test_*.py'` **25/25 / 14.248秒**，只有夹具，无实际部署/上传。
+- 本次仅同步、冲突整合、主机检查与Git交付；未重跑Android完整JUnit/APK、iOS Debug/Profile/Release或真机用例，未构建鸿蒙。
+  先前本机Android依赖门禁缺缓存仍保留，不重复同一失败下载；另一电脑已记录构建不改写成本合并产物通过。没有覆盖安装、导出IPA或上传Apple。
+- 检查跟踪文件未包含p12/p8/keystore/provisioning/健康数据库；原件、截图、VM认证URI与日志只在私有目录。
+
+提交前再次fetch：MERGE_HEAD及对方远端均为 `26bc11ad284e11d27dcae5090c7bd70a78016405`，当前远端仍 `c030bba4b6c7044fba1ba5362c95b48c2ea5de5b`，没有覆盖新来提交。
+CLI `git push --dry-run origin HEAD:refs/heads/codex/global-update-20261018` 实际通过；正式合并提交随后推送同一分支，并以fetch/ls-remote回读为最终成功标准。不推main、不移动对方分支、不force。

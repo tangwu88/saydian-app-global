@@ -113,7 +113,7 @@ abstract class AppLocalizations {
   /// No description provided for @iosActivitySleepScope.
   ///
   /// In en, this message translates to:
-  /// **'This iOS edition supports activity and sleep only. Physiological measurements, medical risk interpretations and AI analysis are not available. Previously saved records are retained.'**
+  /// **'This iOS edition syncs and shares activity and sleep. Supported Urion devices can also display blood pressure, heart rate and oxygen records locally on this phone. Medical risk interpretations and AI analysis are unavailable. Previously saved records are retained.'**
   String get iosActivitySleepScope;
 
   /// No description provided for @scanLocationTitle.
@@ -4115,7 +4115,7 @@ abstract class AppLocalizations {
   /// No description provided for @iosWellnessSafety.
   ///
   /// In en, this message translates to:
-  /// **'SayDian on iOS displays activity and sleep information from compatible devices for everyday wellness. It does not provide medical measurements, diagnosis or treatment. Consult a qualified healthcare professional before making medical decisions.'**
+  /// **'Device readings are for everyday reference, not diagnosis or treatment. Supported Urion sensor records stay on this phone; cloud sync and sharing cover activity and sleep. Consult a qualified healthcare professional before making medical decisions.'**
   String get iosWellnessSafety;
 
   /// No description provided for @smartRing.

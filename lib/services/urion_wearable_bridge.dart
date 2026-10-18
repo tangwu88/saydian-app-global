@@ -108,9 +108,7 @@ class UrionWearableBridge
     )) {
       if (IosWellnessPolicy.current.enabled &&
           (frame.command == 0x37 ||
-              frame.command == 0x33 ||
-              (frame.command == 0x73 &&
-                  {1, 2, 3, 4, 5, 6}.contains(frame[1])))) {
+              (frame.command == 0x73 && {4, 5, 6}.contains(frame[1])))) {
         continue;
       }
       if (frame.command == 0x37) {
@@ -235,7 +233,8 @@ class UrionWearableBridge
     int count = 1,
   ]) async {
     if (IosWellnessPolicy.current.enabled &&
-        IosWellnessPolicy.blockedEB1Commands.contains(command)) {
+        IosWellnessPolicy.blockedEB1Commands.contains(command) &&
+        !IosWellnessPolicy.urionLocalCommands.contains(command)) {
       throw PlatformException(
         code: 'IOS_WELLNESS_SCOPE',
         message: 'Not available in this iOS edition.',
@@ -420,6 +419,30 @@ class UrionWearableBridge
   Future<DeviceCapabilities> getCapabilities() => _runConnected(() async {
     if (_capabilities != null) return _capabilities!;
     if (IosWellnessPolicy.current.enabled) {
+      final sensorMetrics = <HealthMetric>{};
+      try {
+        await _readBloodPressure(count: 1);
+        sensorMetrics.add(HealthMetric.bloodPressure);
+      } on PlatformException catch (error) {
+        if (error.code != 'UNSUPPORTED_DEVICE') rethrow;
+      }
+      for (final metric in [HealthMetric.heartRate, HealthMetric.bloodOxygen]) {
+        try {
+          final history = await _readIndexed(metric);
+          if (!history.hasNoData) {
+            history.decodeHourlyOrFiveMinuteValues(
+              expectedInterval: metric == HealthMetric.heartRate ? 5 : 60,
+            );
+          }
+          sensorMetrics.add(metric);
+        } on PlatformException catch (error) {
+          if (error.code != 'UNSUPPORTED_DEVICE') rethrow;
+        } on FormatException {
+          if (kDebugMode) {
+            debugPrint('[U19Capability] indexed layout unverified');
+          }
+        }
+      }
       final daily = await _exchange(0x07, [0], 2);
       Eb1DailySnapshot.parse(daily[0], daily[1]);
       final generalFeatures = <DeviceFeature>{
@@ -445,8 +468,8 @@ class UrionWearableBridge
         if (error.code != 'UNSUPPORTED_DEVICE') rethrow;
       }
       return _capabilities = DeviceCapabilities(
-        metrics: {HealthMetric.steps, HealthMetric.sleep},
-        manualMetrics: const {},
+        metrics: {HealthMetric.steps, HealthMetric.sleep, ...sensorMetrics},
+        manualMetrics: sensorMetrics,
         features: generalFeatures,
         integratedFeatures: generalFeatures,
       );

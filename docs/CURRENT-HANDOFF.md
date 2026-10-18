@@ -1,5 +1,13 @@
 # SayDian 当前交接说明
 
+## 2026-10-18 最新源码同步与 R12 整合
+
+用户要求“更新同步后，再提交GIT”。新 fetch 已发现另一电脑刚发布的 `origin/codex/u19s-local-health-ios-20261017 / 26bc11a`，源码现为 `1.0.1+1020`；此前“1019来源未到远端”仅为同步前快照，已由本节替代。
+在本地 checkpoint `5255c1e` 上合并该分支，完整保留其 U19S 本机功能、XR 测试与 1020 上传记录，以及本轮 R12 发现修复和国际回读隔离。两个历史都保留，不重置、不改旧 main 或对方分支。
+对照此前手机1019源码快照，101个App Dart script仅R12策略不同，其余100个完全相同；此前19个未知差异已定位。已上传1020包不含R12修复，不得冒用旧包/回执代表本次合并；后续发布需新构建号。
+冲突仅为两个交接/索引追加段落及健康回读 URL；文档两侧均保留，回读继续使用环境校验 helper，保留新 XR 场景与 ACK/去重门禁。合并后检查及实际 Git 推送以 [同步记录](QA-20261018-IOS-RING-CLOUD.md) 为准；本次不重装手机、构建发行包、上传/提交审核。
+合并后analyzer零问题，UTC/Shanghai全量各1114、八份Foundation夹具、更新后的Swift本机策略及发布25通过。未重新验收平台安装包或R12实物；Android缓存门禁及设备闭环仍待。本机备份分支保留5255c1e，合并目标为当前codex/global-update-20261018。
+
 ## 2026-10-18 接续：R12 发现过滤与 1019 来源
 
 真机原生扫描能发现 R12，用户已确认就是测试目标；此前“App 无设备”不能再归结为戒指没有广播。已窄幅修复 Flutter/iOS/Android 名称策略，仍须真实 SDK 握手，不照搬 Say Ring 的通用 R 前缀或功能扩展。
@@ -15,6 +23,32 @@ iOS Debug/Profile 无签名编译检查通过；Android 完整原生与两模式
 用户选择先测 QRing，但扫描暂无设备，真实设备 ACK/服务器回读/去重尚未完成；已请先断开其他配套 App 后返回国际版搜索。LuckRing 仍待。
 提供的三份 PDF 属于 U19S 气囊血压手表，不能当作两戒指资质；FDA K254048 官方已查，包装/授权编码不一致和欧洲材料缺页待补，不改变 iOS 功能或现有审核。
 精确现场、失败、清理边界见 [本轮同步记录](QA-20261018-IOS-RING-CLOUD.md)，材料核对见 [U19S 资质记录](release/DEVICE-QUALIFICATIONS-20261018.md)。私有健康库、会话和原件不进 Git。
+## 2026-10-18 国际版源码已提交GitHub
+
+源码65b31bf的45项改动通过已授权GitHub连接发布到codex/u19s-local-health-ios-20261017，等价远端源码提交33058b659210ecbd0fa9fbb80ac4f8f48587d863，tree821ee682877ea6bde378c9fb39dba82a038ed2e6与本地逐对象、完整tree及重新fetch/diff一致。普通HTTPS写入凭据仍缺失，原本地commit历史保留；本记录的后续文档提交不改变产品代码，使用本地verified跟踪分支核对规范远端。未合并另一global-update分支或main。仓库接口现返回public，已告知，未修改可见性。详见[Git发布记录](IMPLEMENTATION-20261018-GIT-PUBLISH.md)，不把源码上传当CI或XR数据问题已通过。
+
+## 2026-10-17 苹果1020已正式上传
+
+用户要求新苹果构建并上传；pubspec现1.0.1+1020。用户完成实际Xcode Apple Accounts登录后，同一正常lib/main.dart归档已成功导出Apple Distribution正式IPA，严格签名/包名/1020版本/iPhone-only/.com/无QA代码检查通过，归档与导出代码段及UUID一致。Xcode实际上传退出0，upload succeeded/EXPORT SUCCEEDED和ContentDelivery UPLOAD_COMPLETE已核对，回执uploaded=true；15个厂商SDK缺dSYM警告未阻止上传。正式IPA为build/store-upload-20261017-1020/export/SayDian.ipa，SHA256 9bd7d474a7a5518d0e0ebfe8e54f9fa347605d9a0fd1e635f0279d8301800700；本地IPA hash不等同Xcode上传模式重新导出压缩文件hash。analyzer、发布门禁25、双时区各1110沿用同一产品代码结果。先前No Accounts及旧1018IPA拦截失败记录均保留；未误传旧包。Apple后续处理状态未独立读取，未替换1018审核或重新提审，未发送新测试邀请。XR持久化差异及新功能正式材料仍待核对，不可把上传成功写成硬件全面通过或审核通过。见[1020构建记录](IMPLEMENTATION-20261017-IOS-1020-UPLOAD.md)。
+
+## 2026-10-17 另一台 iPhone XR 测试中
+
+目标iPhone XR/iOS18.7.10，用户已登录并连接U19S。网络恢复后实际美国能力HTTP200/true；真实Urion连接恢复及能力门禁通过。r3完整页面实机04:54退出0，31张私有截图覆盖首页提示移除、关爱底部提示、血压/心率/血氧详情和真实连接设备页、英文法律正文、Data privacy与语言。r2最后因About滚动位置导致懒构建头部入口定位失败，已仅修正QA滚动并重跑通过。主机UTC/Shanghai各1110与analyzer通过；产品源码和旧1018审核未动。
+
+硬件同步仍未验收：三分钟窗口后的同步无活动/睡眠样本，state=idle/accepted=0/rejected=0，未进入首ACK/回读/去重，不推定服务器拒绝或成功。用户现已回报步数和三项测量显示，同时说明暂不能走动。追加独立既有记录QA后发现XR当前账号本机0条（四项均0），但实际美国活动/睡眠GET可读82条；现有值匹配与replay未执行，等待澄清是XR具体数值、占位或另一手机，不据此判定丢数据。所有后续drive保留no-uninstall-first及keep-app-running；正常Profile1019已恢复独立运行，最新覆盖前后2文件72,037bytes非空逐字节一致，用户回报后QA前后加密数据库也字节一致，当前数据私有备份已保存。本轮Runner崩溃报告0。失败与早期工具自动卸载纠正、数据恢复、当前边界均保留于[XR记录](QA-20261017-IPHONE-XR.md)，不能写成全面验收通过。
+
+
+## 2026-10-17 首页提示位置更新
+
+按用户12:16截图要求，1019的本机血压/心率/血氧存储提示已从健康首页移至远程关爱列表末尾，设备条件及数据策略不变。静态分析、UTC/Shanghai各1110项、Android Debug/QA Release和iOS Profile/Debug通过；新完整源码Debug已覆盖安装并保持附加，实际首页树无该提示/无ErrorWidget、登录保留。旧调试VM曾超时，已主动停止并重建恢复；用户后续解锁确认时旧附加已断，已再次正常源码run恢复；最新VM确认U19S已连接、五项能力及无同步错误，首页无该提示/错误组件。远程关爱底部尚未另作真机截图。详细失败与重试见[本轮实施记录](IMPLEMENTATION-20261017-U19S-LOCAL-HEALTH.md)。
+
+
+## 2026-10-17 U19S 1019 本机模块与崩溃恢复
+
+1019按已验证Urion/EB1能力恢复本机血压、心率、血氧；用户反馈“已有”，确认入口显示。云同步/关爱仍只活动与睡眠，其他iOS设备范围及现有1018审核不变，1019未上传。源码双时区完整测试各1110、分析、原生/发布测试与Android Debug/QA Release、iOS Debug/Profile构建通过，具体边界见[实施记录](IMPLEMENTATION-20261017-U19S-LOCAL-HEALTH.md)。
+
+用户随后报告崩溃。预编译Debug热重载存在ListenableBuilder构造异常，另取得1019启动时Flutter VSyncClient空指针原生报告；未推断为Urion传感器故障。已改为从完整源码正常flutter run构建/覆盖安装与附加，保留登录和数据库。重建28.2s、安装启动23.1s，实际VM/首页树正常，无ErrorWidget；重新热重载8库840ms，无Dart异常或断连；最新崩溃目录仅旧12:10报告。Debug需保持USB和Flutter附加，脱离工具的独立冷启动须使用Profile/发布包，不能把附加运行作为独立运行验收。12:14:56重新确认U19S已连接、五项能力齐全、无设备同步错误；仍是短时验收。私有日志/数据库/VM地址不入Git。
+
 
 ## 2026-10-17 国际版苹果真机 Debug 重新开启
 

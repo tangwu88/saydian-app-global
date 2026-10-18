@@ -1,5 +1,5 @@
 {
-  "iosActivitySleepScope": "Cette version iOS prend uniquement en charge l’activité et le sommeil. Les mesures physiologiques, l’interprétation des risques médicaux et l’analyse par IA ne sont pas disponibles. Les données déjà enregistrées sont conservées.",
+  "iosActivitySleepScope": "Cette version iOS synchronise et partage l’activité et le sommeil. Les appareils Urion compatibles peuvent aussi afficher la tension, la fréquence cardiaque et l’oxygène localement sur ce téléphone. L’interprétation des risques médicaux et l’analyse par IA ne sont pas disponibles. Les données enregistrées sont conservées.",
   "scanLocationTitle": "Activer la localisation",
   "scanLocationHint": "Activez la localisation, puis réessayez.",
   "scanPermissionTitle": "Autoriser l’accès aux appareils",
@@ -737,7 +737,7 @@
   "dataChoiceBody": "Accordez les autorisations nécessaires aux fonctions choisies et gérez le partage dans l’app. Pour demander la suppression du compte et des données associées, ouvrez Compte → Supprimer le compte. Consultez la politique de confidentialité pour les durées de conservation et les autres droits.",
   "dataThirdPartyTitle": "Services facultatifs",
   "dataThirdPartyBody": "La météo, les notifications et d’autres services facultatifs peuvent traiter les informations nécessaires selon leurs propres politiques. Le stockage aux États-Unis concerne le cloud SayDian, pas votre téléphone ni le traitement indépendant par des tiers.",
-  "iosWellnessSafety": "SayDian sur iOS présente l’activité et le sommeil d’appareils compatibles pour le bien-être quotidien. L’app ne fournit ni mesures médicales, ni diagnostic, ni traitement. Consultez un professionnel de santé qualifié avant toute décision médicale.",
+  "iosWellnessSafety": "Les relevés de l’appareil sont des indications quotidiennes, pas un diagnostic ni un traitement. Les relevés des capteurs Urion compatibles restent sur ce téléphone ; la synchronisation cloud et le partage concernent l’activité et le sommeil. Consultez un professionnel de santé avant toute décision médicale.",
   "smartRing": "Bague connectée",
   "ringStress": "Stress",
   "ringGestures": "Commandes gestuelles",

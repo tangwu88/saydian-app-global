@@ -10,7 +10,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get iosActivitySleepScope =>
-      '此 iOS 版本仅支持活动与睡眠，不提供生理测量、医疗风险解读和 AI 分析。此前保存的记录仍会保留。';
+      '此 iOS 版本同步和分享活动与睡眠；支持的 Urion 设备还可在本机显示血压、心率和血氧记录。不提供医疗风险解读和 AI 分析。此前保存的记录仍会保留。';
 
   @override
   String get scanLocationTitle => '请开启手机定位';
@@ -2070,7 +2070,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get iosWellnessSafety =>
-      'iOS 版 SayDian 展示兼容设备的活动与睡眠信息，用于日常健康生活管理，不提供医学测量、诊断或治疗。作出医疗决定前，请咨询合格的医疗专业人员。';
+      '设备读数仅供日常参考，不用于诊断或治疗。支持的 Urion 生理记录仅保存在本机，云同步和分享仅包含活动与睡眠。作出医疗决定前，请咨询合格的医疗专业人员。';
 
   @override
   String get smartRing => '智能戒指';
@@ -2107,7 +2107,7 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
 
   @override
   String get iosActivitySleepScope =>
-      '此 iOS 版本仅支持活动与睡眠，不提供生理测量、医疗风险解读和 AI 分析。此前保存的记录仍会保留。';
+      '此 iOS 版本同步和分享活动与睡眠；支持的 Urion 设备还可在本机显示血压、心率和血氧记录。不提供医疗风险解读和 AI 分析。此前保存的记录仍会保留。';
 
   @override
   String get scanLocationTitle => '请开启手机定位';
@@ -4167,7 +4167,7 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
 
   @override
   String get iosWellnessSafety =>
-      'iOS 版 SayDian 展示兼容设备的活动与睡眠信息，用于日常健康生活管理，不提供医学测量、诊断或治疗。作出医疗决定前，请咨询合格的医疗专业人员。';
+      '设备读数仅供日常参考，不用于诊断或治疗。支持的 Urion 生理记录仅保存在本机，云同步和分享仅包含活动与睡眠。作出医疗决定前，请咨询合格的医疗专业人员。';
 
   @override
   String get smartRing => '智能戒指';
@@ -4204,7 +4204,7 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get iosActivitySleepScope =>
-      '此 iOS 版本僅支援活動與睡眠，不提供生理測量、醫療風險解讀和 AI 分析。先前儲存的記錄仍會保留。';
+      '此 iOS 版本同步和分享活動與睡眠；支援的 Urion 裝置還可在本機顯示血壓、心率和血氧記錄。不提供醫療風險解讀和 AI 分析。先前儲存的記錄仍會保留。';
 
   @override
   String get scanLocationTitle => '請開啟手機定位';
@@ -6264,7 +6264,7 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get iosWellnessSafety =>
-      'iOS 版 SayDian 顯示相容裝置的活動與睡眠資訊，用於日常健康生活管理，不提供醫學測量、診斷或治療。作出醫療決定前，請諮詢合格的醫療專業人員。';
+      '裝置讀數僅供日常參考，不用於診斷或治療。支援的 Urion 生理記錄僅儲存在本機，雲端同步和分享僅包含活動與睡眠。作出醫療決定前，請諮詢合格的醫療專業人員。';
 
   @override
   String get smartRing => '智慧戒指';

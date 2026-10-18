@@ -105,7 +105,9 @@ final class UrionGattTransport: NSObject, FlutterStreamHandler, CBCentralManager
     case "writeFrame":
       let arguments = call.arguments as? [String: Any]
       let bytes = arguments?["bytes"] as? FlutterStandardTypedData
-      if let command = bytes?.data.first, IOSWellnessPolicy.blockedEB1Commands.contains(command) {
+      if let command = bytes?.data.first,
+        IOSWellnessPolicy.blockedEB1Commands.contains(command),
+        !IOSWellnessPolicy.urionLocalCommands.contains(command) {
         result(FlutterError(code: "IOS_WELLNESS_SCOPE", message: "Not available in this iOS edition.", details: nil))
         return
       }

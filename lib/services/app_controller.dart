@@ -488,7 +488,7 @@ class AppController extends ChangeNotifier {
     return {
       'metrics': (value['metrics'] as List? ?? const [])
           .whereType<String>()
-          .where(wellnessPolicy.allowsWireMetric)
+          .where(sharingPolicy.allowsWireMetric)
           .toList(),
       'records': _projectCareRows(
         (value['records'] as List? ?? const []).whereType<Map>().map(
@@ -501,7 +501,7 @@ class AppController extends ChangeNotifier {
   List<Map<String, Object?>> _projectCareRows(
     Iterable<Map<String, Object?>> rows,
   ) => rows
-      .map(wellnessPolicy.projectCareRow)
+      .map(sharingPolicy.projectCareRow)
       .whereType<Map<String, Object?>>()
       .toList(growable: false);
   Future<List<Map<String, Object?>>> globalCareRecordsRange(
@@ -510,7 +510,7 @@ class AppController extends ChangeNotifier {
     DateTime start,
     DateTime end,
   ) async {
-    if (!wellnessPolicy.allowsWireMetric(metric)) return const [];
+    if (!sharingPolicy.allowsWireMetric(metric)) return const [];
     return _projectCareRows(
       await (_api as GlobalCareHealthApi).globalCareRecordsRange(
         id,
@@ -547,7 +547,7 @@ class AppController extends ChangeNotifier {
                     received: row.received,
                     name: row.name,
                     metrics: row.metrics
-                        .where(wellnessPolicy.allowsWireMetric)
+                        .where(sharingPolicy.allowsWireMetric)
                         .toSet(),
                     expiresAt: row.expiresAt,
                   ),
@@ -560,7 +560,7 @@ class AppController extends ChangeNotifier {
   Future<void> globalShareCare(String id, Set<String> metrics) =>
       (_api as GlobalCareApi).globalShareCare(
         id,
-        metrics.where(wellnessPolicy.allowsWireMetric).toSet(),
+        metrics.where(sharingPolicy.allowsWireMetric).toSet(),
       );
   Future<void> globalRevokeCare(String id) =>
       (_api as GlobalCareApi).globalRevokeCare(id);
@@ -569,7 +569,7 @@ class AppController extends ChangeNotifier {
     String metric,
     DateTime day,
   ) async {
-    if (!wellnessPolicy.allowsWireMetric(metric)) return const [];
+    if (!sharingPolicy.allowsWireMetric(metric)) return const [];
     return _projectCareRows(
       await (_api as GlobalCareApi).globalCareRecords(id, metric, day),
     );
@@ -777,7 +777,13 @@ class AppController extends ChangeNotifier {
       _devicePresentationTarget;
   String get deviceKindLabel =>
       devicePresentationDevice?.isRing == true ? '戒指' : '手表';
-  IosWellnessPolicy get wellnessPolicy => IosWellnessPolicy.current;
+  IosWellnessPolicy get wellnessPolicy =>
+      IosWellnessPolicy.forSdkSource(connectedDevice?.sdkSource);
+  bool get hasLocalUrionHealth => wellnessPolicy.hasLocalDeviceMetrics;
+  IosWellnessPolicy get sharingPolicy => IosWellnessPolicy.current;
+  bool isLocalDeviceMetric(HealthMetric metric) =>
+      hasLocalUrionHealth &&
+      IosWellnessPolicy.urionLocalMetrics.contains(metric);
   bool get isIosWellnessEdition => wellnessPolicy.enabled;
   bool get hasRingDeviceSettings => const {
     WearableSdkSource.coolwear,
@@ -929,7 +935,7 @@ class AppController extends ChangeNotifier {
   }
 
   bool canMeasureHealthMetric(HealthMetric metric) =>
-      !isIosWellnessEdition &&
+      wellnessPolicy.allowsMeasurement(metric) &&
       connectedDevice != null &&
       _hasResolvedDeviceCapabilities &&
       capabilities?.supportsManualMeasurement(metric) == true;
@@ -2394,7 +2400,7 @@ class AppController extends ChangeNotifier {
   }
 
   Future<bool> startMeasurement(HealthMetric metric) async {
-    if (isIosWellnessEdition) return false;
+    if (!wellnessPolicy.allowsMeasurement(metric)) return false;
     if (_activeMeasurementMetric != null ||
         deviceState == DeviceConnectionState.measuring) {
       measurementErrorMessage = '另一项$deviceKindLabel测量尚未结束，请稍后重试';

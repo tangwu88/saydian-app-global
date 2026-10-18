@@ -15,6 +15,7 @@ import 'package:saydian_app/services/app_notification_service.dart';
 import 'package:saydian_app/services/local_health_store.dart';
 import 'package:saydian_app/services/secure_vault.dart';
 import 'package:saydian_app/services/wearable_bootstrap.dart';
+import 'package:saydian_app/services/wearable_routing.dart';
 
 import 'ios_store_empty_state_test.dart' as empty_state;
 import 'support/health_sync_readback.dart';
@@ -91,8 +92,18 @@ class _ReceiptHttpClient extends http.BaseClient {
 
   @override
   Future<http.StreamedResponse> send(http.BaseRequest request) async {
-    final response = await _inner.send(request);
-    if (request.url.path.endsWith('/health/capabilities')) {
+    final capability = request.url.path.endsWith('/health/capabilities');
+    if (capability) debugPrint('IOS_WELLNESS_QA_CAPABILITY_HTTP: sending=true');
+    late final http.StreamedResponse response;
+    try {
+      response = await _inner.send(request);
+    } catch (error) {
+      debugPrint(
+        'IOS_WELLNESS_QA_TRANSPORT_ERROR: type=${error.runtimeType} osCode=${error is SocketException ? error.osError?.errorCode : null}',
+      );
+      rethrow;
+    }
+    if (capability) {
       debugPrint(
         'IOS_WELLNESS_QA_CAPABILITY_HTTP: status=${response.statusCode}',
       );
@@ -307,7 +318,134 @@ Future<Set<String>> _cloudIds(
   }
 }
 
-void main() {
+void main() => runIosWellnessSyncQa();
+
+/// Existing-record acceptance after the wearer reports readings. This never
+/// substitutes for the separate fresh-SDK-sample/current-day-increase suite.
+void runIosExistingUrionRecordsQa() {
+  IntegrationTestWidgetsFlutterBinding.ensureInitialized();
+  testWidgets('iOS existing Urion records persist and cloud replay is stable', (
+    tester,
+  ) async {
+    final vault = SecureSessionVault.global();
+    final store = EncryptedHealthStore(vault, globalEdition: true);
+    final api = _ReceiptApi(vault);
+    final controller = AppController(
+      vault,
+      api,
+      store,
+      createProductionWearableBridge(),
+      notificationService: JPushAppNotificationService(),
+      allowAutomaticWearableRestore: false,
+    );
+    addTearDown(controller.dispose);
+    await controller.initialize();
+    expect(controller.isAuthenticated, isTrue);
+    expect(controller.isIosWellnessEdition, isTrue);
+    final owner = (await vault.readSession())!.accountKey;
+    final rows = await store.recent(limit: 10000);
+    expect(
+      rows.length < 10000,
+      isTrue,
+      reason: 'Untruncated baseline required',
+    );
+    final missing = <String>[];
+    debugPrint('IOS_WELLNESS_QA_PERSISTED: totalRecords=${rows.length}');
+    for (final metric in const [
+      HealthMetric.steps,
+      HealthMetric.bloodPressure,
+      HealthMetric.heartRate,
+      HealthMetric.bloodOxygen,
+    ]) {
+      final present = rows.any(
+        (r) =>
+            r.metric == metric &&
+            r.source == MeasurementSource.wearable &&
+            r.values.values.any((value) => value > 0),
+      );
+      debugPrint(
+        'IOS_WELLNESS_QA_PERSISTED: metric=${metric.wireName} present=$present matchingRecords=${rows.where((r) => r.metric == metric).length}',
+      );
+      if (!present) missing.add(metric.wireName);
+    }
+    // Diagnose each metric and the independent read-only server response before
+    // failing. One missing metric must not conceal the other persistence facts.
+    final serverBaseline = await _cloudIds(vault, owner);
+    debugPrint(
+      'IOS_WELLNESS_QA_EXISTING: serverBaselineCount=${serverBaseline.length}',
+    );
+    expect(missing.isEmpty, isTrue, reason: 'Reported readings not persisted');
+    final localRows = rows
+        .where((r) => !IosWellnessPolicy.metrics.contains(r.metric))
+        .toList();
+    final localPending = (await store.pending(
+      limit: 10000,
+    )).where((r) => !IosWellnessPolicy.metrics.contains(r.metric)).toList();
+    await controller.synchronizeCloud();
+    expect(
+      (await store.pending(
+        limit: 10000,
+        allowedMetrics: IosWellnessPolicy.metrics,
+      )).isEmpty,
+      isTrue,
+      reason: 'Actual activity/sleep queue must be acknowledged',
+    );
+    final expected = <String, HealthRecord>{
+      for (final r in controller.healthRecords)
+        if (IosWellnessPolicy.metrics.contains(r.metric))
+          r.id: IosWellnessPolicy.current.projectRecord(r)!,
+    };
+    expect(expected.isNotEmpty, isTrue, reason: 'Real cloud records required');
+    final verified = <String>{};
+    final before = await _cloudIds(
+      vault,
+      owner,
+      receipts: expected,
+      verified: verified,
+    );
+    expect(verified.containsAll(expected.keys), isTrue);
+    debugPrint('IOS_WELLNESS_QA_EXISTING: contentReadback=true');
+    final replay = expected.values.first;
+    final result = await api.uploadHealthBatch(
+      SyncBatch(cursor: null, records: [replay]),
+    );
+    expect(result.acceptedIds.contains(replay.id), isTrue);
+    expect(result.rejected.isEmpty, isTrue);
+    final after = await _cloudIds(vault, owner, receipts: expected);
+    expect(after.length == before.length && after.containsAll(before), isTrue);
+    expect(
+      _fingerprint(
+            (await store.recent(limit: 10000))
+                .where((r) => !IosWellnessPolicy.metrics.contains(r.metric))
+                .toList(),
+          ) ==
+          _fingerprint(localRows),
+      isTrue,
+    );
+    expect(
+      _fingerprint(
+            (await store.pending(limit: 10000))
+                .where((r) => !IosWellnessPolicy.metrics.contains(r.metric))
+                .toList(),
+          ) ==
+          _fingerprint(localPending),
+      isTrue,
+    );
+    expect(api.rejected, 0);
+    debugPrint(
+      'IOS_WELLNESS_QA_EXISTING: replayAck=true serverIdsUnchanged=true localPhysiologyPreserved=true freshActivity=notTested',
+    );
+    expect(tester.takeException(), isNull);
+  });
+}
+
+void runIosWellnessSyncQa({
+  String? targetNamePrefix,
+  bool requireUrion = false,
+  bool includePublicUi = true,
+  bool allowManualConnection = false,
+  Duration activityWindow = const Duration(seconds: 120),
+}) {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
   testWidgets('iOS activity/sleep real watch, ACK, retry and preserved history', (
     tester,
@@ -315,6 +453,11 @@ void main() {
     final vault = SecureSessionVault.global();
     final store = EncryptedHealthStore(vault, globalEdition: true);
     final api = _ReceiptApi(vault);
+    final savedBinding = await const SecureWearableTransportPreferenceStore()
+        .readBinding();
+    debugPrint(
+      'IOS_WELLNESS_QA_BINDING: exists=${savedBinding != null} transport=${savedBinding?.transport.name ?? 'none'}',
+    );
     final bridge = createProductionWearableBridge();
     final controller = AppController(
       vault,
@@ -334,18 +477,41 @@ void main() {
     );
     expect(await vault.readPrivacyConsentGranted(), isTrue);
     final owner = (await vault.readSession())!.accountKey;
-    expect(
-      await api.supportsDailySummaries(),
-      isTrue,
-      reason:
-          'Authenticated capabilities with production token refresh required',
-    );
+    var dailySupported = await api.supportsDailySummaries();
+    if (!dailySupported) {
+      final client = http.Client();
+      try {
+        final session = await vault.readSession();
+        final request = http.Request(
+          'GET',
+          Uri.parse(
+            'https://app.saydian.com/global/api/saydian-app/v2/health/capabilities',
+          ),
+        )..followRedirects = false;
+        request.headers['Authorization'] = 'Bearer ${session!.accessToken}';
+        final response = await client
+            .send(request)
+            .timeout(const Duration(seconds: 25));
+        debugPrint(
+          'IOS_WELLNESS_QA_CAPABILITY_DIRECT: status=${response.statusCode}',
+        );
+        await response.stream.drain<void>();
+      } catch (error) {
+        debugPrint(
+          'IOS_WELLNESS_QA_CAPABILITY_DIRECT: errorType=${error.runtimeType}',
+        );
+      } finally {
+        client.close();
+      }
+    }
     final oldRows = (await store.recent(
       limit: 10000,
     )).where((r) => !IosWellnessPolicy.metrics.contains(r.metric)).toList();
     final oldPending = (await store.pending(
       limit: 10000,
     )).where((r) => !IosWellnessPolicy.metrics.contains(r.metric)).toList();
+    final oldIds = oldRows.map((r) => r.id).toSet();
+    final oldPendingIds = oldPending.map((r) => r.id).toSet();
     final original = _fingerprint(oldRows);
     final originalPending = _fingerprint(oldPending);
     // Diagnose the durable queue independently of Bluetooth restoration. A
@@ -357,6 +523,58 @@ void main() {
     await controller.restoreWearableConnection().timeout(
       const Duration(seconds: 90),
     );
+    if (controller.connectedDevice == null && targetNamePrefix != null) {
+      await controller.scanDevices().timeout(const Duration(seconds: 45));
+      await controller.stopDeviceScan();
+      final matches = controller.scannedDevices
+          .where(
+            (d) =>
+                d.name.toUpperCase().startsWith(targetNamePrefix.toUpperCase()),
+          )
+          .toList();
+      debugPrint(
+        'IOS_WELLNESS_QA_SCAN: targetMatches=${matches.length} savedTargetSeen=${savedBinding != null && controller.scannedDevices.any((d) => d.id == RoutedDevice.scopedID(savedBinding.transport, savedBinding.nativeIdentifier))}',
+      );
+      if (matches.length == 1) {
+        await controller
+            .connectDevice(matches.single)
+            .timeout(const Duration(seconds: 120));
+      } else if (!allowManualConnection) {
+        expect(
+          matches.length == 1,
+          isTrue,
+          reason: 'One explicitly requested device must be discoverable',
+        );
+      }
+    }
+    if (controller.connectedDevice == null && allowManualConnection) {
+      controller.selectTab(1);
+      await tester.pump(const Duration(seconds: 1));
+      final search = find.text('Search for devices');
+      if (search.evaluate().isNotEmpty) {
+        await tester.ensureVisible(search.first);
+        await tester.tap(search.first);
+      }
+      final previousPointerPolicy =
+          tester.binding.shouldPropagateDevicePointerEvents;
+      tester.binding.shouldPropagateDevicePointerEvents = true;
+      try {
+        debugPrint('IOS_WELLNESS_QA_PHASE: manual-connection-ready');
+        final deadline = DateTime.now().add(const Duration(minutes: 5));
+        while (controller.connectedDevice == null &&
+            DateTime.now().isBefore(deadline)) {
+          await tester.pump(const Duration(milliseconds: 500));
+        }
+        expect(
+          controller.connectedDevice != null,
+          isTrue,
+          reason: 'Real phone connection required; no fixture fallback',
+        );
+      } finally {
+        tester.binding.shouldPropagateDevicePointerEvents =
+            previousPointerPolicy;
+      }
+    }
     debugPrint('IOS_WELLNESS_QA_PHASE: connection-restored');
     await _wait(
       () => controller.connectedDevice != null && !controller.isDeviceSyncing,
@@ -367,15 +585,41 @@ void main() {
     expect(controller.capabilities!.metrics.isNotEmpty, isTrue);
     expect(
       controller.capabilities!.metrics.every(
-        IosWellnessPolicy.metrics.contains,
+        controller.wellnessPolicy.allowsMetric,
       ),
       isTrue,
     );
-    expect(controller.capabilities!.manualMetrics, isEmpty);
-    expect(await controller.startMeasurement(HealthMetric.heartRate), isFalse);
+    if (requireUrion) {
+      expect(
+        controller.connectedDevice!.sdkSource == WearableSdkSource.urion,
+        isTrue,
+        reason: 'Actual EB1 transport handshake required',
+      );
+    }
+    expect(
+      (controller.capabilities!.manualMetrics ?? const <HealthMetric>{}).every(
+        controller.wellnessPolicy.allowsMeasurement,
+      ),
+      isTrue,
+    );
+    // This cloud/history suite never starts a supported physical measurement.
+    if (!controller.wellnessPolicy.allowsMeasurement(HealthMetric.heartRate)) {
+      expect(
+        await controller.startMeasurement(HealthMetric.heartRate),
+        isFalse,
+      );
+    }
     expect(
       await controller.sendAiMessage(app: 1, message: 'Not transmitted'),
       isFalse,
+    );
+    // Connectivity may change while the human connects the device. Recheck the
+    // real endpoint at this point; the initial offline result remains logged.
+    dailySupported = await api.supportsDailySummaries();
+    expect(
+      dailySupported,
+      isTrue,
+      reason: 'Authenticated daily-summary capability is still required',
     );
     final initialRows = await store.recent(limit: 10000);
     expect(
@@ -410,7 +654,7 @@ void main() {
     // adjust a timestamp/value, or treat an already uploaded row as first ACK.
     // Allow a real wearer time to receive the prompt and walk. This changes
     // only the bounded collection window, not the fresh-step or ACK gates.
-    final activityWindowEnd = DateTime.now().add(const Duration(seconds: 120));
+    final activityWindowEnd = DateTime.now().add(activityWindow);
     while (DateTime.now().isBefore(activityWindowEnd)) {
       await tester.pump(const Duration(milliseconds: 500));
     }
@@ -458,23 +702,27 @@ void main() {
       );
       expect(cloud.containsAll(acceptedPoints), isTrue);
       expect(
-        cloud.containsAll(controller.healthRecords.map((r) => r.id)),
+        cloud.containsAll(
+          controller.healthRecords
+              .where((r) => IosWellnessPolicy.metrics.contains(r.metric))
+              .map((r) => r.id),
+        ),
         isTrue,
         reason: 'Local allowed records missing on server',
       );
       expect(
         _fingerprint(
-          (await store.recent(limit: 10000))
-              .where((r) => !IosWellnessPolicy.metrics.contains(r.metric))
-              .toList(),
+          (await store.recent(
+            limit: 10000,
+          )).where((r) => oldIds.contains(r.id)).toList(),
         ),
         original,
       );
       expect(
         _fingerprint(
-          (await store.pending(limit: 10000))
-              .where((r) => !IosWellnessPolicy.metrics.contains(r.metric))
-              .toList(),
+          (await store.pending(
+            limit: 10000,
+          )).where((r) => oldPendingIds.contains(r.id)).toList(),
         ),
         originalPending,
       );
@@ -559,5 +807,5 @@ void main() {
     expect(api.rejected, 0);
     expect(tester.takeException(), isNull);
   });
-  empty_state.main();
+  if (includePublicUi) empty_state.main();
 }

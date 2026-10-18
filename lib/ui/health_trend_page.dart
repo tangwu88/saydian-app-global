@@ -378,6 +378,8 @@ class _HealthTrendPageState extends State<HealthTrendPage> {
           key: Key('health-trend-${widget.metric.wireName}'),
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 28),
           children: [
+            if (widget.controller.isLocalDeviceMetric(widget.metric))
+              const UrionLocalHealthNotice(),
             SegmentedButton<HealthTrendPeriod>(
               segments: [
                 for (final period in HealthTrendPeriod.values)

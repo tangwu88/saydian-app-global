@@ -1,5 +1,5 @@
 {
-  "iosActivitySleepScope": "Diese iOS-Version unterstützt nur Aktivität und Schlaf. Physiologische Messungen, medizinische Risikobewertungen und KI-Analysen sind nicht verfügbar. Bereits gespeicherte Daten bleiben erhalten.",
+  "iosActivitySleepScope": "Diese iOS-Version synchronisiert und teilt Aktivitäts- und Schlafdaten. Unterstützte Urion-Geräte können zusätzlich Blutdruck, Herzfrequenz und Sauerstoffwerte lokal auf diesem Telefon anzeigen. Medizinische Risikobewertungen und KI-Analysen sind nicht verfügbar. Gespeicherte Daten bleiben erhalten.",
   "scanLocationTitle": "Standort einschalten",
   "scanLocationHint": "Standort aktivieren und erneut versuchen.",
   "scanPermissionTitle": "Gerätezugriff erlauben",
@@ -737,7 +737,7 @@
   "dataChoiceBody": "Erteilen Sie nur die für eine Funktion benötigten Berechtigungen und verwalten Sie Freigaben in der App. Die Löschung Ihres Kontos und zugehöriger Daten können Sie unter Konto → Konto löschen beantragen. Aufbewahrungsfristen und weitere Rechte finden Sie in der Datenschutzerklärung.",
   "dataThirdPartyTitle": "Optionale Dienste",
   "dataThirdPartyBody": "Wetter, Benachrichtigungen und andere optionale Dienste können erforderliche Daten nach ihren eigenen Datenschutzregeln verarbeiten. Die Speicherung in den USA bezieht sich auf die SayDian-Cloud, nicht auf Ihr Telefon oder die eigenständige Verarbeitung durch Dritte.",
-  "iosWellnessSafety": "SayDian für iOS zeigt Aktivitäts- und Schlafdaten kompatibler Geräte für das tägliche Wohlbefinden. Die App bietet keine medizinischen Messungen, Diagnosen oder Behandlungen. Holen Sie vor medizinischen Entscheidungen fachkundigen ärztlichen Rat ein.",
+  "iosWellnessSafety": "Gerätewerte dienen als Orientierung im Alltag, nicht zur Diagnose oder Behandlung. Unterstützte Urion-Sensordaten bleiben auf diesem Telefon; Cloud-Synchronisierung und Freigabe umfassen Aktivität und Schlaf. Fragen Sie vor medizinischen Entscheidungen qualifiziertes medizinisches Fachpersonal.",
   "smartRing": "Smarter Ring",
   "ringStress": "Stress",
   "ringGestures": "Gestensteuerung",

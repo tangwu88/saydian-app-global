@@ -116,11 +116,13 @@ class DashboardPage extends StatelessWidget {
     ];
     final metrics =
         (controller.isIosWellnessEdition
-                ? const [
+                ? [
                     HealthMetric.steps,
                     HealthMetric.distance,
                     HealthMetric.calories,
                     HealthMetric.sleep,
+                    if (controller.hasLocalUrionHealth)
+                      ...IosWellnessPolicy.urionLocalMetrics,
                   ]
                 : supportedMetrics)
             .where((metric) {

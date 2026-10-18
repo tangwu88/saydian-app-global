@@ -5,13 +5,17 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:saydian_app/app.dart';
-import 'package:saydian_app/domain/ios_wellness_policy.dart';
 import 'package:saydian_app/l10n/global_locale_controller.dart';
 import 'package:saydian_app/services/app_controller.dart';
 
 import 'ios_wellness_sync_qa_test.dart' as wellness_sync;
 
-void main() {
+void main() => runIosFullPageQa();
+
+void runIosFullPageQa({
+  bool includeWellnessSync = true,
+  bool strictPageCoverage = false,
+}) {
   final binding = IntegrationTestWidgetsFlutterBinding.ensureInitialized();
   final captureKey = GlobalKey();
 
@@ -47,11 +51,12 @@ void main() {
     await _settle(tester);
     expect(find.byKey(const Key('ios-wellness-scope')), findsNothing);
     expect(find.text('Health library'), findsOneWidget);
+    expect(find.byKey(const Key('urion-local-health-notice')), findsNothing);
     expect(find.text('Health alerts'), findsNothing);
     expect(find.byKey(const Key('dashboard-ai-ask')), findsNothing);
     expect(
       controller.healthRecords.every(
-        (r) => IosWellnessPolicy.metrics.contains(r.metric),
+        (r) => controller.wellnessPolicy.projectRecord(r) != null,
       ),
       isTrue,
     );
@@ -74,6 +79,15 @@ void main() {
       await tester.tap(featureEntries.at(entry.$2));
       await _settle(tester);
       expect(find.byType(NavigationBar), findsNothing, reason: entry.$1);
+      if (entry.$1 == 'remote-care' && controller.hasLocalUrionHealth) {
+        final notice = find.byKey(const Key('urion-local-health-notice'));
+        await tester.scrollUntilVisible(
+          notice,
+          250,
+          scrollable: find.byType(Scrollable).first,
+        );
+        expect(notice, findsOneWidget);
+      }
       await _capture(tester, binding, captureKey, entry.$1);
       await _pop(tester);
     }
@@ -121,6 +135,8 @@ void main() {
     }
 
     for (final metric in const [
+      ('blood-pressure', 'health-metric-bloodPressure'),
+      ('blood-oxygen', 'health-metric-bloodOxygen'),
       ('steps', 'health-metric-steps'),
       ('distance', 'health-metric-distance'),
       ('calories', 'health-metric-calories'),
@@ -192,7 +208,11 @@ void main() {
     controller.selectTab(1);
     await _settle(tester);
     await _capture(tester, binding, captureKey, '09-device');
-    final deviceAbout = _firstText(['关于设备', 'About this watch']);
+    final deviceAbout = _firstText([
+      '关于设备',
+      'About this device',
+      'About this watch',
+    ]);
     if (deviceAbout.evaluate().isNotEmpty) {
       await _tapText(tester, deviceAbout.first);
       await _settle(tester);
@@ -205,6 +225,8 @@ void main() {
       'Start searching',
       '添加设备',
       'Add device',
+      'Connect a device',
+      'Search for devices',
     ]);
     if (search.evaluate().isNotEmpty) {
       await _tapText(tester, search.first);
@@ -248,12 +270,18 @@ void main() {
       ('unit-settings', ['单位设置', 'Units']),
       ('account-settings', ['账号设置', 'Account settings']),
       ('permissions', ['权限管理', 'Permissions']),
-      ('feedback', ['帮助与反馈', 'Help & feedback', 'Help and feedback']),
+      (
+        'feedback',
+        ['帮助与反馈', 'Help & feedback', 'Help and feedback', 'Feedback'],
+      ),
       ('customer-service', ['联系客服', 'Customer support']),
-      ('about', ['关于我们', 'About SAYDIAN Health']),
+      ('about', ['关于我们', 'About SayDian', 'About SAYDIAN Health']),
     ];
     for (final entry in serviceEntries) {
       final target = _firstText(entry.$2);
+      if (strictPageCoverage) {
+        expect(target, findsOneWidget, reason: 'Required service ${entry.$1}');
+      }
       if (target.evaluate().isEmpty) continue;
       await _tapText(tester, target.first);
       await _settle(tester);
@@ -269,10 +297,29 @@ void main() {
           if (link.evaluate().isEmpty) continue;
           await _tapText(tester, link.first);
           await _settle(tester);
+          final body = find.byKey(const Key('global-legal-body'));
+          for (var retry = 0; retry < 45 && body.evaluate().isEmpty; retry++) {
+            await tester.pump(const Duration(seconds: 1));
+          }
+          expect(body, findsOneWidget, reason: 'Published ${legal.$1} loaded');
           expect(find.byType(NavigationBar), findsNothing, reason: legal.$1);
           await _capture(tester, binding, captureKey, '10-legal-${legal.$1}');
           await _pop(tester);
         }
+        // Opening the legal links can leave About scrolled below its lazily
+        // built header. Return to the actual entry before asserting/tapping.
+        final privacy = find.byKey(const Key('data-privacy-link'));
+        await tester.scrollUntilVisible(
+          privacy,
+          -300,
+          scrollable: find.byType(Scrollable).first,
+        );
+        expect(privacy, findsOneWidget);
+        await tester.tap(privacy);
+        await _settle(tester);
+        expect(find.byKey(const Key('data-privacy-page')), findsOneWidget);
+        await _capture(tester, binding, captureKey, '10-data-privacy');
+        await _pop(tester);
       }
       await _pop(tester);
     }
@@ -298,7 +345,7 @@ void main() {
 
     expect(tester.takeException(), isNull);
   });
-  wellness_sync.main();
+  if (includeWellnessSync) wellness_sync.main();
 }
 
 Finder _firstText(List<String> values) {

@@ -1,5 +1,5 @@
 {
-  "iosActivitySleepScope": "This iOS edition supports activity and sleep only. Physiological measurements, medical risk interpretations and AI analysis are not available. Previously saved records are retained.",
+  "iosActivitySleepScope": "This iOS edition syncs and shares activity and sleep. Supported Urion devices can also display blood pressure, heart rate and oxygen records locally on this phone. Medical risk interpretations and AI analysis are unavailable. Previously saved records are retained.",
   "scanLocationTitle": "Turn on location",
   "scanLocationHint": "Enable phone location, then retry.",
   "scanPermissionTitle": "Allow device access",
@@ -845,7 +845,7 @@
   "dataChoiceBody": "You can use device features with the permissions they need, decline optional permissions, and manage sharing in the app. To request deletion of your account and associated data, open Account → Delete account. See the Privacy Policy for retention and other rights.",
   "dataThirdPartyTitle": "Optional services",
   "dataThirdPartyBody": "Weather, notifications and other optional services may process the information needed for the feature under their own policies. The United States storage statement applies to SayDian’s cloud storage, not to your phone or a third party’s independent processing.",
-  "iosWellnessSafety": "SayDian on iOS displays activity and sleep information from compatible devices for everyday wellness. It does not provide medical measurements, diagnosis or treatment. Consult a qualified healthcare professional before making medical decisions.",
+  "iosWellnessSafety": "Device readings are for everyday reference, not diagnosis or treatment. Supported Urion sensor records stay on this phone; cloud sync and sharing cover activity and sleep. Consult a qualified healthcare professional before making medical decisions.",
   "smartRing": "Smart ring",
   "ringStress": "Stress",
   "ringGestures": "Gesture control",
