@@ -1,5 +1,9 @@
 # SayDian 当前交接说明
 
+## 2026-10-18 国际版源码已提交GitHub
+
+源码65b31bf的45项改动通过已授权GitHub连接发布到codex/u19s-local-health-ios-20261017，等价远端源码提交33058b659210ecbd0fa9fbb80ac4f8f48587d863，tree821ee682877ea6bde378c9fb39dba82a038ed2e6与本地逐对象、完整tree及重新fetch/diff一致。普通HTTPS写入凭据仍缺失，原本地commit历史保留；本记录的后续文档提交不改变产品代码，使用本地verified跟踪分支核对规范远端。未合并另一global-update分支或main。仓库接口现返回public，已告知，未修改可见性。详见[Git发布记录](IMPLEMENTATION-20261018-GIT-PUBLISH.md)，不把源码上传当CI或XR数据问题已通过。
+
 ## 2026-10-17 苹果1020已正式上传
 
 用户要求新苹果构建并上传；pubspec现1.0.1+1020。用户完成实际Xcode Apple Accounts登录后，同一正常lib/main.dart归档已成功导出Apple Distribution正式IPA，严格签名/包名/1020版本/iPhone-only/.com/无QA代码检查通过，归档与导出代码段及UUID一致。Xcode实际上传退出0，upload succeeded/EXPORT SUCCEEDED和ContentDelivery UPLOAD_COMPLETE已核对，回执uploaded=true；15个厂商SDK缺dSYM警告未阻止上传。正式IPA为build/store-upload-20261017-1020/export/SayDian.ipa，SHA256 9bd7d474a7a5518d0e0ebfe8e54f9fa347605d9a0fd1e635f0279d8301800700；本地IPA hash不等同Xcode上传模式重新导出压缩文件hash。analyzer、发布门禁25、双时区各1110沿用同一产品代码结果。先前No Accounts及旧1018IPA拦截失败记录均保留；未误传旧包。Apple后续处理状态未独立读取，未替换1018审核或重新提审，未发送新测试邀请。XR持久化差异及新功能正式材料仍待核对，不可把上传成功写成硬件全面通过或审核通过。见[1020构建记录](IMPLEMENTATION-20261017-IOS-1020-UPLOAD.md)。
