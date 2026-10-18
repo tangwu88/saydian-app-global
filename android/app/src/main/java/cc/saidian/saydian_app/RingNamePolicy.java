@@ -20,7 +20,8 @@ final class RingNamePolicy {
     static boolean isQRingName(String name) {
         if (name == null || coolWearModel(name) != null) return false;
         String normalized = name.trim().toUpperCase(Locale.ROOT);
-        return normalized.contains("R8") || normalized.contains("R21") || normalized.contains("R22")
+        boolean isR12 = normalized.equals("R12") || normalized.startsWith("R12_") || normalized.startsWith("R12-");
+        return isR12 || normalized.contains("R8") || normalized.contains("R21") || normalized.contains("R22")
                 || normalized.startsWith("Q_") || normalized.startsWith("O_")
                 || normalized.startsWith("R2");
     }

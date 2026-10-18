@@ -16,6 +16,7 @@ static inline NSString *CNRingCoolWearModel(NSString *name) {
 static inline BOOL CNRingIsQRingName(NSString *name) {
     if (![name isKindOfClass:NSString.class] || CNRingCoolWearModel(name)) return NO;
     NSString *upper = [[name stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet] uppercaseString];
-    return [upper containsString:@"R8"] || [upper containsString:@"R21"] || [upper containsString:@"R22"] ||
+    BOOL isR12 = [upper isEqualToString:@"R12"] || [upper hasPrefix:@"R12_"] || [upper hasPrefix:@"R12-"];
+    return isR12 || [upper containsString:@"R8"] || [upper containsString:@"R21"] || [upper containsString:@"R22"] ||
         [upper hasPrefix:@"Q_"] || [upper hasPrefix:@"O_"] || [upper hasPrefix:@"R2"];
 }

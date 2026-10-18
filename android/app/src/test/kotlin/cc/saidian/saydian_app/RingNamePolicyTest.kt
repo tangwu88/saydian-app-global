@@ -9,6 +9,18 @@ import org.junit.Test
 
 class RingNamePolicyTest {
     @Test
+    fun `confirmed R12 names retain model boundaries and LuckRing precedence`() {
+        listOf("R12", " r12 ", "R12_fixture", "r12-fixture").forEach {
+            assertTrue(it, RingNamePolicy.isQRingName(it))
+            assertNull(it, RingNamePolicy.coolWearModel(it))
+        }
+        listOf("R120", "R123", "XR12", "custom-R12-tail", "R18", "R12-HR05").forEach {
+            assertFalse(it, RingNamePolicy.isQRingName(it))
+        }
+        assertNotNull(RingNamePolicy.coolWearModel("R12-HR05"))
+    }
+
+    @Test
     fun `qring keywords match anywhere without a model suffix restriction`() {
         listOf("R8", "custom-r8-tail", "R80", "prefix-R21-other", "custom-r22-tail", "Q_fixture", "O_fixture").forEach {
             assertTrue(it, RingNamePolicy.isQRingName(it))

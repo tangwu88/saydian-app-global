@@ -7,6 +7,23 @@ import 'package:saydian_app/services/wearable_bridge.dart';
 import 'package:saydian_app/services/wearable_routing.dart';
 
 void main() {
+  test(
+    'confirmed R12 model selects QRing without broadening other R names',
+    () {
+      for (final name in ['R12', ' r12 ', 'R12_fixture', 'r12-fixture']) {
+        expect(
+          ringTransportForName(name),
+          WearableTransport.qring,
+          reason: name,
+        );
+      }
+      for (final name in ['R120', 'R123', 'XR12', 'custom-R12-tail', 'R18']) {
+        expect(ringTransportForName(name), isNull, reason: name);
+      }
+      expect(ringTransportForName('R12-HR05'), WearableTransport.coolwear);
+    },
+  );
+
   test('all failed SDK scans preserve Bluetooth error guidance', () async {
     final bridge = RoutedWearableBridge(
       veepoo: _FakeWearableBridge(scanned: const [])
@@ -193,6 +210,7 @@ void main() {
     'keyword broadcasts are deduplicated and connected by their ring SDK',
     () async {
       const routes = {
+        'R12_fixture': WearableTransport.qring,
         'Custom-R8-Plus': WearableTransport.qring,
         'prefix-r21-tail': WearableTransport.qring,
         'custom-R22-variant': WearableTransport.qring,

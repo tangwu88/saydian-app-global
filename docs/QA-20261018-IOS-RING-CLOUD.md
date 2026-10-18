@@ -75,3 +75,67 @@ P1 / 测试链路隔离问题：`ios_wellness_sync_qa_test.dart` 的 `_cloudIds`
 App Store 现有审核、服务器部署、医疗功能边界本轮均未改动。提供的 U19S 资质核对另见设备资质记录。
 
 私有设备 JSON、日志、原生调试输出、VM 地址与加密库留本机 0700 目录 / 0600 文件，不进 Git 或普通交接包。
+
+## 继续：R12 发现缺口与修改前记录
+
+接续基线 `c030bba`，当前分支已跟踪同名 origin 分支；工作树干净，fetch / ff-only pull 均无新代码。
+指定 iPhone 仍 USB wired、开发者模式开启；只重新附加国际 App 原进程，实际 Bundle/版本仍为 `cn.saydian.app.global / 1.0.1 (1019)`。
+同机 Say Ring 有独立 LLDB 会话，本轮未中断；本 App 首次激活恰逢附加暂停而超时，继续运行后重试成功。原生表达式首轮因未声明选择器返回类型失败，改显式类型后只读成功。
+未恢复旧端口对应的 Flutter attach；仅复核原有本 App VM 端口仍 getVM/main 正常，重新建立其专属 USB 转发及 DevTools（HTTP 200）。未注入本机 kernel、未覆盖安装。
+
+先后扫描存在前后台切换；再次明确前台等待完整 20 秒，控制器正常完成但结果仍为 0、无权限异常。
+原生 CoreBluetooth state=5（poweredOn），原生扫描缓存实际 5 台；其中一台广播前缀 R12，被现有 Flutter/iOS/Android 名称规则同时遗漏。
+用户明确回复已唤醒、且该 R12 就是本次 QRing 目标。其他附近设备的名称、UUID、广播内容不进入 Git。
+系统已有 QRing 候选查询完成为 0；美国 `supportsDailySummaries()` 实际完成 true。
+当前账号健康库 `pending()`（上限 200）返回 0；不是新 R12 上传成功的证明，也没有因此清队列、上传旧缓存或修改历史记录。
+
+P1：搜索不到用户确认的 R12。复现为正常扫描 → 原生能发现 → 现有名称过滤拒绝 → App 0 候选；预期仅作为 QRing 候选进入，能力必须继续真实握手。
+参考 Say Ring 的只读实现记录确认其已补 R12 路由，但不照搬通用 R 前缀、睡眠 AI 或监测设置扩展。
+拟修改 Flutter / iOS / Android 三处同源名称策略，窄幅接受 R12 本名及 `_` / `-` 分隔后缀；保留 LuckRing 冲突优先级和其他未知型号拒绝。
+新增 Dart 路由/去重回归、iOS Foundation 真执行夹具与 Android 原生用例。数据值、SDK 二进制、上传 API、iOS 功能范围不变；随后逐项追加实际检查结果。
+
+现装源码差异已通过 VM 只读哈希核对：101 个本 App Dart script 中 82 个与当前 checkout 完全一致，19 个不同，包含控制器、UI、Urion 与 iOS 策略。
+因此 1019 不能视为“1018 只改构建号”；本轮不以旧基线构建直接覆盖未知改动。当前其他已知本地 checkout 也未完整匹配，需定位该安装来源后再合入并做最终实机验证。
+
+用户随后明确确认 1019 来自另一台电脑；尚未提供其源码目录、分支或包。只读 VM 源码用于哈希核对，没有重建/提交缺失的 19 个文件，也不以本机旧基线覆盖它们。
+
+### R12 修改与已执行回归
+
+- 改动前先新增定向断言，实际失败：`Expected WearableTransport.qring / Actual null / R12`，退出 1。
+  随后三处策略均窄幅修复，普通 R 前缀、R120/R123、未知别名仍不放开；没有给名字赋予能力。
+- `dart format` 两文件实际格式化，最终 `--output=none --set-exit-if-changed` 两文件 / 0 改动；`git diff --check` 通过。
+  `flutter test --no-pub test/wearable_routing_test.dart test/qring_transport_test.dart test/ios_sync_qa_boundary_test.dart --reporter expanded` **31/31**。
+- `flutter analyze --no-pub` 零问题 / 3.1 秒；全量 `TZ=UTC` **1109/1109 / 129 秒**，`TZ=Asia/Shanghai` **1109/1109 / 93 秒**。
+  使用 `--no-pub --reporter expanded`；异常处理测试的受控错误日志不是现场产品错误或真实 API 请求。
+- 八个 `test/native/*.m` 分别以 `xcrun clang -fobjc-arc -framework Foundation` 编译执行，全通过；新增名称策略 24 断言。
+  `xcrun swiftc ios/Runner/WearablePayloadMapper.swift test/native/ios_wellness_policy_main.swift` 编译及执行通过。不是 iOS XCTest 或 SDK 实物握手。
+- Android 实际 `RingNamePolicy.java` 加私有无凭据夹具以 JDK17 `javac` 编译、`java` 真执行 **24 检查通过**。
+  首次误在 javac 完成前执行，报 ClassNotFoundException；等待编译退出 0 后重跑通过。不是 Android 原生 JUnit、APK 或 BLE 验收。
+- `python3 -m unittest discover -s scripts/release -p 'test_*.py'` **25/25 / 22.368 秒**，仅发布夹具，不是生产发布。
+
+### 构建检查与安装停线
+
+构建前保留本机旧 1014 `Runner.app`（约 171 MiB）到私有目录；原发布 archive/IPA 与手机 1019 不动。
+本轮只使用当前仓库 1018 基线作编译检查，正常 `lib/main.dart`、`.com` API/更新地址、禁用未配置推送、`--no-pub --no-codesign`；不是可安装/分发版本。
+Xcode27 编译复用私有 `XCODE_XCCONFIG_FILE` 的最低 15.0 兼容设置，没有修改跟踪的产品最低系统版本、签名或 App Store 归档。
+Debug 实际成功，Xcode 100.9 秒，Bundle `cn.saydian.app.global`、build 1018；Runner SHA256 `cd7888a528ad62bdc140da90c971f424a4823ade0605cd9a03de7d37efc1426f`。
+Profile 实际成功，Xcode 105.0 秒、约 64.4 MB，同 Bundle/build，Runner SHA256 `30d3ff4c22ea0d751fa8d381fdea8520183220f280f967af3fbf7bb8ec11a36f`。
+两个编译结果均为 1018 基线无签名检查，未覆盖手机。原生 XCTest 因不能覆盖未知 1019 或其账号现场，本轮不执行；未构建鸿蒙、未执行 Android 真机测试或商店上传。
+
+Android 原生首次 `./gradlew :app:testSideloadDebugUnitTest :app:testPlayDebugUnitTest -Ptarget-platform=android-arm,android-arm64 --offline --max-workers=1 --console=plain` 失败。
+Gradle wrapper 原锁定 9.1.0 不在缓存，正常从官方分发站下载；离线随后因 Kotlin DSL plugin 6.2.0 缺缓存失败，不是 R12 测试断言失败。保持依赖版本不变，在线重试同一任务。
+
+在线重试约 5 分钟仍未执行到原生测试。通过 stdout 文件核对本轮 Gradle client 后，仅对该 client 发 SIGINT，退出 130，未终止共享 daemon 或其他项目。
+随后显式请求两个原生测试任务及 `:app:assembleSideloadDebug :app:assembleSideloadRelease`，双 ARM、QA Release、禁用未配置推送，离线重试 12 秒失败。
+实际阻断为 `:camera_android_camerax` 的 `com.android.tools.build:gradle:8.13.1` jar 缺缓存，另有项目评估监听器 NPE；没有修改依赖版本绕过。
+本轮 Android 完整原生测试、Debug/Release APK 均未产出/通过；仅前述实际 Java 策略检查通过。待恢复依赖后重跑，不能用它替代完整平台或设备验收。
+
+调试面板打开返回 queued，不计目视页面验收。主机回归期间 VM 请求超时，之前曾观察 App 进入后台，不据此确定故障原因。
+收尾 CoreDevice 仍确认原 1019 相同进程/安装路径存活；旧 VM 端口随后 connection refused，重新激活 App 成功但未发现新的专属 mDNS 服务，完整 Flutter Debug/热重载未恢复。
+原生 LLDB 附加不等于 VM 当前可达或业务通过；没有为了恢复调试将 1018 注入/安装到 1019。
+
+### 用户改为先更新本地
+
+用户随后要求“先更新本地代码到最新”，本轮先停止安装/闭环后续流程，保存 R12 最小修复和真实测试边界，再同步当前跟踪分支。
+重新 fetch 并核对所有 origin heads；已配置远端仍以 `c030bba` 为最新日期提交，当前跟踪分支没有新增内容。`origin/main` 为历史 `ada5df2`，不能按分支名将旧代码合并成最新。
+保留全部本地改动为 checkpoint 后再执行 ff-only pull；不强推、不重置、不覆盖手机。另一台 1019 的源码/分支尚未出现在已配置远端，需该电脑推送真实修改后再同步。
