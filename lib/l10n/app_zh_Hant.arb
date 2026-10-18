@@ -1,5 +1,5 @@
 {
-  "iosActivitySleepScope": "此 iOS 版本僅支援活動與睡眠，不提供生理測量、醫療風險解讀和 AI 分析。先前儲存的記錄仍會保留。",
+  "iosActivitySleepScope": "此 iOS 版本同步和分享活動與睡眠；支援的 Urion 裝置還可在本機顯示血壓、心率和血氧記錄。不提供醫療風險解讀和 AI 分析。先前儲存的記錄仍會保留。",
   "scanLocationTitle": "請開啟手機定位",
   "scanLocationHint": "開啟手機定位後重試。",
   "scanPermissionTitle": "請允許相關權限",
@@ -737,7 +737,7 @@
   "dataChoiceBody": "您可依功能需要授予權限、拒絕可選權限，並在應用程式內管理分享。如需申請刪除帳號及關聯資料，請開啟「帳號 → 刪除帳號」。保留期限及其他權利請查看隱私政策。",
   "dataThirdPartyTitle": "可選服務",
   "dataThirdPartyBody": "天氣、通知等可選服務可能根據各自的隱私政策處理所需資訊。美國儲存聲明適用於 SayDian 雲端儲存，不涵蓋手機本機儲存或第三方獨立的資料處理。",
-  "iosWellnessSafety": "iOS 版 SayDian 顯示相容裝置的活動與睡眠資訊，用於日常健康生活管理，不提供醫學測量、診斷或治療。作出醫療決定前，請諮詢合格的醫療專業人員。",
+  "iosWellnessSafety": "裝置讀數僅供日常參考，不用於診斷或治療。支援的 Urion 生理記錄僅儲存在本機，雲端同步和分享僅包含活動與睡眠。作出醫療決定前，請諮詢合格的醫療專業人員。",
   "smartRing": "智慧戒指",
   "ringStress": "壓力",
   "ringGestures": "手勢控制",

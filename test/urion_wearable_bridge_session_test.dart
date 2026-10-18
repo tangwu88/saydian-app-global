@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
+
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:saydian_app/domain/feature_models.dart';
@@ -12,6 +14,45 @@ void main() {
   late _Watch watch;
   setUp(() => watch = _Watch());
   tearDown(() => watch.dispose());
+
+  test(
+    'iOS Urion exposes verified local sensors without advanced health commands',
+    () async {
+      debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+      try {
+        await watch.connectAndReadCapabilities();
+        final capabilities = await watch.bridge.getCapabilities();
+        expect(
+          capabilities.metrics,
+          containsAll([
+            HealthMetric.bloodPressure,
+            HealthMetric.heartRate,
+            HealthMetric.bloodOxygen,
+          ]),
+        );
+        expect(
+          capabilities.manualMetrics,
+          contains(HealthMetric.bloodPressure),
+        );
+        expect(
+          capabilities.features,
+          isNot(contains(DeviceFeature.healthAssessment)),
+        );
+        expect(
+          capabilities.features,
+          isNot(contains(DeviceFeature.healthMonitoring)),
+        );
+        expect(
+          watch.writes
+              .map((e) => e.$2.command)
+              .where({0x16, 0x2c, 0x32, 0x34, 0x36, 0x38, 0x39}.contains),
+          isEmpty,
+        );
+      } finally {
+        debugDefaultTargetPlatformOverride = null;
+      }
+    },
+  );
 
   test(
     'read-only capability discovery exposes BP and find without starting measurement',

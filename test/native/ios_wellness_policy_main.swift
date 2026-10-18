@@ -25,6 +25,9 @@ struct IOSWellnessPolicyTests {
     precondition(IOSWellnessPolicy.blockedEB1Commands.contains(0x16))
     precondition(IOSWellnessPolicy.blockedEB1Commands.contains(0x2c))
     precondition(!IOSWellnessPolicy.blockedEB1Commands.contains(0x07))
+    precondition(IOSWellnessPolicy.urionLocalCommands == [0x14, 0x15, 0x2d, 0x32, 0x38, 0x39])
+    precondition(!IOSWellnessPolicy.urionLocalCommands.contains(0x16))
+    precondition(!IOSWellnessPolicy.urionLocalCommands.contains(0x36))
     let activity: [String: Any] = ["id": "synthetic-old", "type": "steps",
       "deviceId": "synthetic-device", "measuredAt": "2026-10-06T17:00:00.000Z",
       "timezone": "+08:00", "values": ["value": 20], "unit": "步"]

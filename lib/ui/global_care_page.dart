@@ -7,6 +7,7 @@ import '../domain/models.dart';
 import '../l10n/ui_labels.dart';
 import 'health_trend_page.dart';
 import 'app_theme.dart';
+import 'ios_wellness_scope.dart';
 import '../l10n/global_locale_controller.dart';
 import '../services/app_controller.dart';
 
@@ -258,6 +259,10 @@ class _GlobalCareOverviewState extends State<GlobalCarePage> {
                       (m) => _metrics.contains(m.wireName),
                     ))
                       _card(member, metric),
+                  if (widget.controller.hasLocalUrionHealth) ...[
+                    const SizedBox(height: 16),
+                    const UrionLocalHealthNotice(),
+                  ],
                 ],
               ),
             ),
@@ -485,8 +490,9 @@ class _GlobalCareManagementPageState extends State<GlobalCareManagementPage> {
                 children: [
                   Text(dialog.l10n.careSharingHint),
                   for (final entry in _metricLabels(dialog).entries.where(
-                    (entry) => widget.controller.wellnessPolicy
-                        .allowsWireMetric(entry.key),
+                    (entry) => widget.controller.sharingPolicy.allowsWireMetric(
+                      entry.key,
+                    ),
                   ))
                     CheckboxListTile(
                       title: Text(entry.value),

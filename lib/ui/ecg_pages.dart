@@ -55,6 +55,8 @@ class HealthRecordDetailPage extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          if (controller.isLocalDeviceMetric(record.metric))
+            const UrionLocalHealthNotice(),
           Card(
             child: Padding(
               padding: const EdgeInsets.all(24),

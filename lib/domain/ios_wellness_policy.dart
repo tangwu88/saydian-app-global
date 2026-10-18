@@ -3,16 +3,35 @@ import 'package:flutter/foundation.dart';
 import 'feature_models.dart';
 import 'models.dart';
 
-/// iOS activity/sleep scope, independent of account, device and server flags.
+/// iOS cloud scope stays activity/sleep. Verified Urion devices can additionally
+/// expose local sensor records, independently of account or build mode.
 /// Projections are views/transport payloads; never rewrite historical storage.
 class IosWellnessPolicy {
-  const IosWellnessPolicy({required this.enabled});
+  const IosWellnessPolicy({
+    required this.enabled,
+    this.urionLocalDevice = false,
+  });
 
   static IosWellnessPolicy get current => IosWellnessPolicy(
     enabled: !kIsWeb && defaultTargetPlatform == TargetPlatform.iOS,
   );
 
   final bool enabled;
+  final bool urionLocalDevice;
+  static IosWellnessPolicy forSdkSource(WearableSdkSource? source) =>
+      IosWellnessPolicy(
+        enabled: current.enabled,
+        urionLocalDevice: source == WearableSdkSource.urion,
+      );
+  static const urionLocalMetrics = {
+    HealthMetric.bloodPressure,
+    HealthMetric.heartRate,
+    HealthMetric.bloodOxygen,
+  };
+  static const urionLocalCommands = {0x14, 0x15, 0x2d, 0x32, 0x38, 0x39};
+  bool get hasLocalDeviceMetrics => enabled && urionLocalDevice;
+  bool allowsMeasurement(HealthMetric metric) =>
+      !enabled || (urionLocalDevice && urionLocalMetrics.contains(metric));
   static const blockedEB1Commands = {
     0x14,
     0x15,
@@ -33,11 +52,12 @@ class IosWellnessPolicy {
     HealthMetric.calories,
     HealthMetric.sleep,
   };
-  Set<HealthMetric>? get allowedMetrics => enabled ? metrics : null;
+  Set<HealthMetric>? get allowedMetrics =>
+      enabled ? {...metrics, if (urionLocalDevice) ...urionLocalMetrics} : null;
   bool allowsMetric(HealthMetric metric) =>
-      !enabled || metrics.contains(metric);
+      !enabled || allowedMetrics!.contains(metric);
   bool allowsWireMetric(String wire) =>
-      !enabled || metrics.any((metric) => metric.wireName == wire);
+      !enabled || allowedMetrics!.any((metric) => metric.wireName == wire);
   bool isDisplayable(HealthRecord record, {DateTime? now}) =>
       !enabled ||
       (allowsMetric(record.metric) &&
@@ -63,7 +83,11 @@ class IosWellnessPolicy {
       'awakeMinutes',
       'wakeCount',
     };
-    final keys = metric == HealthMetric.sleep ? sleepKeys : const {'value'};
+    final keys = metric == HealthMetric.sleep
+        ? sleepKeys
+        : metric == HealthMetric.bloodPressure && urionLocalDevice
+        ? const {'systolic', 'diastolic'}
+        : const {'value'};
     return Map.unmodifiable({
       for (final entry in values.entries)
         if (allowsMetric(metric) && keys.contains(entry.key))
@@ -74,6 +98,12 @@ class IosWellnessPolicy {
   HealthRecord? projectRecord(HealthRecord record) {
     if (!enabled) return record;
     if (!allowsMetric(record.metric)) return null;
+    if (urionLocalMetrics.contains(record.metric) &&
+        (WearableSdkSource.fromDeviceId(record.deviceId) !=
+                WearableSdkSource.urion ||
+            record.origin == MeasurementOrigin.remoteMember)) {
+      return null;
+    }
     return HealthRecord(
       id: record.id,
       metric: record.metric,
@@ -105,7 +135,9 @@ class IosWellnessPolicy {
     if (!enabled) return capabilities;
     return DeviceCapabilities(
       metrics: capabilities.metrics.where(allowsMetric).toSet(),
-      manualMetrics: const {},
+      manualMetrics: (capabilities.manualMetrics ?? const <HealthMetric>{})
+          .where(allowsMeasurement)
+          .toSet(),
       stoppableManualMetrics: const {},
       sportModes: capabilities.sportModes,
       features: capabilities.features.where(allowsFeature).toSet(),

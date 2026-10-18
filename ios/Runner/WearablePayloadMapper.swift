@@ -5,6 +5,9 @@ enum IOSWellnessPolicy {
   static let metrics: Set<String> = ["steps", "distance", "calories", "sleep"]
   static let blockedFeatures: Set<String> = ["health_monitoring", "health_assessment", "health_reminders"]
   static let blockedEB1Commands: Set<UInt8> = [0x14, 0x15, 0x16, 0x2c, 0x2d, 0x32, 0x34, 0x35, 0x36, 0x38, 0x39, 0x3a]
+  // Used only by the verified EB1 transport, never the other SDKs. These
+  // records stay local; cloud and sharing still use the activity/sleep scope.
+  static let urionLocalCommands: Set<UInt8> = [0x14, 0x15, 0x2d, 0x32, 0x38, 0x39]
 
   static func capabilities(_ original: [String: Any]) -> [String: Any] {
     var value = original

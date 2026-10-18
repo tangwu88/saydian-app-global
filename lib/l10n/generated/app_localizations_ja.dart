@@ -10,7 +10,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get iosActivitySleepScope =>
-      'このiOS版は活動と睡眠のみ対応しています。生理測定、医療リスクの解釈、AI分析は利用できません。以前の記録は保持されます。';
+      'このiOS版は活動と睡眠を同期・共有します。対応するUrionデバイスでは、血圧・心拍数・血中酸素の記録をこの端末内で表示できます。医療リスクの解釈やAI分析は利用できません。保存済みの記録は保持されます。';
 
   @override
   String get scanLocationTitle => '位置情報をオンにしてください';
@@ -2100,7 +2100,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get iosWellnessSafety =>
-      'iOS 版 SayDian は日常の健康管理のために、対応デバイスの活動と睡眠の情報を表示します。医療用の測定、診断、治療は提供しません。医療上の判断を行う前に、資格を持つ医療専門家に相談してください。';
+      'デバイスの測定値は日常の参考用で、診断や治療を目的としません。対応するUrionセンサーの記録はこの端末内に保存され、クラウド同期と共有は活動・睡眠が対象です。医療上の判断をする前に資格を持つ医療専門家に相談してください。';
 
   @override
   String get smartRing => 'スマートリング';

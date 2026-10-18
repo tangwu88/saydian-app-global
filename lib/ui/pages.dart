@@ -31,6 +31,7 @@ import 'global_care_page.dart';
 import 'health_reports_page.dart';
 import 'health_trend_page.dart';
 import 'ios_wellness_scope.dart';
+import '../domain/ios_wellness_policy.dart';
 import 'prototype_pages.dart';
 import 'shop_pages.dart';
 import 'feature_visibility.dart';

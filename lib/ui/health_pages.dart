@@ -54,6 +54,10 @@ class HealthPage extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 14),
+          if (controller.hasLocalUrionHealth) ...[
+            const UrionLocalHealthNotice(),
+            const SizedBox(height: 10),
+          ],
           if (visibleMetrics.isEmpty) ...[
             _InlineNotice(
               message: controller.connectedDevice == null
@@ -146,7 +150,7 @@ Future<void> _showHealthMeasurementDialog(
   AppController controller,
   HealthMetric metric,
 ) async {
-  if (controller.isIosWellnessEdition) return;
+  if (!controller.canMeasureHealthMetric(metric)) return;
   if (metric == HealthMetric.bloodPressure &&
       controller.connectedDevice?.sdkSource == WearableSdkSource.urion &&
       !controller.isMeasurementRunning(metric)) {

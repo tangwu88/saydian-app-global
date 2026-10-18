@@ -552,7 +552,7 @@ void main() {
           expect(find.text('Heart rate'), findsNothing);
         } else {
           expect(
-            find.textContaining('supports activity and sleep only'),
+            find.textContaining('syncs and shares activity and sleep'),
             findsOneWidget,
           );
         }

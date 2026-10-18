@@ -1,5 +1,28 @@
 # SayDian 当前交接说明
 
+## 2026-10-17 苹果1020已正式上传
+
+用户要求新苹果构建并上传；pubspec现1.0.1+1020。用户完成实际Xcode Apple Accounts登录后，同一正常lib/main.dart归档已成功导出Apple Distribution正式IPA，严格签名/包名/1020版本/iPhone-only/.com/无QA代码检查通过，归档与导出代码段及UUID一致。Xcode实际上传退出0，upload succeeded/EXPORT SUCCEEDED和ContentDelivery UPLOAD_COMPLETE已核对，回执uploaded=true；15个厂商SDK缺dSYM警告未阻止上传。正式IPA为build/store-upload-20261017-1020/export/SayDian.ipa，SHA256 9bd7d474a7a5518d0e0ebfe8e54f9fa347605d9a0fd1e635f0279d8301800700；本地IPA hash不等同Xcode上传模式重新导出压缩文件hash。analyzer、发布门禁25、双时区各1110沿用同一产品代码结果。先前No Accounts及旧1018IPA拦截失败记录均保留；未误传旧包。Apple后续处理状态未独立读取，未替换1018审核或重新提审，未发送新测试邀请。XR持久化差异及新功能正式材料仍待核对，不可把上传成功写成硬件全面通过或审核通过。见[1020构建记录](IMPLEMENTATION-20261017-IOS-1020-UPLOAD.md)。
+
+## 2026-10-17 另一台 iPhone XR 测试中
+
+目标iPhone XR/iOS18.7.10，用户已登录并连接U19S。网络恢复后实际美国能力HTTP200/true；真实Urion连接恢复及能力门禁通过。r3完整页面实机04:54退出0，31张私有截图覆盖首页提示移除、关爱底部提示、血压/心率/血氧详情和真实连接设备页、英文法律正文、Data privacy与语言。r2最后因About滚动位置导致懒构建头部入口定位失败，已仅修正QA滚动并重跑通过。主机UTC/Shanghai各1110与analyzer通过；产品源码和旧1018审核未动。
+
+硬件同步仍未验收：三分钟窗口后的同步无活动/睡眠样本，state=idle/accepted=0/rejected=0，未进入首ACK/回读/去重，不推定服务器拒绝或成功。用户现已回报步数和三项测量显示，同时说明暂不能走动。追加独立既有记录QA后发现XR当前账号本机0条（四项均0），但实际美国活动/睡眠GET可读82条；现有值匹配与replay未执行，等待澄清是XR具体数值、占位或另一手机，不据此判定丢数据。所有后续drive保留no-uninstall-first及keep-app-running；正常Profile1019已恢复独立运行，最新覆盖前后2文件72,037bytes非空逐字节一致，用户回报后QA前后加密数据库也字节一致，当前数据私有备份已保存。本轮Runner崩溃报告0。失败与早期工具自动卸载纠正、数据恢复、当前边界均保留于[XR记录](QA-20261017-IPHONE-XR.md)，不能写成全面验收通过。
+
+
+## 2026-10-17 首页提示位置更新
+
+按用户12:16截图要求，1019的本机血压/心率/血氧存储提示已从健康首页移至远程关爱列表末尾，设备条件及数据策略不变。静态分析、UTC/Shanghai各1110项、Android Debug/QA Release和iOS Profile/Debug通过；新完整源码Debug已覆盖安装并保持附加，实际首页树无该提示/无ErrorWidget、登录保留。旧调试VM曾超时，已主动停止并重建恢复；用户后续解锁确认时旧附加已断，已再次正常源码run恢复；最新VM确认U19S已连接、五项能力及无同步错误，首页无该提示/错误组件。远程关爱底部尚未另作真机截图。详细失败与重试见[本轮实施记录](IMPLEMENTATION-20261017-U19S-LOCAL-HEALTH.md)。
+
+
+## 2026-10-17 U19S 1019 本机模块与崩溃恢复
+
+1019按已验证Urion/EB1能力恢复本机血压、心率、血氧；用户反馈“已有”，确认入口显示。云同步/关爱仍只活动与睡眠，其他iOS设备范围及现有1018审核不变，1019未上传。源码双时区完整测试各1110、分析、原生/发布测试与Android Debug/QA Release、iOS Debug/Profile构建通过，具体边界见[实施记录](IMPLEMENTATION-20261017-U19S-LOCAL-HEALTH.md)。
+
+用户随后报告崩溃。预编译Debug热重载存在ListenableBuilder构造异常，另取得1019启动时Flutter VSyncClient空指针原生报告；未推断为Urion传感器故障。已改为从完整源码正常flutter run构建/覆盖安装与附加，保留登录和数据库。重建28.2s、安装启动23.1s，实际VM/首页树正常，无ErrorWidget；重新热重载8库840ms，无Dart异常或断连；最新崩溃目录仅旧12:10报告。Debug需保持USB和Flutter附加，脱离工具的独立冷启动须使用Profile/发布包，不能把附加运行作为独立运行验收。12:14:56重新确认U19S已连接、五项能力齐全、无设备同步错误；仍是短时验收。私有日志/数据库/VM地址不入Git。
+
+
 ## 2026-10-17 国际版苹果真机 Debug 重新开启
 
 此前Flutter会话已停止，本轮在指定iPhone 15 Pro Max重新启动正常入口1.0.1(1018) Debug；USB wired/iOS26.6/开发者模式正常，另一台已连接XR未操作。运行源码未变，复用签名及SHA验证通过的10-16调试包；手动安装后启动前3个数据库共5,431,296bytes逐字节一致。

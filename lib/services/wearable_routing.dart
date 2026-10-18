@@ -577,13 +577,18 @@ class RoutedWearableBridge
   }
 
   @override
-  Future<DeviceCapabilities> getCapabilities() async => IosWellnessPolicy
-      .current
+  Future<DeviceCapabilities> getCapabilities() async => _localDevicePolicy
       .projectCapabilities(await _activeBridge.getCapabilities());
+
+  IosWellnessPolicy get _localDevicePolicy => IosWellnessPolicy.forSdkSource(
+    _activeTransport == WearableTransport.urion
+        ? WearableSdkSource.urion
+        : null,
+  );
 
   @override
   Future<List<HealthRecord>> syncHealthData({String? cursor}) async =>
-      IosWellnessPolicy.current.projectRecords(
+      _localDevicePolicy.projectRecords(
         await _activeBridge.syncHealthData(cursor: cursor),
       );
 
@@ -604,13 +609,13 @@ class RoutedWearableBridge
 
   @override
   Future<void> startMeasurement(HealthMetric metric) async {
-    _requirePhysiology();
+    if (!_localDevicePolicy.allowsMeasurement(metric)) _requirePhysiology();
     await _activeBridge.startMeasurement(metric);
   }
 
   @override
   Future<void> stopMeasurement(HealthMetric metric) async {
-    _requirePhysiology();
+    if (!_localDevicePolicy.allowsMeasurement(metric)) _requirePhysiology();
     await _activeBridge.stopMeasurement(metric);
   }
 
@@ -744,17 +749,19 @@ class RoutedWearableBridge
   }
 
   void _forwardEvent(WearableTransport transport, WearableEvent event) {
-    final policy = IosWellnessPolicy.current;
+    final policy = IosWellnessPolicy.forSdkSource(
+      transport == WearableTransport.urion ? WearableSdkSource.urion : null,
+    );
     if (policy.enabled) {
       if (event.type == 'healthRecord') {
         if (!policy.allowsWireMetric('${event.payload['type'] ?? ''}')) return;
-        event = WearableEvent(
-          type: event.type,
-          payload: policy
-              .projectRecord(HealthRecord.fromJson(event.payload))!
-              .toJson(),
+        final projected = policy.projectRecord(
+          HealthRecord.fromJson(event.payload),
         );
-      } else if (event.type.startsWith('measurement') ||
+        if (projected == null) return;
+        event = WearableEvent(type: event.type, payload: projected.toJson());
+      } else if ((event.type.startsWith('measurement') &&
+              !policy.hasLocalDeviceMetrics) ||
           event.type.toLowerCase().contains('ecg')) {
         return;
       } else if (event.type == 'sportData') {
