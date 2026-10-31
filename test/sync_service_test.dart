@@ -154,6 +154,85 @@ void main() {
       expect(await store.readCursor(), isNull);
     },
   );
+  test(
+    'AUD-01 bounded scan resumes past rejected rows without losing retry or account ownership',
+    () async {
+      final store = MemoryHealthStore();
+      await store.switchOwner('a');
+      final api = _SelectiveApi();
+      final bad = [
+        for (var i = 0; i < 10; i++)
+          _measurement('bad-$i', HealthMetric.heartRate, {'value': 75}),
+      ];
+      api.rejectedIds.addAll(bad.map((r) => r.id));
+      await store.upsert([
+        ...bad,
+        _measurement('valid-last', HealthMetric.heartRate, {'value': 76}),
+      ]);
+      final first = await HealthSyncService(
+        store,
+        api,
+        maxPages: 1,
+      ).synchronizeNow();
+      expect(first.hasPending, isTrue);
+      expect(first.rejected, 10);
+      expect(await store.readQueueScanCursor(), isNotNull);
+      await store.switchOwner('b');
+      expect(await store.readQueueScanCursor(), isNull);
+      await store.switchOwner('a');
+      final next = await HealthSyncService(store, api).synchronizeNow();
+      expect(next.uploaded, 1);
+      expect(next.hasPending, isTrue);
+      expect(api.receivedIds, {'valid-last'});
+      expect(await store.pending(), hasLength(10));
+      expect(await store.readQueueScanCursor(), isNull);
+      api.rejectedIds.clear();
+      final retry = await HealthSyncService(store, api).synchronizeNow();
+      expect(retry.uploaded, 10);
+      expect(retry.hasPending, isFalse);
+      expect(await store.pending(), isEmpty);
+    },
+  );
+
+  test(
+    'AUD-01 partial ACK retains only rejected rows and does not repeatedly count them in the pass',
+    () async {
+      final store = MemoryHealthStore();
+      final api = _SelectiveApi()..rejectedIds.add('bad');
+      await store.upsert([
+        for (final id in ['bad', 'good-a', 'good-b'])
+          _measurement(id, HealthMetric.heartRate, {'value': 75}),
+      ]);
+      final result = await HealthSyncService(store, api).synchronizeNow();
+      expect(result.uploaded, 2);
+      expect(result.rejected, 1);
+      expect(result.hasPending, isTrue);
+      expect((await store.pending()).map((r) => r.id), ['bad']);
+    },
+  );
+
+  test(
+    'AUD-01 network failure preserves pending and retry can acknowledge every row',
+    () async {
+      final store = MemoryHealthStore();
+      final api = _SelectiveApi()..networkFailure = true;
+      await store.upsert([
+        _measurement('retry', HealthMetric.heartRate, {'value': 75}),
+      ]);
+      await expectLater(
+        HealthSyncService(store, api).synchronizeNow(),
+        throwsA(isA<ApiException>()),
+      );
+      expect((await store.pending()).single.id, 'retry');
+      expect(await store.readQueueScanCursor(), isNull);
+      api.networkFailure = false;
+      expect(
+        (await HealthSyncService(store, api).synchronizeNow()).uploaded,
+        1,
+      );
+      expect(await store.pending(), isEmpty);
+    },
+  );
 }
 
 HealthRecord _measurement(
@@ -299,4 +378,31 @@ abstract class _BaseFakeApi implements SaydianApi {
   @override
   Future<Session> register(String mobile, String password) =>
       throw UnimplementedError();
+}
+
+class _SelectiveApi extends _AcceptingApi {
+  final rejectedIds = <String>{};
+  bool networkFailure = false;
+  @override
+  Future<BatchUploadResult> uploadHealthBatch(SyncBatch batch) async {
+    if (networkFailure) {
+      throw const ApiException(
+        'Synthetic network failure',
+        code: 'NETWORK_UNAVAILABLE',
+      );
+    }
+    final accepted = batch.records
+        .map((r) => r.id)
+        .where((id) => !rejectedIds.contains(id))
+        .toSet();
+    receivedIds.addAll(accepted);
+    return BatchUploadResult(
+      acceptedIds: accepted,
+      rejected: {
+        for (final r in batch.records)
+          if (rejectedIds.contains(r.id)) r.id: 'Synthetic rejection',
+      },
+      nextCursor: 'synthetic-cursor',
+    );
+  }
 }

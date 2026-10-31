@@ -2004,6 +2004,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get cloudHealthLocalOnly => '数据仅保存在本机，登录后可上传';
 
   @override
+  String get cloudHealthOnDeviceOnly => '这些记录仅保存在本机。';
+
+  @override
   String get cloudHealthPending => '部分记录暂未上传，已保存在本机';
 
   @override
@@ -4101,6 +4104,9 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
   String get cloudHealthLocalOnly => '数据仅保存在本机，登录后可上传';
 
   @override
+  String get cloudHealthOnDeviceOnly => '这些记录仅保存在本机。';
+
+  @override
   String get cloudHealthPending => '部分记录暂未上传，已保存在本机';
 
   @override
@@ -6196,6 +6202,9 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get cloudHealthLocalOnly => '資料僅儲存在本機，登入後可上傳';
+
+  @override
+  String get cloudHealthOnDeviceOnly => '這些記錄僅儲存在本機。';
 
   @override
   String get cloudHealthPending => '部分記錄暫未上傳，已儲存在本機';

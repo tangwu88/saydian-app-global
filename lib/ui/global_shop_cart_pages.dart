@@ -11,17 +11,30 @@ import '../l10n/global_locale_controller.dart';
 import '../services/api_client.dart';
 import '../services/app_controller.dart';
 import 'global_shop_widgets.dart';
+import 'global_account_boundary.dart';
 
-class GlobalShopCartPage extends StatefulWidget {
+class GlobalShopCartPage extends StatelessWidget {
   const GlobalShopCartPage({required this.controller, super.key});
 
   final AppController controller;
 
   @override
-  State<GlobalShopCartPage> createState() => _GlobalShopCartPageState();
+  Widget build(BuildContext context) => GlobalAccountBoundary(
+    controller: controller,
+    builder: (_) => _GlobalShopCartPageContent(controller: controller),
+  );
 }
 
-class _GlobalShopCartPageState extends State<GlobalShopCartPage> {
+class _GlobalShopCartPageContent extends StatefulWidget {
+  const _GlobalShopCartPageContent({required this.controller});
+
+  final AppController controller;
+
+  @override
+  State<_GlobalShopCartPageContent> createState() => _GlobalShopCartPageState();
+}
+
+class _GlobalShopCartPageState extends State<_GlobalShopCartPageContent> {
   Map<String, Object?> _cart = const {};
   GlobalCommerceCapabilities _capabilities =
       GlobalCommerceCapabilities.unavailable;
@@ -46,6 +59,7 @@ class _GlobalShopCartPageState extends State<GlobalShopCartPage> {
   }
 
   Future<void> _load() async {
+    if (!mounted) return;
     final generation = ++_generation;
     setState(() {
       _loading = true;
@@ -79,6 +93,7 @@ class _GlobalShopCartPageState extends State<GlobalShopCartPage> {
     required int quantity,
     required bool selected,
   }) async {
+    if (!mounted) return;
     if (_busy) return;
     final sku = commerceMap(item['sku']);
     final skuId = commerceId(item['skuId'] ?? item['sku_id'] ?? sku['id']);
@@ -103,6 +118,7 @@ class _GlobalShopCartPageState extends State<GlobalShopCartPage> {
   }
 
   Future<void> _remove(Map<String, Object?> item) async {
+    if (!mounted) return;
     if (_busy) return;
     final id = commerceId(item['id']);
     if (id.isEmpty) return;
@@ -118,6 +134,7 @@ class _GlobalShopCartPageState extends State<GlobalShopCartPage> {
   }
 
   Future<void> _checkout() async {
+    if (!mounted) return;
     final items = _selected
         .map((item) {
           final sku = commerceMap(item['sku']);
@@ -368,7 +385,7 @@ class _EmptyCart extends StatelessWidget {
   );
 }
 
-class GlobalShopCheckoutPage extends StatefulWidget {
+class GlobalShopCheckoutPage extends StatelessWidget {
   const GlobalShopCheckoutPage({
     required this.controller,
     required this.items,
@@ -381,10 +398,34 @@ class GlobalShopCheckoutPage extends StatefulWidget {
   final GlobalCommerceCapabilities capabilities;
 
   @override
-  State<GlobalShopCheckoutPage> createState() => _GlobalShopCheckoutPageState();
+  Widget build(BuildContext context) => GlobalAccountBoundary(
+    controller: controller,
+    builder: (_) => _GlobalShopCheckoutPageContent(
+      controller: controller,
+      items: items,
+      capabilities: capabilities,
+    ),
+  );
 }
 
-class _GlobalShopCheckoutPageState extends State<GlobalShopCheckoutPage> {
+class _GlobalShopCheckoutPageContent extends StatefulWidget {
+  const _GlobalShopCheckoutPageContent({
+    required this.controller,
+    required this.items,
+    required this.capabilities,
+  });
+
+  final AppController controller;
+  final List<Map<String, Object?>> items;
+  final GlobalCommerceCapabilities capabilities;
+
+  @override
+  State<_GlobalShopCheckoutPageContent> createState() =>
+      _GlobalShopCheckoutPageState();
+}
+
+class _GlobalShopCheckoutPageState
+    extends State<_GlobalShopCheckoutPageContent> {
   List<Map<String, Object?>> _addresses = const [];
   List<Map<String, Object?>> _coupons = const [];
   Map<String, Object?>? _address;
@@ -418,6 +459,7 @@ class _GlobalShopCheckoutPageState extends State<GlobalShopCheckoutPage> {
   }
 
   Future<void> _load() async {
+    if (!mounted) return;
     setState(() {
       _loading = true;
       _failed = false;
@@ -526,6 +568,7 @@ class _GlobalShopCheckoutPageState extends State<GlobalShopCheckoutPage> {
   }
 
   Future<void> _clearDraft() async {
+    if (!mounted) return;
     try {
       await widget.controller.clearGlobalShopDraft(_draftKey);
     } catch (_) {
@@ -542,6 +585,7 @@ class _GlobalShopCheckoutPageState extends State<GlobalShopCheckoutPage> {
   }
 
   Future<void> _refreshQuote() async {
+    if (!mounted) return;
     final address = _address;
     if (address == null || _orderItems.isEmpty) {
       if (mounted) {
@@ -586,6 +630,7 @@ class _GlobalShopCheckoutPageState extends State<GlobalShopCheckoutPage> {
   }
 
   Future<void> _chooseAddress() async {
+    if (!mounted) return;
     final selected = await Navigator.of(context).push<Map<String, Object?>>(
       MaterialPageRoute(
         builder: (_) => GlobalShopAddressesPage(
@@ -601,6 +646,7 @@ class _GlobalShopCheckoutPageState extends State<GlobalShopCheckoutPage> {
   }
 
   Future<void> _placeOrder() async {
+    if (!mounted) return;
     if (_submitting ||
         (_frozenRequest == null && (_quote == null || _address == null))) {
       return;
@@ -641,6 +687,7 @@ class _GlobalShopCheckoutPageState extends State<GlobalShopCheckoutPage> {
         return;
       }
     }
+    if (!mounted) return;
     try {
       final order = await widget.controller.placeGlobalShopOrder(
         addressId: commerceId(request['addressId']),
@@ -996,7 +1043,7 @@ class _GlobalShopCheckoutPageState extends State<GlobalShopCheckoutPage> {
   }
 }
 
-class GlobalShopAddressesPage extends StatefulWidget {
+class GlobalShopAddressesPage extends StatelessWidget {
   const GlobalShopAddressesPage({
     required this.controller,
     this.selectMode = false,
@@ -1009,11 +1056,34 @@ class GlobalShopAddressesPage extends StatefulWidget {
   final GlobalCommerceCapabilities? capabilities;
 
   @override
-  State<GlobalShopAddressesPage> createState() =>
+  Widget build(BuildContext context) => GlobalAccountBoundary(
+    controller: controller,
+    builder: (_) => _GlobalShopAddressesPageContent(
+      controller: controller,
+      selectMode: selectMode,
+      capabilities: capabilities,
+    ),
+  );
+}
+
+class _GlobalShopAddressesPageContent extends StatefulWidget {
+  const _GlobalShopAddressesPageContent({
+    required this.controller,
+    this.selectMode = false,
+    this.capabilities,
+  });
+
+  final AppController controller;
+  final bool selectMode;
+  final GlobalCommerceCapabilities? capabilities;
+
+  @override
+  State<_GlobalShopAddressesPageContent> createState() =>
       _GlobalShopAddressesPageState();
 }
 
-class _GlobalShopAddressesPageState extends State<GlobalShopAddressesPage> {
+class _GlobalShopAddressesPageState
+    extends State<_GlobalShopAddressesPageContent> {
   List<Map<String, Object?>> _items = const [];
   late GlobalCommerceCapabilities _capabilities;
   bool _loading = true;
@@ -1028,6 +1098,7 @@ class _GlobalShopAddressesPageState extends State<GlobalShopAddressesPage> {
   }
 
   Future<void> _load() async {
+    if (!mounted) return;
     setState(() {
       _loading = true;
       _failed = false;
@@ -1058,6 +1129,7 @@ class _GlobalShopAddressesPageState extends State<GlobalShopAddressesPage> {
   }
 
   Future<void> _edit([Map<String, Object?>? item]) async {
+    if (!mounted) return;
     if (_capabilities.countryCodes.isEmpty) {
       ScaffoldMessenger.of(
         context,
@@ -1077,6 +1149,7 @@ class _GlobalShopAddressesPageState extends State<GlobalShopAddressesPage> {
   }
 
   Future<void> _delete(Map<String, Object?> item) async {
+    if (!mounted) return;
     final id = commerceId(item['id']);
     if (id.isEmpty) return;
     final confirmed = await showDialog<bool>(
@@ -1221,7 +1294,7 @@ class _GlobalShopAddressesPageState extends State<GlobalShopAddressesPage> {
   );
 }
 
-class GlobalShopAddressEditPage extends StatefulWidget {
+class GlobalShopAddressEditPage extends StatelessWidget {
   const GlobalShopAddressEditPage({
     required this.controller,
     required this.capabilities,
@@ -1234,11 +1307,34 @@ class GlobalShopAddressEditPage extends StatefulWidget {
   final Map<String, Object?>? address;
 
   @override
-  State<GlobalShopAddressEditPage> createState() =>
+  Widget build(BuildContext context) => GlobalAccountBoundary(
+    controller: controller,
+    builder: (_) => _GlobalShopAddressEditPageContent(
+      controller: controller,
+      capabilities: capabilities,
+      address: address,
+    ),
+  );
+}
+
+class _GlobalShopAddressEditPageContent extends StatefulWidget {
+  const _GlobalShopAddressEditPageContent({
+    required this.controller,
+    required this.capabilities,
+    this.address,
+  });
+
+  final AppController controller;
+  final GlobalCommerceCapabilities capabilities;
+  final Map<String, Object?>? address;
+
+  @override
+  State<_GlobalShopAddressEditPageContent> createState() =>
       _GlobalShopAddressEditPageState();
 }
 
-class _GlobalShopAddressEditPageState extends State<GlobalShopAddressEditPage> {
+class _GlobalShopAddressEditPageState
+    extends State<_GlobalShopAddressEditPageContent> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _name;
   late final TextEditingController _phone;
@@ -1298,6 +1394,7 @@ class _GlobalShopAddressEditPageState extends State<GlobalShopAddressEditPage> {
   }
 
   Future<void> _save() async {
+    if (!mounted) return;
     if (_busy ||
         !widget.capabilities.countryCodes.contains(_country) ||
         !_formKey.currentState!.validate()) {

@@ -2034,6 +2034,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get cloudHealthLocalOnly => 'この端末に保存されています。送信するにはログインしてください。';
 
   @override
+  String get cloudHealthOnDeviceOnly => 'これらの記録はこの端末にのみ保存されています。';
+
+  @override
   String get cloudHealthPending => '未送信の記録があります。記録はこの端末に保存されています。';
 
   @override

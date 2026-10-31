@@ -1,0 +1,143 @@
+{
+  "date": "2026-11-01",
+  "timezone": "Asia/Shanghai",
+  "baselineCommit": "1c974ac",
+  "branch": "codex/client-audit-fixes-20261101",
+  "appVersion": "1.0.1+1020",
+  "findings": [
+    {
+      "id": "AUD-01",
+      "status": "FIXED-AUTO",
+      "qualification": "Source and automated checks; physical-device/release acceptance separate"
+    },
+    {
+      "id": "AUD-02",
+      "status": "FIXED-AUTO",
+      "qualification": "Source and automated checks; physical-device/release acceptance separate"
+    },
+    {
+      "id": "AUD-03",
+      "status": "FIXED-AUTO",
+      "qualification": "Source and automated checks; physical-device/release acceptance separate"
+    },
+    {
+      "id": "AUD-04",
+      "status": "FIXED-AUTO",
+      "qualification": "Source and automated checks; physical-device/release acceptance separate"
+    },
+    {
+      "id": "AUD-05",
+      "status": "FIXED-AUTO",
+      "qualification": "Source and automated checks; physical-device/release acceptance separate"
+    },
+    {
+      "id": "AUD-06",
+      "status": "FIXED-AUTO",
+      "qualification": "Source and automated checks; physical-device/release acceptance separate"
+    }
+  ],
+  "checks": {
+    "analyzer": {
+      "exitCode": 0,
+      "issues": 0
+    },
+    "flutterUTC": {
+      "exitCode": 0,
+      "passed": 1142,
+      "seconds": 30
+    },
+    "flutterAsiaShanghai": {
+      "exitCode": 0,
+      "passed": 1142,
+      "seconds": 27
+    },
+    "targetedFinal": {
+      "exitCode": 0,
+      "passed": 37
+    },
+    "pythonReleaseTools": {
+      "exitCode": 0,
+      "passed": 25
+    },
+    "nodeNativeAuth": {
+      "exitCode": 0,
+      "passed": 92,
+      "skipped": 1,
+      "skipReason": "Windows ACL requires Windows"
+    },
+    "androidNative": {
+      "Play": {
+        "tests": 38,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "Sideload": {
+        "tests": 38,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    "format": {
+      "exitCode": 0,
+      "files": 199,
+      "filesChanged": 0
+    }
+  },
+  "androidArtifacts": [
+    {
+      "mode": "debug",
+      "sha256": "6a52432166c58b7ce6ad08ab647f8c56039b16fc6102647363bfa19a02b1e379",
+      "bytes": 159121975,
+      "abis": [
+        "arm64-v8a",
+        "armeabi-v7a"
+      ],
+      "oldRawHealthLogStringsPresent": false
+    },
+    {
+      "mode": "release",
+      "sha256": "369a3352084c84e84dcb54f38f203c695c9d00cc725652eda08630384c63f876",
+      "bytes": 70685377,
+      "abis": [
+        "arm64-v8a",
+        "armeabi-v7a"
+      ],
+      "oldRawHealthLogStringsPresent": false
+    }
+  ],
+  "builds": {
+    "androidPlayDebug": {
+      "exitCode": 0,
+      "seconds": 16.3
+    },
+    "androidPlayQARelease": {
+      "exitCode": 0,
+      "seconds": 25.1,
+      "storeSigningAcceptance": false
+    },
+    "iosProfile": {
+      "exitCode": 0,
+      "seconds": 40.1,
+      "signed": false
+    },
+    "iosDebug": {
+      "exitCode": 0,
+      "seconds": 16.6,
+      "signed": false,
+      "bundleId": "cn.saydian.app.global",
+      "displayName": "SayDian",
+      "build": "1020"
+    },
+    "iosTemporaryMinimumVersion": "15.0 via private Xcode27 compatibility override; tracked configuration unchanged"
+  },
+  "notAccepted": [
+    "New physical iPhone runtime and BLE/sync regression: iPhone15pm unavailable; do not disturb XR other app test",
+    "Signed release/export/upload or store review",
+    "Production login/payment/OTP/load tests",
+    "Harmony HAP",
+    "Remote CI status until separately recorded"
+  ],
+  "dataProtection": "No original health payload, device container, signing credential or private evidence committed. SQLite FFI reopen tested, not claimed as phone SQLCipher acceptance."
+}

@@ -71,6 +71,14 @@ List<Map<String, Object?>> get _checkoutItems => [
 ];
 
 class _FlowController extends Fake implements AppController {
+  // Static rendering fixture; session lifecycle tests use a real controller.
+  @override
+  Object? get accountViewIdentity => 'synthetic-static-owner';
+  @override
+  void addListener(VoidCallback listener) {}
+  @override
+  void removeListener(VoidCallback listener) {}
+
   final drafts = <String, Map<String, Object?>>{};
   final placed = <Map<String, Object?>>[];
   final afterSales = <Map<String, Object?>>[];

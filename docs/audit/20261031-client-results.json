@@ -1,0 +1,91 @@
+{
+  "date": "2026-10-31",
+  "timezone": "Asia/Shanghai",
+  "scope": "International client source and check-code audit; no runtime fix, build, deployment or store change",
+  "baselineCommit": "6b197e9228b0a3148e81de54cb62f0c2f261eb55",
+  "branch": "codex/client-code-audit-20261031",
+  "appVersion": "1.0.1+1020",
+  "flutterVersion": "3.44.9",
+  "dartVersion": "3.12.2",
+  "checks": [
+    {
+      "name": "existing Flutter tests UTC",
+      "exitCode": 0,
+      "passed": 1110,
+      "failed": 0,
+      "seconds": 36.3
+    },
+    {
+      "name": "existing Flutter tests Asia/Shanghai",
+      "exitCode": 0,
+      "passed": 1110,
+      "failed": 0,
+      "seconds": 25.9
+    },
+    {
+      "name": "Python release tool unit tests",
+      "exitCode": 0,
+      "passed": 25,
+      "failed": 0,
+      "qualification": "Offline tool fixtures, including historical domestic release cases; not a new international artifact inspection"
+    },
+    {
+      "name": "Node native-log, Urion lifecycle and auth offline gates",
+      "exitCode": 0,
+      "passed": 90,
+      "failed": 0,
+      "skipped": 1,
+      "skipReason": "Windows ACL validation requires Windows; host is macOS",
+      "qualification": "Source/offline checks, not native compilation or physical-device acceptance"
+    },
+    {
+      "name": "final analyzer including new audit repro source",
+      "exitCode": 0,
+      "issues": 0
+    },
+    {
+      "name": "final dart format lib test and audit repro source",
+      "exitCode": 0,
+      "files": 194,
+      "filesChanged": 0,
+      "qualification": "New repro file had been formatted before this check"
+    },
+    {
+      "name": "explicit audit safety repros after formatting",
+      "path": "tool/audit/client_review_regressions_test.dart",
+      "exitCode": 1,
+      "passed": 0,
+      "failedSafetyAssertions": 4,
+      "compileOrSetupErrors": 0,
+      "qualification": "OPEN product findings reproduced. This suite is separate from ordinary flutter test and is not green."
+    },
+    {
+      "name": "git diff --check",
+      "exitCode": 0
+    }
+  ],
+  "findings": [
+    {"id": "AUD-01", "priority": "P1", "status": "OPEN", "evidence": "offline-reproduced", "summary": "Invalid metadata blocks queue head and starves later valid records"},
+    {"id": "AUD-02", "priority": "P2", "status": "OPEN", "evidence": "offline-api-race-reproduced", "summary": "Late logout clears a replacement vault session"},
+    {"id": "AUD-03", "priority": "P2", "status": "OPEN", "evidence": "offline-reproduced", "summary": "Local-only iOS physiology reports cloud complete despite zero uploads"},
+    {"id": "AUD-04", "priority": "P2", "status": "OPEN", "evidence": "widget-lifecycle-reproduced", "summary": "Mounted private orders page retains prior owner content after controller logout"},
+    {"id": "AUD-05", "priority": "P2", "status": "OPEN", "evidence": "source-reviewed-no-device-log", "summary": "CoolWear Android DEBUG logs include stress readings and timestamps"},
+    {"id": "AUD-06", "priority": "P2", "status": "OPEN", "evidence": "source-reviewed-no-stress-test", "summary": "ECG response and gzip size checks follow full allocation, with no dedicated request deadline"}
+  ],
+  "unmergedReference": {
+    "ref": "origin/codex/global-update-20261018",
+    "commit": "f5d632b973834aaab3aaabe11777c93be75cc76d",
+    "qualification": "Contains distinct R12 routing and QA documentation. Not merged or substituted for audit baseline."
+  },
+  "notRun": [
+    "Android Gradle/JVM builds and native compilation",
+    "iOS Xcode/XCTest/signing builds",
+    "Harmony HAP build",
+    "Physical-device and sensor regression",
+    "Live login, server read-back, restore or authorization testing",
+    "Current remote CI execution",
+    "Live dependency/CVE advisory audit",
+    "Store status update, upload or submission"
+  ],
+  "sensitiveEvidence": "Only synthetic fixtures in Git. Raw logs remain in private local audit directory."
+}

@@ -2147,6 +2147,10 @@ class AppLocalizationsFr extends AppLocalizations {
       'Enregistrées sur ce téléphone. Connectez-vous pour les envoyer.';
 
   @override
+  String get cloudHealthOnDeviceOnly =>
+      'Ces données sont enregistrées uniquement sur ce téléphone.';
+
+  @override
   String get cloudHealthPending =>
       'Certaines données ne sont pas encore envoyées. Elles restent sur ce téléphone.';
 

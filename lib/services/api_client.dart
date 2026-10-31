@@ -13,6 +13,7 @@ import '../domain/global_account.dart';
 import '../domain/global_care.dart';
 import '../domain/health_report_models.dart';
 import 'global_environment.dart';
+import 'bounded_bytes.dart';
 import 'network_audit.dart';
 import 'secure_vault.dart';
 
@@ -2024,9 +2025,24 @@ class SaydianApiClient
   }
 
   Future<http.Response> _withAuthorizationRetry(
-    Future<http.Response> Function(Session session) request,
-  ) async {
-    final session = await _requiredSession();
+    Future<http.Response> Function(Session session) request, {
+    Session? expectedSession,
+  }) async {
+    final session = expectedSession ?? await _requiredSession();
+    if (expectedSession != null) {
+      final current = await _vault.readSession();
+      if (current == null ||
+          current.accessToken != session.accessToken ||
+          current.refreshToken != session.refreshToken ||
+          current.memberId != session.memberId ||
+          current.accountKey != session.accountKey) {
+        throw const ApiException(
+          'Session changed',
+          code: 'SESSION_CHANGED',
+          statusCode: 401,
+        );
+      }
+    }
     final response = await request(session);
     if (!_isUnauthorizedResponse(response) ||
         session.refreshToken.trim().isEmpty) {

@@ -2043,6 +2043,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get cloudHealthLocalOnly => '이 휴대폰에 저장되었습니다. 업로드하려면 로그인해 주세요.';
 
   @override
+  String get cloudHealthOnDeviceOnly => '이 기록은 이 휴대폰에만 저장됩니다.';
+
+  @override
   String get cloudHealthPending => '아직 업로드되지 않은 기록이 있습니다. 이 휴대폰에 저장되어 있습니다.';
 
   @override

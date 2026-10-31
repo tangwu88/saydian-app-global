@@ -755,6 +755,11 @@ class AppController extends ChangeNotifier {
   double deviceSyncProgress = 0;
   bool isPreviewMode = false;
   Session? session;
+  // No token is exposed to widget keys/diagnostics. Refresh retains this owner;
+  // transitions, logout and same-account reauthentication invalidate old pages.
+  Object? get accountViewIdentity => session == null || _accountTransitioning
+      ? null
+      : (_sessionGeneration, session!.accountKey, session!.memberId);
   int selectedTab = 0;
   String? errorMessage;
   String? measurementErrorMessage;
@@ -1653,70 +1658,106 @@ class AppController extends ChangeNotifier {
   }
 
   Future<void> logout() async {
+    if (_accountTransitioning) return;
+    final expectedOwner = session;
+    final expectedGeneration = _sessionGeneration;
+    Session? storedSession;
+    bool current() =>
+        _isCurrentSessionGeneration(expectedGeneration) &&
+        identical(session, expectedOwner);
     cancelWechatLogin(force: true);
     isBusy = true;
     _accountTransitioning = true;
     notifyListeners();
     try {
+      storedSession = await _vault.readSession();
       await _pauseWearableForAccountTransition();
       await _drainCloudSync();
-      if (session != null) {
+      if (current() && session != null) {
         await _unregisterPushDevice();
-        await _api.logout();
-      } else {
-        await _vault.clearSession();
+        if (current()) {
+          final api = _api;
+          if (api is GlobalSaydianApiClient) {
+            if (storedSession != null) {
+              await api.logout(expectedSession: storedSession);
+            }
+          } else {
+            await api.logout();
+          }
+        }
       }
     } on ApiException catch (error) {
-      errorMessage = _apiErrorMessage(error, fallback: '退出失败，请稍后重试');
-    } finally {
-      try {
-        await _vault.clearSession();
-        await _vault.writePrivacyConsentGranted(false);
-      } catch (_) {
-        // The in-memory session is still cleared immediately below.
+      if (current()) {
+        errorMessage = _apiErrorMessage(error, fallback: '退出失败，请稍后重试');
       }
-      session = null;
-      _privacyConsentGranted = false;
-      final generation = _advanceSessionGeneration(null);
-      await _switchHealthOwnerAndLoad(
-        null,
-        expectedGeneration: generation,
-        loadCache: false,
-      );
-      isPreviewMode = false;
-      memberProfile = const {};
-      careMembers = const [];
-      careInvitations = const [];
-      aiMessages = const [];
-      _aiSessionIds.clear();
-      notifications = const [];
-      remoteNotificationUnreadCount = null;
-      pendingNotificationRoute = null;
-      _careInvitationPollTimer?.cancel();
-      notificationInboxEvents = const [];
-      notificationUnreadCount = 0;
-      await _notificationService.setBadge(0);
-      await _notificationService.deactivate();
-      orders = const [];
-      addresses = const [];
-      selectedTab = 0;
-      _accountTransitioning = false;
-      isBusy = false;
-      if (_notificationStorageReady) await _refreshNotificationInboxState();
-      notifyListeners();
+    } finally {
+      if (current()) {
+        try {
+          if (storedSession != null) {
+            await _vault.clearSessionIfUnchanged(storedSession);
+          }
+          await _vault.writePrivacyConsentGranted(false);
+        } catch (_) {
+          // The in-memory session is still cleared immediately below.
+        }
+        session = null;
+        _privacyConsentGranted = false;
+        final generation = _advanceSessionGeneration(null);
+        await _switchHealthOwnerAndLoad(
+          null,
+          expectedGeneration: generation,
+          loadCache: false,
+        );
+        isPreviewMode = false;
+        memberProfile = const {};
+        careMembers = const [];
+        careInvitations = const [];
+        aiMessages = const [];
+        _aiSessionIds.clear();
+        notifications = const [];
+        remoteNotificationUnreadCount = null;
+        pendingNotificationRoute = null;
+        _careInvitationPollTimer?.cancel();
+        notificationInboxEvents = const [];
+        notificationUnreadCount = 0;
+        await _notificationService.setBadge(0);
+        await _notificationService.deactivate();
+        orders = const [];
+        addresses = const [];
+        selectedTab = 0;
+        _accountTransitioning = false;
+        isBusy = false;
+        if (_notificationStorageReady) await _refreshNotificationInboxState();
+        notifyListeners();
+      }
     }
   }
 
   Future<bool> deleteAccount() => _guard(() async {
+    final expectedOwner = session;
+    final expectedGeneration = _sessionGeneration;
     _accountTransitioning = true;
     try {
+      final storedSession = await _vault.readSession();
       await _drainCloudSync();
       if (session == null) {
         throw const ApiException('快速体验账号无需注销');
       }
       final notificationInboxToClear = _notificationInboxService;
       await _unregisterPushDevice();
-      await _api.deleteAccount();
+      final api = _api;
+      if (api is GlobalSaydianApiClient) {
+        if (storedSession == null) {
+          throw const ApiException('Sign in to continue.', statusCode: 401);
+        }
+        await api.deleteAccount(expectedSession: storedSession);
+      } else {
+        await api.deleteAccount();
+      }
+      if (!_isCurrentSessionGeneration(expectedGeneration) ||
+          !identical(session, expectedOwner)) {
+        return;
+      }
       await _pauseWearableForAccountTransition();
       await _vault.writePrivacyConsentGranted(false);
       session = null;
@@ -3510,19 +3551,33 @@ class AppController extends ChangeNotifier {
             !_accountTransitioning && _isCurrentSessionGeneration(generation),
       );
       if (!_isCurrentSessionGeneration(generation)) return;
+      final hasCloudRecords = healthRecords.any(
+        (record) => IosWellnessPolicy.current.projectRecord(record) != null,
+      );
+      final onlyLocal =
+          !hasCloudRecords &&
+          healthRecords.isNotEmpty &&
+          result.uploaded == 0 &&
+          result.rejected == 0 &&
+          !result.hasPending &&
+          result.message == null;
       cloudSyncStatus =
           result.message ??
-          (result.uploaded == 0 &&
-                  result.rejected == 0 &&
-                  !result.hasPending &&
-                  healthRecords.isNotEmpty
+          (onlyLocal
+              ? '数据仅保存在本机'
+              : result.uploaded == 0 &&
+                    result.rejected == 0 &&
+                    !result.hasPending &&
+                    hasCloudRecords
               ? '数据已同步，无待上传记录'
               : '已上传 ${result.uploaded} 条，拒绝 ${result.rejected} 条');
       cloudSyncUploadedCount = result.uploaded;
       cloudSyncState =
           result.hasPending || result.rejected > 0 || result.message != null
           ? CloudHealthSyncState.pending
-          : result.uploaded > 0 || healthRecords.isNotEmpty
+          : onlyLocal
+          ? CloudHealthSyncState.localOnly
+          : result.uploaded > 0 || hasCloudRecords
           ? CloudHealthSyncState.complete
           : CloudHealthSyncState.idle;
     } on ApiException catch (error) {

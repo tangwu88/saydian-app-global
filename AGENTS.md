@@ -8,6 +8,7 @@
 - Record every implementation/test round in Git, including exact commands, failures, correction, skipped checks and actual build evidence. Never equate a host-side contract test with a real device/SDK/provider acceptance.
 - Registration and health-analysis consent use reviewed, published international documents; do not invent versions. Provider, market and payment availability comes from server configuration, not UI assumptions. No real OTP delivery/payment without an authorized test destination and accepted channel.
 - Existing health values and device algorithms stay unchanged. Unknown values remain unknown; unconfirmed uploads remain pending, not successful.
+- Before client changes, read `docs/CLIENT-REGRESSION-GATES.md` and the latest linked fix record. The 2026-10-31 audit remains historical; AUD-01–06 were fixed in source with automated regression evidence on 2026-11-01 (`docs/IMPLEMENTATION-20261101-CLIENT-AUDIT-FIXES.md`). The original safety assertions now run in ordinary `test/client_review_regressions_test.dart` / CI; `tool/audit/` forwards to them. Preserve their correct expectations. Device, signing and store acceptance remain separate evidence.
 
 ## 项目角色
 

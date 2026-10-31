@@ -232,7 +232,9 @@ class DevicePage extends StatelessWidget {
                               CloudHealthSyncState.uploading =>
                                 context.l10n.cloudHealthUploading,
                               CloudHealthSyncState.localOnly =>
-                                context.l10n.cloudHealthLocalOnly,
+                                controller.isAuthenticated
+                                    ? context.l10n.cloudHealthOnDeviceOnly
+                                    : context.l10n.cloudHealthLocalOnly,
                               CloudHealthSyncState.pending =>
                                 context.l10n.cloudHealthPending,
                               CloudHealthSyncState.complete =>

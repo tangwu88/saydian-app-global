@@ -1,5 +1,21 @@
 # SayDian 当前交接说明
 
+## 2026-11-01 六项客户端问题已修复并回归
+
+基线 `1c974ac`，分支 `codex/client-audit-fixes-20261101`。依次修复坏队首阻塞、会话迟到清除、私有页面/弹窗残留、本机数据误报云成功、Debug 原值日志和 ECG 网络/解压资源限制。原四个正确反例已提升到普通 test/ 和现有 CI。最终双时区各 1142、定向37、analyzer 通过；发布25、Node92通过/1跳过、Android 两渠道原生各38通过。Android Play Debug/QA Release、iOS 构建及 Git 交付的实际细节见 [本轮记录](IMPLEMENTATION-20261101-CLIENT-AUDIT-FIXES.md)。
+
+状态为源码/自动回归已验证；iPhone15pm 起始 unavailable，尚未新真机覆盖安装/采集/同步验收，不以 XR 其他 App 测试替代，也没有改变商店审核或提交新包。旧 10-31 OPEN/红灯记录保留为历史；后续从 [当前门禁](CLIENT-REGRESSION-GATES.md) 开始。
+
+## 2026-10-31 客户端代码审查已记录，问题待修复
+
+基线 `6b197e9` / 1.0.1(1020)，本轮 `codex/client-code-audit-20261031` 只增加审查资料及合成复现测试。既有 analyzer、UTC/Shanghai 各 1110、发布测试 25 通过；原生/认证离线门禁 90 通过、Windows ACL 1 跳过。新增显式 audit 套件四项安全断言均失败，复现队首阻塞、旧 logout 清除新会话、iOS 本机数据误报云完成、退出后已挂载订单页缓存残留。另有 Debug 健康值日志和 ECG 分配后限额的源码风险。六项均 OPEN，未改产品代码，也未构建/安装/上传/提审，不将普通测试绿灯作为这些问题已修复的依据。
+
+下一位同事先读 [完整审查及证据](CLIENT-CODE-AUDIT-20261031.md) 和 [长期回归门禁](CLIENT-REGRESSION-GATES.md)，修复后逐项转入普通测试/CI。另一 `global-update-20261018` 的 R12 路由差异尚未集成，不混用不同分支验收。真机、服务器和商店状态均未在本轮重新验证。
+
+## 2026-10-29 iPhone 15 Pro Max 国际版 Debug 已启动
+
+正常 `lib/main.dart` 的 1.0.1(1020) 已覆盖安装到指定 USB iPhone15pm，保留旧数据；手动安装后、启动前的 3 个数据库共 5,513,216 bytes 逐字节一致。签名、包名、设备授权、VM/main isolate 和热重载 721ms 通过，进程保持附加，DevTools 已打开。另一台 XR 的 SayRing 测试未操作。无产品源码改动、正式上传或重新送审，不等于蓝牙/同步或苹果拒审整改验收。见 [本轮调试记录](QA-20261029-IPHONE15PM-DEBUG.md)。
+
 ## 2026-10-18 国际版源码已提交GitHub
 
 源码65b31bf的45项改动通过已授权GitHub连接发布到codex/u19s-local-health-ios-20261017，等价远端源码提交33058b659210ecbd0fa9fbb80ac4f8f48587d863，tree821ee682877ea6bde378c9fb39dba82a038ed2e6与本地逐对象、完整tree及重新fetch/diff一致。普通HTTPS写入凭据仍缺失，原本地commit历史保留；本记录的后续文档提交不改变产品代码，使用本地verified跟踪分支核对规范远端。未合并另一global-update分支或main。仓库接口现返回public，已告知，未修改可见性。详见[Git发布记录](IMPLEMENTATION-20261018-GIT-PUBLISH.md)，不把源码上传当CI或XR数据问题已通过。

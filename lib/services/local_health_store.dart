@@ -17,6 +17,13 @@ String _calendarKey(DateTime value) =>
     '${value.month.toString().padLeft(2, '0')}-'
     '${value.day.toString().padLeft(2, '0')}';
 
+/// Stable per-pass queue position; never persisted as an upload ACK.
+class HealthPendingCursor {
+  const HealthPendingCursor(this.measuredAt, this.id);
+  final DateTime measuredAt;
+  final String id;
+}
+
 abstract interface class HealthStore implements NotificationInboxStorage {
   Future<void> initialize();
   Future<void> switchOwner(String ownerId);
@@ -40,6 +47,7 @@ abstract interface class HealthStore implements NotificationInboxStorage {
   Future<List<HealthWarningAlert>> healthWarningAlerts();
   Future<List<HealthRecord>> pending({
     int limit = 200,
+    HealthPendingCursor? after,
     bool includeDailySummaries = true,
     Set<HealthMetric>? allowedMetrics,
   });
@@ -50,6 +58,8 @@ abstract interface class HealthStore implements NotificationInboxStorage {
   });
   Future<void> markSynced(Iterable<String> ids);
   Future<void> markInvalid(Iterable<String> ids);
+  Future<HealthPendingCursor?> readQueueScanCursor();
+  Future<void> writeQueueScanCursor(HealthPendingCursor? cursor);
   Future<String?> readCursor();
   Future<void> writeCursor(String cursor);
   Future<void> close();
@@ -1146,6 +1156,7 @@ class EncryptedHealthStore implements HealthStore, HealthStoreRecoveryStatus {
   @override
   Future<List<HealthRecord>> pending({
     int limit = 200,
+    HealthPendingCursor? after,
     bool includeDailySummaries = true,
     Set<HealthMetric>? allowedMetrics,
   }) async {
@@ -1161,12 +1172,20 @@ class EncryptedHealthStore implements HealthStore, HealthStoreRecoveryStatus {
                 : 'owner_id = ? AND synced = 0 AND aggregation_kind IS NULL') +
             (allowedMetrics == null
                 ? ''
-                : ' AND metric IN (${List.filled(allowedMetrics.length, '?').join(',')})'),
+                : ' AND metric IN (${List.filled(allowedMetrics.length, '?').join(',')})') +
+            (after == null
+                ? ''
+                : ' AND (measured_at > ? OR (measured_at = ? AND id > ?))'),
         whereArgs: [
           ownerId,
           ...?allowedMetrics?.map((metric) => metric.wireName),
+          if (after != null) ...[
+            after.measuredAt.toUtc().toIso8601String(),
+            after.measuredAt.toUtc().toIso8601String(),
+            after.id,
+          ],
         ],
-        orderBy: 'measured_at ASC',
+        orderBy: 'measured_at ASC, id ASC',
         limit: limit,
       ),
     );
@@ -1244,6 +1263,55 @@ class EncryptedHealthStore implements HealthStore, HealthStoreRecoveryStatus {
   }
 
   @override
+  Future<HealthPendingCursor?> readQueueScanCursor() async {
+    final ownerId = _ownerId;
+    return _enqueue(() async {
+      final rows = await _db.query(
+        'metadata',
+        columns: ['value'],
+        where: 'owner_id = ? AND key = ?',
+        whereArgs: [ownerId, 'queue_scan_cursor'],
+        limit: 1,
+      );
+      if (rows.isEmpty) return null;
+      try {
+        final value = jsonDecode('${rows.first['value']}') as Map;
+        return HealthPendingCursor(
+          DateTime.parse(value['time'] as String),
+          value['id'] as String,
+        );
+      } on FormatException {
+        return null;
+      } on TypeError {
+        return null;
+      }
+    });
+  }
+
+  @override
+  Future<void> writeQueueScanCursor(HealthPendingCursor? cursor) {
+    final ownerId = _ownerId;
+    return _enqueue(() async {
+      if (cursor == null) {
+        await _db.delete(
+          'metadata',
+          where: 'owner_id = ? AND key = ?',
+          whereArgs: [ownerId, 'queue_scan_cursor'],
+        );
+      } else {
+        await _db.insert('metadata', {
+          'owner_id': ownerId,
+          'key': 'queue_scan_cursor',
+          'value': jsonEncode({
+            'time': cursor.measuredAt.toUtc().toIso8601String(),
+            'id': cursor.id,
+          }),
+        }, conflictAlgorithm: ConflictAlgorithm.replace);
+      }
+    });
+  }
+
+  @override
   Future<String?> readCursor() async {
     final ownerId = _ownerId;
     return _enqueue(() async {
@@ -1281,6 +1349,7 @@ class EncryptedHealthStore implements HealthStore, HealthStoreRecoveryStatus {
 
 class MemoryHealthStore implements HealthStore {
   String _ownerId = 'anonymous';
+  final Map<String, HealthPendingCursor> _queueScanCursors = {};
   final Map<String, Map<String, HealthRecord>> _recordsByOwner = {};
   final Map<String, Set<String>> _syncedByOwner = {};
   final Map<String, Set<String>> _invalidByOwner = {};
@@ -1494,19 +1563,31 @@ class MemoryHealthStore implements HealthStore {
   @override
   Future<List<HealthRecord>> pending({
     int limit = 200,
+    HealthPendingCursor? after,
     bool includeDailySummaries = true,
     Set<HealthMetric>? allowedMetrics,
-  }) async => _records.values
-      .where(
-        (record) =>
-            !_synced.contains(record.id) &&
-            !_invalid.contains(record.id) &&
-            (allowedMetrics == null ||
-                allowedMetrics.contains(record.metric)) &&
-            (includeDailySummaries || record.aggregation == null),
-      )
-      .take(limit)
-      .toList();
+  }) async {
+    final ordered = _records.values.toList()
+      ..sort((a, b) {
+        final time = a.measuredAt.compareTo(b.measuredAt);
+        return time == 0 ? a.id.compareTo(b.id) : time;
+      });
+    return ordered
+        .where(
+          (record) =>
+              (after == null ||
+                  record.measuredAt.isAfter(after.measuredAt) ||
+                  (record.measuredAt.isAtSameMomentAs(after.measuredAt) &&
+                      record.id.compareTo(after.id) > 0)) &&
+              !_synced.contains(record.id) &&
+              !_invalid.contains(record.id) &&
+              (allowedMetrics == null ||
+                  allowedMetrics.contains(record.metric)) &&
+              (includeDailySummaries || record.aggregation == null),
+        )
+        .take(limit)
+        .toList();
+  }
 
   @override
   Future<HealthRecord?> latestDailySummary({
@@ -1533,6 +1614,18 @@ class MemoryHealthStore implements HealthStore {
 
   @override
   Future<void> markInvalid(Iterable<String> ids) async => _invalid.addAll(ids);
+
+  @override
+  Future<HealthPendingCursor?> readQueueScanCursor() async =>
+      _queueScanCursors[_ownerId];
+  @override
+  Future<void> writeQueueScanCursor(HealthPendingCursor? cursor) async {
+    if (cursor == null) {
+      _queueScanCursors.remove(_ownerId);
+    } else {
+      _queueScanCursors[_ownerId] = cursor;
+    }
+  }
 
   @override
   Future<String?> readCursor() async => _cursorByOwner[_ownerId];

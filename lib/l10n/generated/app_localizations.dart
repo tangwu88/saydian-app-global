@@ -3992,6 +3992,12 @@ abstract class AppLocalizations {
   /// **'Saved on this phone. Sign in to upload.'**
   String get cloudHealthLocalOnly;
 
+  /// No description provided for @cloudHealthOnDeviceOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'These records are saved on this phone only.'**
+  String get cloudHealthOnDeviceOnly;
+
   /// No description provided for @cloudHealthPending.
   ///
   /// In en, this message translates to:

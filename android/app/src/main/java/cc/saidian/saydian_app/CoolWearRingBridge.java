@@ -948,10 +948,6 @@ public final class CoolWearRingBridge
             if (value == null) continue;
             long time = CoolWearRecordMapper.currentTimestamp(value.getTime());
             int stress = value.getStressValue();
-            if (BuildConfig.DEBUG) {
-                Log.i(TAG, "manual stress sample; source=stress, value=" + stress
-                        + ", deviceTime=" + value.getTime() + ", mappedTime=" + time);
-            }
             if (stress >= 1 && stress <= 100) {
                 if (time == 0) time = System.currentTimeMillis();
                 emitMeasurement("stress", time, stress, "");
@@ -984,10 +980,6 @@ public final class CoolWearRingBridge
             if (value == null) continue;
             long time = CoolWearRecordMapper.currentTimestamp(value.getTime());
             int stress = value.getHrvNums();
-            if (BuildConfig.DEBUG) {
-                Log.i(TAG, "manual stress sample; source=real_hrv, value=" + stress
-                        + ", deviceTime=" + value.getTime() + ", mappedTime=" + time);
-            }
             if (stress >= 1 && stress <= 100) {
                 if (time == 0) time = System.currentTimeMillis();
                 emitMeasurement("stress", time, stress, "");

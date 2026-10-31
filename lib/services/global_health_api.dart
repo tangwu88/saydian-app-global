@@ -23,7 +23,7 @@ mixin GlobalHealthApi on SaydianApiClient
           statusCode: 401,
         );
       }
-      return _client.get(_uri(path), headers: _authorizationHeaders(session));
+      return _readEcgResponse(path, session);
     });
     if (_stableSessionAccountKey(await _requiredSession()) != owner) {
       throw const ApiException(
@@ -51,11 +51,30 @@ mixin GlobalHealthApi on SaydianApiClient
         sha256.convert(bytes).toString() != hash.toLowerCase()) {
       throw const ApiException('Invalid ECG waveform', code: 'INVALID_ECG_ACK');
     }
-    final uncompressed = gzip.decode(bytes);
-    if (uncompressed.length > 32 * 1024 * 1024) {
+    Object? samples;
+    try {
+      final uncompressed = await inflateBoundedGzip(
+        bytes,
+        maxBytes: 32 * 1024 * 1024,
+      );
+      samples = jsonDecode(utf8.decode(uncompressed));
+    } on ResourceLimitException {
       throw const ApiException('Invalid ECG waveform', code: 'INVALID_ECG_ACK');
+    } on FormatException {
+      throw const ApiException('Invalid ECG waveform', code: 'INVALID_ECG_ACK');
+    } on TimeoutException {
+      throw const ApiException(
+        'Unable to load waveform. Please try again.',
+        code: 'NETWORK_TIMEOUT',
+      );
     }
-    final samples = jsonDecode(utf8.decode(uncompressed));
+    if (_stableSessionAccountKey(await _requiredSession()) != owner) {
+      throw const ApiException(
+        'Session changed',
+        code: 'SESSION_CHANGED',
+        statusCode: 401,
+      );
+    }
     if (samples is! List ||
         samples.length != count ||
         samples.any((v) => v is! num || !v.isFinite)) {
@@ -67,6 +86,46 @@ mixin GlobalHealthApi on SaydianApiClient
       rawVersion: record.quality == 'suspect' ? record.rawVersion : 2,
       values: {...record.values, 'sampleFrequency': rate},
     );
+  }
+
+  Future<http.Response> _readEcgResponse(String path, Session session) async {
+    final aborted = Completer<void>();
+    void abort() {
+      if (!aborted.isCompleted) aborted.complete();
+    }
+
+    final timer = Timer(SaydianApiClient._requestTimeout, abort);
+    try {
+      return await _performRequest(() async {
+        final request = http.AbortableRequest(
+          'GET',
+          _uri(path),
+          abortTrigger: aborted.future,
+        )..headers.addAll(_authorizationHeaders(session));
+        final response = await _client.send(request);
+        final maxBytes = response.statusCode == 200
+            ? 25 * 1024 * 1024
+            : 256 * 1024;
+        if ((response.contentLength ?? 0) > maxBytes) {
+          await response.stream.listen(null).cancel();
+          throw const ResourceLimitException();
+        }
+        final body = await readBoundedBytes(
+          response.stream,
+          maxBytes: maxBytes,
+        );
+        return http.Response.bytes(
+          body,
+          response.statusCode,
+          headers: response.headers,
+        );
+      });
+    } on ResourceLimitException {
+      throw const ApiException('Invalid ECG waveform', code: 'INVALID_ECG_ACK');
+    } finally {
+      timer.cancel();
+      abort();
+    }
   }
 
   String? _globalRecordReason(HealthRecord record) {

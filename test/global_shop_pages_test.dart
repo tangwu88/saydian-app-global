@@ -8,6 +8,14 @@ import 'package:saydian_app/ui/global_shop_pages.dart';
 import 'package:saydian_app/ui/shop_pages.dart';
 
 class _Controller extends Fake implements AppController {
+  // Static rendering fixture; session lifecycle tests use a real controller.
+  @override
+  Object? get accountViewIdentity => 'synthetic-static-owner';
+  @override
+  void addListener(VoidCallback listener) {}
+  @override
+  void removeListener(VoidCallback listener) {}
+
   final productRequests = <String>[];
   final filters = <String>[];
   final cartUpdates = <Map<String, Object?>>[];

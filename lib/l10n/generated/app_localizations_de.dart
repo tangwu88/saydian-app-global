@@ -2144,6 +2144,10 @@ class AppLocalizationsDe extends AppLocalizations {
       'Auf diesem Telefon gespeichert. Zum Hochladen anmelden.';
 
   @override
+  String get cloudHealthOnDeviceOnly =>
+      'Diese Daten sind nur auf diesem Telefon gespeichert.';
+
+  @override
   String get cloudHealthPending =>
       'Einige Daten wurden noch nicht hochgeladen. Sie bleiben auf diesem Telefon gespeichert.';
 

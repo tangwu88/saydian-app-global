@@ -825,6 +825,7 @@
   },
   "cloudHealthUploading": "Uploading saved records…",
   "cloudHealthLocalOnly": "Saved on this phone. Sign in to upload.",
+  "cloudHealthOnDeviceOnly": "These records are saved on this phone only.",
   "cloudHealthPending": "Some records have not been uploaded. They remain saved on this phone.",
   "cloudHealthConfirmed": "The server has confirmed the uploaded records.",
   "u19WristMeasurementHint": "Rest quietly for 5 minutes. Sit with feet flat and keep your wrist supported at heart level. Follow the device instructions. Wrist readings are for reference; ask a clinician about a validated upper-arm monitor for medical decisions.",

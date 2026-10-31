@@ -84,3 +84,23 @@ test('ring adapters do not log vendor exception messages or raw stack traces', (
     assert.doesNotMatch(text, /\.printStackTrace\(/);
   }
 });
+
+test('AUD-05 ring diagnostics never interpolate readings, payloads or device times even in DEBUG', () => {
+  for (const name of ['CoolWearRingBridge', 'QRingBridge']) {
+    const text = source(`android/app/src/main/java/cc/saidian/saydian_app/${name}.java`);
+    const calls = text.match(/Log\.[vdiwe]\([\s\S]*?;/g) ?? [];
+    for (const call of calls) {
+      assert.doesNotMatch(call, /(?:value=|deviceTime=|mappedTime=|accessToken|refreshToken|toJson\(|getAddress\(|getStressValue\(|getHrvNums\()/);
+      assert.doesNotMatch(call, /\+\s*(?:stress|hrv|time|payload|record|address|deviceId|samples)\b/);
+    }
+  }
+});
+
+test('AUD-05 iOS ring logging remains type/stage only, not raw SDK objects', () => {
+  const qring = source('ios/Runner/QRingWearableBridge.m');
+  const coolwear = source('ios/Runner/CoolWearWearableBridge.m');
+  assert.doesNotMatch(coolwear, /NSLog\(|printf\(|print\(/);
+  const qa = qring.slice(qring.indexOf('static void QRingMeasurementQA('), qring.indexOf('@interface QRingWearableBridge'));
+  assert.match(qa, /metric, phase, kind, QRingMeasurementValues\(metric, value\) != nil, success/);
+  assert.doesNotMatch(qa, /metric,\s*phase,\s*value\s*[,)]|error\.userInfo|peripheral\.identifier|description\]/);
+});

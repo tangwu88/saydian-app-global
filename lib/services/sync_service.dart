@@ -19,7 +19,8 @@ class SyncOutcome {
 }
 
 class HealthSyncService {
-  const HealthSyncService(this._store, this._api);
+  const HealthSyncService(this._store, this._api, {this.maxPages = 1000});
+  final int maxPages;
 
   final HealthStore _store;
   final SaydianApi _api;
@@ -36,7 +37,12 @@ class HealthSyncService {
     var rejected = 0;
     var quarantined = 0;
     final preparationFailures = <String, String>{};
-    while (true) {
+    HealthPendingCursor? after = await _store.readQueueScanCursor();
+    var hasDeferred = false;
+    String? deferredReason;
+    // Bound work even if new records arrive continuously. Each selected row is
+    // visited once per pass; unacknowledged rows remain pending for later retry.
+    for (var page = 0; page < maxPages; page++) {
       if (!canContinue()) {
         return SyncOutcome(uploaded: uploaded, rejected: rejected);
       }
@@ -46,6 +52,7 @@ class HealthSyncService {
       // tens of seconds. Uploads still continue until the queue is empty.
       final pending = await _store.pending(
         limit: 10,
+        after: after,
         includeDailySummaries: dailySupported,
         allowedMetrics: policy.allowedMetrics,
       );
@@ -53,6 +60,20 @@ class HealthSyncService {
         return SyncOutcome(uploaded: uploaded, rejected: rejected);
       }
       if (pending.isEmpty) {
+        await _store.writeQueueScanCursor(null);
+        if (!canContinue()) {
+          return SyncOutcome(uploaded: uploaded, rejected: rejected);
+        }
+        final remaining = await _store.pending(
+          limit: 1,
+          allowedMetrics: policy.allowedMetrics,
+        );
+        if (!canContinue()) {
+          return SyncOutcome(uploaded: uploaded, rejected: rejected);
+        }
+        final heldEarlier =
+            remaining.isNotEmpty &&
+            (dailySupported || remaining.first.aggregation == null);
         final heldDaily =
             !dailySupported &&
             (await _store.pending(
@@ -62,14 +83,20 @@ class HealthSyncService {
         return SyncOutcome(
           uploaded: uploaded,
           rejected: rejected,
-          hasPending: heldDaily,
-          message: heldDaily
+          hasPending: heldDaily || hasDeferred || heldEarlier,
+          message: hasDeferred
+              ? deferredReason
+              : heldEarlier
+              ? '服务器未确认本批记录，已保留本地队列'
+              : heldDaily
               ? '已保存到本机，暂未同步'
               : quarantined == 0
               ? null
               : '已隔离 $quarantined 条无效设备数据',
         );
       }
+      final last = pending.last;
+      after = HealthPendingCursor(last.measuredAt, last.id);
       final invalid = pending
           .where((record) => !hasSaneWearableTransportValues(record))
           .toList();
@@ -141,16 +168,12 @@ class HealthSyncService {
         }
         uploaded += acceptedIds.length;
         rejected += result.rejected.length;
-        if (acceptedIds.isEmpty) {
-          return SyncOutcome(
-            uploaded: uploaded,
-            rejected: rejected,
-            hasPending: true,
-            message: result.rejected.isNotEmpty
-                ? preparationFailures[result.rejected.keys.first] ??
-                      result.rejected.values.first
-                : '服务器未确认本批记录，已保留本地队列',
-          );
+        if (acceptedIds.length < submittedIds.length) {
+          hasDeferred = true;
+          deferredReason ??= result.rejected.isNotEmpty
+              ? preparationFailures[result.rejected.keys.first] ??
+                    result.rejected.values.first
+              : '服务器未确认本批记录，已保留本地队列';
         }
       } on FeatureNotConfiguredException catch (error) {
         return SyncOutcome(
@@ -161,5 +184,28 @@ class HealthSyncService {
         );
       }
     }
+    if (canContinue()) {
+      final remaining = await _store.pending(
+        limit: 1,
+        allowedMetrics: policy.allowedMetrics,
+      );
+      if (!canContinue()) {
+        return SyncOutcome(uploaded: uploaded, rejected: rejected);
+      }
+      await _store.writeQueueScanCursor(remaining.isEmpty ? null : after);
+      if (remaining.isEmpty) {
+        return SyncOutcome(
+          uploaded: uploaded,
+          rejected: rejected,
+          message: quarantined == 0 ? null : '已隔离 $quarantined 条无效设备数据',
+        );
+      }
+    }
+    return SyncOutcome(
+      uploaded: uploaded,
+      rejected: rejected,
+      hasPending: true,
+      message: deferredReason ?? '已保存到本机，暂未同步',
+    );
   }
 }

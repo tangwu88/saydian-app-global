@@ -13,6 +13,7 @@ abstract interface class SessionVault {
   Future<void> writeSession(Session session);
   Future<bool> writeSessionIfUnchanged(Session expected, Session replacement);
   Future<void> clearSession();
+  Future<bool> clearSessionIfUnchanged(Session expected);
   Future<bool> readPrivacyConsentGranted();
   Future<void> writePrivacyConsentGranted(bool granted);
   Future<HealthWarningSettings> readHealthWarningSettings();
@@ -121,6 +122,14 @@ class SecureSessionVault implements SessionVault {
   @override
   Future<void> clearSession() =>
       _withSessionLock(() => _storage.delete(key: _sessionKey));
+
+  @override
+  Future<bool> clearSessionIfUnchanged(Session expected) =>
+      _withSessionLock(() async {
+        if (!_sameSession(await _readSessionDirect(), expected)) return false;
+        await _storage.delete(key: _sessionKey);
+        return true;
+      });
 
   @override
   Future<bool> readPrivacyConsentGranted() async =>
@@ -256,6 +265,13 @@ class MemorySessionVault implements SessionVault {
 
   @override
   Future<void> clearSession() async => session = null;
+
+  @override
+  Future<bool> clearSessionIfUnchanged(Session expected) async {
+    if (!_sameSession(session, expected)) return false;
+    session = null;
+    return true;
+  }
 
   @override
   Future<String> databaseKey() async => key;

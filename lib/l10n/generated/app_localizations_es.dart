@@ -2138,6 +2138,10 @@ class AppLocalizationsEs extends AppLocalizations {
       'Guardados en este teléfono. Inicie sesión para subirlos.';
 
   @override
+  String get cloudHealthOnDeviceOnly =>
+      'Estos datos se guardan solo en este teléfono.';
+
+  @override
   String get cloudHealthPending =>
       'Algunos registros aún no se han subido. Siguen guardados en este teléfono.';
 

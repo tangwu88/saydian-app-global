@@ -1697,32 +1697,50 @@ class GlobalSaydianApiClient extends SaydianApiClient
   }
 
   @override
-  Future<void> logout() async {
+  Future<void> logout({Session? expectedSession}) async {
+    Session? expected = expectedSession ?? await _vault.readSession();
+    if (expected == null) return;
     try {
       _decode(
-        await _withAuthorizationRetry(
-          (session) => _performRequest(
+        await _withAuthorizationRetry((session) {
+          // A retry may refresh the same login, but must not revoke a newer one.
+          expected = session;
+          return _performRequest(
             () => _client.post(
               _uri('/api/saydian-app/v2/auth/logout'),
               headers: _authorizationHeaders(session),
             ),
-          ),
-        ),
+          );
+        }, expectedSession: expected),
       );
     } finally {
-      await _vault.clearSession();
+      await _vault.clearSessionIfUnchanged(expected!);
     }
   }
 
   @override
-  Future<void> deleteAccount() async {
+  Future<void> deleteAccount({Session? expectedSession}) async {
+    Session? expected = expectedSession ?? await _vault.readSession();
+    if (expected == null) {
+      throw const ApiException('Sign in to continue.', statusCode: 401);
+    }
+    final initial = expected;
     _decode(
-      await _authorizedPostJson(
-        '/api/saydian-app/v2/auth/delete-account',
-        const {'confirm': true},
-      ),
+      await _withAuthorizationRetry((session) {
+        expected = session;
+        return _performRequest(
+          () => _client.post(
+            _uri('/api/saydian-app/v2/auth/delete-account'),
+            headers: {
+              ..._authorizationHeaders(session),
+              'Content-Type': 'application/json',
+            },
+            body: jsonEncode(const {'confirm': true}),
+          ),
+        );
+      }, expectedSession: initial),
     );
-    await _vault.clearSession();
+    await _vault.clearSessionIfUnchanged(expected!);
   }
 }
 

@@ -717,6 +717,7 @@
   },
   "cloudHealthUploading": "正在上傳已儲存的記錄…",
   "cloudHealthLocalOnly": "資料僅儲存在本機，登入後可上傳",
+  "cloudHealthOnDeviceOnly": "這些記錄僅儲存在本機。",
   "cloudHealthPending": "部分記錄暫未上傳，已儲存在本機",
   "cloudHealthConfirmed": "雲端已確認接收本次上傳的記錄",
   "u19WristMeasurementHint": "先安靜休息 5 分鐘，雙腳平放，托住手腕並保持與心臟同高，依手錶說明測量。腕部讀數僅供參考；醫療判斷請諮詢醫師並使用經驗證的上臂式血壓計。",

@@ -2118,6 +2118,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cloudHealthLocalOnly => 'Saved on this phone. Sign in to upload.';
 
   @override
+  String get cloudHealthOnDeviceOnly =>
+      'These records are saved on this phone only.';
+
+  @override
   String get cloudHealthPending =>
       'Some records have not been uploaded. They remain saved on this phone.';
 

@@ -717,6 +717,7 @@
   },
   "cloudHealthUploading": "Gespeicherte Daten werden hochgeladen…",
   "cloudHealthLocalOnly": "Auf diesem Telefon gespeichert. Zum Hochladen anmelden.",
+  "cloudHealthOnDeviceOnly": "Diese Daten sind nur auf diesem Telefon gespeichert.",
   "cloudHealthPending": "Einige Daten wurden noch nicht hochgeladen. Sie bleiben auf diesem Telefon gespeichert.",
   "cloudHealthConfirmed": "Der Server hat die hochgeladenen Daten bestätigt.",
   "u19WristMeasurementHint": "Ruhen Sie sich 5 Minuten aus. Stellen Sie beide Füße flach auf den Boden und stützen Sie das Handgelenk auf Herzhöhe ab. Befolgen Sie die Anweisungen der Uhr. Messwerte am Handgelenk dienen nur zur Orientierung. Besprechen Sie medizinische Entscheidungen mit einer Fachperson und verwenden Sie dafür ein validiertes Oberarmmessgerät.",
