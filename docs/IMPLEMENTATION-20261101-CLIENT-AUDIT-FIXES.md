@@ -82,3 +82,12 @@ flutter --no-version-check build ios --debug --no-codesign --no-pub
 提交前核对实际 diff、敏感资料排除及完整源树。使用独立国际版分支，不合并/强推 main、不覆盖 R12 分支。远端发布后的 commit、完整 tree 对比和当前 CI 状态将在这里追加。六项当前为 **源码已修复、自动回归已验证**；实体设备与正式签名验收单列，不与问题源码状态混为一项。
 
 后续若制作正式上传包，必须核对商店已占用构建号并递增（既有 1020 已上传，不能重新上传同号）。本轮维持开发版本标识，以 Git 源提交区分，不把本轮 QA/无签名产物当新正式包。
+
+
+### GitHub 实际发布回执（2026-11-01）
+
+- 本地源码提交 `55b3c2dd99c60a3c211ffe2985505110167411f5`；通过已授权 GitHub 连接创建等价远端源码提交 [`14ae5c0b522cd33b6bf88ffe2d6a6eb7839a5140`](https://github.com/tangwu88/saydian-app-global/commit/14ae5c0b522cd33b6bf88ffe2d6a6eb7839a5140)。工具提交元数据不同，不伪称 commit SHA 相同；原本地历史保留。
+- 独立分支 [`codex/client-audit-fixes-20261101`](https://github.com/tangwu88/saydian-app-global/tree/codex/client-audit-fixes-20261101)，父提交为既有国际源码 `26bc11ad...`。累计差异包括本轮修复以及原来未发布的审查/交接资料，没有推送国内仓库、移动 main 或覆盖 R12 分支。
+- API 返回完整 tree `5a64955c8f210361405fac8b1bec122c837d4f16`，与本地源码提交完全相同；实际 fetch 后 `git diff --exit-code HEAD origin/codex/client-audit-fixes-20261101` 退出 0，远端 SHA 和 tree 再次一致。不是只比较文件数量。
+- 已触发源码 push CI [`41252587354`](https://github.com/tangwu88/saydian-app-global/actions/runs/41252587354)，head 为上述远端源码提交。最后核对时 UTC/Shanghai 两个 Harmony **主机契约** job 已 success，quality 已进入 pub get，Android/iOS 云端 job 仍待执行；因此不声称云端全量 CI 已通过。上述本机检查和构建结果是已执行证据。
+- 本段及机器结果中的 Git 回执是后续文档提交，不改产品代码；云端 CI 的验收对象仍为源码 commit。最终以新文档树再次 fetch/diff 核对，并将当前本地分支跟踪到规范远端；旧本地提交另留 `codex/client-audit-fixes-local-20261101`，不 reset 或 force push。

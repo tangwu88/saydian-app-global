@@ -139,5 +139,27 @@
     "Harmony HAP",
     "Remote CI status until separately recorded"
   ],
-  "dataProtection": "No original health payload, device container, signing credential or private evidence committed. SQLite FFI reopen tested, not claimed as phone SQLCipher acceptance."
+  "dataProtection": "No original health payload, device container, signing credential or private evidence committed. SQLite FFI reopen tested, not claimed as phone SQLCipher acceptance.",
+  "git": {
+    "localSourceCommit": "55b3c2dd99c60a3c211ffe2985505110167411f5",
+    "remoteSourceCommit": "14ae5c0b522cd33b6bf88ffe2d6a6eb7839a5140",
+    "sourceTree": "5a64955c8f210361405fac8b1bec122c837d4f16",
+    "branch": "codex/client-audit-fixes-20261101",
+    "fetchAndFullTreeDiffExitCode": 0,
+    "localOriginalHistoryPreservedAs": "codex/client-audit-fixes-local-20261101"
+  },
+  "remoteCI": {
+    "runId": 41252587354,
+    "headCommit": "14ae5c0b522cd33b6bf88ffe2d6a6eb7839a5140",
+    "url": "https://github.com/tangwu88/saydian-app-global/actions/runs/41252587354",
+    "lastObserved": "in_progress",
+    "completedSuccessJobs": [
+      "Harmony contracts (UTC)",
+      "Harmony contracts (Asia/Shanghai)"
+    ],
+    "quality": "in_progress: flutter pub get",
+    "android": "not_started",
+    "ios": "not_started",
+    "qualification": "Snapshot at record time; not claimed as all CI passed"
+  }
 }
