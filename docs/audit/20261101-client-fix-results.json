@@ -136,8 +136,7 @@
     "New physical iPhone runtime and BLE/sync regression: iPhone15pm unavailable; do not disturb XR other app test",
     "Signed release/export/upload or store review",
     "Production login/payment/OTP/load tests",
-    "Harmony HAP",
-    "Remote CI status until separately recorded"
+    "Harmony HAP"
   ],
   "dataProtection": "No original health payload, device container, signing credential or private evidence committed. SQLite FFI reopen tested, not claimed as phone SQLCipher acceptance.",
   "git": {
@@ -152,14 +151,44 @@
     "runId": 41252587354,
     "headCommit": "14ae5c0b522cd33b6bf88ffe2d6a6eb7839a5140",
     "url": "https://github.com/tangwu88/saydian-app-global/actions/runs/41252587354",
-    "lastObserved": "in_progress",
-    "completedSuccessJobs": [
-      "Harmony contracts (UTC)",
-      "Harmony contracts (Asia/Shanghai)"
+    "status": "completed",
+    "conclusion": "success",
+    "completedAtUTC": "2026-10-31T23:48:21Z",
+    "completedAtAsiaShanghai": "2026-11-01T07:48:21+08:00",
+    "jobs": [
+      {
+        "name": "quality",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "android",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "ios",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "Harmony contracts (UTC)",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "Harmony contracts (Asia/Shanghai)",
+        "status": "completed",
+        "conclusion": "success"
+      }
     ],
-    "quality": "in_progress: flutter pub get",
-    "android": "not_started",
-    "ios": "not_started",
-    "qualification": "Snapshot at record time; not claimed as all CI passed"
+    "qualification": "Verified official API terminal state for the source commit; not physical-device, signed release, HAP or store acceptance"
+  },
+  "physicalDeviceAcceptance": {
+    "status": "deferred_by_user",
+    "reason": "暂时无法连接，先完成代码、自动回归和 Git 提交",
+    "target": "iPhone 15 Pro Max",
+    "newInstallOrBleAcceptance": false,
+    "xrOtherAppTestUsedAsSubstitute": false
   }
 }

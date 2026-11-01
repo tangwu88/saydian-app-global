@@ -89,5 +89,14 @@ flutter --no-version-check build ios --debug --no-codesign --no-pub
 - 本地源码提交 `55b3c2dd99c60a3c211ffe2985505110167411f5`；通过已授权 GitHub 连接创建等价远端源码提交 [`14ae5c0b522cd33b6bf88ffe2d6a6eb7839a5140`](https://github.com/tangwu88/saydian-app-global/commit/14ae5c0b522cd33b6bf88ffe2d6a6eb7839a5140)。工具提交元数据不同，不伪称 commit SHA 相同；原本地历史保留。
 - 独立分支 [`codex/client-audit-fixes-20261101`](https://github.com/tangwu88/saydian-app-global/tree/codex/client-audit-fixes-20261101)，父提交为既有国际源码 `26bc11ad...`。累计差异包括本轮修复以及原来未发布的审查/交接资料，没有推送国内仓库、移动 main 或覆盖 R12 分支。
 - API 返回完整 tree `5a64955c8f210361405fac8b1bec122c837d4f16`，与本地源码提交完全相同；实际 fetch 后 `git diff --exit-code HEAD origin/codex/client-audit-fixes-20261101` 退出 0，远端 SHA 和 tree 再次一致。不是只比较文件数量。
-- 已触发源码 push CI [`41252587354`](https://github.com/tangwu88/saydian-app-global/actions/runs/41252587354)，head 为上述远端源码提交。最后核对时 UTC/Shanghai 两个 Harmony **主机契约** job 已 success，quality 已进入 pub get，Android/iOS 云端 job 仍待执行；因此不声称云端全量 CI 已通过。上述本机检查和构建结果是已执行证据。
+- 已触发源码 push CI [`41252587354`](https://github.com/tangwu88/saydian-app-global/actions/runs/41252587354)，head 为上述远端源码提交。初次发布核对时（历史快照）UTC/Shanghai 两个 Harmony **主机契约** job 已 success，quality 已进入 pub get，Android/iOS 云端 job 仍待执行；因此不声称云端全量 CI 已通过。上述本机检查和构建结果是已执行证据。
 - 本段及机器结果中的 Git 回执是后续文档提交，不改产品代码；云端 CI 的验收对象仍为源码 commit。最终以新文档树再次 fetch/diff 核对，并将当前本地分支跟踪到规范远端；旧本地提交另留 `codex/client-audit-fixes-local-20261101`，不 reset 或 force push。
+
+
+### CI 终态与用户暂缓真机（2026-11-01 增补）
+
+- 官方 API 实读源码 CI `41252587354` 已 `completed / success`，验收 head 为 `14ae5c0b522cd33b6bf88ffe2d6a6eb7839a5140`，完成时间为 **2026-11-01 07:48:21（Asia/Shanghai）** / `2026-10-31T23:48:21Z`。
+- 五个 job 全部成功：quality、android、ios、Harmony contracts (UTC)、Harmony contracts (Asia/Shanghai)。此前排队/pub get 的状态只保留为过程快照，不再是当前结论。平台 CI/主机契约成功不是实体设备采集或 Harmony HAP 验收。
+- 用户明确答复：“暂时无法连接，先完成代码、自动回归和 Git 提交”。因此本轮真机阶段按用户安排暂缓，不再要求现在连接手机；未执行新的覆盖安装、蓝牙、采集、SQLCipher 实机或美国同步验收，不将 XR 的其他 App 测试用于替代。
+- 六项修复的源码、本机自动回归、两端构建和源码云端 CI 均已完成。原四条安全反例仍在普通测试内；新设备验收等手机可用时再安排。
+- 本次增补只修改文档/汇总，不改变 `14ae5c0b...` 的产品代码；已核对 lib/android/ios/pubspec/workflow 差异为零，因此没有重复构建或重新触发完整 CI。补充记录独立提交 Git，最后核对远端与本地完整文件树。

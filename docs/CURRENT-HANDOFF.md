@@ -4,7 +4,7 @@
 
 基线 `1c974ac`，分支 `codex/client-audit-fixes-20261101`。依次修复坏队首阻塞、会话迟到清除、私有页面/弹窗残留、本机数据误报云成功、Debug 原值日志和 ECG 网络/解压资源限制。原四个正确反例已提升到普通 test/ 和现有 CI。最终双时区各 1142、定向37、analyzer 通过；发布25、Node92通过/1跳过、Android 两渠道原生各38通过。Android Play Debug/QA Release、iOS 构建及 Git 交付的实际细节见 [本轮记录](IMPLEMENTATION-20261101-CLIENT-AUDIT-FIXES.md)。
 
-GitHub 源码 `14ae5c0b...` 已发布独立同名分支，完整 tree 与本机一致；CI `41252587354` 已触发，两时区主机契约通过，质量及两平台云构建尚在运行/等待，不能写成全部通过。状态为源码/自动回归已验证；iPhone15pm 起始 unavailable，尚未新真机覆盖安装/采集/同步验收，不以 XR 其他 App 测试替代，也没有改变商店审核或提交新包。旧 10-31 OPEN/红灯记录保留为历史；后续从 [当前门禁](CLIENT-REGRESSION-GATES.md) 开始。
+GitHub 源码 `14ae5c0b...` 已发布独立同名分支，完整 tree 与本机一致；CI `41252587354` 已于 2026-11-01 07:48:21（Asia/Shanghai）全部 success：质量、Android、iOS 及两个时区主机契约，共五个 job。状态为源码/本机自动回归/云端CI已验证；用户随后明确“暂时无法连接，先完成代码、自动回归和 Git 提交”，真机阶段按此暂缓，尚未新真机覆盖安装/采集/同步验收，不以 XR 其他 App 测试替代，也没有改变商店审核或提交新包。旧 10-31 OPEN/红灯记录保留为历史；后续从 [当前门禁](CLIENT-REGRESSION-GATES.md) 开始。
 
 ## 2026-10-31 客户端代码审查已记录，问题待修复
 

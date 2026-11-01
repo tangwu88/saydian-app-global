@@ -6,6 +6,8 @@
 
 六项均已修复源码并通过自动回归，见 [修复及失败保留记录](IMPLEMENTATION-20261101-CLIENT-AUDIT-FIXES.md)。`FIXED-AUTO` 表示源码/自动回归，不表示新真机、服务器、正式包或商店验收。具体型号与实体设备验收仍需在对应修改记录追加。
 
+源码 CI [41252587354](https://github.com/tangwu88/saydian-app-global/actions/runs/41252587354) 的五个 job 已全部 success，head 为 `14ae5c0b...`，完成于 2026-11-01 07:48:21（Asia/Shanghai）。用户已明确暂时无法连接手机，先完成代码/自动回归/Git；真机检查继续保留为待验收，不再作为当前代码交付的等待条件。
+
 | ID | 状态 | 关闭必须证明 |
 | --- | --- | --- |
 | AUD-01 | FIXED-AUTO | 已验证队首/部分 ACK/错误重试、有界续扫、SQLite 重开与 owner 隔离；新设备上 SQLCipher 回归另验 |
