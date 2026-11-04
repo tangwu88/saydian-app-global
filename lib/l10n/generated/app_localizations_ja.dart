@@ -10,7 +10,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get iosActivitySleepScope =>
-      'このiOS版は活動と睡眠を同期・共有します。対応するUrionデバイスでは、血圧・心拍数・血中酸素の記録をこの端末内で表示できます。医療リスクの解釈やAI分析は利用できません。保存済みの記録は保持されます。';
+      'このiOS版では、ログイン後に活動、睡眠、保存済みの血圧・心拍数・血中酸素の記録を米国のSayDianサーバーに同期します。家族との共有は活動と睡眠が対象です。機能はデバイスによって異なり、医療リスクの解釈やAI分析は提供されません。保存済みの記録は保持されます。';
 
   @override
   String get scanLocationTitle => '位置情報をオンにしてください';
@@ -2103,7 +2103,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get iosWellnessSafety =>
-      'デバイスの測定値は日常の参考用で、診断や治療を目的としません。対応するUrionセンサーの記録はこの端末内に保存され、クラウド同期と共有は活動・睡眠が対象です。医療上の判断をする前に資格を持つ医療専門家に相談してください。';
+      'デバイスの測定値は日常の参考用で、診断や治療用ではありません。ログイン後は保存済みの血圧・心拍数・血中酸素の記録も米国のSayDianサーバーに同期します。受信が確認されていない記録は送信待ちのまま保持されます。家族との共有は活動と睡眠が対象です。医療上の判断をする前に医療専門家に相談してください。';
 
   @override
   String get smartRing => 'スマートリング';

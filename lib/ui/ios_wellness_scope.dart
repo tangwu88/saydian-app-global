@@ -10,9 +10,7 @@ class UrionLocalHealthNotice extends StatelessWidget {
     child: Padding(
       padding: const EdgeInsets.all(12),
       child: Text(
-        Localizations.localeOf(context).languageCode == 'zh'
-            ? '此设备的血压、心率和血氧记录仅保存在本机。云同步和关爱分享目前只包含活动与睡眠。仅供日常参考，作医疗决定前请咨询医生。'
-            : 'Blood pressure, heart rate and oxygen records stay on this phone. Cloud sync and sharing include activity and sleep only. For everyday reference; consult a doctor before medical decisions.',
+        context.l10n.iosWellnessSafety,
         key: const Key('urion-local-health-notice'),
       ),
     ),

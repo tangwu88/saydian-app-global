@@ -10,7 +10,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get iosActivitySleepScope =>
-      'Cette version iOS synchronise et partage l’activité et le sommeil. Les appareils Urion compatibles peuvent aussi afficher la tension, la fréquence cardiaque et l’oxygène localement sur ce téléphone. L’interprétation des risques médicaux et l’analyse par IA ne sont pas disponibles. Les données enregistrées sont conservées.';
+      'Après connexion, cette version iOS synchronise l’activité, le sommeil et les relevés enregistrés de tension, de fréquence cardiaque et d’oxygène sanguin avec les serveurs SayDian aux États-Unis. Le partage familial couvre l’activité et le sommeil. Les fonctions varient selon l’appareil ; les interprétations de risques médicaux et les analyses par IA sont indisponibles. Les données enregistrées sont conservées.';
 
   @override
   String get scanLocationTitle => 'Activer la localisation';
@@ -2220,7 +2220,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get iosWellnessSafety =>
-      'Les relevés de l’appareil sont des indications quotidiennes, pas un diagnostic ni un traitement. Les relevés des capteurs Urion compatibles restent sur ce téléphone ; la synchronisation cloud et le partage concernent l’activité et le sommeil. Consultez un professionnel de santé avant toute décision médicale.';
+      'Les relevés servent de repères quotidiens, pas de diagnostic ni de traitement. Après connexion, les relevés enregistrés de tension, de fréquence cardiaque et d’oxygène sanguin sont aussi synchronisés avec les serveurs SayDian aux États-Unis. Les relevés non confirmés restent en attente. Le partage familial couvre l’activité et le sommeil. Consultez un professionnel de santé avant toute décision médicale.';
 
   @override
   String get smartRing => 'Bague connectée';

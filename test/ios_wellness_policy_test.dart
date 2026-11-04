@@ -56,7 +56,7 @@ class _Api implements SaydianApi, HealthRecordPreparationApi {
     return BatchUploadResult(
       acceptedIds: acknowledge
           ? {...batch.records.map((record) => record.id), 'old-heart'}
-          : {'old-heart'},
+          : {'unrequested'},
       rejected: const {},
       nextCursor: null,
     );
@@ -290,18 +290,19 @@ void main() {
           sleep,
         ]);
         final outcome = await HealthSyncService(store, api).synchronizeNow();
-        expect(outcome.uploaded, acknowledge ? 1 : 0);
+        expect(outcome.uploaded, acknowledge ? 222 : 0);
         expect(outcome.hasPending, !acknowledge);
-        expect(api.uploaded.single.id, 'sleep');
-        expect(api.uploaded.single.values, {'value': 7});
-        expect(api.prepared.single.values, {'value': 7});
-        expect(
-          (await store.pending(limit: 400)).length,
-          acknowledge ? 221 : 222,
-        );
+        expect(api.uploaded, hasLength(222));
+        expect(api.uploaded.singleWhere((r) => r.id == 'sleep').values, {
+          'value': 7,
+        });
+        expect(api.prepared.singleWhere((r) => r.id == 'sleep').values, {
+          'value': 7,
+        });
+        expect((await store.pending(limit: 400)).length, acknowledge ? 0 : 222);
         expect(
           (await store.pending(limit: 400)).any((r) => r.id == 'old-heart'),
-          isTrue,
+          !acknowledge,
         );
         final original = (await store.recent(
           limit: 400,
@@ -310,7 +311,7 @@ void main() {
         expect(original.quality, 'poor');
         if (acknowledge) {
           await HealthSyncService(store, api).synchronizeNow();
-          expect(api.uploaded, hasLength(1));
+          expect(api.uploaded, hasLength(222));
         }
       },
     );
@@ -552,7 +553,9 @@ void main() {
           expect(find.text('Heart rate'), findsNothing);
         } else {
           expect(
-            find.textContaining('syncs and shares activity and sleep'),
+            find.textContaining(
+              'syncs activity, sleep and saved blood pressure',
+            ),
             findsOneWidget,
           );
         }

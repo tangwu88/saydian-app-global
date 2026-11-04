@@ -26,7 +26,7 @@ class HealthSyncService {
   final SaydianApi _api;
 
   Future<SyncOutcome> synchronizeNow({bool Function()? isCurrent}) async {
-    final policy = IosWellnessPolicy.current;
+    final policy = IosWellnessPolicy.cloud;
     bool canContinue() => isCurrent?.call() ?? true;
     final supportApi = _api is DailySummarySupportApi
         ? _api as DailySummarySupportApi

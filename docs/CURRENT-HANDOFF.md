@@ -1,5 +1,9 @@
 # SayDian 当前交接说明
 
+## 2026-11-04 iOS 血压/心率/血氧云同步（源码）
+
+用户明确要求三项已测量记录也上传美国。新增独立 cloud 策略用于队列和 payload；保留采集能力、关爱授权、原值和 pending/ACK 边界。同账号旧待上传记录可补传，不自动导入北京数据。版本 1.0.2+1022；1151 项双时区回归、analyzer 和实际美国合成记录 ACK/回读/去重/临时账号清理已通过。用户本轮已审核并授权发布 r4；美国两份正文与注册 consentVersion 已启用并回读一致。1021 Google 已提交的旧包不会因源码变化更新。真机/正式包/法律发布及 Git 构建状态见 [本轮记录](IMPLEMENTATION-20261104-IOS-SENSOR-CLOUD.md)。
+
 ## 2026-11-04 Google Play 1.0.2（1021）已提交
 
 基于最新六项修复源码（14ae5c0b，工作基线4d6b4b4），真正 production AAB 已构建并由 Google 接收，cn.saydian.app.global / SayDian / 1.0.2（1021）。原上传证书C4:47...8E:F2不变；两ARM ABI、22个arm64 ELF的16KiB、签名/实际权限检查通过。英文版本说明已保存，旧1018未包括。

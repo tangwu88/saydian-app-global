@@ -1,5 +1,5 @@
 {
-  "iosActivitySleepScope": "Esta versión de iOS sincroniza y comparte actividad y sueño. Los dispositivos Urion compatibles también pueden mostrar presión arterial, frecuencia cardíaca y oxígeno localmente en este teléfono. No ofrece interpretaciones de riesgos médicos ni análisis con IA. Los registros guardados se conservan.",
+  "iosActivitySleepScope": "Al iniciar sesión, esta versión de iOS sincroniza actividad, sueño y los registros guardados de presión arterial, frecuencia cardíaca y oxígeno en sangre con los servidores de SayDian en Estados Unidos. El uso compartido familiar incluye actividad y sueño. Las funciones varían según el dispositivo; no se ofrecen interpretaciones de riesgos médicos ni análisis con IA. Los registros guardados se conservan.",
   "scanLocationTitle": "Activa la ubicación",
   "scanLocationHint": "Activa la ubicación y reintenta.",
   "scanPermissionTitle": "Permite el acceso a dispositivos",
@@ -738,7 +738,7 @@
   "dataChoiceBody": "Conceda los permisos necesarios para cada función y gestione el uso compartido en la app. Para solicitar la eliminación de su cuenta y datos asociados, abra Cuenta → Eliminar cuenta. Consulte la política de privacidad para los plazos de conservación y otros derechos.",
   "dataThirdPartyTitle": "Servicios opcionales",
   "dataThirdPartyBody": "El tiempo, las notificaciones y otros servicios opcionales pueden procesar la información necesaria según sus propias políticas. El almacenamiento en Estados Unidos se refiere a la nube de SayDian, no al teléfono ni al procesamiento independiente de terceros.",
-  "iosWellnessSafety": "Las lecturas del dispositivo son de referencia cotidiana, no de diagnóstico ni tratamiento. Los registros de sensores Urion compatibles permanecen en este teléfono; la sincronización en la nube y el uso compartido incluyen actividad y sueño. Consulte a un profesional sanitario antes de tomar decisiones médicas.",
+  "iosWellnessSafety": "Las lecturas son una referencia diaria, no un diagnóstico ni un tratamiento. Al iniciar sesión, los registros guardados de presión arterial, frecuencia cardíaca y oxígeno en sangre también se sincronizan con los servidores de SayDian en Estados Unidos. Los registros sin confirmar permanecen pendientes. El uso compartido familiar incluye actividad y sueño. Consulte a un profesional sanitario antes de tomar decisiones médicas.",
   "smartRing": "Anillo inteligente",
   "ringStress": "Estrés",
   "ringGestures": "Control por gestos",

@@ -3,21 +3,27 @@ import 'package:flutter/foundation.dart';
 import 'feature_models.dart';
 import 'models.dart';
 
-/// iOS cloud scope stays activity/sleep. Verified Urion devices can additionally
-/// expose local sensor records, independently of account or build mode.
+/// Display/acquisition and family-care scopes remain separate from cloud upload.
+/// Cloud transport also accepts saved blood pressure, heart rate and oxygen.
 /// Projections are views/transport payloads; never rewrite historical storage.
 class IosWellnessPolicy {
   const IosWellnessPolicy({
     required this.enabled,
     this.urionLocalDevice = false,
+    this.cloudSensorRecords = false,
   });
 
   static IosWellnessPolicy get current => IosWellnessPolicy(
     enabled: !kIsWeb && defaultTargetPlatform == TargetPlatform.iOS,
   );
 
+  /// Own-account cloud sync must not depend on the currently connected device.
+  static IosWellnessPolicy get cloud =>
+      IosWellnessPolicy(enabled: current.enabled, cloudSensorRecords: true);
+
   final bool enabled;
   final bool urionLocalDevice;
+  final bool cloudSensorRecords;
   static IosWellnessPolicy forSdkSource(WearableSdkSource? source) =>
       IosWellnessPolicy(
         enabled: current.enabled,
@@ -52,8 +58,12 @@ class IosWellnessPolicy {
     HealthMetric.calories,
     HealthMetric.sleep,
   };
-  Set<HealthMetric>? get allowedMetrics =>
-      enabled ? {...metrics, if (urionLocalDevice) ...urionLocalMetrics} : null;
+  Set<HealthMetric>? get allowedMetrics => enabled
+      ? {
+          ...metrics,
+          if (urionLocalDevice || cloudSensorRecords) ...urionLocalMetrics,
+        }
+      : null;
   bool allowsMetric(HealthMetric metric) =>
       !enabled || allowedMetrics!.contains(metric);
   bool allowsWireMetric(String wire) =>
@@ -85,7 +95,8 @@ class IosWellnessPolicy {
     };
     final keys = metric == HealthMetric.sleep
         ? sleepKeys
-        : metric == HealthMetric.bloodPressure && urionLocalDevice
+        : metric == HealthMetric.bloodPressure &&
+              (urionLocalDevice || cloudSensorRecords)
         ? const {'systolic', 'diastolic'}
         : const {'value'};
     return Map.unmodifiable({
@@ -98,7 +109,8 @@ class IosWellnessPolicy {
   HealthRecord? projectRecord(HealthRecord record) {
     if (!enabled) return record;
     if (!allowsMetric(record.metric)) return null;
-    if (urionLocalMetrics.contains(record.metric) &&
+    if (!cloudSensorRecords &&
+        urionLocalMetrics.contains(record.metric) &&
         (WearableSdkSource.fromDeviceId(record.deviceId) !=
                 WearableSdkSource.urion ||
             record.origin == MeasurementOrigin.remoteMember)) {
@@ -113,7 +125,9 @@ class IosWellnessPolicy {
       timezone: record.timezone,
       deviceId: record.deviceId,
       firmwareVersion: record.firmwareVersion,
-      quality: 'unknown',
+      quality: cloudSensorRecords && urionLocalMetrics.contains(record.metric)
+          ? record.quality
+          : 'unknown',
       source: record.source,
       origin: record.origin,
       rawVersion: record.rawVersion,

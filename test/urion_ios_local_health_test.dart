@@ -124,23 +124,23 @@ void main() {
     );
   });
 
-  test(
-    'local sensor history remains local while activity receives ACK',
-    () async {
-      final store = MemoryHealthStore();
-      final api = _Api();
-      await store.initialize();
-      await store.upsert([
-        record(HealthMetric.bloodPressure),
-        record(HealthMetric.steps),
-      ]);
-      final result = await HealthSyncService(store, api).synchronizeNow();
-      expect(result.uploaded, 1);
-      expect(api.uploaded.single.metric, HealthMetric.steps);
-      expect((await store.pending()).single.metric, HealthMetric.bloodPressure);
-      expect((await store.recent()).length, 2);
-    },
-  );
+  test('saved sensor history and activity both receive cloud ACK', () async {
+    final store = MemoryHealthStore();
+    final api = _Api();
+    await store.initialize();
+    await store.upsert([
+      record(HealthMetric.bloodPressure),
+      record(HealthMetric.steps),
+    ]);
+    final result = await HealthSyncService(store, api).synchronizeNow();
+    expect(result.uploaded, 2);
+    expect(
+      api.uploaded.map((r) => r.metric),
+      containsAll([HealthMetric.steps, HealthMetric.bloodPressure]),
+    );
+    expect(await store.pending(), isEmpty);
+    expect((await store.recent()).length, 2);
+  });
 
   test(
     'router uses confirmed Urion transport and refuses unimplemented metrics',

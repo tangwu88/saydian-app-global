@@ -1752,7 +1752,12 @@ class _GlobalHttpClient extends http.BaseClient {
 
   @override
   Future<http.StreamedResponse> send(http.BaseRequest request) async {
-    final policy = IosWellnessPolicy.current;
+    final ownRecords = RegExp(
+      r'/health/records(?:/|$)',
+    ).hasMatch(request.url.path);
+    final policy = ownRecords
+        ? IosWellnessPolicy.cloud
+        : IosWellnessPolicy.current;
     final metric = request.url.queryParameters['metric'];
     if (policy.enabled &&
         metric != null &&

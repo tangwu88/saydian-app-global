@@ -10,7 +10,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get iosActivitySleepScope =>
-      'Esta versión de iOS sincroniza y comparte actividad y sueño. Los dispositivos Urion compatibles también pueden mostrar presión arterial, frecuencia cardíaca y oxígeno localmente en este teléfono. No ofrece interpretaciones de riesgos médicos ni análisis con IA. Los registros guardados se conservan.';
+      'Al iniciar sesión, esta versión de iOS sincroniza actividad, sueño y los registros guardados de presión arterial, frecuencia cardíaca y oxígeno en sangre con los servidores de SayDian en Estados Unidos. El uso compartido familiar incluye actividad y sueño. Las funciones varían según el dispositivo; no se ofrecen interpretaciones de riesgos médicos ni análisis con IA. Los registros guardados se conservan.';
 
   @override
   String get scanLocationTitle => 'Activa la ubicación';
@@ -2211,7 +2211,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get iosWellnessSafety =>
-      'Las lecturas del dispositivo son de referencia cotidiana, no de diagnóstico ni tratamiento. Los registros de sensores Urion compatibles permanecen en este teléfono; la sincronización en la nube y el uso compartido incluyen actividad y sueño. Consulte a un profesional sanitario antes de tomar decisiones médicas.';
+      'Las lecturas son una referencia diaria, no un diagnóstico ni un tratamiento. Al iniciar sesión, los registros guardados de presión arterial, frecuencia cardíaca y oxígeno en sangre también se sincronizan con los servidores de SayDian en Estados Unidos. Los registros sin confirmar permanecen pendientes. El uso compartido familiar incluye actividad y sueño. Consulte a un profesional sanitario antes de tomar decisiones médicas.';
 
   @override
   String get smartRing => 'Anillo inteligente';

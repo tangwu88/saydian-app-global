@@ -58,6 +58,16 @@ class _Wearable extends Fake implements WearableBridge {
 
 class _Api extends Fake
     implements SaydianApi, GlobalAccountApi, GlobalCommerceApi {
+  bool acknowledge = false;
+
+  @override
+  Future<BatchUploadResult> uploadHealthBatch(SyncBatch batch) async =>
+      BatchUploadResult(
+        acceptedIds: acknowledge ? batch.records.map((r) => r.id).toSet() : {},
+        rejected: const {},
+        nextCursor: null,
+      );
+
   @override
   Future<void> logout() async {}
 
@@ -136,7 +146,7 @@ void main() {
   });
 
   test(
-    'AUD-03 local-only iOS sensor rows must not report cloud complete',
+    'AUD-03 unacknowledged iOS sensor rows must not report cloud complete',
     () async {
       debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
       final store = MemoryHealthStore();
@@ -350,13 +360,14 @@ void main() {
     },
   );
 
-  for (final kind in ['empty', 'local', 'cloud', 'mixed']) {
+  for (final kind in ['empty', 'sensor', 'cloud', 'mixed']) {
     test('AUD-03 iOS $kind cloud state uses only eligible records', () async {
       debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+      final store = MemoryHealthStore();
       final controller = AppController(
         MemorySessionVault(),
-        _Api(),
-        MemoryHealthStore(),
+        _Api()..acknowledge = true,
+        store,
         _Wearable(),
       );
       addTearDown(controller.dispose);
@@ -368,18 +379,25 @@ void main() {
       final local = _record('local');
       final cloud = _record('cloud', metric: HealthMetric.steps);
       controller.healthRecords = switch (kind) {
-        'local' => [local],
+        'sensor' => [local],
         'cloud' => [cloud],
         'mixed' => [local, cloud],
         _ => [],
       };
+      await store.upsert(controller.healthRecords);
       await controller.synchronizeCloud();
       expect(controller.cloudSyncState, switch (kind) {
-        'local' => CloudHealthSyncState.localOnly,
         'empty' => CloudHealthSyncState.idle,
         _ => CloudHealthSyncState.complete,
       });
-      expect(controller.cloudSyncUploadedCount, 0);
+      expect(
+        controller.cloudSyncUploadedCount,
+        kind == 'empty'
+            ? 0
+            : kind == 'mixed'
+            ? 2
+            : 1,
+      );
     });
   }
 

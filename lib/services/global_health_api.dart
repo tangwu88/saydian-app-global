@@ -344,7 +344,7 @@ mixin GlobalHealthApi on SaydianApiClient
           }
         : null;
     for (final original in batch.records) {
-      final record = IosWellnessPolicy.current.projectRecord(original);
+      final record = IosWellnessPolicy.cloud.projectRecord(original);
       if (record == null) {
         rejected[original.id] = 'Not available in this iOS edition.';
         continue;

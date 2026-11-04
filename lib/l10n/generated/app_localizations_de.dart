@@ -10,7 +10,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get iosActivitySleepScope =>
-      'Diese iOS-Version synchronisiert und teilt Aktivitäts- und Schlafdaten. Unterstützte Urion-Geräte können zusätzlich Blutdruck, Herzfrequenz und Sauerstoffwerte lokal auf diesem Telefon anzeigen. Medizinische Risikobewertungen und KI-Analysen sind nicht verfügbar. Gespeicherte Daten bleiben erhalten.';
+      'Nach der Anmeldung synchronisiert diese iOS-Version Aktivität, Schlaf sowie gespeicherte Blutdruck-, Herzfrequenz- und Blutsauerstoffdaten mit SayDian-Servern in den USA. Die Familienfreigabe umfasst Aktivität und Schlaf. Funktionen hängen vom Gerät ab; medizinische Risikobewertungen und KI-Analysen sind nicht verfügbar. Gespeicherte Daten bleiben erhalten.';
 
   @override
   String get scanLocationTitle => 'Standort einschalten';
@@ -2218,7 +2218,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get iosWellnessSafety =>
-      'Gerätewerte dienen als Orientierung im Alltag, nicht zur Diagnose oder Behandlung. Unterstützte Urion-Sensordaten bleiben auf diesem Telefon; Cloud-Synchronisierung und Freigabe umfassen Aktivität und Schlaf. Fragen Sie vor medizinischen Entscheidungen qualifiziertes medizinisches Fachpersonal.';
+      'Gerätewerte dienen der täglichen Orientierung, nicht der Diagnose oder Behandlung. Nach der Anmeldung werden auch gespeicherte Blutdruck-, Herzfrequenz- und Blutsauerstoffdaten mit SayDian-Servern in den USA synchronisiert. Unbestätigte Daten bleiben ausstehend. Die Familienfreigabe umfasst Aktivität und Schlaf. Fragen Sie vor medizinischen Entscheidungen medizinisches Fachpersonal.';
 
   @override
   String get smartRing => 'Smarter Ring';

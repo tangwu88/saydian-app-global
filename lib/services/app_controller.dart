@@ -3551,8 +3551,10 @@ class AppController extends ChangeNotifier {
             !_accountTransitioning && _isCurrentSessionGeneration(generation),
       );
       if (!_isCurrentSessionGeneration(generation)) return;
-      final hasCloudRecords = healthRecords.any(
-        (record) => IosWellnessPolicy.current.projectRecord(record) != null,
+      final savedRecords = await _healthStore.recent();
+      if (!_isCurrentSessionGeneration(generation)) return;
+      final hasCloudRecords = savedRecords.any(
+        (record) => IosWellnessPolicy.cloud.projectRecord(record) != null,
       );
       final onlyLocal =
           !hasCloudRecords &&
