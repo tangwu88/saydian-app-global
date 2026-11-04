@@ -27,3 +27,11 @@
 实际已安装、签名通过、原数据恢复并验证、正常英文首页已渲染且原登录状态可见。原生 LLDB 保持附加；Flutter attach 正等待系统本地网络权限允许后的服务发现。未将仅有原生进程或画面当作 Dart VM/热重载成功。无需用户发送账号或密码。
 
 顺便实读同一1022源码CI41766547984：quality、android、ios及双时区Harmony contracts共五个job均 completed/success。此为实际远端CI终态，不等同当前手机测量/上云验收。此次没有产品源码改动，不重复先前已通过的1151双时区全量/Android等构建；仅本次新的设备签名构建/安装/恢复/附加另记。
+
+## 用户允许权限后的最终调试验证
+
+用户在手机明确点“允许”并保持前台后，原有 Flutter attach 自动连接，无需再次安装。同步源码文件1492ms；实际 Dart VM getVM HTTP200/type=VM，PID1790与指定国际版进程匹配，main isolate存在。通过 Flutter PID的SIGUSR1请求热重载，真实回执 `Reloaded 8 of 2224 libraries in 2,036ms (compile: 107 ms, reload: 125 ms, reassemble: 1449 ms).`。随后再次getVM确认main/PID仍在、Flutter进程存活；日志无Lost connection/Application finished。
+
+官方安装列表再次确认1.0.2(1022)。本次使用原生LLDB启动与Flutter attach正常main源码，不再二次安装，仍保持两个调试进程运行。已打开本次DevTools，入口HTTP200；实际面板状态与截图另留忽略构建目录。会话URL、VM令牌、PID文件、手机截图与数据库备份不提交Git。
+
+此前“等待本地网络权限”的段落是过程记录，当前已通过。手机测量、U19S/LuckRing/QRing连接、新三项真实设备采集及美国ACK/回读仍需各自验收，本轮不凭调试连接成功冒称完成。Debug需保持USB及Mac调试进程，独立冷启动应使用Profile/TestFlight/Release。此轮仅补记录，不更改产品源码或商店审核。
