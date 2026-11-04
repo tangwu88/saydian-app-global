@@ -40,7 +40,9 @@
         "exactWordsMatch": true,
         "sourceSha256": "8d28b319273abd7ee5e7a853c8fdbc4437763ff5dd93b308cc301c87da093d11"
       }
-    }
+    },
+    "browserRenderedPrivacy": true,
+    "browserRenderedTerms": true
   },
   "storeUpload": "not_executed_for_1022",
   "builds": {
@@ -63,5 +65,13 @@
       "seconds": 20.1
     },
     "androidUnitEachFlavor": 38
+  },
+  "git": {
+    "sourceCommit": "78d32720fb238437f3d6c2a518ae971b7e06fae7",
+    "tree": "9b2838fe2116d8daf02a96c1d9f7759f8fd75d0b",
+    "branch": "codex/ios-sensor-cloud-20261104",
+    "fullTreeMatched": true,
+    "ciRun": 41766547984,
+    "ciObservedState": "in_progress"
   }
 }

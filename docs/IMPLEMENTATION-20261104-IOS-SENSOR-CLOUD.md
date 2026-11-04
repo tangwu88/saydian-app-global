@@ -49,3 +49,11 @@ Both r4 documents were newly created under Saydian Health on the **US** admin, r
 Live auth/capabilities now returns consentVersion `global-appstore-2026-11-04-r4`. Both versioned legal API bodies match all approved words; SHA256 privacy `2e2355475dbe224c5aad8c75ef4dda67c957dea58b964d8d64404a799dae0748`, terms `8d28b319273abd7ee5e7a853c8fdbc4437763ff5dd93b308cc301c87da093d11`. Initial raw HTML version assertion failed because public pages are JavaScript shells, not stale policies; actual browser-rendered privacy shows r4 and iOS sensor cloud wording. Public terms rendering checked separately. No new server program deployment was needed for existing sensor ingestion. No China records/policies or other product legal documents were changed.
 
 Local evidence (ignored): `build/sensor-cloud-20261104/privacy-r4-published.jpg`, admin list screenshot; private probe/command logs remain outside Git. Build artifacts and credentials excluded.
+
+## Git delivery
+
+Local implementation commit `17e120786a49b97fbd3756e841592f65d0c25e95` is preserved on `codex/ios-sensor-cloud-local-20261104`. The authorized GitHub connection published equivalent source commit `78d32720fb238437f3d6c2a518ae971b7e06fae7` on `codex/ios-sensor-cloud-20261104`. Full tree `9b2838fe2116d8daf02a96c1d9f7759f8fd75d0b` matches exactly; fresh origin fetch and full-tree diff passed. No main merge or force push. Current working branch tracks the canonical remote.
+
+Source CI [41766547984](https://github.com/tangwu88/saydian-app-global/actions/runs/41766547984) was observed in_progress for exactly that source SHA. Local tests/builds are passed; cloud CI is a separate pending result at this delivery snapshot. This following record-only commit skips redundant CI, without treating the source CI as already passed.
+
+Public browser-rendered terms additionally verified r4, the saved activity/sleep/BP/heart-rate/oxygen US-sync clause, and US location. The public privacy screenshot shows the actual active r4 wording. Final unresolved acceptance: unavailable iPhone15pm/new signed installation/actual sensor-to-cloud ACK; no 1022 production store upload or submission in this task. The user's earlier physical-device deferral remains respected.
