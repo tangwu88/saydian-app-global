@@ -1,5 +1,9 @@
 # SayDian 当前交接说明
 
+## 2026-11-04 iPhone15pm 安装1023 Release
+
+用户要求真机测试，已将刚上传1023同一份Release归档中的手机授权签名包安装到指定15 Pro Max。安装前备份，启动前核对5文件/3数据库/10,139,097bytes逐字节一致，无需恢复。实际安装列表1.0.2（1023）；Device英文页面正常，用户实连U19S并手动同步，实拍显示Connected和US cloud confirmed小字，无独立提示卡。用户明确跳过血压/心率/血氧三项新测量及对应云回读。最后计划重启后PID2924不依赖Flutter/LLDB/console独立运行，原账号首页可访问；当前首页中文，未改语言偏好。未测试重启后自动重连或三项新数据，不用旧反馈代替。详情见[本轮记录](QA-20261104-IPHONE15PM-1023-RELEASE.md)，XR/Say Ring与商店构建未动。
+
 ## 2026-11-04 苹果1.0.2（1023）构建与上传
 
 最新运行源码0002cd7的CI41776718607五job均success，构建起点3050bfb仅追加文档、程序完整差异为空。沿用该通过版本，以CLI指定1.0.2（1023），未改pubspec开发标识。正式归档53.5s、自动App Store导出148.5s，实际Apple Distribution、包名/版本/美国接口、无QA/Always定位及归档-导出代码段一致性通过。IPA SHA256 af8177bdc9e573c185cff3b0fc36b5c29ad7ed0f00c3a6a539dbe877d6400577。实际上传退出0/Upload succeeded/EXPORT SUCCEEDED，Apple国际版TestFlight已列出1.0.2（1023）“正在处理”，创建时间11月4日14:01。15项旧厂商dSYM警告未阻断上传。处理完成/出口合规/测试/送审各自另验；旧1.0.1（1018）拒绝草稿及旧审核文案尚未替换。详见[本轮记录](IMPLEMENTATION-20261104-IOS-1023-UPLOAD.md)。
