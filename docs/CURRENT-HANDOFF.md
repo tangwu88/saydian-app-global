@@ -1,5 +1,11 @@
 # SayDian 当前交接说明
 
+## 2026-11-04 Google Play 1.0.2（1021）已提交
+
+基于最新六项修复源码（14ae5c0b，工作基线4d6b4b4），真正 production AAB 已构建并由 Google 接收，cn.saydian.app.global / SayDian / 1.0.2（1021）。原上传证书C4:47...8E:F2不变；两ARM ABI、22个arm64 ELF的16KiB、签名/实际权限检查通过。英文版本说明已保存，旧1018未包括。
+
+最终送审确认已完成，发布概览实际列入“正在审核中的更改”；Google自动常见问题检查仍在进行，通过后进入后续审核，不能写成审核通过或已上架。自管式发布保持开启。产物、SHA、过程与回执见 [11-04 Google Play记录](IMPLEMENTATION-20261104-GOOGLE-PLAY.md)。本次使用CLI发行版本覆盖，跟踪pubspec开发标识未改；1021已被使用，下次须递增。
+
 ## 2026-11-01 六项客户端问题已修复并回归
 
 基线 `1c974ac`，分支 `codex/client-audit-fixes-20261101`。依次修复坏队首阻塞、会话迟到清除、私有页面/弹窗残留、本机数据误报云成功、Debug 原值日志和 ECG 网络/解压资源限制。原四个正确反例已提升到普通 test/ 和现有 CI。最终双时区各 1142、定向37、analyzer 通过；发布25、Node92通过/1跳过、Android 两渠道原生各38通过。Android Play Debug/QA Release、iOS 构建及 Git 交付的实际细节见 [本轮记录](IMPLEMENTATION-20261101-CLIENT-AUDIT-FIXES.md)。

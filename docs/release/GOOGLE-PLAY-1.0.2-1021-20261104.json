@@ -1,0 +1,165 @@
+{
+  "file": "/Users/saydian/Documents/ChatGPT/软件开发/saydian-app-global/build/store-play-20261104/SayDian-1.0.2-1021-play-release.aab",
+  "package": "cn.saydian.app.global",
+  "versionName": "1.0.2",
+  "versionCode": 1021,
+  "label": "SayDian",
+  "sha256": "89a473122d91043c7971cd03fbd8bafa9295be7343200431c769cc0e63e7e7e8",
+  "bytes": 65549607,
+  "abis": [
+    "arm64-v8a",
+    "armeabi-v7a"
+  ],
+  "arm64Libraries": 22,
+  "arm64ElfChecks": [
+    {
+      "name": "libDspConfig.so",
+      "minimumLoadAlignment": 16384
+    },
+    {
+      "name": "libEcgAnaly.so",
+      "minimumLoadAlignment": 16384
+    },
+    {
+      "name": "libabpartool.so",
+      "minimumLoadAlignment": 16384
+    },
+    {
+      "name": "libapp.so",
+      "minimumLoadAlignment": 65536
+    },
+    {
+      "name": "libcbuf.so",
+      "minimumLoadAlignment": 16384
+    },
+    {
+      "name": "libdartjni.so",
+      "minimumLoadAlignment": 16384
+    },
+    {
+      "name": "libflutter.so",
+      "minimumLoadAlignment": 65536
+    },
+    {
+      "name": "libimage_processing_util_jni.so",
+      "minimumLoadAlignment": 16384
+    },
+    {
+      "name": "libjl_auth.so",
+      "minimumLoadAlignment": 16384
+    },
+    {
+      "name": "libjl_bmp_convert.so",
+      "minimumLoadAlignment": 16384
+    },
+    {
+      "name": "libjl_crc.so",
+      "minimumLoadAlignment": 16384
+    },
+    {
+      "name": "libjl_fatfs.so",
+      "minimumLoadAlignment": 16384
+    },
+    {
+      "name": "libjl_opus.so",
+      "minimumLoadAlignment": 16384
+    },
+    {
+      "name": "libjl_ota_auth.so",
+      "minimumLoadAlignment": 16384
+    },
+    {
+      "name": "libjl_pack_format.so",
+      "minimumLoadAlignment": 16384
+    },
+    {
+      "name": "libjl_speex.so",
+      "minimumLoadAlignment": 16384
+    },
+    {
+      "name": "libjutils.so",
+      "minimumLoadAlignment": 16384
+    },
+    {
+      "name": "libnative-lib.so",
+      "minimumLoadAlignment": 16384
+    },
+    {
+      "name": "libsqlcipher.so",
+      "minimumLoadAlignment": 16384
+    },
+    {
+      "name": "libst_opus.so",
+      "minimumLoadAlignment": 16384
+    },
+    {
+      "name": "libst_speex.so",
+      "minimumLoadAlignment": 16384
+    },
+    {
+      "name": "libsurface_util_jni.so",
+      "minimumLoadAlignment": 16384
+    }
+  ],
+  "uploadCertSha256": "C4:47:97:12:B3:83:33:13:E3:BE:BD:F8:A6:36:B6:6B:12:79:EF:17:19:2A:F5:73:71:F1:06:27:3F:25:8E:F2",
+  "jarSignatureVerified": true,
+  "forbiddenPermissions": [],
+  "remotePushComponentsPresent": false,
+  "metadataFiles": 11,
+  "minimumSdk": "26",
+  "targetSdk": "36",
+  "date": "2026-11-04",
+  "sourceCommit": "14ae5c0b522cd33b6bf88ffe2d6a6eb7839a5140",
+  "baselineCommit": "4d6b4b492dd8cd3634f0d3dd3fbfe5bbbcc9a3d3",
+  "branch": "codex/google-play-release-20261104",
+  "buildMode": "production",
+  "qaRelease": false,
+  "apiOrigin": "https://app.saydian.com",
+  "pushEnabled": false,
+  "analyzer": {
+    "exitCode": 0,
+    "issues": 0
+  },
+  "releaseToolTests": {
+    "passed": 25,
+    "exitCode": 0
+  },
+  "sameSourceCI": {
+    "runId": 41252587354,
+    "conclusion": "success",
+    "fullFlutterPerTimezone": 1142,
+    "qualification": "Prior CI verified; product source diff is zero. No new physical-device acceptance."
+  },
+  "play": {
+    "developerId": "6152149340569927946",
+    "appId": "4975663791244149918",
+    "track": "production",
+    "releaseId": "2",
+    "managedPublishing": true,
+    "uploadStatus": "accepted",
+    "submissionStatus": "submitted",
+    "observedBundle": {
+      "versionCode": 1021,
+      "versionName": "1.0.2",
+      "minSdk": 26,
+      "targetSdk": 36,
+      "abis": 2,
+      "mappingAndNativeSymbolsAttached": true
+    },
+    "preflight": "ready_to_publish_no_blocking_error",
+    "rolloutPercent": 100,
+    "countriesScope": "existing_all_target_countries",
+    "deviceSupportRemoved": 0,
+    "deviceSupportAdded": 0,
+    "releaseNotesLocale": "en-US",
+    "releaseSaved": true,
+    "publishingOverviewVersion": "1.0.2 (1021)",
+    "reviewUiHeading": "正在审核中的更改",
+    "automatedChecks": "in_progress",
+    "humanReviewStarted": "not_established",
+    "approvalStatus": "not_approved",
+    "newVersionPublished": false,
+    "receiptScreenshot": "build/store-play-20261104/google-play-submitted-1021.png"
+  },
+  "rawHealthLogPrefixesPresent": false
+}
