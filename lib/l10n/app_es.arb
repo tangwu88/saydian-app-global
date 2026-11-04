@@ -730,6 +730,7 @@
   "ecgWaveformPreviewHint": "Vista previa de onda · escala sin confirmar",
   "ecgWaveformLowSignalHint": "Señal de baja calidad · vista previa",
   "dataPrivacyTitle": "Privacidad de los datos",
+  "usStorageNotice": "Sus datos en la nube de SayDian se almacenan en servidores ubicados en Estados Unidos. Los registros pendientes permanecen en este teléfono hasta que el servidor confirma su recepción.",
   "dataResidencyTitle": "Almacenamiento en Estados Unidos",
   "dataResidencyBody": "Los datos de cuenta, dispositivo y datos sincronizados del wearable guardados en la nube de SayDian se almacenan en servidores ubicados en Estados Unidos. Si usa SayDian desde otro país, los datos que decida sincronizar se transferirán a Estados Unidos.",
   "dataLocalTitle": "En su teléfono",

@@ -2083,6 +2083,10 @@ class AppLocalizationsKo extends AppLocalizations {
   String get dataPrivacyTitle => '데이터 개인정보 보호';
 
   @override
+  String get usStorageNotice =>
+      'SayDian 클라우드 데이터는 미국 내 서버에 저장됩니다. 전송 대기 중인 기록은 서버에서 수신을 확인할 때까지 이 휴대전화에 보관됩니다.';
+
+  @override
   String get dataResidencyTitle => '미국 내 저장';
 
   @override

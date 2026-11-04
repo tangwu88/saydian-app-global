@@ -831,30 +831,6 @@ class _AiChatPageState extends State<AiChatPage> {
   }
 }
 
-class _InfoPage extends StatelessWidget {
-  const _InfoPage({required this.title, required this.message});
-
-  final String title;
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text(title)),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(28),
-          child: Text(
-            message,
-            textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 15, height: 1.7),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 class _SettingsIcon extends StatelessWidget {
   const _SettingsIcon({required this.icon, required this.color});
 

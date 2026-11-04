@@ -2074,6 +2074,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get dataPrivacyTitle => 'データのプライバシー';
 
   @override
+  String get usStorageNotice =>
+      'SayDianのクラウドデータは米国内のサーバーに保存されます。送信待ちの記録は、サーバーが受信を確認するまでこの端末に保持されます。';
+
+  @override
   String get dataResidencyTitle => '米国内での保存';
 
   @override

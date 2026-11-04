@@ -730,6 +730,7 @@
   "ecgWaveformPreviewHint": "파형 미리보기 · 눈금 미확인",
   "ecgWaveformLowSignalHint": "신호 품질 낮음 · 파형 미리보기",
   "dataPrivacyTitle": "데이터 개인정보 보호",
+  "usStorageNotice": "SayDian 클라우드 데이터는 미국 내 서버에 저장됩니다. 전송 대기 중인 기록은 서버에서 수신을 확인할 때까지 이 휴대전화에 보관됩니다.",
   "dataResidencyTitle": "미국 내 저장",
   "dataResidencyBody": "SayDian 클라우드의 계정, 기기 및 동기화된 웨어러블 데이터는 미국 내 서버에 저장됩니다. 다른 국가에서 SayDian을 사용하면 동기화하기로 선택한 데이터가 미국으로 전송됩니다.",
   "dataLocalTitle": "휴대폰 내 저장",

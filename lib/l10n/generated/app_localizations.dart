@@ -4070,6 +4070,12 @@ abstract class AppLocalizations {
   /// **'Data privacy'**
   String get dataPrivacyTitle;
 
+  /// No description provided for @usStorageNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'Your SayDian cloud data is stored on servers physically located in the United States. Pending uploads stay on this phone until the server confirms receipt.'**
+  String get usStorageNotice;
+
   /// No description provided for @dataResidencyTitle.
   ///
   /// In en, this message translates to:

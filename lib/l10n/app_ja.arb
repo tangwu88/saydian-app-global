@@ -730,6 +730,7 @@
   "ecgWaveformPreviewHint": "波形プレビュー · スケール未確認",
   "ecgWaveformLowSignalHint": "信号品質が低いため波形をプレビュー",
   "dataPrivacyTitle": "データのプライバシー",
+  "usStorageNotice": "SayDianのクラウドデータは米国内のサーバーに保存されます。送信待ちの記録は、サーバーが受信を確認するまでこの端末に保持されます。",
   "dataResidencyTitle": "米国内での保存",
   "dataResidencyBody": "SayDian のクラウドに保存するアカウント、デバイスおよび同期したウェアラブルデータは、米国内のサーバーに保存されます。他の国から利用する場合、同期を選択したデータは米国に転送されます。",
   "dataLocalTitle": "スマートフォン内の保存",

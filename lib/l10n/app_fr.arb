@@ -730,6 +730,7 @@
   "ecgWaveformPreviewHint": "Aperçu du tracé · échelle non confirmée",
   "ecgWaveformLowSignalHint": "Signal de faible qualité · aperçu",
   "dataPrivacyTitle": "Confidentialité des données",
+  "usStorageNotice": "Vos données cloud SayDian sont stockées sur des serveurs situés aux États-Unis. Les données en attente restent sur ce téléphone jusqu’à confirmation de réception par le serveur.",
   "dataResidencyTitle": "Stockage aux États-Unis",
   "dataResidencyBody": "Les données de compte, d’appareil et les données synchronisées de votre accessoire stockées dans le cloud SayDian sont conservées sur des serveurs situés aux États-Unis. Si vous utilisez SayDian depuis un autre pays, les données que vous choisissez de synchroniser sont transférées aux États-Unis.",
   "dataLocalTitle": "Sur votre téléphone",

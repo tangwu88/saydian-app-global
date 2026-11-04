@@ -121,131 +121,120 @@ class DevicePage extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: FilledButton.icon(
-                          onPressed: controller.isDeviceSyncing
-                              ? null
-                              : () async {
-                                  final succeeded = await controller
-                                      .syncDeviceData();
-                                  if (!context.mounted) return;
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        succeeded
-                                            ? context
-                                                  .l10n
-                                                  .deviceDataReadComplete
-                                            : context.l10n.syncFailedTryAgain,
+                  _DeviceSyncActions(
+                    primary: FilledButton.icon(
+                      onPressed: controller.isDeviceSyncing
+                          ? null
+                          : () async {
+                              final succeeded = await controller
+                                  .syncDeviceData();
+                              if (!context.mounted) return;
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    succeeded
+                                        ? context.l10n.deviceDataReadComplete
+                                        : context.l10n.syncFailedTryAgain,
+                                  ),
+                                ),
+                              );
+                            },
+                      icon: controller.isDeviceSyncing
+                          ? const SizedBox.square(
+                              dimension: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.sync_rounded),
+                      label: Text(
+                        controller.isDeviceSyncing
+                            ? controller.deviceSyncProgress <= 0.1
+                                  ? context.l10n.readingData
+                                  : '${context.l10n.syncing} ${(controller.deviceSyncProgress * 100).round()}%'
+                            : context.l10n.syncData,
+                      ),
+                      style: FilledButton.styleFrom(
+                        minimumSize: const Size.fromHeight(44),
+                        padding: const EdgeInsets.symmetric(horizontal: 10),
+                      ),
+                    ),
+                    secondary: OutlinedButton(
+                      onPressed: controller.isDeviceDisconnecting
+                          ? null
+                          : () async {
+                              final qring =
+                                  connected.sdkSource ==
+                                  WearableSdkSource.qring;
+                              try {
+                                await controller.disconnectDevice();
+                                if (!context.mounted ||
+                                    !qring ||
+                                    !controller.isIosWellnessEdition) {
+                                  return;
+                                }
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      context.l10n.ringDisconnectHelp,
+                                    ),
+                                    duration: const Duration(seconds: 8),
+                                  ),
+                                );
+                              } catch (_) {
+                                if (!context.mounted) return;
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      _safeUiError(
+                                        context,
+                                        controller.errorMessage,
+                                        _localeCopy(
+                                          context,
+                                          'The connection has not ended. Try again.',
+                                          '设备连接尚未结束，请重试',
+                                        ),
                                       ),
                                     ),
-                                  );
-                                },
-                          icon: controller.isDeviceSyncing
-                              ? const SizedBox.square(
-                                  dimension: 16,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
                                   ),
-                                )
-                              : const Icon(Icons.sync_rounded),
-                          label: Text(
-                            controller.isDeviceSyncing
-                                ? controller.deviceSyncProgress <= 0.1
-                                      ? context.l10n.readingData
-                                      : '${context.l10n.syncing} ${(controller.deviceSyncProgress * 100).round()}%'
-                                : context.l10n.syncData,
-                          ),
-                          style: FilledButton.styleFrom(
-                            minimumSize: const Size.fromHeight(44),
-                            padding: const EdgeInsets.symmetric(horizontal: 10),
-                          ),
-                        ),
+                                );
+                              }
+                            },
+                      style: OutlinedButton.styleFrom(
+                        minimumSize: const Size.fromHeight(44),
+                        padding: const EdgeInsets.symmetric(horizontal: 10),
                       ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: controller.isDeviceDisconnecting
-                              ? null
-                              : () async {
-                                  final qring =
-                                      connected.sdkSource ==
-                                      WearableSdkSource.qring;
-                                  try {
-                                    await controller.disconnectDevice();
-                                    if (!context.mounted ||
-                                        !qring ||
-                                        !controller.isIosWellnessEdition) {
-                                      return;
-                                    }
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(
-                                          context.l10n.ringDisconnectHelp,
-                                        ),
-                                        duration: const Duration(seconds: 8),
-                                      ),
-                                    );
-                                  } catch (_) {
-                                    if (!context.mounted) return;
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(
-                                          _safeUiError(
-                                            context,
-                                            controller.errorMessage,
-                                            _localeCopy(
-                                              context,
-                                              'The connection has not ended. Try again.',
-                                              '设备连接尚未结束，请重试',
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    );
-                                  }
-                                },
-                          style: OutlinedButton.styleFrom(
-                            minimumSize: const Size.fromHeight(44),
-                            padding: const EdgeInsets.symmetric(horizontal: 10),
-                          ),
-                          child: Text(
-                            controller.isDeviceDisconnecting
-                                ? context.l10n.ringDisconnecting
-                                : context.l10n.disconnect,
-                          ),
-                        ),
+                      child: Text(
+                        controller.isDeviceDisconnecting
+                            ? context.l10n.ringDisconnecting
+                            : context.l10n.disconnect,
                       ),
-                    ],
+                    ),
                   ),
                   if (controller.cloudSyncState !=
                       CloudHealthSyncState.idle) ...[
                     const SizedBox(height: 8),
-                    Row(
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 4,
                       key: const Key('device-cloud-sync-status'),
                       children: [
-                        Expanded(
-                          child: Text(
-                            switch (controller.cloudSyncState) {
-                              CloudHealthSyncState.uploading =>
-                                context.l10n.cloudHealthUploading,
-                              CloudHealthSyncState.localOnly =>
-                                controller.isAuthenticated
-                                    ? context.l10n.cloudHealthOnDeviceOnly
-                                    : context.l10n.cloudHealthLocalOnly,
-                              CloudHealthSyncState.pending =>
-                                context.l10n.cloudHealthPending,
-                              CloudHealthSyncState.complete =>
-                                context.l10n.cloudHealthConfirmed,
-                              CloudHealthSyncState.idle => '',
-                            },
-                            style: const TextStyle(
-                              fontSize: 12,
-                              height: 1.4,
-                              color: SaydianColors.muted,
-                            ),
+                        Text(
+                          switch (controller.cloudSyncState) {
+                            CloudHealthSyncState.uploading =>
+                              context.l10n.cloudHealthUploading,
+                            CloudHealthSyncState.localOnly =>
+                              controller.isAuthenticated
+                                  ? context.l10n.cloudHealthOnDeviceOnly
+                                  : context.l10n.cloudHealthLocalOnly,
+                            CloudHealthSyncState.pending =>
+                              context.l10n.cloudHealthPending,
+                            CloudHealthSyncState.complete =>
+                              context.l10n.cloudHealthConfirmed,
+                            CloudHealthSyncState.idle => '',
+                          },
+                          style: const TextStyle(
+                            fontSize: 12,
+                            height: 1.4,
+                            color: SaydianColors.muted,
                           ),
                         ),
                         if (controller.cloudSyncState ==
@@ -257,6 +246,8 @@ class DevicePage extends StatelessWidget {
                       ],
                     ),
                   ],
+                  const SizedBox(height: 10),
+                  const UsDataStorageNotice(),
                 ],
               ),
             )
@@ -472,10 +463,7 @@ class DevicePage extends StatelessWidget {
                   onTap: () => Navigator.of(context).push(
                     MaterialPageRoute<void>(
                       settings: const RouteSettings(name: 'connection-help'),
-                      builder: (context) => _InfoPage(
-                        title: context.l10n.connectionHelp,
-                        message: context.l10n.connectionInstructions,
-                      ),
+                      builder: (_) => const ConnectionHelpPage(),
                     ),
                   ),
                   leading: const Icon(Icons.help_outline_rounded),
@@ -1549,4 +1537,33 @@ class _ConnectionBadge extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Keep device actions readable at narrow widths and large text sizes.
+class _DeviceSyncActions extends StatelessWidget {
+  const _DeviceSyncActions({required this.primary, required this.secondary});
+  final Widget primary;
+  final Widget secondary;
+
+  @override
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, constraints) {
+      final stacked =
+          constraints.maxWidth < 280 ||
+          MediaQuery.textScalerOf(context).scale(14) > 19.6;
+      if (stacked) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [primary, const SizedBox(height: 8), secondary],
+        );
+      }
+      return Row(
+        children: [
+          Expanded(child: primary),
+          const SizedBox(width: 10),
+          Expanded(child: secondary),
+        ],
+      );
+    },
+  );
 }

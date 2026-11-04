@@ -2044,6 +2044,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get dataPrivacyTitle => '数据隐私';
 
   @override
+  String get usStorageNotice =>
+      '您的 SayDian 云端数据保存在位于美国境内的服务器上。待上传记录会保留在此手机，直到服务器确认接收。';
+
+  @override
   String get dataResidencyTitle => '数据存储在美国';
 
   @override
@@ -4144,6 +4148,10 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
   String get dataPrivacyTitle => '数据隐私';
 
   @override
+  String get usStorageNotice =>
+      '您的 SayDian 云端数据保存在位于美国境内的服务器上。待上传记录会保留在此手机，直到服务器确认接收。';
+
+  @override
   String get dataResidencyTitle => '数据存储在美国';
 
   @override
@@ -6242,6 +6250,10 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get dataPrivacyTitle => '資料隱私';
+
+  @override
+  String get usStorageNotice =>
+      '您的 SayDian 雲端資料儲存在位於美國境內的伺服器上。待上傳記錄會保留在此手機，直到伺服器確認接收。';
 
   @override
   String get dataResidencyTitle => '資料儲存在美國';

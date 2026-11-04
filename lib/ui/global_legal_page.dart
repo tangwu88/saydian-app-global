@@ -162,6 +162,11 @@ class _GlobalLegalPageState extends State<GlobalLegalPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  if (widget.document ==
+                      GlobalLegalDocumentType.privacyPolicy) ...[
+                    const UsDataStorageNotice(),
+                    const SizedBox(height: 16),
+                  ],
                   Text(
                     '$_version · $_documentLanguage',
                     style: Theme.of(context).textTheme.labelSmall,

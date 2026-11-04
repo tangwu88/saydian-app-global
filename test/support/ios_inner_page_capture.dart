@@ -152,10 +152,28 @@ void main() {
         initialLocale: const Locale('en'),
       );
       addTearDown(localeController.dispose);
+      final syncController =
+          AppController(
+              MemorySessionVault(),
+              _OfflineGlobalApi(),
+              MemoryHealthStore(),
+              _OfflineWatch(),
+            )
+            ..isBooting = false
+            ..connectedDevice = const DeviceInfo(
+              id: 'urion:visual-fixture',
+              name: 'U19S',
+            )
+            ..cloudSyncState = CloudHealthSyncState.pending;
+      addTearDown(syncController.dispose);
       final pages = <String, Widget>{
         'global-dashboard': AppShell(controller: globalController),
         'global-device': AppShell(controller: globalController),
         'global-privacy': const DataPrivacyPage(),
+        'global-connection-help': const ConnectionHelpPage(),
+        'global-sync-notice': Scaffold(
+          body: DevicePage(controller: syncController),
+        ),
         'global-profile': ProfileEditPage(controller: globalController),
         'global-about': AboutSaydianPage(controller: globalController),
         'account': AccountSettingsPage(controller: controller),

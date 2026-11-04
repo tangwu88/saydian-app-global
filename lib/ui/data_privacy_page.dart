@@ -2,6 +2,76 @@ import 'package:flutter/material.dart';
 
 import '../l10n/global_locale_controller.dart';
 
+/// A storage-location explanation, independent of the current upload result.
+class UsDataStorageNotice extends StatelessWidget {
+  const UsDataStorageNotice({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return Semantics(
+      container: true,
+      child: Container(
+        key: const Key('us-data-storage-notice'),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: colors.surfaceContainerLow,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: colors.outlineVariant),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(Icons.public, size: 20, color: colors.onSurfaceVariant),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    context.l10n.dataResidencyTitle,
+                    style: Theme.of(context).textTheme.labelLarge,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    context.l10n.usStorageNotice,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      height: 1.4,
+                      color: colors.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class ConnectionHelpPage extends StatelessWidget {
+  const ConnectionHelpPage({super.key});
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+    appBar: AppBar(title: Text(context.l10n.connectionHelp)),
+    body: ListView(
+      padding: const EdgeInsets.all(20),
+      children: [
+        Text(
+          context.l10n.connectionInstructions,
+          style: const TextStyle(fontSize: 15, height: 1.7),
+        ),
+        const SizedBox(height: 20),
+        const UsDataStorageNotice(),
+        const SizedBox(height: 8),
+        const DataPrivacyLink(),
+      ],
+    ),
+  );
+}
+
 /// Additional operator-provided storage information. This page never records
 /// consent or substitutes for the versioned legal document from the server.
 class DataPrivacyPage extends StatelessWidget {

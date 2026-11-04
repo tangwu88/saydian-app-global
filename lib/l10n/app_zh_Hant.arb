@@ -730,6 +730,7 @@
   "ecgWaveformPreviewHint": "波形預覽 · 刻度待確認",
   "ecgWaveformLowSignalHint": "訊號品質較低 · 波形預覽",
   "dataPrivacyTitle": "資料隱私",
+  "usStorageNotice": "您的 SayDian 雲端資料儲存在位於美國境內的伺服器上。待上傳記錄會保留在此手機，直到伺服器確認接收。",
   "dataResidencyTitle": "資料儲存在美國",
   "dataResidencyBody": "SayDian 雲端保存的帳號、裝置及同步的穿戴裝置資料，均儲存在美國境內的伺服器。如果您在其他國家或地區使用 SayDian，您選擇同步的資料將傳輸至美國。",
   "dataLocalTitle": "手機本機儲存",

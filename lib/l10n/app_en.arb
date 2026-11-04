@@ -838,6 +838,7 @@
   "ecgWaveformPreviewHint": "Waveform preview · scale unconfirmed",
   "ecgWaveformLowSignalHint": "Low signal quality · waveform preview",
   "dataPrivacyTitle": "Data privacy",
+  "usStorageNotice": "Your SayDian cloud data is stored on servers physically located in the United States. Pending uploads stay on this phone until the server confirms receipt.",
   "dataResidencyTitle": "Stored in the United States",
   "dataResidencyBody": "Your account, device and synchronized wearable data stored in SayDian’s cloud is kept on servers physically located in the United States. If you use SayDian from another country, the data you choose to synchronize is transferred to the United States.",
   "dataLocalTitle": "On your phone",

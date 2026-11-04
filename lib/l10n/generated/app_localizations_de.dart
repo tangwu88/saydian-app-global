@@ -2189,6 +2189,10 @@ class AppLocalizationsDe extends AppLocalizations {
   String get dataPrivacyTitle => 'Datenschutz';
 
   @override
+  String get usStorageNotice =>
+      'Ihre SayDian-Clouddaten werden auf Servern in den Vereinigten Staaten gespeichert. Ausstehende Daten bleiben auf diesem Telefon, bis der Server den Empfang bestätigt.';
+
+  @override
   String get dataResidencyTitle => 'Speicherung in den USA';
 
   @override

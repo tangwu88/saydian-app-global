@@ -2182,6 +2182,10 @@ class AppLocalizationsEs extends AppLocalizations {
   String get dataPrivacyTitle => 'Privacidad de los datos';
 
   @override
+  String get usStorageNotice =>
+      'Sus datos en la nube de SayDian se almacenan en servidores ubicados en Estados Unidos. Los registros pendientes permanecen en este teléfono hasta que el servidor confirma su recepción.';
+
+  @override
   String get dataResidencyTitle => 'Almacenamiento en Estados Unidos';
 
   @override
