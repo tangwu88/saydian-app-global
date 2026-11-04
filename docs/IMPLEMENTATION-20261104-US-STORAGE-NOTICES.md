@@ -91,3 +91,5 @@ flutter --no-version-check build ios --debug --no-pub --dart-define=SAYDIAN_API_
 本机最终159e9d24466fb04b9d7d6df2b8ba13b158857fcd通过GitHub连接发布为0002cd743001a63235eac1fc2b27e039b56ac8bd，完整tree a31cdeb7ab3c31c203db88988d334f6ce52ecbbf一致。fetch/full-tree diff通过，本机跟踪同名规范远端，原本机历史保留codex/us-storage-notices-unified-local-20261104；没有main合并、force push或商店操作。最新源码CI41776718607已排队，交付时未完成；不以较早源码748aaaae的CI替代。此前41774487076最后观察质量、iOS和两时区主机契约通过，Android仍运行，不能写成全部通过。本段仅记录交付，跳过重复CI。
 
 交付收尾一次getVM请求5秒超时；当前run进程仍在，无新增异常/断连日志，手机未锁定。仅将精确国际版App恢复前台后，同一getVM立即返回VM/main成功，没有重新安装、清数据或重启设备。因此该次超时不计为崩溃，也不以超时结果声称连接正常；实际恢复回执另记在此。
+
+后续用户要求检查CI并构建上传苹果新版时已实读：41776718607及41774487076均completed/success；最新源码41776718607的质量、Android、iOS和两时区Harmony contracts五job逐一success。前述排队/运行中状态已被这次实际结果更新。后续正式1023构建/上传独立记录于IMPLEMENTATION-20261104-IOS-1023-UPLOAD.md。
