@@ -85,3 +85,7 @@ flutter --no-version-check build ios --debug --no-pub --dart-define=SAYDIAN_API_
 用户随后确认已打开Connection help；再次采集精确手机实拍并打开核对，真实英文页面已是一张完整圆角卡：连接步骤、分隔线、美国存储说明及Data privacy入口均在卡内，文字未裁切。文件位于忽略目录build/us-storage-notices-20261104/iphone-connection-help-final.png。该证据关闭前述帮助页显示待核对项，不代表新增测量或隐私入口点击已经真机验收。
 
 最终文档补记脚本出现输入编码SyntaxError，shell未设置set-e仍创建了含先前记录的本地8540dd2提交；没有源码丢失。改用apply_patch补齐本段构建/真机结果，单独保留后续文档提交，不重写既有本地历史。后续关联命令统一要求失败即停。
+
+## 收口交付
+
+本机最终159e9d24466fb04b9d7d6df2b8ba13b158857fcd通过GitHub连接发布为0002cd743001a63235eac1fc2b27e039b56ac8bd，完整tree a31cdeb7ab3c31c203db88988d334f6ce52ecbbf一致。fetch/full-tree diff通过，本机跟踪同名规范远端，原本机历史保留codex/us-storage-notices-unified-local-20261104；没有main合并、force push或商店操作。最新源码CI41776718607已排队，交付时未完成；不以较早源码748aaaae的CI替代。此前41774487076最后观察质量、iOS和两时区主机契约通过，Android仍运行，不能写成全部通过。本段仅记录交付，跳过重复CI。
