@@ -405,7 +405,7 @@
   "needsAttention": "Requiere atención",
   "tapToOpen": "Toca para abrir",
   "deviceInfoHint": "Ver información del dispositivo",
-  "connectionInstructions": "1. Activa Bluetooth y permite buscar dispositivos cercanos.\n2. Carga el reloj y acércalo al teléfono.\n3. Toca Buscar dispositivos y selecciona tu reloj.\n4. Confirma en el reloj si se solicita.",
+  "connectionInstructions": "1. Activa Bluetooth y permite buscar dispositivos cercanos.\n2. Carga el dispositivo y acércalo al teléfono.\n3. Toca Buscar dispositivos y selecciona tu dispositivo.\n4. Confirma en el dispositivo si se solicita.",
   "syncNearbyHint": "Mantén el reloj cerca al sincronizar.",
   "invalidCode": "Comprueba el código e inténtalo de nuevo",
   "codeExpired": "Este código ha caducado. Solicita uno nuevo.",
@@ -715,11 +715,11 @@
       }
     }
   },
-  "cloudHealthUploading": "Subiendo los registros guardados…",
+  "cloudHealthUploading": "Subiendo registros guardados a la nube (servidores de EE. UU.)…",
   "cloudHealthLocalOnly": "Guardados en este teléfono. Inicie sesión para subirlos.",
   "cloudHealthOnDeviceOnly": "Estos datos se guardan solo en este teléfono.",
-  "cloudHealthPending": "Algunos registros aún no se han subido. Siguen guardados en este teléfono.",
-  "cloudHealthConfirmed": "El servidor ha confirmado la recepción de los registros subidos.",
+  "cloudHealthPending": "Algunos registros aún no han llegado a la nube (servidores de EE. UU.). Permanecen en este teléfono.",
+  "cloudHealthConfirmed": "La nube (servidores de EE. UU.) ha confirmado la recepción de estos registros.",
   "u19WristMeasurementHint": "Descanse en silencio durante 5 minutos. Apoye ambos pies en el suelo y mantenga la muñeca apoyada a la altura del corazón. Siga las instrucciones del reloj. Las lecturas de la muñeca son orientativas; para decisiones médicas, consulte a un profesional y use un tensiómetro de brazo validado.",
   "manageCare": "Gestionar",
   "batteryCharging": "Cargando",

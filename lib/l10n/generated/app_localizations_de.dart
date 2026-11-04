@@ -1168,7 +1168,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get connectionInstructions =>
-      '1. Bluetooth aktivieren und Gerätezugriff erlauben.\n2. Uhr laden und neben das Telefon legen.\n3. Geräte suchen antippen und Ihre Uhr wählen.\n4. Eine Anfrage auf der Uhr bestätigen.';
+      '1. Bluetooth aktivieren und Gerätezugriff erlauben.\n2. Gerät laden und neben das Telefon legen.\n3. Geräte suchen antippen und Ihr Gerät wählen.\n4. Eine Anfrage auf dem Gerät bestätigen.';
 
   @override
   String get syncNearbyHint => 'Uhr beim Synchronisieren in der Nähe halten.';
@@ -2137,7 +2137,8 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String get cloudHealthUploading => 'Gespeicherte Daten werden hochgeladen…';
+  String get cloudHealthUploading =>
+      'Gespeicherte Daten werden in die Cloud (US-Server) hochgeladen…';
 
   @override
   String get cloudHealthLocalOnly =>
@@ -2149,11 +2150,11 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get cloudHealthPending =>
-      'Einige Daten wurden noch nicht hochgeladen. Sie bleiben auf diesem Telefon gespeichert.';
+      'Einige Daten sind noch nicht in der Cloud (US-Server). Sie bleiben auf diesem Telefon.';
 
   @override
   String get cloudHealthConfirmed =>
-      'Der Server hat die hochgeladenen Daten bestätigt.';
+      'Die Cloud (US-Server) hat den Empfang dieser Daten bestätigt.';
 
   @override
   String get u19WristMeasurementHint =>

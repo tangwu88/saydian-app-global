@@ -1086,7 +1086,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get connectionInstructions =>
-      '1. 打开手机蓝牙并允许查找附近设备。\n2. 将手表充电激活，并放在手机旁边。\n3. 点击“开始查找”，选择自己的手表。\n4. 如果手表弹出确认，请及时确认。';
+      '1. 打开手机蓝牙并允许查找附近设备。\n2. 将设备充电激活，并放在手机旁边。\n3. 点击“开始查找”，选择自己的设备。\n4. 如果设备弹出确认，请及时确认。';
 
   @override
   String get syncNearbyHint => '同步时请保持手表靠近。';
@@ -1998,7 +1998,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get cloudHealthUploading => '正在上传已保存的记录…';
+  String get cloudHealthUploading => '正在上传已保存的记录至云端（美国服务器）…';
 
   @override
   String get cloudHealthLocalOnly => '数据仅保存在本机，登录后可上传';
@@ -2007,10 +2007,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get cloudHealthOnDeviceOnly => '这些记录仅保存在本机。';
 
   @override
-  String get cloudHealthPending => '部分记录暂未上传，已保存在本机';
+  String get cloudHealthPending => '部分记录暂未上传至云端（美国服务器），已保存在本机';
 
   @override
-  String get cloudHealthConfirmed => '云端已确认接收本次上传的记录';
+  String get cloudHealthConfirmed => '云端（美国服务器）已确认接收本次上传的记录';
 
   @override
   String get u19WristMeasurementHint =>
@@ -3190,7 +3190,7 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
 
   @override
   String get connectionInstructions =>
-      '1. 打开手机蓝牙并允许查找附近设备。\n2. 将手表充电激活，并放在手机旁边。\n3. 点击“开始查找”，选择自己的手表。\n4. 如果手表弹出确认，请及时确认。';
+      '1. 打开手机蓝牙并允许查找附近设备。\n2. 将设备充电激活，并放在手机旁边。\n3. 点击“开始查找”，选择自己的设备。\n4. 如果设备弹出确认，请及时确认。';
 
   @override
   String get syncNearbyHint => '同步时请保持手表靠近。';
@@ -4102,7 +4102,7 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
   }
 
   @override
-  String get cloudHealthUploading => '正在上传已保存的记录…';
+  String get cloudHealthUploading => '正在上传已保存的记录至云端（美国服务器）…';
 
   @override
   String get cloudHealthLocalOnly => '数据仅保存在本机，登录后可上传';
@@ -4111,10 +4111,10 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
   String get cloudHealthOnDeviceOnly => '这些记录仅保存在本机。';
 
   @override
-  String get cloudHealthPending => '部分记录暂未上传，已保存在本机';
+  String get cloudHealthPending => '部分记录暂未上传至云端（美国服务器），已保存在本机';
 
   @override
-  String get cloudHealthConfirmed => '云端已确认接收本次上传的记录';
+  String get cloudHealthConfirmed => '云端（美国服务器）已确认接收本次上传的记录';
 
   @override
   String get u19WristMeasurementHint =>
@@ -5294,7 +5294,7 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get connectionInstructions =>
-      '1. 開啟手機藍牙並允許尋找附近裝置。\n2. 為手錶充電並放在手機旁。\n3. 點選「開始搜尋」，選擇自己的手錶。\n4. 若手錶顯示確認提示，請確認。';
+      '1. 開啟手機藍牙並允許尋找附近裝置。\n2. 為裝置充電並放在手機旁。\n3. 點選「開始搜尋」，選擇自己的裝置。\n4. 若裝置顯示確認提示，請確認。';
 
   @override
   String get syncNearbyHint => '同步時請保持手錶靠近。';
@@ -6206,7 +6206,7 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   }
 
   @override
-  String get cloudHealthUploading => '正在上傳已儲存的記錄…';
+  String get cloudHealthUploading => '正在上傳已儲存的記錄至雲端（美國伺服器）…';
 
   @override
   String get cloudHealthLocalOnly => '資料僅儲存在本機，登入後可上傳';
@@ -6215,10 +6215,10 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get cloudHealthOnDeviceOnly => '這些記錄僅儲存在本機。';
 
   @override
-  String get cloudHealthPending => '部分記錄暫未上傳，已儲存在本機';
+  String get cloudHealthPending => '部分記錄暫未上傳至雲端（美國伺服器），已儲存在本機';
 
   @override
-  String get cloudHealthConfirmed => '雲端已確認接收本次上傳的記錄';
+  String get cloudHealthConfirmed => '雲端（美國伺服器）已確認接收本次上傳的記錄';
 
   @override
   String get u19WristMeasurementHint =>

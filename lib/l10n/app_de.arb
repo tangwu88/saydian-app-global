@@ -405,7 +405,7 @@
   "needsAttention": "Aktion erforderlich",
   "tapToOpen": "Zum Öffnen tippen",
   "deviceInfoHint": "Geräteinformationen ansehen",
-  "connectionInstructions": "1. Bluetooth aktivieren und Gerätezugriff erlauben.\n2. Uhr laden und neben das Telefon legen.\n3. Geräte suchen antippen und Ihre Uhr wählen.\n4. Eine Anfrage auf der Uhr bestätigen.",
+  "connectionInstructions": "1. Bluetooth aktivieren und Gerätezugriff erlauben.\n2. Gerät laden und neben das Telefon legen.\n3. Geräte suchen antippen und Ihr Gerät wählen.\n4. Eine Anfrage auf dem Gerät bestätigen.",
   "syncNearbyHint": "Uhr beim Synchronisieren in der Nähe halten.",
   "invalidCode": "Code prüfen und erneut versuchen",
   "codeExpired": "Dieser Code ist abgelaufen. Fordern Sie einen neuen an.",
@@ -715,11 +715,11 @@
       }
     }
   },
-  "cloudHealthUploading": "Gespeicherte Daten werden hochgeladen…",
+  "cloudHealthUploading": "Gespeicherte Daten werden in die Cloud (US-Server) hochgeladen…",
   "cloudHealthLocalOnly": "Auf diesem Telefon gespeichert. Zum Hochladen anmelden.",
   "cloudHealthOnDeviceOnly": "Diese Daten sind nur auf diesem Telefon gespeichert.",
-  "cloudHealthPending": "Einige Daten wurden noch nicht hochgeladen. Sie bleiben auf diesem Telefon gespeichert.",
-  "cloudHealthConfirmed": "Der Server hat die hochgeladenen Daten bestätigt.",
+  "cloudHealthPending": "Einige Daten sind noch nicht in der Cloud (US-Server). Sie bleiben auf diesem Telefon.",
+  "cloudHealthConfirmed": "Die Cloud (US-Server) hat den Empfang dieser Daten bestätigt.",
   "u19WristMeasurementHint": "Ruhen Sie sich 5 Minuten aus. Stellen Sie beide Füße flach auf den Boden und stützen Sie das Handgelenk auf Herzhöhe ab. Befolgen Sie die Anweisungen der Uhr. Messwerte am Handgelenk dienen nur zur Orientierung. Besprechen Sie medizinische Entscheidungen mit einer Fachperson und verwenden Sie dafür ein validiertes Oberarmmessgerät.",
   "manageCare": "Verwalten",
   "batteryCharging": "Wird geladen",

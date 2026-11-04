@@ -1169,7 +1169,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get connectionInstructions =>
-      '1. Activa Bluetooth y permite buscar dispositivos cercanos.\n2. Carga el reloj y acércalo al teléfono.\n3. Toca Buscar dispositivos y selecciona tu reloj.\n4. Confirma en el reloj si se solicita.';
+      '1. Activa Bluetooth y permite buscar dispositivos cercanos.\n2. Carga el dispositivo y acércalo al teléfono.\n3. Toca Buscar dispositivos y selecciona tu dispositivo.\n4. Confirma en el dispositivo si se solicita.';
 
   @override
   String get syncNearbyHint => 'Mantén el reloj cerca al sincronizar.';
@@ -2131,7 +2131,8 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
-  String get cloudHealthUploading => 'Subiendo los registros guardados…';
+  String get cloudHealthUploading =>
+      'Subiendo registros guardados a la nube (servidores de EE. UU.)…';
 
   @override
   String get cloudHealthLocalOnly =>
@@ -2143,11 +2144,11 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get cloudHealthPending =>
-      'Algunos registros aún no se han subido. Siguen guardados en este teléfono.';
+      'Algunos registros aún no han llegado a la nube (servidores de EE. UU.). Permanecen en este teléfono.';
 
   @override
   String get cloudHealthConfirmed =>
-      'El servidor ha confirmado la recepción de los registros subidos.';
+      'La nube (servidores de EE. UU.) ha confirmado la recepción de estos registros.';
 
   @override
   String get u19WristMeasurementHint =>

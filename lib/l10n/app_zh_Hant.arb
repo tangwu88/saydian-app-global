@@ -405,7 +405,7 @@
   "needsAttention": "需要處理",
   "tapToOpen": "點選進入",
   "deviceInfoHint": "查看裝置資訊",
-  "connectionInstructions": "1. 開啟手機藍牙並允許尋找附近裝置。\n2. 為手錶充電並放在手機旁。\n3. 點選「開始搜尋」，選擇自己的手錶。\n4. 若手錶顯示確認提示，請確認。",
+  "connectionInstructions": "1. 開啟手機藍牙並允許尋找附近裝置。\n2. 為裝置充電並放在手機旁。\n3. 點選「開始搜尋」，選擇自己的裝置。\n4. 若裝置顯示確認提示，請確認。",
   "syncNearbyHint": "同步時請保持手錶靠近。",
   "invalidCode": "請檢查驗證碼後重試",
   "codeExpired": "驗證碼已過期，請重新取得",
@@ -715,11 +715,11 @@
       }
     }
   },
-  "cloudHealthUploading": "正在上傳已儲存的記錄…",
+  "cloudHealthUploading": "正在上傳已儲存的記錄至雲端（美國伺服器）…",
   "cloudHealthLocalOnly": "資料僅儲存在本機，登入後可上傳",
   "cloudHealthOnDeviceOnly": "這些記錄僅儲存在本機。",
-  "cloudHealthPending": "部分記錄暫未上傳，已儲存在本機",
-  "cloudHealthConfirmed": "雲端已確認接收本次上傳的記錄",
+  "cloudHealthPending": "部分記錄暫未上傳至雲端（美國伺服器），已儲存在本機",
+  "cloudHealthConfirmed": "雲端（美國伺服器）已確認接收本次上傳的記錄",
   "u19WristMeasurementHint": "先安靜休息 5 分鐘，雙腳平放，托住手腕並保持與心臟同高，依手錶說明測量。腕部讀數僅供參考；醫療判斷請諮詢醫師並使用經驗證的上臂式血壓計。",
   "manageCare": "管理",
   "batteryCharging": "充電中",

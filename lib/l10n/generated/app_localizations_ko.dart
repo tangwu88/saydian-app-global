@@ -1109,7 +1109,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get connectionInstructions =>
-      '1. 블루투스를 켜고 주변 기기 접근을 허용하세요.\n2. 워치를 충전하고 휴대전화 가까이에 두세요.\n3. 기기 검색을 눌러 본인의 워치를 선택하세요.\n4. 워치에 확인 요청이 표시되면 승인하세요.';
+      '1. 블루투스를 켜고 주변 기기 접근을 허용하세요.\n2. 기기를 충전하고 휴대전화 가까이에 두세요.\n3. 기기 검색을 눌러 본인의 기기를 선택하세요.\n4. 기기에 확인 요청이 표시되면 승인하세요.';
 
   @override
   String get syncNearbyHint => '동기화 중에는 워치를 가까이 두세요.';
@@ -2037,7 +2037,7 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get cloudHealthUploading => '저장된 기록을 업로드하고 있습니다…';
+  String get cloudHealthUploading => '저장된 기록을 클라우드(미국 서버)에 업로드하고 있습니다…';
 
   @override
   String get cloudHealthLocalOnly => '이 휴대폰에 저장되었습니다. 업로드하려면 로그인해 주세요.';
@@ -2046,10 +2046,11 @@ class AppLocalizationsKo extends AppLocalizations {
   String get cloudHealthOnDeviceOnly => '이 기록은 이 휴대폰에만 저장됩니다.';
 
   @override
-  String get cloudHealthPending => '아직 업로드되지 않은 기록이 있습니다. 이 휴대폰에 저장되어 있습니다.';
+  String get cloudHealthPending =>
+      '일부 기록이 아직 클라우드(미국 서버)에 도착하지 않았습니다. 이 휴대전화에 보관됩니다.';
 
   @override
-  String get cloudHealthConfirmed => '서버가 업로드된 기록을 수신했음을 확인했습니다.';
+  String get cloudHealthConfirmed => '클라우드(미국 서버)에서 이번 기록의 수신을 확인했습니다.';
 
   @override
   String get u19WristMeasurementHint =>

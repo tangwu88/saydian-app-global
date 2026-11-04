@@ -246,8 +246,6 @@ class DevicePage extends StatelessWidget {
                       ],
                     ),
                   ],
-                  const SizedBox(height: 10),
-                  const UsDataStorageNotice(),
                 ],
               ),
             )

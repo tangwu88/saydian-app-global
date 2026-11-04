@@ -1106,7 +1106,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get connectionInstructions =>
-      '1. Bluetoothと付近のデバイスへのアクセスを有効にします。\n2. ウォッチを充電し、スマートフォンの近くに置きます。\n3. デバイスを検索し、自分のウォッチを選びます。\n4. ウォッチに確認が表示されたら承認します。';
+      '1. Bluetoothと付近のデバイスへのアクセスを有効にします。\n2. デバイスを充電し、スマートフォンの近くに置きます。\n3. デバイスを検索し、自分のデバイスを選びます。\n4. デバイスに確認が表示されたら承認します。';
 
   @override
   String get syncNearbyHint => '同期中は時計を近くに置いてください。';
@@ -2028,7 +2028,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get cloudHealthUploading => '保存済みの記録を送信しています…';
+  String get cloudHealthUploading => '保存済みの記録をクラウド（米国のサーバー）に送信しています…';
 
   @override
   String get cloudHealthLocalOnly => 'この端末に保存されています。送信するにはログインしてください。';
@@ -2037,10 +2037,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get cloudHealthOnDeviceOnly => 'これらの記録はこの端末にのみ保存されています。';
 
   @override
-  String get cloudHealthPending => '未送信の記録があります。記録はこの端末に保存されています。';
+  String get cloudHealthPending => 'クラウド（米国のサーバー）に届いていない記録があります。この端末に保持されています。';
 
   @override
-  String get cloudHealthConfirmed => '送信した記録の受信をサーバーが確認しました。';
+  String get cloudHealthConfirmed => 'クラウド（米国のサーバー）が今回の記録の受信を確認しました。';
 
   @override
   String get u19WristMeasurementHint =>

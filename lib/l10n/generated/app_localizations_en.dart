@@ -2112,7 +2112,8 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get cloudHealthUploading => 'Uploading saved records…';
+  String get cloudHealthUploading =>
+      'Uploading saved records to the cloud (US servers)…';
 
   @override
   String get cloudHealthLocalOnly => 'Saved on this phone. Sign in to upload.';
@@ -2123,11 +2124,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get cloudHealthPending =>
-      'Some records have not been uploaded. They remain saved on this phone.';
+      'Some records have not reached the cloud (US servers). They remain saved on this phone.';
 
   @override
   String get cloudHealthConfirmed =>
-      'The server has confirmed the uploaded records.';
+      'The cloud (US servers) has confirmed receipt of these records.';
 
   @override
   String get u19WristMeasurementHint =>

@@ -3983,7 +3983,7 @@ abstract class AppLocalizations {
   /// No description provided for @cloudHealthUploading.
   ///
   /// In en, this message translates to:
-  /// **'Uploading saved records…'**
+  /// **'Uploading saved records to the cloud (US servers)…'**
   String get cloudHealthUploading;
 
   /// No description provided for @cloudHealthLocalOnly.
@@ -4001,13 +4001,13 @@ abstract class AppLocalizations {
   /// No description provided for @cloudHealthPending.
   ///
   /// In en, this message translates to:
-  /// **'Some records have not been uploaded. They remain saved on this phone.'**
+  /// **'Some records have not reached the cloud (US servers). They remain saved on this phone.'**
   String get cloudHealthPending;
 
   /// No description provided for @cloudHealthConfirmed.
   ///
   /// In en, this message translates to:
-  /// **'The server has confirmed the uploaded records.'**
+  /// **'The cloud (US servers) has confirmed receipt of these records.'**
   String get cloudHealthConfirmed;
 
   /// No description provided for @u19WristMeasurementHint.

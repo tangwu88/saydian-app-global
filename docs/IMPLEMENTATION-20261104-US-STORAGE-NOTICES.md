@@ -41,3 +41,47 @@ Android Play Debug13.3秒和内部QA Release30.1秒通过；推送仍关闭、AR
 本机源码ff4007b5bb1a8f1805b4135a995ba884c38e80b5通过已授权GitHub连接发布为748aaaaed9884ade0e2ea84e66e59fbf0f2c0ef8，完整tree a6e3b6beb2eae49208e2cc0108139600a5c0a4bf一致。已fetch/diff核对并跟踪规范远端；原本机历史保留codex/us-storage-notices-local-20261104，没有main合并或force push。源码CI41774487076已触发，送交记录时仍在运行；最终状态另验，不将本机通过当云端已通过。本次追加仅文档，跳过重复CI。
 
 手机前台切回本国际版同一PID1971后，实际设备页已显示已连接U19S、美国数据存储提示及独立的云同步状态。该页实拍已打开检查，当前手机使用中文设置；英文版连接帮助另有已标注离线组件预览。此单页实拍补充真实UI证据，不代表隐私/帮助全部真机逐页验收，也不证明三项新测量的逐条ACK。
+
+## 用户截图后的界面收口
+
+用户明确要求设备页去掉独立美国数据存储卡，把美国位置并入原有小字。已删除设备页该卡及间距，连接帮助与隐私页的共享说明保留。云同步上传中/待上传/已确认三种文案加入“云端（美国服务器）”及对应九份语言；仅本机状态仍明确留在本机，不改ACK/上传业务。手机使用标准Flutter run热重载，避免再次安装。结果随后追加。
+
+用户进一步要求连接说明“变成一个整体”。步骤、美国存储说明和隐私入口合入同一Card，统一20px内边距，用细分隔线区分内容；隐私入口在卡内左对齐并去掉重复地球图标。其他页面继续使用原共享提示。相关语言连接步骤统一“设备”称谓，沿用戒指/手表共用要求；不改连接动作。
+
+本轮基线bb86021682b3657355dc7d3b11bc078315fe1c53，首次收口前干净且已跟踪远端；修改期间仅fetch核对远端仍相同，不对未提交改动pull。涉及data_privacy_page.dart、device_pages.dart及九份ARB/生成文件，保留r4和原上传状态来源。
+
+设备页收口热重载35/2224库、954ms成功。合并帮助页热重载35/2224库、30,961ms成功（编译334ms/reload191ms/reassemble108ms）；初次读取日志过早尚无完成行，检查脚本AssertionError只表示没有等到回执，后续已核对完成行，无新增异常/断连。该次过早截图实际为用户当时前台另一App，未作为SayDian证据；随后激活精确cn.saydian.app.global同一PID1971，实际设备页已显示英文US servers小字、无独立美国提示卡，U19S连接仍在。没有操作另一App的数据或XR。
+
+帮助页正常411宽及320宽/1.8倍文字的离线真实组件截图均通过，已打开检查：同卡布局、换行正确，无横向溢出，小屏大字体使用滚动。不是新测量/云端验收。已请用户进入帮助页作真机核对；截至本段记录尚未取得该页实拍，不能用其他页面截图替代。
+
+最新analyzer零问题2.9s，既有定向global_ring_privacy/client_review_regressions/global_legal_page共67通过；UTC/Asia-Shanghai全量各1151通过（39s/30s）。格式10文件0改变，git diff --check通过。继续复用现有测试和opt-in截图入口，没有为这次可逆布局新增镜像实现测试。
+
+执行命令（原始输出在受限临时目录，不含入Git的会话/健康库）：
+
+```sh
+flutter --no-version-check analyze --no-pub
+flutter --no-version-check test --no-pub --reporter=expanded test/global_ring_privacy_test.dart test/client_review_regressions_test.dart test/global_legal_page_test.dart
+TZ=UTC flutter --no-version-check test --no-pub --reporter=expanded
+TZ=Asia/Shanghai flutter --no-version-check test --no-pub --reporter=expanded
+flutter --no-version-check test --no-pub --reporter=expanded test/support/ios_inner_page_capture.dart --dart-define=IOS_REFERENCE_OUTPUT=build/us-storage-notices-20261104/help-unified --dart-define=IOS_REFERENCE_PAGE=global-connection-help
+flutter --no-version-check test --no-pub --reporter=expanded test/support/ios_inner_page_capture.dart --dart-define=IOS_REFERENCE_OUTPUT=build/us-storage-notices-20261104/help-unified-narrow --dart-define=IOS_REFERENCE_PAGE=global-connection-help --dart-define=IOS_REFERENCE_WIDTH=320 --dart-define=IOS_REFERENCE_HEIGHT=800 --dart-define=IOS_REFERENCE_TEXT_SCALE=1.8
+dart format --output=none --set-exit-if-changed lib/ui/data_privacy_page.dart lib/ui/device_pages.dart lib/l10n/generated
+git diff --check
+```
+
+最新两端重建完成：Android Play Debug32.2s、QA Release33.1s；iOS串行Profile无签名45.7s、开发签名Debug23.7s，均退出0。QA APK为内部测试签名，不上传商店。沿用此前供应商SwiftPM/模拟器arm64、Kotlin未来迁移提示，无新编译错误。构建不另装手机，手机运行的是本轮已热重载的标准run进程；最终getVM/main仍成功。build ios生成的TRACK_WIDGET_CREATION=false不同于当前run的true；后续调试如再需完整编译/重载，使用标准flutter run对齐参数，避免重复此前手工混用产物的异常。
+
+构建使用相同美国API/update defines、空JPUSH_APP_KEY、SAIDIAN_DISABLE_REMOTE_PUSH=true；Android另设JPUSH_VENDOR_CHANNELS=none、双ARM及SAIDIAN_PLAY_STORE=true，QA Release显式SAIDIAN_ALLOW_QA_RELEASE=true。执行顺序为：
+
+```sh
+flutter --no-version-check build apk --debug --no-pub --flavor play --target-platform android-arm,android-arm64 --dart-define=SAIDIAN_PLAY_STORE=true --dart-define=SAYDIAN_API_BASE_URL=https://app.saydian.com --dart-define=JPUSH_APP_KEY=
+SAIDIAN_ALLOW_QA_RELEASE=true flutter --no-version-check build apk --release --no-pub --flavor play --target-platform android-arm,android-arm64 --dart-define=SAIDIAN_PLAY_STORE=true --dart-define=SAYDIAN_API_BASE_URL=https://app.saydian.com --dart-define=JPUSH_APP_KEY=
+flutter --no-version-check build ios --profile --no-pub --no-codesign --dart-define=SAYDIAN_API_BASE_URL=https://app.saydian.com --dart-define=SAYDIAN_UPDATE_MANIFEST_URL=https://app.saydian.com/global/api/saydian-app/v2/support/app-update --dart-define=JPUSH_APP_KEY=
+flutter --no-version-check build ios --debug --no-pub --dart-define=SAYDIAN_API_BASE_URL=https://app.saydian.com --dart-define=SAYDIAN_UPDATE_MANIFEST_URL=https://app.saydian.com/global/api/saydian-app/v2/support/app-update --dart-define=JPUSH_APP_KEY=
+```
+
+上述iOS命令均使用受限目录既有XCODE_XCCONFIG_FILE的iOS15/开发团队配置，没有分发证书或App Store上传。本轮隐私正文和已发布r4未变，不触发新的法律版本。
+
+用户随后确认已打开Connection help；再次采集精确手机实拍并打开核对，真实英文页面已是一张完整圆角卡：连接步骤、分隔线、美国存储说明及Data privacy入口均在卡内，文字未裁切。文件位于忽略目录build/us-storage-notices-20261104/iphone-connection-help-final.png。该证据关闭前述帮助页显示待核对项，不代表新增测量或隐私入口点击已经真机验收。
+
+最终文档补记脚本出现输入编码SyntaxError，shell未设置set-e仍创建了含先前记录的本地8540dd2提交；没有源码丢失。改用apply_patch补齐本段构建/真机结果，单独保留后续文档提交，不重写既有本地历史。后续关联命令统一要求失败即停。

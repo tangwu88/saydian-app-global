@@ -19,33 +19,43 @@ class UsDataStorageNotice extends StatelessWidget {
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: colors.outlineVariant),
         ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(Icons.public, size: 20, color: colors.onSurfaceVariant),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    context.l10n.dataResidencyTitle,
-                    style: Theme.of(context).textTheme.labelLarge,
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    context.l10n.usStorageNotice,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      height: 1.4,
-                      color: colors.onSurfaceVariant,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
+        child: const _UsDataStorageContent(),
       ),
+    );
+  }
+}
+
+class _UsDataStorageContent extends StatelessWidget {
+  const _UsDataStorageContent();
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(Icons.public, size: 20, color: colors.onSurfaceVariant),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                context.l10n.dataResidencyTitle,
+                style: Theme.of(context).textTheme.labelLarge,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                context.l10n.usStorageNotice,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  height: 1.4,
+                  color: colors.onSurfaceVariant,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
@@ -59,14 +69,40 @@ class ConnectionHelpPage extends StatelessWidget {
     body: ListView(
       padding: const EdgeInsets.all(20),
       children: [
-        Text(
-          context.l10n.connectionInstructions,
-          style: const TextStyle(fontSize: 15, height: 1.7),
+        Card(
+          margin: EdgeInsets.zero,
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  context.l10n.connectionInstructions,
+                  style: const TextStyle(fontSize: 15, height: 1.7),
+                ),
+                const Divider(height: 32),
+                const _UsDataStorageContent(),
+                const SizedBox(height: 8),
+                TextButton(
+                  key: const Key('connection-help-privacy-link'),
+                  onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => const DataPrivacyPage(),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Flexible(child: Text(context.l10n.dataPrivacyTitle)),
+                      const SizedBox(width: 4),
+                      const Icon(Icons.chevron_right_rounded, size: 18),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
-        const SizedBox(height: 20),
-        const UsDataStorageNotice(),
-        const SizedBox(height: 8),
-        const DataPrivacyLink(),
       ],
     ),
   );

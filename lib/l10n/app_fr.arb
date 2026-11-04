@@ -405,7 +405,7 @@
   "needsAttention": "Action requise",
   "tapToOpen": "Touchez pour ouvrir",
   "deviceInfoHint": "Voir les informations de l’appareil",
-  "connectionInstructions": "1. Activez le Bluetooth et l’accès aux appareils à proximité.\n2. Chargez la montre et placez-la près du téléphone.\n3. Lancez la recherche et sélectionnez votre montre.\n4. Confirmez sur la montre si nécessaire.",
+  "connectionInstructions": "1. Activez le Bluetooth et l’accès aux appareils à proximité.\n2. Chargez l’appareil et placez-la près du téléphone.\n3. Lancez la recherche et sélectionnez votre appareil.\n4. Confirmez sur l’appareil si nécessaire.",
   "syncNearbyHint": "Gardez la montre près de vous pendant la synchronisation.",
   "invalidCode": "Vérifiez le code et réessayez",
   "codeExpired": "Ce code a expiré. Demandez-en un nouveau.",
@@ -715,11 +715,11 @@
       }
     }
   },
-  "cloudHealthUploading": "Envoi des données enregistrées…",
+  "cloudHealthUploading": "Envoi des données enregistrées vers le cloud (serveurs américains)…",
   "cloudHealthLocalOnly": "Enregistrées sur ce téléphone. Connectez-vous pour les envoyer.",
   "cloudHealthOnDeviceOnly": "Ces données sont enregistrées uniquement sur ce téléphone.",
-  "cloudHealthPending": "Certaines données ne sont pas encore envoyées. Elles restent sur ce téléphone.",
-  "cloudHealthConfirmed": "Le serveur a confirmé la réception des données envoyées.",
+  "cloudHealthPending": "Certaines données ne sont pas encore dans le cloud (serveurs américains). Elles restent sur ce téléphone.",
+  "cloudHealthConfirmed": "Le cloud (serveurs américains) a confirmé la réception de ces données.",
   "u19WristMeasurementHint": "Reposez-vous au calme pendant 5 minutes. Posez les pieds à plat et soutenez le poignet à hauteur du cœur. Suivez les instructions de la montre. Les mesures au poignet sont indicatives ; pour toute décision médicale, consultez un professionnel et utilisez un tensiomètre brachial validé.",
   "manageCare": "Gérer",
   "batteryCharging": "En charge",
