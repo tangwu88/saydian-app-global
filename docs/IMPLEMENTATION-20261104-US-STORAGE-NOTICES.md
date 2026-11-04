@@ -25,3 +25,19 @@
 连接帮助411宽正常字体截图通过；设备同步320宽/1.8倍文字截图在自适应修正后通过，无RenderFlex溢出。两张截图已实际打开检查，文字均英文，图标与段落可读。图片来自离线空数据夹具，不是真实采集或云端成功证明。预览位于忽略目录build/us-storage-notices-20261104/help与sync-r2。
 
 Android Play Debug13.3秒和内部QA Release30.1秒通过；推送仍关闭、ARM双ABI不变。串行iOS Profile及开发签名Debug正在运行，实际结果随后追加。dart format/diff检查通过。r4法律内容没有变更，不产生新的法律版本或发布动作。
+
+## 最终构建、安装与调试结果
+
+串行iOS Profile无签名50.4秒、开发签名Debug23.9秒通过；最初手动安装的已验证候选Runner SHA256 d1039ab558448d370ea07608d9e0fc7216851a286e24442cec14b4e7825b948c，实际cn.saydian.app.global/1.0.2(1022)，strict codesign/手机描述文件通过。手动覆盖后、启动前与最新私有备份逐字节核对，5个Documents/Application Support文件/10,127,599bytes（3数据库）一致；未出现空容器，未恢复或覆盖原记录。Preferences另有备份。
+
+手动LLDB恢复时先遇到异步attach后过早continue的“Process must be launched”，再出现EXC_BAD_ACCESS；保留日志并停止本任务的旧进程/手动LLDB，不停止XR或其他产品会话。没有把这次手动附加当成功。随后改用标准Flutter run正常lib/main.dart、--no-uninstall-first、--track-widget-creation及相同美国defines，SDK自行管理编译/安装/LLDB。标准流程Xcode18.9秒、安装启动82.7秒、源码同步139ms；实际VM/main isolate及国际版进程PID1971匹配。
+
+标准流程后SIGUSR1热重载真实回执 `Reloaded 8 of 2224 libraries in 675ms (compile:112ms,reload:128ms,reassemble:70ms)`，后续无NoSuchMethod/EXCEPTION/断连；调试器保持附加。新DevTools已替换旧会话。运行中设备文件元数据确认3个数据库仍在（9,650,176bytes）；这不是运行后的逐字节不变断言。临时运行时UI导航evaluate返回113未执行页面跳转；页面位置与小屏视觉证据使用已注明的离线真实组件截图，不冒充真机逐页点击验收。
+
+当前活动会话指针在私有 `/private/tmp/saydian-us-notices-20261104/debug-session.json`，不要使用旧iphone15-debug目录里的会话URI。原始运行日志/截图/会话URI/备份不入Git；其余证据保留受限目录。手机可继续使用当前更新后的1022调试包，独立重启仍遵守Debug需附加工具的既有规则。本轮没有上传新商店包或改变在线法律文档。
+
+## Git与CI
+
+本机源码ff4007b5bb1a8f1805b4135a995ba884c38e80b5通过已授权GitHub连接发布为748aaaaed9884ade0e2ea84e66e59fbf0f2c0ef8，完整tree a6e3b6beb2eae49208e2cc0108139600a5c0a4bf一致。已fetch/diff核对并跟踪规范远端；原本机历史保留codex/us-storage-notices-local-20261104，没有main合并或force push。源码CI41774487076已触发，送交记录时仍在运行；最终状态另验，不将本机通过当云端已通过。本次追加仅文档，跳过重复CI。
+
+手机前台切回本国际版同一PID1971后，实际设备页已显示已连接U19S、美国数据存储提示及独立的云同步状态。该页实拍已打开检查，当前手机使用中文设置；英文版连接帮助另有已标注离线组件预览。此单页实拍补充真实UI证据，不代表隐私/帮助全部真机逐页验收，也不证明三项新测量的逐条ACK。
