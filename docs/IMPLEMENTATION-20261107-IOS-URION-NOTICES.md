@@ -35,3 +35,27 @@ test/urion_wearable_bridge_session_test.dart新增两项同时验证错误设备
 四项构建没有并发iOS编译、清理共享DerivedData或操作手机原数据；沿用已存在的Xcode27/最低iOS15临时构建配置。保留原厂模拟器arm64、Kotlin及SDK XML版本提示，它们未阻断实际手机架构构建。未找到的verify_ipa.py路径是工具定位错误，改为核对现有工具和实际产物，没有伪造该脚本通过。
 
 实时App Store Connect仍为国际版1.0.2等待审核（原提交ID不变）；旧链接失效后按实际tab1重新绑定。GitHub连接只列PR事件，改从已登录Actions网页取得本次push流程，再使用连接读取五job。当前准备发布新源码并核对其新CI，通过后才开始1026正式归档/发行导出；不能以765d7cb文档提交或31bfda1旧CI代替新源码结果。
+
+## 新源码CI通过、美国旧历史逐条回读及审核资料
+
+源码已通过GitHub连接发布为a30c6a581e09f828c908b9498c55c992cc191c7a，完整tree3fffdaf9227ec58b13ef96d66e0122fc2b62c497与本机一致；本地同树提交cc42406保留在codex/urion-ios-notices-local-20261107，当前国际分支跟踪远端，没有强推/重置/合国内main。新CI[42372007896](https://github.com/tangwu88/saydian-app-global/actions/runs/42372007896)实际五job全部completed/success，于2026-11-07 20:45:47（Asia/Shanghai）回读确认，之后才开始正式归档。iOS包括Debug/Profile/Release及RunnerTests编译，Android包括三个渠道构建、ABI/推送和双渠道原生测试；不是实体SDK/测量验收。
+
+手机实际使用纽约时区，额外TZ=America/New_York的Urion协议/会话/历史43项通过。安卓正常1025调试会话热重载9/2226库、2691ms通过，运行API根仍https://app.saydian.com、当前U19M通道正确，计划保持Off、原30/45未改。U19M实读硬件U19_V1.0、固件9.01.105C1；不与原U19S的U19_V3.0验收混用。没有手动调整手机时间或人为快进设备以触发监测；正常连接/同步流程的协议对时保持原实现。
+
+本机59条E8旧历史的ID，在当前同账号美国服务最近200条中全部找到；逐条数值、单位、observedAt/原measuredAt瞬时均一致，当前pending0、云complete、本次上传计数0。此证据证明这批旧历史可在美国服务回读，不证明本轮U19M新采集、首ACK或定时触发。observedAt早于基线仅说明不是基线后的新采样，不能据此断言期间没有旧历史上传；原临时云基线文件缺失，不能凭记忆重造ID差集。
+
+美国公开auth/capabilities为global/en、registration.verificationRequired=false、consentVersion=r4；按其返回路径映射至/global后，两份英文法律文档均200、reviewed=true、active=true、版本global-appstore-2026-11-04-r4，正文无中文且保留美国存储说明，未修改或重新发布法律正文。独立保护的审核账号仍未在本轮重新密码登录，不能用当前物理测试账号profile200替代。
+
+商店实际英语（美国）的“App预览和截屏”面板仍保存global-dashboard/global-device/global-privacy三张英文图，已目视核对设备通用/美国存储、无真实健康值或旧的云端仅活动睡眠表述。最初看到的空“标题和搜索结果”是可选新创意区域，不是截图丢失；通过实际下拉切回正确面板核对。当前发布方式仍AFTER_APPROVAL自动，未擅自改变。新英文[1026审核资料草稿](release/STORES-1026-20261107-DRAFT.json)已整理，3156字符、未写入商店，保留真实硬件/审核账号未验项。
+
+## 1026归档完成，发行导出被Xcode账户阻断
+
+CI全绿后，以正常main/.com/空JPUSH、production=true/QA=false及1.0.2（1026）正式归档。保留并移动旧默认archive/ipa至1026的preserved-default-*，没有删除旧正式包或缓存。实际Xcode27.2（27B52），xcode-select为/Applications/Xcode.app/Contents/Developer，无DEVELOPER_DIR覆盖；不是另一套27.1工具链。
+
+归档40.8秒/257.1MB完成，整次Flutter命令47.7秒，开发签名严格deep/strict核验通过、正确包名/版本，新App.framework的代码及UUID与1025不同；产物在build/store-upload-20261107-1026/Runner.xcarchive。归档仍为Development签名，不是商店发行包。
+
+发行导出640ms返回多项error: exportArchive No Accounts，没有生成IPA。Flutter命令本身却退出0，已依实际产物及签名门禁正确判定“导出失败/未上传”，没有据exit0宣布成功。本机Flutter导出实现已包含allowProvisioningUpdates，不能靠重复相同命令解决缺账户。登录后可直接复用此隔离归档重新导出，无需重编译。
+
+本轮私有发行核验脚本先在旧1025已验证包上校对：初版只接受thin Mach-O，遇App.framework的单arm64 fat容器失败；按实际fat头/边界补齐后，旧1025发行签名、entitlements、UUID及全部有内容section比较通过。它不是1026已通过发行核验的证明；1026须在实际IPA生成后独立跑同样检查。
+
+尝试打开Xcode账户页时bundle ID命中两套Xcode，按实际xcode-select改选/Applications/Xcode.app，随后工具明确“Mac已锁屏且自动解锁失败”。已请求用户解锁并在本次Xcode27.2的Apple Accounts登录/完成二次验证，未绕过锁屏、重置账户/证书、提取网页凭据或把网页登录当Xcode登录。原审核仍1023等待，1026没有上传或正式送审，正在等待账户操作。后续成功回执追加，保留此次No Accounts失败历史。

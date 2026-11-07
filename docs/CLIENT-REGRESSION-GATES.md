@@ -65,6 +65,7 @@ flutter --no-version-check test --no-pub --reporter=expanded test/client_review_
 - [ ] 源码测试、原生编译、构建、安装、独立冷启、业务采集、服务器回读和商店操作逐项列证据。
 - [ ] 英文默认、无意外中文、设备通用表述、大小字体及小屏，按实际可见路由与状态验收。
 - [ ] 将目标 build、commit、产物 hash、能力矩阵、法律版本、英文截图与审核说明对应；确认商店实际选择的是该构建。
+- [ ] `flutter build ipa`退出0不能单独作为发行成功：2026-11-07的1026归档完成后，exportArchive报No Accounts且无IPA，Flutter仍退出0。分别核验归档、实际IPA、发行签名/程序一致、上传成功和平台构建列表；账户恢复后优先复用已核验归档。见[原始失败及纠正](IMPLEMENTATION-20261107-IOS-URION-NOTICES.md)。
 - [ ] 审核账号从未登录环境实际复验；设备配对/完整流程视频对应正式范围。不得用后台管理员账号作 App 审核账号。
 - [ ] 失败原文、工具错误、跳过原因和重试保留；不因补测通过而删除失败历史。
 
