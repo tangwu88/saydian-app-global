@@ -43,6 +43,97 @@ void main() {
   });
 
   test(
+    'iOS applies current-device pressure notices without writing settings',
+    () async {
+      debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+      try {
+        await watch.connectAndReadCapabilities();
+        final writes = watch.writes.length;
+        final update = Eb1Frame.request(0x37, [0, 9, 60, 90]);
+        await watch.emit(update, device: 'another-watch');
+        await watch.emit(update, session: watch.generation - 1);
+        await watch.emit(Eb1Frame.request(0x73, [4]));
+        await watch.emit(Eb1Frame.request(0x73, [6]));
+        await _flush();
+        expect(
+          watch.events.where((e) => e.type == 'deviceFeatureData'),
+          isEmpty,
+        );
+
+        expect(watch.events.where((e) => e.type == 'healthDataReady'), isEmpty);
+
+        await watch.emit(update);
+        await _flush();
+        final event = watch.events.singleWhere(
+          (e) => e.type == 'deviceFeatureData',
+        );
+        expect(
+          event.payload['feature'],
+          DeviceFeature.healthMonitoring.wireName,
+        );
+        expect(event.payload['deviceId'], watch.id);
+        expect(event.payload['dynamicBloodPressure'], {
+          'enabled': false,
+          'startHour': 9,
+          'dayIntervalMinutes': 60,
+          'nightIntervalMinutes': 90,
+        });
+        expect(watch.writes, hasLength(writes));
+      } finally {
+        debugDefaultTargetPlatformOverride = null;
+      }
+    },
+  );
+
+  test(
+    'iOS pulse completion reads the result and retires the active session',
+    () async {
+      debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+      try {
+        await watch.connectAndReadCapabilities();
+        await watch.bridge.writeDeviceFeature(DeviceFeature.healthAssessment, {
+          'operation': 'start',
+        });
+        watch.now = watch.now.add(const Duration(seconds: 30));
+        final stamp = watch.now.millisecondsSinceEpoch ~/ 1000;
+        watch.pulseHistory = [
+          Eb1Frame.request(0x34, [
+            for (var i = 0; i < 4; i++) (stamp >> (i * 8)) & 255,
+            3,
+            6,
+            2,
+          ]),
+        ];
+        final reads = watch.writes.where((e) => e.$2.command == 0x34).length;
+        final notice = Eb1Frame.request(0x73, [5]);
+        await watch.emit(notice, device: 'another-watch');
+        await watch.emit(notice, session: watch.generation - 1);
+        await _flush();
+        expect(
+          watch.writes.where((e) => e.$2.command == 0x34),
+          hasLength(reads),
+        );
+        await watch.emit(notice);
+        await _until(
+          () => watch.events.any((e) => e.type == 'deviceFeatureData'),
+        );
+        final event = watch.events.lastWhere(
+          (e) => e.type == 'deviceFeatureData',
+        );
+        expect(event.payload['justMeasured'], isTrue);
+        expect(event.payload['pulse'], containsPair('qiBlood', 6));
+        expect(watch.records, isEmpty);
+        await watch.bridge.writeDeviceFeature(DeviceFeature.healthAssessment, {
+          'operation': 'start',
+        });
+        expect(watch.writes.where((e) => e.$2.command == 0x3a), hasLength(2));
+      } finally {
+        debugDefaultTargetPlatformOverride = null;
+      }
+    },
+  );
+
+  test(
     'read-only capability discovery exposes BP and find without starting measurement',
     () async {
       await watch.connect();

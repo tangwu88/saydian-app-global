@@ -106,9 +106,11 @@ class UrionWearableBridge
     for (final frame in _buffer.add(
       bytes is Uint8List ? bytes : bytes as List<int>,
     )) {
+      // Urion monitoring and pulse features are available on iOS. Their
+      // settings/result notices must reach the same handlers as explicit reads.
       if (IosWellnessPolicy.current.enabled &&
-          (frame.command == 0x37 ||
-              (frame.command == 0x73 && {4, 5, 6}.contains(frame[1])))) {
+          frame.command == 0x73 &&
+          {4, 6}.contains(frame[1])) {
         continue;
       }
       if (frame.command == 0x37) {
