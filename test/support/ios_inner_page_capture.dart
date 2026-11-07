@@ -11,6 +11,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:saydian_app/domain/models.dart';
+import 'package:saydian_app/domain/urion_pulse_record.dart';
 import 'package:saydian_app/domain/feature_models.dart';
 import 'package:saydian_app/l10n/generated/app_localizations.dart';
 import 'package:saydian_app/l10n/global_locale_controller.dart';
@@ -23,6 +24,7 @@ import 'package:saydian_app/ui/app_theme.dart';
 import 'package:saydian_app/ui/data_privacy_page.dart';
 import 'package:saydian_app/ui/pages.dart';
 import 'package:saydian_app/ui/prototype_pages.dart' hide AfterSalesPage;
+import 'package:saydian_app/ui/urion_pulse_history.dart';
 import 'package:saydian_app/ui/shop_pages.dart' as shop;
 
 void main() {
@@ -167,6 +169,31 @@ void main() {
             ..cloudSyncState = CloudHealthSyncState.pending;
       addTearDown(syncController.dispose);
       final pages = <String, Widget>{
+        'global-u19-pulse': Scaffold(
+          appBar: AppBar(title: const Text('Pulse insights')),
+          body: SingleChildScrollView(
+            child: UrionPulseHistory(
+              records: [
+                for (var i = 0; i < 25; i++)
+                  UrionPulseRecord(
+                    deviceId: 'urion:visual-fixture',
+                    rawTimestamp:
+                        DateTime.utc(
+                          2026,
+                          10,
+                          i + 1,
+                          8,
+                        ).millisecondsSinceEpoch ~/
+                        1000,
+                    measuredAt: DateTime.utc(2026, 10, i + 1, 8),
+                    bloodStasis: i % 5,
+                    qiBlood: 5 + i % 5,
+                    dampness: 2 + i % 4,
+                  ),
+              ],
+            ),
+          ),
+        ),
         'global-dashboard': AppShell(controller: globalController),
         'global-device': AppShell(controller: globalController),
         'global-privacy': const DataPrivacyPage(),

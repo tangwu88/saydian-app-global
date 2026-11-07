@@ -418,62 +418,6 @@ class UrionWearableBridge
   @override
   Future<DeviceCapabilities> getCapabilities() => _runConnected(() async {
     if (_capabilities != null) return _capabilities!;
-    if (IosWellnessPolicy.current.enabled) {
-      final sensorMetrics = <HealthMetric>{};
-      try {
-        await _readBloodPressure(count: 1);
-        sensorMetrics.add(HealthMetric.bloodPressure);
-      } on PlatformException catch (error) {
-        if (error.code != 'UNSUPPORTED_DEVICE') rethrow;
-      }
-      for (final metric in [HealthMetric.heartRate, HealthMetric.bloodOxygen]) {
-        try {
-          final history = await _readIndexed(metric);
-          if (!history.hasNoData) {
-            history.decodeHourlyOrFiveMinuteValues(
-              expectedInterval: metric == HealthMetric.heartRate ? 5 : 60,
-            );
-          }
-          sensorMetrics.add(metric);
-        } on PlatformException catch (error) {
-          if (error.code != 'UNSUPPORTED_DEVICE') rethrow;
-        } on FormatException {
-          if (kDebugMode) {
-            debugPrint('[U19Capability] indexed layout unverified');
-          }
-        }
-      }
-      final daily = await _exchange(0x07, [0], 2);
-      Eb1DailySnapshot.parse(daily[0], daily[1]);
-      final generalFeatures = <DeviceFeature>{
-        if (_findSupported) DeviceFeature.findWatch,
-      };
-      try {
-        final screen = (await _exchange(0x1f, [1])).single;
-        if (screen[1] == 1 && screen[2] >= 1 && screen[2] <= 20) {
-          generalFeatures.add(DeviceFeature.screenDisplay);
-        }
-      } on PlatformException catch (error) {
-        if (error.code != 'UNSUPPORTED_DEVICE') rethrow;
-      }
-      try {
-        final profile = (await _exchange(0x0a, [1])).single;
-        final goals = (await _exchange(0x21, [1])).single;
-        if (profile[1] == 1 &&
-            (profile[2] == 0 || profile[2] == 1) &&
-            goals[1] == 1) {
-          generalFeatures.add(DeviceFeature.basicSettings);
-        }
-      } on PlatformException catch (error) {
-        if (error.code != 'UNSUPPORTED_DEVICE') rethrow;
-      }
-      return _capabilities = DeviceCapabilities(
-        metrics: {HealthMetric.steps, HealthMetric.sleep, ...sensorMetrics},
-        manualMetrics: sensorMetrics,
-        features: generalFeatures,
-        integratedFeatures: generalFeatures,
-      );
-    }
     final metrics = <HealthMetric>{};
     final features = <DeviceFeature>{};
     final manualMetrics = <HealthMetric>{};
@@ -544,7 +488,9 @@ class UrionWearableBridge
     for (final command in [0x16, 0x2c]) {
       try {
         final answer = (await _exchange(command, [1])).single;
-        if (answer[1] == 1) settingsReadable.add(command);
+        if (answer[1] == 1 && {1, 2}.contains(answer[2])) {
+          settingsReadable.add(command);
+        }
       } on PlatformException catch (error) {
         if (error.code != 'UNSUPPORTED_DEVICE') rethrow;
       }
@@ -1076,10 +1022,19 @@ class UrionWearableBridge
     Eb1PulseSample sample, {
     DateTime? measuredAt,
   }) => {
+    'rawTimestamp': sample.rawTimestamp,
     'bloodStasis': sample.bloodStasis,
     'qiBlood': sample.qiBlood,
     'dampness': sample.dampness,
-    if (measuredAt != null) 'measuredAt': measuredAt.toIso8601String(),
+    // EB1 4.15 carries epoch seconds. Do not use the history-read time.
+    'measuredAt':
+        (measuredAt ??
+                eb1DecodeTimestamp(
+                  sample.rawTimestamp,
+                  _bloodPressureTimeEncoding ?? Eb1TimestampEncoding.utc,
+                ))
+            .toUtc()
+            .toIso8601String(),
   };
 
   void _scheduleMeasurementRead() {
@@ -1289,10 +1244,11 @@ class UrionWearableBridge
     DeviceFeature feature,
   ) => _runConnected(() async {
     if (feature == DeviceFeature.healthAssessment) {
-      final samples = await _readPulse(count: 1);
+      final samples = await _readPulse();
       if (samples.isEmpty) {
         return <String, Object?>{
           'pulse': null,
+          'pulseHistory': <Map<String, Object?>>[],
           'awaitingCompletion': _pulseMeasurement != null,
         };
       }
@@ -1300,6 +1256,7 @@ class UrionWearableBridge
       final encoding = _bloodPressureTimeEncoding;
       return <String, Object?>{
         'awaitingCompletion': _pulseMeasurement != null,
+        'pulseHistory': samples.map((sample) => _pulseMap(sample)).toList(),
         'pulse': _pulseMap(
           sample,
           measuredAt: encoding == null
@@ -1348,7 +1305,9 @@ class UrionWearableBridge
       for (final entry in {'heartRate': 0x16, 'bloodOxygen': 0x2c}.entries) {
         try {
           final response = (await _exchange(entry.value, [1])).single;
-          if (response[1] == 1) values[entry.key] = response[2] == 1;
+          if (response[1] == 1 && {1, 2}.contains(response[2])) {
+            values[entry.key] = response[2] == 1;
+          }
         } on PlatformException catch (error) {
           if (error.code != 'UNSUPPORTED_DEVICE') rethrow;
         }

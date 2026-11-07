@@ -1,5 +1,11 @@
 # SayDian 当前交接说明
 
+## 2026-11-07 U19S脉搏历史与动态血压1024
+
+在559e040基线完成U19脉搏历史50组读取、按账号/设备本机SQLCipher持久化去重、三指数7/30/全部趋势及分页；原值/设备时间不改，无脉搏指数云上传。iOS Urion逐协议发现和Dart/原生命令范围开放监测/脉搏；其他厂商范围、云传感/关爱、确认和写后回读保持。用户明确闹钟先不做，原协议无可用闹钟读写命令，不加假入口。
+
+最终analyzer、UTC/Shanghai全量各1162、Swift范围、两端四项Debug/Profile/QA构建均通过；390及320/1.8截图实看修正轴宽，单点不伪造趋势，测量按钮在历史之前。新1.0.2（1024）Debug已覆盖指定15pm，启动前5文件/3库10,146,893bytes一致，无需恢复，实际VM/main/PID20221和英文原账号首页通过。已请用户连接U19S打开健康监测；本轮真实设备设置、历史回读和计划执行待独立验收，未自动开启充气。XR不动，1023商店审核未操作。当前会话在/private/tmp/saydian-u19-features-20261107/debug-session.json。完整失败、构建及边界见[本轮实施](IMPLEMENTATION-20261107-U19-PULSE-MONITORING.md)。
+
 ## 2026-11-07 国际版15pm Debug已开启
 
 最新干净分支408003a经origin fetch/ff-only核对，正常main签名Debug1.0.2（1023）已覆盖安装到指定iPhone15pm；启动前5文件/3数据库10,141,687bytes全部一致，无需恢复。JIT/附加过程的失败和纠正均保留；最终单个Flutter PID53148及LLDB在App PID20053持续运行，getVM HTTP200/main匹配、热重载0/2224库27,439ms通过，内部浏览器DevTools实际显示Connected app/iOS debug。会话指针仅存私有/private/tmp/saydian-iphone15-debug-20261107/debug-session.json。请保留USB和前台；这是Debug附加，不是独立冷启动验收。当前附近设备可扫描，不冒称蓝牙/三项新采集/上云通过；XR独立SayRing未动，已取消的SayRing六问题任务未恢复，商店状态未操作。完整证据见[本轮记录](QA-20261107-IPHONE15PM-DEBUG.md)。

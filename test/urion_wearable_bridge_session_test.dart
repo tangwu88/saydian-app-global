@@ -15,44 +15,32 @@ void main() {
   setUp(() => watch = _Watch());
   tearDown(() => watch.dispose());
 
-  test(
-    'iOS Urion exposes verified local sensors without advanced health commands',
-    () async {
-      debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
-      try {
-        await watch.connectAndReadCapabilities();
-        final capabilities = await watch.bridge.getCapabilities();
-        expect(
-          capabilities.metrics,
-          containsAll([
-            HealthMetric.bloodPressure,
-            HealthMetric.heartRate,
-            HealthMetric.bloodOxygen,
-          ]),
-        );
-        expect(
-          capabilities.manualMetrics,
-          contains(HealthMetric.bloodPressure),
-        );
-        expect(
-          capabilities.features,
-          isNot(contains(DeviceFeature.healthAssessment)),
-        );
-        expect(
-          capabilities.features,
-          isNot(contains(DeviceFeature.healthMonitoring)),
-        );
-        expect(
-          watch.writes
-              .map((e) => e.$2.command)
-              .where({0x16, 0x2c, 0x32, 0x34, 0x36, 0x38, 0x39}.contains),
-          isEmpty,
-        );
-      } finally {
-        debugDefaultTargetPlatformOverride = null;
-      }
-    },
-  );
+  test('iOS Urion discovers pulse and monitoring with reads only', () async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+    try {
+      await watch.connectAndReadCapabilities();
+      final capabilities = await watch.bridge.getCapabilities();
+      expect(
+        capabilities.metrics,
+        containsAll([
+          HealthMetric.bloodPressure,
+          HealthMetric.heartRate,
+          HealthMetric.bloodOxygen,
+        ]),
+      );
+      expect(capabilities.manualMetrics, contains(HealthMetric.bloodPressure));
+      expect(capabilities.features, contains(DeviceFeature.healthAssessment));
+      expect(capabilities.features, contains(DeviceFeature.healthMonitoring));
+      expect(
+        watch.writes
+            .map((e) => e.$2.command)
+            .where({0x32, 0x35, 0x38, 0x39, 0x3a}.contains),
+        isEmpty,
+      );
+    } finally {
+      debugDefaultTargetPlatformOverride = null;
+    }
+  });
 
   test(
     'read-only capability discovery exposes BP and find without starting measurement',
@@ -416,6 +404,47 @@ void main() {
     expect(event.payload['pulse'], containsPair('qiBlood', 6));
   });
 
+  test('unknown automatic-monitoring state is not displayed as off', () async {
+    watch.autoMonitorState = 255;
+    await watch.connectAndReadCapabilities();
+    final value = await watch.bridge.readDeviceFeature(
+      DeviceFeature.healthMonitoring,
+    );
+    expect(value.containsKey('heartRate'), isFalse);
+    expect(value.containsKey('bloodOxygen'), isFalse);
+    expect(value['dynamicBloodPressure'], isA<Map>());
+  });
+
+  test(
+    'pulse read requests 50 original samples with device timestamps',
+    () async {
+      await watch.connectAndReadCapabilities();
+      final time = watch.now.subtract(const Duration(days: 2)).toUtc();
+      final stamp = time.millisecondsSinceEpoch ~/ 1000;
+      final packet = Eb1Frame.request(0x34, [
+        for (var i = 0; i < 4; i++) (stamp >> (i * 8)) & 255,
+        3,
+        6,
+        2,
+      ]);
+      watch.pulseHistory = [packet, packet];
+      final value = await watch.bridge.readDeviceFeature(
+        DeviceFeature.healthAssessment,
+      );
+      expect(watch.writes.last.$2[6], 50);
+      expect(
+        value['pulseHistory'],
+        hasLength(2),
+      ); // Storage deduplicates; transport preserves packets.
+      expect((value['pulse'] as Map)['rawTimestamp'], stamp);
+      expect(
+        DateTime.parse((value['pulse'] as Map)['measuredAt'] as String),
+        time,
+      );
+      expect(watch.writes.where((r) => r.$2.command == 0x3a), isEmpty);
+    },
+  );
+
   test('pulse restart waits for user-confirmed end on the watch', () async {
     await watch.connectAndReadCapabilities();
     await watch.bridge.writeDeviceFeature(DeviceFeature.healthAssessment, {
@@ -592,6 +621,7 @@ class _Watch {
   bool oxygenFivePacket = false;
   List<int> schedule = [0, 8, 60, 60];
   int screenDuration = 10;
+  int autoMonitorState = 2;
   final events = <WearableEvent>[];
   final writes = <(String, Eb1Frame)>[];
   final secureValues = <String, String>{};
@@ -704,7 +734,7 @@ class _Watch {
       case 0x01:
         replies.add(Eb1Frame.request(0x01));
       case 0x16 || 0x2c:
-        replies.add(Eb1Frame.request(request.command, [1, 2]));
+        replies.add(Eb1Frame.request(request.command, [1, autoMonitorState]));
       case 0x0a:
         replies.add(Eb1Frame.request(0x0a, [1, 0, 0, 1, 36, 170, 65]));
       case 0x21:

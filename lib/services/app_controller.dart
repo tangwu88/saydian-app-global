@@ -18,6 +18,7 @@ import '../domain/health_record_validation.dart';
 import '../domain/health_record_dedup.dart';
 import '../domain/models.dart';
 import '../domain/ios_wellness_policy.dart';
+import '../domain/urion_pulse_record.dart';
 import '../domain/global_account.dart';
 import '../domain/global_care.dart';
 import '../l10n/global_locale_controller.dart';
@@ -1028,6 +1029,7 @@ class AppController extends ChangeNotifier {
 
   void _clearAccountScopedMemory() {
     _devicePresentationTarget = null;
+    deviceFeatureData = const {};
     healthRecords = const [];
     sportRecords = const [];
     healthWarningAlerts = const [];
@@ -3370,8 +3372,13 @@ class AppController extends ChangeNotifier {
     final id = connectedDevice?.id;
     _setDeviceFeatureBusy(feature, true);
     try {
-      final value = await _wearable.readDeviceFeature(feature);
+      var value = await _wearable.readDeviceFeature(feature);
       if (!_settingsCurrent(revision, id)) return const {};
+      if (feature == DeviceFeature.healthAssessment &&
+          connectedDevice?.sdkSource == WearableSdkSource.urion) {
+        value = await _mergeUrionPulseHistory(value, revision, id!);
+        if (!_settingsCurrent(revision, id)) return const {};
+      }
       errorMessage = null;
       deviceFeatureData = {...deviceFeatureData, feature: value};
       return value;
@@ -3399,6 +3406,61 @@ class AppController extends ChangeNotifier {
       for (final entry in deviceFeatureData.entries)
         if (entry.key != feature) entry.key: entry.value,
     };
+  }
+
+  Future<Map<String, Object?>> _mergeUrionPulseHistory(
+    Map<String, Object?> value,
+    ({int connection, int session}) revision,
+    String deviceId,
+  ) async {
+    if (!_settingsCurrent(revision, deviceId)) return const {};
+    final owner = _healthOwnerFor(session);
+    final incoming = <UrionPulseRecord>[
+      for (final raw in [
+        if (value['pulseHistory'] is List) ...value['pulseHistory'] as List,
+        value['pulse'],
+      ])
+        ?UrionPulseRecord.tryParse(raw, deviceId: deviceId),
+    ];
+    final store = _healthStore;
+    if (store is! UrionPulseHistoryStore) return value;
+    await (store as UrionPulseHistoryStore).saveUrionPulseHistory(
+      incoming,
+      ownerId: owner,
+    );
+    if (!_settingsCurrent(revision, deviceId)) return const {};
+    final saved = await (store as UrionPulseHistoryStore).readUrionPulseHistory(
+      ownerId: owner,
+      deviceId: deviceId,
+    );
+    if (!_settingsCurrent(revision, deviceId)) return const {};
+    return {
+      ...value,
+      'pulseHistory': saved.map((record) => record.toMap()).toList(),
+      if (saved.isNotEmpty) 'pulse': saved.first.toMap(),
+    };
+  }
+
+  Future<void> _cacheUrionPulseEvent(Map<String, Object?> value) async {
+    final revision = wearableSettingsRevision;
+    final id = connectedDevice?.id;
+    if (id == null || connectedDevice?.sdkSource != WearableSdkSource.urion) {
+      return;
+    }
+    try {
+      final merged = await _mergeUrionPulseHistory(value, revision, id);
+      if (!_settingsCurrent(revision, id)) return;
+      deviceFeatureData = {
+        ...deviceFeatureData,
+        DeviceFeature.healthAssessment: merged,
+      };
+      notifyListeners();
+    } catch (_) {
+      if (_settingsCurrent(revision, id)) {
+        errorMessage = '脉搏记录尚未保存，请重新读取设备记录';
+        notifyListeners();
+      }
+    }
   }
 
   Future<Map<String, Object?>> readWatchFaceProfile() async {
@@ -5857,6 +5919,10 @@ class AppController extends ChangeNotifier {
           ...deviceFeatureData,
           feature: {...?deviceFeatureData[feature], ...data},
         };
+        if (feature == DeviceFeature.healthAssessment &&
+            connectedDevice?.sdkSource == WearableSdkSource.urion) {
+          unawaited(_cacheUrionPulseEvent({...?deviceFeatureData[feature]}));
+        }
       }
     } else if (event.type == 'syncProgress') {
       final deviceId = '${event.payload['deviceId'] ?? ''}';

@@ -34,7 +34,20 @@ class IosWellnessPolicy {
     HealthMetric.heartRate,
     HealthMetric.bloodOxygen,
   };
-  static const urionLocalCommands = {0x14, 0x15, 0x2d, 0x32, 0x38, 0x39};
+  static const urionLocalCommands = {
+    0x14,
+    0x15,
+    0x16,
+    0x2c,
+    0x2d,
+    0x32,
+    0x34,
+    0x35,
+    0x36,
+    0x38,
+    0x39,
+    0x3a,
+  };
   bool get hasLocalDeviceMetrics => enabled && urionLocalDevice;
   bool allowsMeasurement(HealthMetric metric) =>
       !enabled || (urionLocalDevice && urionLocalMetrics.contains(metric));
@@ -76,6 +89,11 @@ class IosWellnessPolicy {
           ));
   bool allowsFeature(DeviceFeature feature) =>
       !enabled ||
+      (urionLocalDevice &&
+          const {
+            DeviceFeature.healthMonitoring,
+            DeviceFeature.healthAssessment,
+          }.contains(feature)) ||
       !const {
         DeviceFeature.healthMonitoring,
         DeviceFeature.healthAssessment,

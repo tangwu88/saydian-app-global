@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:saydian_app/domain/ios_wellness_policy.dart';
+import 'package:saydian_app/domain/feature_models.dart';
 import 'package:saydian_app/domain/models.dart';
 import 'package:saydian_app/l10n/generated/app_localizations.dart';
 import 'package:saydian_app/services/api_client.dart';
@@ -69,7 +70,25 @@ class _Wearable implements WearableBridge {
       const DeviceCapabilities(
         metrics: {HealthMetric.bloodPressure, HealthMetric.bloodGlucose},
         manualMetrics: {HealthMetric.bloodPressure, HealthMetric.bloodGlucose},
+        features: {
+          DeviceFeature.healthAssessment,
+          DeviceFeature.healthMonitoring,
+        },
+        integratedFeatures: {
+          DeviceFeature.healthAssessment,
+          DeviceFeature.healthMonitoring,
+        },
       );
+  @override
+  Future<Map<String, Object?>> readDeviceFeature(DeviceFeature feature) async =>
+      feature == DeviceFeature.healthAssessment
+      ? {'pulse': null}
+      : {'heartRate': true};
+  @override
+  Future<void> writeDeviceFeature(
+    DeviceFeature feature,
+    Map<String, Object?> values,
+  ) async {}
   @override
   Future<void> startMeasurement(HealthMetric metric) async =>
       measurements.add(metric);
@@ -168,6 +187,14 @@ void main() {
       final caps = await bridge.getCapabilities();
       expect(caps.supports(HealthMetric.bloodPressure), isTrue);
       expect(caps.supports(HealthMetric.bloodGlucose), isFalse);
+      expect(caps.features, contains(DeviceFeature.healthAssessment));
+      expect(caps.features, contains(DeviceFeature.healthMonitoring));
+      expect(await bridge.readDeviceFeature(DeviceFeature.healthAssessment), {
+        'pulse': null,
+      });
+      await bridge.writeDeviceFeature(DeviceFeature.healthMonitoring, {
+        'heartRate': false,
+      });
       await bridge.startMeasurement(HealthMetric.bloodPressure);
       expect(urion.measurements, [HealthMetric.bloodPressure]);
       await expectLater(

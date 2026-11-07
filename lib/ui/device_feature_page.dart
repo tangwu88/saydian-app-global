@@ -2809,6 +2809,14 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
   Widget _buildU19PulsePanel(bool busy) {
     final raw = _featureData['pulse'];
     final pulse = raw is Map ? Map<String, Object?>.from(raw) : null;
+    final history = <UrionPulseRecord>[
+      if (_featureData['pulseHistory'] case final List rows)
+        for (final row in rows)
+          ?UrionPulseRecord.tryParse(
+            row,
+            deviceId: widget.controller.connectedDevice?.id ?? '',
+          ),
+    ];
     return Column(
       children: [
         if (pulse != null)
@@ -2912,6 +2920,8 @@ class _DeviceFeaturePageState extends State<DeviceFeaturePage>
           icon: const Icon(Icons.refresh_rounded),
           label: Text(_watchText('读取设备记录', 'Read device history')),
         ),
+        const SizedBox(height: 8),
+        UrionPulseHistory(records: history),
       ],
     );
   }

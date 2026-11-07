@@ -3,10 +3,12 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:path/path.dart' as path;
+import 'package:crypto/crypto.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:sqflite_sqlcipher/sqflite.dart';
 
 import '../domain/models.dart';
+import '../domain/urion_pulse_record.dart';
 import 'global_storage_scope.dart';
 import 'global_migration_proof.dart';
 import 'notification_inbox.dart';
@@ -70,6 +72,18 @@ abstract interface class HealthStoreRecoveryStatus {
   bool get recoveryPending;
 }
 
+/// Local-only device indices. Separate from HealthRecord/upload queues.
+abstract interface class UrionPulseHistoryStore {
+  Future<void> saveUrionPulseHistory(
+    List<UrionPulseRecord> records, {
+    required String ownerId,
+  });
+  Future<List<UrionPulseRecord>> readUrionPulseHistory({
+    required String ownerId,
+    required String deviceId,
+  });
+}
+
 abstract interface class HealthStoreFileOperations {
   Future<bool> exists(String file);
   Future<void> rename(String source, String destination);
@@ -131,7 +145,8 @@ bool _isUnreadableEncryptedDatabaseError(Object error) {
       message.contains('hmac check failed');
 }
 
-class EncryptedHealthStore implements HealthStore, HealthStoreRecoveryStatus {
+class EncryptedHealthStore
+    implements HealthStore, HealthStoreRecoveryStatus, UrionPulseHistoryStore {
   EncryptedHealthStore(
     this._vault, {
     this._databasePathProvider,
@@ -1345,9 +1360,75 @@ class EncryptedHealthStore implements HealthStore, HealthStoreRecoveryStatus {
       _database = null;
     });
   }
+
+  @override
+  Future<void> saveUrionPulseHistory(
+    List<UrionPulseRecord> records, {
+    required String ownerId,
+  }) => _enqueue(() async {
+    await _db.transaction((tx) async {
+      for (final record in records) {
+        await tx.insert('metadata', {
+          'owner_id': ownerId,
+          'key':
+              'urion_pulse_v1.${sha256.convert(utf8.encode(record.fingerprint))}',
+          'value': jsonEncode(record.toMap()),
+        }, conflictAlgorithm: ConflictAlgorithm.ignore);
+      }
+    });
+  });
+
+  @override
+  Future<List<UrionPulseRecord>> readUrionPulseHistory({
+    required String ownerId,
+    required String deviceId,
+  }) => _enqueue(() async {
+    final rows = await _db.query(
+      'metadata',
+      columns: ['value'],
+      where: 'owner_id = ? AND substr(key, 1, 15) = ?',
+      whereArgs: [ownerId, 'urion_pulse_v1.'],
+    );
+    final records = <UrionPulseRecord>[];
+    for (final row in rows) {
+      try {
+        final record = UrionPulseRecord.tryParse(
+          jsonDecode('${row['value']}'),
+          deviceId: deviceId,
+        );
+        if (record != null) records.add(record);
+      } on FormatException {
+        // Preserve malformed metadata without exposing it as a reading.
+      }
+    }
+    records.sort((a, b) => b.rawTimestamp.compareTo(a.rawTimestamp));
+    return records;
+  });
 }
 
-class MemoryHealthStore implements HealthStore {
+class MemoryHealthStore implements HealthStore, UrionPulseHistoryStore {
+  final Map<String, Map<String, UrionPulseRecord>> _pulseByOwner = {};
+
+  @override
+  Future<void> saveUrionPulseHistory(
+    List<UrionPulseRecord> records, {
+    required String ownerId,
+  }) async {
+    final saved = _pulseByOwner.putIfAbsent(ownerId, () => {});
+    for (final record in records) {
+      saved.putIfAbsent(record.fingerprint, () => record);
+    }
+  }
+
+  @override
+  Future<List<UrionPulseRecord>> readUrionPulseHistory({
+    required String ownerId,
+    required String deviceId,
+  }) async =>
+      (_pulseByOwner[ownerId]?.values ?? <UrionPulseRecord>[])
+          .where((record) => record.deviceId == deviceId)
+          .toList()
+        ..sort((a, b) => b.rawTimestamp.compareTo(a.rawTimestamp));
   String _ownerId = 'anonymous';
   final Map<String, HealthPendingCursor> _queueScanCursors = {};
   final Map<String, Map<String, HealthRecord>> _recordsByOwner = {};

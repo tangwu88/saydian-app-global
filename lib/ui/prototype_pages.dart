@@ -1,6 +1,8 @@
 import 'data_privacy_page.dart';
 import 'device_symbol.dart';
 import 'ring_gesture_control_page.dart';
+import 'urion_pulse_history.dart';
+import '../domain/urion_pulse_record.dart';
 import 'widgets/safe_network_image.dart';
 import '../l10n/global_locale_controller.dart';
 import '../l10n/ui_labels.dart';

@@ -602,7 +602,7 @@ class RoutedWearableBridge
   }
 
   void _requireFeature(DeviceFeature feature) {
-    if (!IosWellnessPolicy.current.allowsFeature(feature)) {
+    if (!_localDevicePolicy.allowsFeature(feature)) {
       _requirePhysiology();
     }
   }
