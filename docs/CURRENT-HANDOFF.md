@@ -1,5 +1,9 @@
 # SayDian 当前交接说明
 
+## 2026-11-07 苹果1025已上传、安卓调试已开启
+
+本次源码31bfda1的CI42355059740已实际completed/success，五job均通过；上一轮16:27进行中快照为历史。起点3456223仅文档差异、origin已核对。正常1.0.2（1025）归档60.8s/发行导出158.0s、严格发行签名与归档/导出代码一致通过，17:22苹果上传退出0/Upload succeeded，正确国际版TestFlight已列1025，当前“缺少出口合规证明”。上传完成不等于准备测试、送审或发布，1023审核关联未改。华为PPA-LX3/Android10首次安装国际版1025，用户完成系统确认，adb Success/实际包版本通过。收尾ADB transport变化导致初次调试退出，App PID未变；未重启或重装，现已用原生设备URL恢复附加，VM/main/PID、2427ms热重载及DevTools Connected Android再次通过。原始英文登录页已实拍，17:35仍GlobalAuthPage，登录/蓝牙业务另验。唯一当前会话在/private/tmp/saydian-ios-upload-1025-20261107/android/debug-session.json，保持USB和App前台。完整失败、签名、截图及边界见[本轮记录](IMPLEMENTATION-20261107-IOS-1025-ANDROID-DEBUG.md)。
+
 ## 2026-11-07 U19S脉搏历史与动态血压1024
 
 在559e040基线完成U19脉搏历史50组读取、按账号/设备本机SQLCipher持久化去重、三指数7/30/全部趋势及分页；原值/设备时间不改，无脉搏指数云上传。iOS Urion逐协议发现和Dart/原生命令范围开放监测/脉搏；其他厂商范围、云传感/关爱、确认和写后回读保持。用户明确闹钟先不做，原协议无可用闹钟读写命令，不加假入口。
