@@ -1,5 +1,9 @@
 # SayDian 当前交接说明
 
+## 2026-11-07 国际版15pm Debug已开启
+
+最新干净分支408003a经origin fetch/ff-only核对，正常main签名Debug1.0.2（1023）已覆盖安装到指定iPhone15pm；启动前5文件/3数据库10,141,687bytes全部一致，无需恢复。JIT/附加过程的失败和纠正均保留；最终单个Flutter PID53148及LLDB在App PID20053持续运行，getVM HTTP200/main匹配、热重载0/2224库27,439ms通过，内部浏览器DevTools实际显示Connected app/iOS debug。会话指针仅存私有/private/tmp/saydian-iphone15-debug-20261107/debug-session.json。请保留USB和前台；这是Debug附加，不是独立冷启动验收。当前附近设备可扫描，不冒称蓝牙/三项新采集/上云通过；XR独立SayRing未动，已取消的SayRing六问题任务未恢复，商店状态未操作。完整证据见[本轮记录](QA-20261107-IPHONE15PM-DEBUG.md)。
+
 ## 2026-11-04 两商店1.0.2（1023）已提交审核
 
 Apple 实际最终重新提交成功，平台显示“等待审核”，单一项目1.0.2（1023），提交时间15:16（Asia/Shanghai），提交ID c60f87b6-25aa-4e5a-97be-ff687be9ff30。已替换旧1018拒绝草稿的构建及过时云同步文案；英文介绍、审核备注、既有三张英文截图、Health/Fitness隐私标签及法国未供应状态逐项核对。现有受保护审核凭据保留，未声称本轮重新密码登录。
