@@ -82,3 +82,13 @@ flutter --no-version-check build apk --debug --flavor play --no-pub --target=lib
 从指定PID的原生Flutter日志读取实际VM公告，建立仅本轮设备/端口的只读转发并getVM确认同一main/PID。第一次重附加误将已转发的Mac URL作为Android --debug-url，Flutter再次转发该端口，实际退出2/Connection closed before full header was received；保留flutter-attach-r2.log。核对本机Flutter attach.dart的buildVMServiceUri实现后，改传设备原始VM URL，让Flutter只转发一次，不关闭服务认证。
 
 第三轮附加同步5.5秒成功；getVM HTTP200/main/PID32537，重新热重载8/2226库、2427ms成功。DevTools现有页已换到新会话，实际再次显示Connected app / arm64 android。17:35源码页面树仍是GlobalAuthPage，最后一轮无Lost connection、Unhandled Exception或Widget异常头。没有用户登录回报，不将登录或U19S业务计为已验。当前唯一有效会话以私有android/debug-session.json为准，旧连接日志保留；不再沿用失效的初次端口。上述连接恢复不改变APK、苹果归档或上传结果。
+
+## 安卓登录后复核（17:54，Asia/Shanghai）
+
+用户补充“已登录并保持前台”。实时VM仍HTTP200/main，手机与VM的国际版PID均32537，ADB transport维持10；最后附加日志无断连、Unhandled Exception或Widget异常头。实拍当前是英文Connect a device / Devices found页，已发现多台附近设备，页面与可见刷新/连接入口正常，不把扫描当成成功配对。
+
+只读VM对象字段确认唯一生产AppController的session为Session实例，API实际类型GlobalSaydianApiClient，运行中_baseUri为https://app.saydian.com，connectedDevice为null。读取前明确验证字段存在及类型，不从缺少字段推断登录成功；未读取/输出Session令牌、密码或健康原值。本轮验证了已登录会话和实际运行域名，与国际版配置一致。
+
+辅助检查最初尝试VM evaluate纯布尔表达式，返回No compilation service available；未修改源码、注入编译服务或重启应用，改用只读getObject字段完成核对。网络摘要扩展getHttpProfile返回0条，未开新抓包或凭空补样本，因此本轮不声称复验了登录HTTP状态、新测量上云或ACK。查询一个不存在的本机SDK参考文件路径时rg退出2，改读实际network_profiling.dart及http_impl.dart；这不是产品故障。
+
+因附近有多台设备，已请用户选择本轮测试型号，可继续末尾27:65的U19S、改其他型号或仅保持调试。17:54仍未连接，不自动选择其他设备，不启动测量或修改监测计划。用户密码只在手机输入；当前App和调试会话继续保持。此轮仅补充真机记录，未改产品代码、构建/安装包、苹果或Google后台，既有CI和发行回执不变。
