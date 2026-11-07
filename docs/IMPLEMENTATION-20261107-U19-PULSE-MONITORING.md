@@ -57,3 +57,17 @@ xcrun swiftc ios/Runner/WearablePayloadMapper.swift test/native/ios_wellness_pol
 Android沿用正常Play双ARM、.com、无推送构建参数，QA Release显式SAIDIAN_ALLOW_QA_RELEASE=true；iOS串行Debug/Profile均显式CLI1.0.2/1024、正常main、.com/update、无推送，使用此前临时XCODE_XCCONFIG_FILE。主机截图使用test/support/ios_inner_page_capture.dart的global-u19-pulse与390/844、320/900+1.8参数。完整原始构建/测试/失败与签名回执在/private/tmp/saydian-u19-features-20261107；受限手机原始图和备份不入Git。
 
 源码及所有新增普通回归、可选合成截图夹具、实施和索引记录一起提交当前国际分支；不合main、不触发国内服务。源码Git/本机与远端完整tree、CI实际状态在交付时分别记录，不用旧CI冒充本次源码绿灯。闹钟按用户最新指示跳过，不计故障已修复。
+
+## 最终真机页面验收与 Git（16:27，Asia/Shanghai）
+
+最终1024的热重载实际完成8/2226库，903ms；单个Flutter/LLDB继续附加，getVM再次确认HTTP200、main和PID20221。内部浏览器新DevTools实际显示Connected app / iOS debug。没有重启手机、清库、恢复旧备份或触碰XR。
+
+附近同名U19S有两项，第一次用户反馈后实拍仍停搜索，不能记连接成功。请用户选择末尾27:65的既有正确Urion通道后，实拍正常设备页U19S_SD_2765/Connected，Health monitoring与Pulse insights均可见。用户随后明确反馈“动态血压显示”；这项确认的是设置入口与页面，未让用户开启计划，也没有做定时充气执行或修改设置回读的实体测试。
+
+用户最初反馈“脉搏没有历史”。当前真机只读inspector随后确认生产UrionPulseHistory中Saved readings (2)、两条不同时点记录及图表已生成；实拍可见三项曲线，列表位于图表下方。请用户向上滑后，用户明确回复“已看到两条历史记录”，最后实拍也同时看到Saved readings (2)、两条记录与完整三曲线。因此本轮不存在“只显示最新一次”的页面结果；保留此前反馈及核对过程，不改成用户第一次就通过。记录日期沿用设备原始时间，不把旧日期改写为今天；私有截图/原值/账号/VM令牌不进Git。
+
+本轮实体已验：正确通道连接、两个入口、脉搏历史与趋势展示；动态血压页面由用户确认。真实手机重启后的SQLCipher回读、定时计划硬件执行及新增测量与上传不在本轮通过项中；持久化的SQLite关闭重开/去重/隔离已有自动回归，不能替代这些实体环节。闹钟继续按用户要求暂不做。此前小节中的“待用户连接/待页面检查”为过程状态，以本段最终结果为准。
+
+源码已通过GitHub连接发布为31bfda130d4f5bfde75416d6138e66a35cd8b89e，当前国际分支codex/us-storage-notices-20261104；完整tree 5b8bce680aee5ec6b3d92cc6c0eee4d9526e5761与本机一致，fetch与全树diff通过。等价本地提交b960f9bd9355f7efec2e6d4174dce613f0e65166保存在codex/u19-pulse-monitoring-local-20261107，未强推或合main；当前工作分支已跟踪实际远端提交。
+
+本次源码CI [42355059740](https://github.com/tangwu88/saydian-app-global/actions/runs/42355059740) 已启动，16:27实际质量检查和两个时区Harmony契约均success，Android/iOS job运行中；不能写成全部CI通过。本段及交接索引只补充验收记录，使用[skip ci]文档提交，不改变已经测试、构建和安装的产品代码。未构建App Store正式新包、上传或修改两商店审核。
