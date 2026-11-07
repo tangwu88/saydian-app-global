@@ -92,3 +92,17 @@ flutter --no-version-check build apk --debug --flavor play --no-pub --target=lib
 辅助检查最初尝试VM evaluate纯布尔表达式，返回No compilation service available；未修改源码、注入编译服务或重启应用，改用只读getObject字段完成核对。网络摘要扩展getHttpProfile返回0条，未开新抓包或凭空补样本，因此本轮不声称复验了登录HTTP状态、新测量上云或ACK。查询一个不存在的本机SDK参考文件路径时rg退出2，改读实际network_profiling.dart及http_impl.dart；这不是产品故障。
 
 因附近有多台设备，已请用户选择本轮测试型号，可继续末尾27:65的U19S、改其他型号或仅保持调试。17:54仍未连接，不自动选择其他设备，不启动测量或修改监测计划。用户密码只在手机输入；当前App和调试会话继续保持。此轮仅补充真机记录，未改产品代码、构建/安装包、苹果或Google后台，既有CI和发行回执不变。
+
+## 安卓 U19S 只读功能验收（18:01，Asia/Shanghai）
+
+用户选择继续此前末尾27:65的U19S。随后实拍设备页U19S_SD_2765 / Connected / 48%，Health monitoring与Pulse insights入口均显示；运行Controller的connectedDevice.id精确匹配该已确认目标，urion前缀按现有DeviceInfo.sdkSource规则路由，未按同名设备猜测。设备地址和原始截图仅存私有证明，不在此公开完整标识。
+
+用户按提示完成Sync device、查看监测页及Read device history，并回复“已同步，两页正常，已停留脉搏页”。最后实拍Pulse insights含Saved readings (2)、两条记录及三条原始指数趋势，7天/30天/全部筛选可见。Controller健康评估缓存也为pulseHistory长度2、有最新pulse。原值和设备时间保留，不生成额外样本；没有以主机合成截图代替此轮安卓样本。未重启手机/App验证重开持久化，不能把已有SQLite关闭重开自动回归改为本轮实体重开验收。
+
+对唯一、仍匹配该目标的UrionWearableBridge做只读对象核对，_dynamicPressure为由协议解析得到的Eb1DynamicBloodPressureSettings，enabled=false；关闭态的开始时刻与日/夜间隔原始字段均0。这是已有设备状态，不是本轮设定的计划。用户确认监测页面正常；本轮没有启用计划、写间隔或开始自动充气，不声称定时硬件执行/写后回读已验收。
+
+同步结束状态isDeviceSyncing=false，syncStatus“设备暂无新数据”，cloudSyncState=idle，本次上传0/拒绝0，errorMessage=null。因此本轮读取/同步流程无返回错误，但没有新增可上传传感记录，不能声称验证了新测量、首次云ACK或服务器逐条内容回读。脉搏三指数继续按既有范围本机保存；血压/心率/血氧已有美国云策略未改。
+
+本次登录记录已另交付bc3e75a，完整tree与本机一致；本地等价提交0750660保留。恢复本地跟踪分支时一条命令因工作目录漏写前导斜杠未能启动，校正绝对路径后成功，源码/手机数据无变化。所有VM读取均不用evaluate编译服务，不输出密码、令牌或真实健康原值；原始字段/截图和同步摘要在同一受限android目录。
+
+本轮只追加真机证据与交接说明，没有发现需要修改产品代码的新增异常，未再构建、重装或操作两商店。调试会话和已连接U19S保持，闹钟仍按用户要求暂不做。上面的17:35登录页和17:54未连接是过程快照，以本段最新验收为准。

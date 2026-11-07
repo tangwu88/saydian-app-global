@@ -2,6 +2,8 @@
 
 ## 2026-11-07 苹果1025已上传、安卓调试已开启
 
+18:01最新：安卓已登录美国账号，实际连接此前确认的末尾27:65 U19S。两个入口实拍可见，用户完成手动同步及两页查看；脉搏2条历史/三曲线由实拍与运行缓存核对。唯一匹配Urion桥接读回动态计划enabled=false，未启用或改设置。设备同步返回暂无新数据，云idle/本次上传0拒绝0、无错误；新测量、云ACK和定时硬件执行不计通过。App/调试/U19S继续保持，详见[同轮最终验收](IMPLEMENTATION-20261107-IOS-1025-ANDROID-DEBUG.md)。下文17:35/17:54为早期过程快照。
+
 本次源码31bfda1的CI42355059740已实际completed/success，五job均通过；上一轮16:27进行中快照为历史。起点3456223仅文档差异、origin已核对。正常1.0.2（1025）归档60.8s/发行导出158.0s、严格发行签名与归档/导出代码一致通过，17:22苹果上传退出0/Upload succeeded，正确国际版TestFlight已列1025，当前“缺少出口合规证明”。上传完成不等于准备测试、送审或发布，1023审核关联未改。华为PPA-LX3/Android10首次安装国际版1025，用户完成系统确认，adb Success/实际包版本通过。收尾ADB transport变化导致初次调试退出，App PID未变；未重启或重装，现已用原生设备URL恢复附加，VM/main/PID、2427ms热重载及DevTools Connected Android再次通过。原始英文登录页已实拍，17:35仍GlobalAuthPage，登录/蓝牙业务另验。唯一当前会话在/private/tmp/saydian-ios-upload-1025-20261107/android/debug-session.json，保持USB和App前台。完整失败、签名、截图及边界见[本轮记录](IMPLEMENTATION-20261107-IOS-1025-ANDROID-DEBUG.md)。
 
 17:54补充：用户已在安卓登录；唯一生产Controller的Session实例、GlobalSaydianApiClient及运行_baseUri=https://app.saydian.com均只读核对通过，实拍为英文设备搜索页并发现多台设备。VM/main/PID32537稳定，无新断连或Dart/Widget异常。尚未连接具体设备，已询问本轮测试型号；蓝牙连接、测量与上云不计通过。手机截图和只读运行证明留在同一私有android目录；未修改代码或再构建。
