@@ -59,6 +59,10 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>NSHealthShareUsageDescription</key>
+	<string>SayHeath does not read from Apple Health. It receives readings directly from a device you connect.</string>
+	<key>NSHealthUpdateUsageDescription</key>
+	<string>SayHeath does not write to Apple Health. You choose which supported device readings to sync to your account.</string>
 	<key>NSBluetoothAlwaysUsageDescription</key>
 	<string>Connect to a nearby device you choose and sync the readings you authorize.</string>
 	<key>NSBluetoothPeripheralUsageDescription</key>

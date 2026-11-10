@@ -155,3 +155,6 @@ jobs:
           test "$(plutil -extract CFBundleDisplayName raw "$plist")" = SayHeath
           test "$(plutil -extract CFBundleShortVersionString raw "$plist")" = 1.0.0
           test "$(plutil -extract CFBundleVersion raw "$plist")" = 1
+          plutil -lint build/ios/iphoneos/Runner.app/PrivacyInfo.xcprivacy
+          test -n "$(plutil -extract NSHealthShareUsageDescription raw "$plist")"
+          test -n "$(plutil -extract NSHealthUpdateUsageDescription raw "$plist")"
