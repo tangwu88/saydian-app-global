@@ -250,6 +250,7 @@ class _ShellState extends State<Shell> with WidgetsBindingObserver {
                             ? 'Recent daily steps trend'
                             : 'Recent sleep trend',
                         child: SizedBox(
+                          width: double.infinity,
                           height: 48,
                           child: CustomPaint(
                             painter: DailyTrend(

@@ -298,6 +298,35 @@ void main() {
       expect(s.readings.single['id'], fresh);
     },
   );
+  testWidgets('Steps and sleep trends use the width of their cards', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(390, 844);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.view.resetPhysicalSize);
+    final s = UiState()
+      ..member = 'sample'
+      ..daily = [
+        for (final feature in ['activity', 'sleep'])
+          for (final day in [3, 2])
+            {
+              'feature': feature,
+              'localDate': '2026-01-0$day',
+              'value': day * 100,
+            },
+      ];
+    await tester.pumpWidget(SayHeathApp(state: s));
+    final charts = find.byWidgetPredicate(
+      (w) => w is CustomPaint && w.painter is DailyTrend,
+    );
+    expect(charts, findsNWidgets(2));
+    for (final chart in charts.evaluate()) {
+      final card = chart.findAncestorWidgetOfExactType<Card>()!;
+      final cardWidth = tester.getSize(find.byWidget(card)).width;
+      expect(chart.size!.width, greaterThan(cardWidth * .8));
+    }
+  });
   testWidgets(
     'English sign-in requires agreement; default connected device does not offer sensitive features',
     (tester) async {
