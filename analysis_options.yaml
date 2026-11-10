@@ -5,3 +5,5 @@ analyzer:
     # Ignored build outputs and one-off device probes are not project sources.
     - build/**
     - third_party/**
+    # Independent target has its own package resolution, analyzer and CI.
+    - products/sayheath/**

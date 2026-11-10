@@ -18,6 +18,7 @@ import 'wearable_bridge.dart';
 class UrionWearableBridge
     implements WearableBridge, WearableDeviceDetailsBridge {
   UrionWearableBridge({
+    this.commandAllowed,
     MethodChannel? methods,
     EventChannel? eventChannel,
     this.requestTimeout = const Duration(seconds: 8),
@@ -30,6 +31,21 @@ class UrionWearableBridge
     _subscription = _eventChannel.receiveBroadcastStream().listen(
       _onNativeEvent,
     );
+  }
+
+  // Optional product policy; the existing product retains its original protocol.
+  final bool Function(int command, List<int> payload)? commandAllowed;
+  void invalidateProductCapabilities() {
+    _capabilities = null;
+    if (commandAllowed != null) {
+      _measurement = null;
+      _spotMeasurement = null;
+      _pulseMeasurement = null;
+      _watchBloodPressureNoticeAt = null;
+      _confirmedBloodPressureRecords.clear();
+      _knownBloodPressureFingerprints.clear();
+      _dynamicPressure = null;
+    }
   }
 
   final MethodChannel _methods;
@@ -106,6 +122,31 @@ class UrionWearableBridge
     for (final frame in _buffer.add(
       bytes is Uint8List ? bytes : bytes as List<int>,
     )) {
+      final gate = commandAllowed;
+      final code = frame.command == 0x73
+          ? switch (frame[1]) {
+              1 => 0x15,
+              2 => 0x14,
+              3 => 0x2d,
+              5 => 0x34,
+              0x0c => 0x03,
+              _ => -1,
+            }
+          : frame.command == 0x33
+          ? 0x14
+          : frame.command == 0x37
+          ? 0x36
+          : frame.isError
+          ? frame.command & 0x7f
+          : frame.command;
+      // Replies to a schedule disable are checked against the outgoing payload.
+      if (gate != null &&
+          !gate(
+            code,
+            _pending?.command == code ? _pending!.requestPayload : const [],
+          )) {
+        continue;
+      }
       // Urion monitoring and pulse features are available on iOS. Their
       // settings/result notices must reach the same handlers as explicit reads.
       if (IosWellnessPolicy.current.enabled &&
@@ -234,6 +275,12 @@ class UrionWearableBridge
     List<int> payload = const [],
     int count = 1,
   ]) async {
+    if (commandAllowed?.call(command, payload) == false) {
+      throw PlatformException(
+        code: 'UNSUPPORTED_DEVICE',
+        message: 'This operation is unavailable.',
+      );
+    }
     if (IosWellnessPolicy.current.enabled &&
         IosWellnessPolicy.blockedEB1Commands.contains(command) &&
         !IosWellnessPolicy.urionLocalCommands.contains(command)) {
@@ -250,7 +297,8 @@ class UrionWearableBridge
     if (_operationSession != _session || _operationDevice != id) {
       throw PlatformException(code: 'DEVICE_CHANGED', message: '手表连接已变化，请重试');
     }
-    final pending = _Eb1Pending(command, _session, count);
+    final pending = _Eb1Pending(command, _session, count)
+      ..requestPayload = List.unmodifiable(payload);
     _pending = pending;
     try {
       await _methods
@@ -622,6 +670,8 @@ class UrionWearableBridge
         ),
       );
     }
+    // This product accepts sensors only through its user-initiated capture flow.
+    if (commandAllowed != null) return result;
     for (final metric in [HealthMetric.heartRate, HealthMetric.bloodOxygen]) {
       if (_capabilities?.supports(metric) != true) continue;
       try {
@@ -1567,6 +1617,7 @@ class UrionWearableBridge
 }
 
 class _Eb1Pending {
+  List<int> requestPayload = const [];
   _Eb1Pending(this.command, this.session, int count)
     : _collector = Eb1ResponseCollector(command, count: count) {
     // A native write can fail before _exchange begins awaiting the response.

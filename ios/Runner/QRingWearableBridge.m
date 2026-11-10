@@ -233,7 +233,8 @@ static void QRingMeasurementQA(NSString *metric, NSString *phase, id value, BOOL
     self.charging = nil;
     self.batteryUpdatedAt = nil;
     self.firmware = @"";
-    self.profile = [arguments[@"profile"] isKindOfClass:NSDictionary.class] ? arguments[@"profile"] : @{};
+    self.profile = [arguments[@"skipProfileWrite"] isEqual:@YES] ? nil :
+        ([arguments[@"profile"] isKindOfClass:NSDictionary.class] ? arguments[@"profile"] : @{});
     self.connectedID = identifier;
     self.connectedName = item.peripheral.name ?: @"QRing";
     [self scheduleConnectDeadline];
@@ -401,6 +402,7 @@ static void QRingMeasurementQA(NSString *metric, NSString *phase, id value, BOOL
 }
 
 - (void)writeProfileWithCompletion:(QRingNext)completion {
+    if (!self.profile) { if (completion) completion(); return; }
     NSInteger gender = [self profileNumber:@"gender" fallback:1 minimum:1 maximum:2] == 2 ? 1 : 0;
     [QCSDKCmdCreator setTimeFormatTwentyfourHourFormat:YES
                                           metricSystem:YES

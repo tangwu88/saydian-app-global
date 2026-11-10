@@ -1,0 +1,1 @@
+../../../../../lib/domain/device_state_machine.dart

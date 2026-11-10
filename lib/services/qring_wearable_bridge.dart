@@ -157,6 +157,13 @@ class QRingWearableBridge
     'profile': profile.toMap(),
   }, const Duration(seconds: 40));
 
+  /// Pair and read capabilities without sending a wearer profile to the ring.
+  Future<void> connectWithoutProfile(String deviceId) => _invoke<void>(
+    'connect',
+    {'id': deviceId, 'skipProfileWrite': true},
+    const Duration(seconds: 40),
+  );
+
   @override
   Future<void> disconnect() => _invoke<void>('disconnect');
 

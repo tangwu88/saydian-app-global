@@ -1,0 +1,7 @@
+SayHeath 1.0.0 (1) — private App Review notes (working copy)
+
+Sign in with the demo credentials in App Review Information. Activity shows steps and sleep on the signed-in account. In Family Care, the account owner chooses activity, sleep or both; the recipient accepts each category. Either person can end sharing. Account contains privacy information and shared-account deletion.
+
+The binary also supports device blood pressure, oxygen and heart rate readings, on-phone pulse insights and a wearer-confirmed blood pressure schedule on compatible U19 equipment. Availability is controlled separately for each feature by the product/version configuration and the wearer's permission. New authorized readings sync to US servers; pulse history stays on the phone. The same controls apply to reviewers and customers.
+
+Release team: before copying this note into App Store Connect, verify the supplied demo login, attach actual end-to-end device footage or provide equivalent reviewer access for all device functions in this build, and replace this paragraph with the exact verified steps and hardware-access details. Never enable different behavior when a reviewer is detected. Do not submit with this paragraph or unverified access.
