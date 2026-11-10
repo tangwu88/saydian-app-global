@@ -121,3 +121,37 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
             build-for-testing
+
+  sayheath-ios:
+    name: SayHeath iPhone
+    runs-on: macos-26
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: products/sayheath
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - name: Select Xcode 26.5
+        run: sudo xcode-select --switch /Applications/Xcode_26.5.app/Contents/Developer
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
+        with:
+          flutter-version: 3.44.9
+          channel: stable
+          cache: true
+      - run: flutter pub get --enforce-lockfile
+      - run: dart format --output=none --set-exit-if-changed lib/main.dart lib/src test
+      - run: flutter analyze --no-pub
+      - run: TZ=UTC flutter test --no-pub
+      - run: TZ=America/New_York flutter test --no-pub
+      - run: flutter build ios --debug --no-pub --no-codesign
+      - run: flutter build ios --profile --no-pub --no-codesign
+      - run: flutter build ios --release --no-pub --no-codesign
+      - name: Verify release identity
+        run: |
+          plist=build/ios/iphoneos/Runner.app/Info.plist
+          test "$(plutil -extract CFBundleIdentifier raw "$plist")" = app.saydian.say
+          test "$(plutil -extract CFBundleDisplayName raw "$plist")" = SayHeath
+          test "$(plutil -extract CFBundleShortVersionString raw "$plist")" = 1.0.0
+          test "$(plutil -extract CFBundleVersion raw "$plist")" = 1

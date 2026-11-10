@@ -1,0 +1,1 @@
+../../../../../lib/services/qring_wearable_bridge.dart

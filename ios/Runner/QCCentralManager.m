@@ -73,13 +73,16 @@ static NSInteger const QCBleDefaultConnectTimeout = 6;
 {
     self = [super init];
     if (self) {
-        NSDictionary *options = [NSDictionary dictionaryWithObjectsAndKeys:
-                                 // Alert when Bluetooth is off. 蓝牙未开启时弹出系统提示
-                                 [NSNumber numberWithBool:YES],CBCentralManagerOptionShowPowerAlertKey,
-                                 [NSNumber numberWithBool:YES],CBConnectPeripheralOptionNotifyOnConnectionKey,
-                                 // Restore identifier after app relaunch. App 被系统杀掉后用于恢复中心管理器
-                                 @"QCWXBluetoothRestore",CBCentralManagerOptionRestoreIdentifierKey,
-                                 nil];
+        NSMutableDictionary *options = [@{
+            CBCentralManagerOptionShowPowerAlertKey: @YES,
+            CBConnectPeripheralOptionNotifyOnConnectionKey: @YES
+        } mutableCopy];
+        // iOS raises an exception at initialization when a foreground-only
+        // application supplies a restoration identifier.
+        NSArray *modes = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"UIBackgroundModes"];
+        if ([modes containsObject:@"bluetooth-central"]) {
+            options[CBCentralManagerOptionRestoreIdentifierKey] = @"QCWXBluetoothRestore";
+        }
 
         _centerManager = [[CBCentralManager alloc] initWithDelegate:self queue:dispatch_get_main_queue() options:options];
         _peripherals = [[NSMutableArray alloc] init];

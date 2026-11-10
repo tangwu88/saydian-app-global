@@ -1,0 +1,23 @@
+name: sayheath
+description: SayHeath for iPhone
+publish_to: none
+version: 1.0.0+1
+environment:
+  sdk: ^3.12.2
+dependencies:
+  flutter:
+    sdk: flutter
+  crypto: ^3.0.6
+  http: ^1.6.0
+  flutter_secure_storage: ^10.3.1
+  url_launcher: ^6.3.2
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+flutter:
+  config:
+    enable-swift-package-manager: false
+  uses-material-design: true
+  assets:
+    - assets/wordmark.png

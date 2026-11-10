@@ -5,6 +5,7 @@ import Foundation
 /// CoreBluetooth transports verified EB1 advertisements and 16-byte frames.
 /// All health interpretation is shared with Android in Dart.
 final class UrionGattTransport: NSObject, FlutterStreamHandler, CBCentralManagerDelegate, CBPeripheralDelegate {
+  var productWriteGate: ((Data, String?) -> Bool)?
   private let serviceID = CBUUID(string: "6E40FFF0-B5A3-F393-E0A9-E50E24DCCA9E")
   private let writeID = CBUUID(string: "6E400002-B5A3-F393-E0A9-E50E24DCCA9E")
   private let notifyID = CBUUID(string: "6E400003-B5A3-F393-E0A9-E50E24DCCA9E")
@@ -105,6 +106,9 @@ final class UrionGattTransport: NSObject, FlutterStreamHandler, CBCentralManager
     case "writeFrame":
       let arguments = call.arguments as? [String: Any]
       let bytes = arguments?["bytes"] as? FlutterStandardTypedData
+      if let gate = productWriteGate, let frame = bytes?.data, !gate(frame, nativeID) {
+        result(FlutterError(code: "UNSUPPORTED_DEVICE", message: "Operation unavailable.", details: nil)); return
+      }
       if let command = bytes?.data.first,
         IOSWellnessPolicy.blockedEB1Commands.contains(command),
         !IOSWellnessPolicy.urionLocalCommands.contains(command) {

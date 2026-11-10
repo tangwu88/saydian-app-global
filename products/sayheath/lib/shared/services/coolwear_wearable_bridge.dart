@@ -1,0 +1,1 @@
+../../../../../lib/services/coolwear_wearable_bridge.dart
