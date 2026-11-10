@@ -505,22 +505,29 @@ class MemberState extends ChangeNotifier {
         if (!authorized(f)) return;
         final p = Json.from(item.value as Map);
         if (p['feature'] != f || p['id'] != item.key) continue;
-        final ack = await call('captures/${p['id']}/reading', body: p);
-        if (!authorized(f) ||
-            ack is! Map ||
-            ack['received'] != true ||
-            !same(p, ack)) {
+        try {
+          final ack = await call('captures/${p['id']}/reading', body: p);
+          if (!authorized(f) ||
+              ack is! Map ||
+              ack['received'] != true ||
+              !same(p, ack)) {
+            continue;
+          }
+          final stored = await call('captures/${p['id']}');
+          if (!authorized(f) || !same(p, stored)) continue;
+          await _editQueue(key, (rows) => rows.remove(item.key));
+          if (!authorized(f)) return;
+          readings = [
+            Json.from(stored),
+            ...readings.where((r) => r['id'] != item.key),
+          ];
+          message = 'New reading confirmed on the US server.';
+        } on CloudError catch (error) {
+          // A ticket invalidated by an earlier withdrawal must not block
+          // another, separately authorized capture. Retain it without an ACK.
+          if (!{400, 403, 404, 409, 422}.contains(error.status)) rethrow;
           continue;
         }
-        final stored = await call('captures/${p['id']}');
-        if (!authorized(f) || !same(p, stored)) continue;
-        await _editQueue(key, (rows) => rows.remove(item.key));
-        if (!authorized(f)) return;
-        readings = [
-          Json.from(stored),
-          ...readings.where((r) => r['id'] != item.key),
-        ];
-        message = 'New reading confirmed on the US server.';
       }
     }
   }

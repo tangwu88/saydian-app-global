@@ -84,11 +84,16 @@ class DeviceLink {
   Future<void> connect(Candidate c) async {
     await disconnect();
     final n = ++generation;
-    // EB1 does not write profile on connect. Ring SDKs apply their own compatibility policy.
-    await bridges[c.source]!.connect(
-      c.info.id,
-      profile: WearableUserProfile.fromMember({}, targetSteps: 8000),
-    );
+    final bridge = bridges[c.source]!;
+    if (bridge is QRingWearableBridge) {
+      await bridge.connectWithoutProfile(c.info.id);
+    } else {
+      // The EB1 and LuckRing adapters do not read or transmit the profile argument.
+      await bridge.connect(
+        c.info.id,
+        profile: WearableUserProfile.fromMember({}, targetSteps: 8000),
+      );
+    }
     if (n != generation) {
       await bridges[c.source]!.disconnect();
       return;

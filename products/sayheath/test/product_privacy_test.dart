@@ -1,5 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:sayheath/shared/services/qring_wearable_bridge.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
@@ -45,6 +47,31 @@ void main() {
       );
       expect(readingValues('bloodPressure', {'systolic': 110}), isNull);
       expect(readingValues('pulse', {'value': 1}), isNull);
+    },
+  );
+  test(
+    'QRing pairs without constructing or sending personal attributes',
+    () async {
+      const channel = MethodChannel('sayheath-test-ring');
+      final messenger =
+          TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+      MethodCall? seen;
+      messenger.setMockMethodCallHandler(channel, (call) async {
+        seen = call;
+        return null;
+      });
+      try {
+        await QRingWearableBridge(
+          methods: channel,
+        ).connectWithoutProfile('synthetic-ring');
+        expect(seen?.method, 'connect');
+        expect(seen?.arguments, {
+          'id': 'synthetic-ring',
+          'skipProfileWrite': true,
+        });
+      } finally {
+        messenger.setMockMethodCallHandler(channel, null);
+      }
     },
   );
   final now = DateTime.utc(2026, 11, 11);
@@ -217,6 +244,58 @@ void main() {
         'unopened',
       );
       expect(s.readings.single['id'], id);
+    },
+  );
+  test(
+    'a revoked older ticket does not block a separately authorized new reading',
+    () async {
+      const blocked = '11111111-1111-4111-8111-111111111111',
+          fresh = '22222222-2222-4222-8222-222222222222';
+      Map<String, Object> packet(String id) => {
+        'id': id,
+        'feature': 'heartRate',
+        'unit': 'bpm',
+        'values': {'value': 64},
+        'deviceKey': 'a' * 64,
+        'observedAt': '2026-11-11T00:00:00.000Z',
+      };
+      const queue = 'queue.v1.current.heartRate';
+      FlutterSecureStorage.setMockInitialValues({
+        queue: jsonEncode({blocked: packet(blocked), fresh: packet(fresh)}),
+      });
+      final s =
+          MemberState(
+              cloud: Cloud(
+                transport: MockClient((r) async {
+                  if (r.url.path.contains(blocked)) {
+                    return http.Response('', 403);
+                  }
+                  return http.Response(
+                    jsonEncode({
+                      'code': 200,
+                      'data': {
+                        ...packet(fresh),
+                        if (r.method == 'POST') 'received': true,
+                      },
+                    }),
+                    200,
+                  );
+                }),
+              ),
+            )
+            ..member = 'current'
+            ..token = 'synthetic'
+            ..policy = Availability(
+              {'heartRate'},
+              {'heartRate'},
+              DateTime.now().add(const Duration(seconds: 60)),
+            );
+      await s.flush();
+      expect(
+        (jsonDecode((await MemberState.vault.read(key: queue))!) as Map).keys,
+        [blocked],
+      );
+      expect(s.readings.single['id'], fresh);
     },
   );
   testWidgets(
