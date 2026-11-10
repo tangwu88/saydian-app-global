@@ -1,4 +1,5 @@
-// Physical QA entry point only: flutter run --debug -t tool/xr_connection_probe.dart.
+// Physical QA only. Pass SAYHEATH_QA_DEVICE using an ignored local
+// --dart-define-from-file when running tool/xr_connection_probe.dart.
 // No account, feature override, cloud call, measurement, activity sync or schedule write.
 import 'dart:async';
 import 'package:flutter/foundation.dart';
@@ -7,8 +8,12 @@ import 'package:flutter/services.dart';
 import 'package:sayheath/src/cloud.dart';
 import 'package:sayheath/src/device.dart';
 
+final target = const String.fromEnvironment('SAYHEATH_QA_DEVICE').toUpperCase();
 void main() {
   if (!kDebugMode) throw UnsupportedError('Debug builds only.');
+  if (!RegExp(r'^(?:[0-9A-F]{2}:){5}[0-9A-F]{2}$').hasMatch(target)) {
+    throw StateError('An exact local test device identifier is required.');
+  }
   WidgetsFlutterBinding.ensureInitialized();
   runApp(const MaterialApp(home: _Probe()));
 }
@@ -40,15 +45,14 @@ class _ProbeState extends State<_Probe> {
     try {
       report(
         'scanning',
-        'Allow Bluetooth if asked. Keep U19S ending 27:65 nearby.',
+        'Allow Bluetooth if asked. Keep the selected U19S nearby.',
       );
       await link.prepare();
       final radios = await link.bridges['U19']!.scanDevices();
       final targets = radios
           .where(
             (d) =>
-                (d.hardwareAddress ?? d.id).toUpperCase() ==
-                    'CB:BF:62:4F:27:65' &&
+                (d.hardwareAddress ?? d.id).toUpperCase() == target &&
                 d.name.toUpperCase().contains('U19S'),
           )
           .toList();
